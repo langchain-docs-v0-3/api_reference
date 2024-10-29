@@ -825,12 +825,17 @@
         <span class="p">]</span>
         <span class="n">message</span> <span class="o">=</span> <span class="n">_parse_response_candidate</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">streaming</span><span class="o">=</span><span class="n">stream</span><span class="p">)</span>
         <span class="n">message</span><span class="o">.</span><span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">lc_usage</span>
-        <span class="n">generations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="p">(</span><span class="n">ChatGenerationChunk</span> <span class="k">if</span> <span class="n">stream</span> <span class="k">else</span> <span class="n">ChatGeneration</span><span class="p">)(</span>
-                <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">,</span>
-                <span class="n">generation_info</span><span class="o">=</span><span class="n">generation_info</span><span class="p">,</span>
+        <span class="k">if</span> <span class="n">stream</span><span class="p">:</span>
+            <span class="n">generations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">ChatGenerationChunk</span><span class="p">(</span>
+                    <span class="n">message</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="n">AIMessageChunk</span><span class="p">,</span> <span class="n">message</span><span class="p">),</span>
+                    <span class="n">generation_info</span><span class="o">=</span><span class="n">generation_info</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="p">)</span>
-        <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">generations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">ChatGeneration</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">,</span> <span class="n">generation_info</span><span class="o">=</span><span class="n">generation_info</span><span class="p">)</span>
+            <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">response</span><span class="o">.</span><span class="n">candidates</span><span class="p">:</span>
         <span class="c1"># Likely a "prompt feedback" violation (e.g., toxic input)</span>
         <span class="c1"># Raising an error would be different than how OpenAI handles it,</span>
@@ -839,12 +844,14 @@
             <span class="s2">"Gemini produced an empty response. Continuing with empty message</span><span class="se">\n</span><span class="s2">"</span>
             <span class="sa">f</span><span class="s2">"Feedback: </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">prompt_feedback</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
-        <span class="n">generations</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">(</span><span class="n">ChatGenerationChunk</span> <span class="k">if</span> <span class="n">stream</span> <span class="k">else</span> <span class="n">ChatGeneration</span><span class="p">)(</span>
-                <span class="n">message</span><span class="o">=</span><span class="p">(</span><span class="n">AIMessageChunk</span> <span class="k">if</span> <span class="n">stream</span> <span class="k">else</span> <span class="n">AIMessage</span><span class="p">)(</span><span class="n">content</span><span class="o">=</span><span class="s2">""</span><span class="p">),</span>
-                <span class="n">generation_info</span><span class="o">=</span><span class="p">{},</span>
-            <span class="p">)</span>
-        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">stream</span><span class="p">:</span>
+            <span class="n">generations</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">ChatGenerationChunk</span><span class="p">(</span>
+                    <span class="n">message</span><span class="o">=</span><span class="n">AIMessageChunk</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s2">""</span><span class="p">),</span> <span class="n">generation_info</span><span class="o">=</span><span class="p">{}</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">generations</span> <span class="o">=</span> <span class="p">[</span><span class="n">ChatGeneration</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">AIMessage</span><span class="p">(</span><span class="s2">""</span><span class="p">),</span> <span class="n">generation_info</span><span class="o">=</span><span class="p">{})]</span>
     <span class="k">return</span> <span class="n">ChatResult</span><span class="p">(</span><span class="n">generations</span><span class="o">=</span><span class="n">generations</span><span class="p">,</span> <span class="n">llm_output</span><span class="o">=</span><span class="n">llm_output</span><span class="p">)</span>
 
 

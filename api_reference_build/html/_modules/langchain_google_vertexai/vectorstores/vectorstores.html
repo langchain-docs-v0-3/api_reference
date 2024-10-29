@@ -331,6 +331,8 @@
         <span class="n">neighbors_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_searcher</span><span class="o">.</span><span class="n">find_neighbors</span><span class="p">(</span>
             <span class="n">embeddings</span><span class="o">=</span><span class="p">[</span><span class="n">embedding</span><span class="p">],</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">filter_</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span> <span class="n">numeric_filter</span><span class="o">=</span><span class="n">numeric_filter</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">neighbors_list</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
 
         <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">neighbors_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
         <span class="n">distances</span> <span class="o">=</span> <span class="p">[</span><span class="n">distance</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">distance</span> <span class="ow">in</span> <span class="n">neighbors_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
@@ -345,6 +347,36 @@
             <span class="n">missing_docs</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">doc</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">documents</span><span class="p">)</span> <span class="k">if</span> <span class="n">doc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">]</span>
             <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Documents with ids: </span><span class="si">{</span><span class="n">missing_docs</span><span class="si">}</span><span class="s2"> not found in the storage"</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Delete by vector ID.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            ids (Optional[List[str]]): List of ids to delete.</span>
+<span class="sd">            **kwargs (Any): If added metadata={}, deletes the documents</span>
+<span class="sd">            that match the metadata filter and the parameter ids is not needed.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Optional[bool]: True if deletion is successful.</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If ids is None or an empty list.</span>
+<span class="sd">            RuntimeError: If an error occurs during the deletion process.</span>
+<span class="sd">        """</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"metadata"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">ids</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">metadata</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">ids</span> <span class="ow">and</span> <span class="n">metadata</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"You should provide ids (as list of id's) or a metadata"</span>
+                <span class="s2">"filter for deleting documents."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">metadata</span><span class="p">:</span>
+            <span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_searcher</span><span class="o">.</span><span class="n">get_datapoints_by_filter</span><span class="p">(</span><span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ids</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_searcher</span><span class="o">.</span><span class="n">remove_datapoints</span><span class="p">(</span><span class="n">datapoint_ids</span><span class="o">=</span><span class="n">ids</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_document_storage</span><span class="o">.</span><span class="n">mdelete</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error during deletion: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
 
     <span class="k">def</span> <span class="nf">similarity_search</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -600,6 +632,7 @@
         <span class="n">embedding</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Embeddings</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">stream_update</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">datastore_client_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude_from_indexes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">datastore_kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"document_id"</span><span class="p">,</span>
         <span class="n">datastore_text_property_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"text"</span><span class="p">,</span>
         <span class="n">datastore_metadata_property_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"metadata"</span><span class="p">,</span>
@@ -624,6 +657,7 @@
 <span class="sd">                index must be compatible with stream/batch updates.</span>
 <span class="sd">            kwargs: Additional keyword arguments to pass to</span>
 <span class="sd">                VertexAIVectorSearch.__init__().</span>
+<span class="sd">            exclude_from_indexes: Fields to exclude from datastore indexing</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A configured VectorSearchVectorStoreDatastore.</span>
@@ -650,11 +684,14 @@
 
         <span class="n">datastore_client</span> <span class="o">=</span> <span class="n">sdk_manager</span><span class="o">.</span><span class="n">get_datastore_client</span><span class="p">(</span><span class="o">**</span><span class="n">datastore_client_kwargs</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="n">exclude_from_indexes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">exclude_from_indexes</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">document_storage</span> <span class="o">=</span> <span class="n">DataStoreDocumentStorage</span><span class="p">(</span>
             <span class="n">datastore_client</span><span class="o">=</span><span class="n">datastore_client</span><span class="p">,</span>
             <span class="n">kind</span><span class="o">=</span><span class="n">datastore_kind</span><span class="p">,</span>
             <span class="n">text_property_name</span><span class="o">=</span><span class="n">datastore_text_property_name</span><span class="p">,</span>
             <span class="n">metadata_property_name</span><span class="o">=</span><span class="n">datastore_metadata_property_name</span><span class="p">,</span>
+            <span class="n">exclude_from_indexes</span><span class="o">=</span><span class="n">exclude_from_indexes</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>

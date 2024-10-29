@@ -216,7 +216,6 @@
 <span class="sd">export PROJECT_ID=... - set to your Google Cloud project ID</span>
 <span class="sd">export DATA_STORE_ID=... - the ID of the search engine to use for the test</span>
 <span class="sd">"""</span>
-
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">json</span>
@@ -228,6 +227,7 @@
 <span class="kn">from</span> <span class="nn">google.protobuf.json_format</span> <span class="kn">import</span> <span class="n">MessageToDict</span>
 <span class="kn">from</span> <span class="nn">langchain_core.callbacks</span> <span class="kn">import</span> <span class="n">CallbackManagerForRetrieverRun</span>
 <span class="kn">from</span> <span class="nn">langchain_core.documents</span> <span class="kn">import</span> <span class="n">Document</span>
+<span class="kn">from</span> <span class="nn">langchain_core.embeddings</span> <span class="kn">import</span> <span class="n">Embeddings</span>
 <span class="kn">from</span> <span class="nn">langchain_core.load</span> <span class="kn">import</span> <span class="n">Serializable</span><span class="p">,</span> <span class="n">load</span>
 <span class="kn">from</span> <span class="nn">langchain_core.retrievers</span> <span class="kn">import</span> <span class="n">BaseRetriever</span>
 <span class="kn">from</span> <span class="nn">langchain_core.tools</span> <span class="kn">import</span> <span class="n">BaseTool</span>
@@ -493,6 +493,23 @@
 <span class="sd">    https://cloud.google.com/generative-ai-app-builder/docs/boost-search-results</span>
 <span class="sd">    https://cloud.google.com/generative-ai-app-builder/docs/reference/rest/v1beta/BoostSpec</span>
 <span class="sd">    """</span>
+    <span class="n">custom_embedding</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Embeddings</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">"""Custom embedding model for the retriever. (Bring your own embedding)</span>
+<span class="sd">    It needs to match the embedding model that was used to embed docs in the datastore.</span>
+<span class="sd">    It needs to be a langchain embedding VertexAIEmbeddings(project="{PROJECT}")</span>
+<span class="sd">    If you provide an embedding model, you also need to provide a ranking_expression and</span>
+<span class="sd">    a custom_embedding_field_path.</span>
+<span class="sd">    https://cloud.google.com/generative-ai-app-builder/docs/bring-embeddings</span>
+<span class="sd">    """</span>
+    <span class="n">custom_embedding_field_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">""" The field path for the custom embedding used in the Vertex AI datastore schema.</span>
+<span class="sd">    """</span>
+    <span class="n">custom_embedding_ratio</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="w">    </span><span class="sd">"""Controls the ranking of results. Value should be between 0 and 1.</span>
+<span class="sd">    It will generate the ranking_expression in the following manner:</span>
+<span class="sd">    "{custom_embedding_ratio} * dotProduct({custom_embedding_field_path}) +</span>
+<span class="sd">    {1 - custom_embedding_ratio} * relevance_score"</span>
+<span class="sd">    """</span>
 
     <span class="n">_client</span><span class="p">:</span> <span class="n">SearchServiceClient</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">()</span>
     <span class="n">_serving_config</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">()</span>
@@ -598,6 +615,46 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">content_search_spec</span> <span class="o">=</span> <span class="kc">None</span>
 
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">custom_embedding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_embedding_field_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_embedding</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Please provide a custom embedding model if you provide a "</span>
+                    <span class="s2">"custom_embedding_field_path."</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_embedding_field_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Please provide a custom_embedding_field_path if you provide a "</span>
+                    <span class="s2">"custom embedding model."</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_embedding_ratio</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Please provide a custom_embedding_ratio if you provide a "</span>
+                    <span class="s2">"custom embedding model or a custom_embedding_field_path."</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_embedding_ratio</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Custom embedding ratio must be between 0 and 1 "</span>
+                    <span class="sa">f</span><span class="s2">"when using custom embeddings. Got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">custom_embedding_ratio</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="n">embedding_vector</span> <span class="o">=</span> <span class="n">SearchRequest</span><span class="o">.</span><span class="n">EmbeddingSpec</span><span class="o">.</span><span class="n">EmbeddingVector</span><span class="p">(</span>
+                <span class="n">field_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">custom_embedding_field_path</span><span class="p">,</span>
+                <span class="n">vector</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">custom_embedding</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">embedding_spec</span> <span class="o">=</span> <span class="n">SearchRequest</span><span class="o">.</span><span class="n">EmbeddingSpec</span><span class="p">(</span>
+                <span class="n">embedding_vectors</span><span class="o">=</span><span class="p">[</span><span class="n">embedding_vector</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">ranking_expression</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">custom_embedding_ratio</span><span class="si">}</span><span class="s2"> * "</span>
+                <span class="sa">f</span><span class="s2">"dotProduct(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">custom_embedding_field_path</span><span class="si">}</span><span class="s2">) + "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">custom_embedding_ratio</span><span class="si">}</span><span class="s2"> * relevance_score"</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">embedding_spec</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">ranking_expression</span> <span class="o">=</span> <span class="kc">None</span>
+
         <span class="k">return</span> <span class="n">SearchRequest</span><span class="p">(</span>
             <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
             <span class="nb">filter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">,</span>
@@ -611,6 +668,8 @@
             <span class="n">boost_spec</span><span class="o">=</span><span class="n">SearchRequest</span><span class="o">.</span><span class="n">BoostSpec</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">boost_spec</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">boost_spec</span>
             <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">embedding_spec</span><span class="o">=</span><span class="n">embedding_spec</span><span class="p">,</span>
+            <span class="n">ranking_expression</span><span class="o">=</span><span class="n">ranking_expression</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_get_relevant_documents</span><span class="p">(</span>

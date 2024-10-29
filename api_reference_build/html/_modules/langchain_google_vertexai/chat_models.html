@@ -357,6 +357,8 @@
     <span class="s2">"frequency_penalty"</span><span class="p">,</span>
     <span class="s2">"candidate_count"</span><span class="p">,</span>
     <span class="s2">"seed"</span><span class="p">,</span>
+    <span class="s2">"response_logprobs"</span><span class="p">,</span>
+    <span class="s2">"logprobs"</span><span class="p">,</span>
 <span class="p">]</span>
 <span class="n">_allowed_params_prediction_service</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"request"</span><span class="p">,</span> <span class="s2">"timeout"</span><span class="p">,</span> <span class="s2">"metadata"</span><span class="p">]</span>
 
@@ -1149,6 +1151,29 @@
 
 <span class="sd">            {'input_tokens': 17, 'output_tokens': 7, 'total_tokens': 24}</span>
 
+<span class="sd">    Logprobs:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            llm = ChatVertexAI(model="gemini-1.5-flash-001", logprobs=True)</span>
+<span class="sd">            ai_msg = llm.invoke(messages)</span>
+<span class="sd">            ai_msg.response_metadata["logprobs_result"]</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            {</span>
+<span class="sd">                'chosen_candidates': [</span>
+<span class="sd">                    {'token': 'J', 'log_probability': 0.0},</span>
+<span class="sd">                    {'token': "'", 'log_probability': -4.0052048e-05},</span>
+<span class="sd">                    {'token': 'adore', 'log_probability': -0.003931577},</span>
+<span class="sd">                    {'token': ' programmer', 'log_probability': -0.13637993},</span>
+<span class="sd">                    {'token': '.', 'log_probability': -7.630326e-06},</span>
+<span class="sd">                    {'token': ' ', 'log_probability': -3.1950593e-05},</span>
+<span class="sd">                    {'token': '\n', 'log_probability': 0.0}</span>
+<span class="sd">                ],</span>
+<span class="sd">                'top_candidates': []</span>
+<span class="sd">            }</span>
+
+
 <span class="sd">    Response metadata</span>
 <span class="sd">        .. code-block:: python</span>
 
@@ -1237,6 +1262,17 @@
     <span class="n">cached_content</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">""" Optional. Use the model in cache mode. Only supported in Gemini 1.5 and later</span>
 <span class="sd">        models. Must be a string containing the cache name (A sequence of numbers)</span>
+<span class="sd">    """</span>
+
+    <span class="n">logprobs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">"""Whether to return logprobs as part of AIMessage.response_metadata.</span>
+<span class="sd">    </span>
+<span class="sd">    If False, don't return logprobs. If True, return logprobs for top candidate. If </span>
+<span class="sd">    int, return logprobs for top ``logprobs`` candidates.</span>
+<span class="sd">    </span>
+<span class="sd">    **NOTE**: As of 10.28.24 this is only supported for gemini-1.5-flash models.</span>
+<span class="sd">    </span>
+<span class="sd">    .. versionadded: 2.0.6</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1407,12 +1443,22 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">stop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">logprobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenerationConfig</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Prepares GenerationConfig part of the request.</span>
 
 <span class="sd">        https://cloud.google.com/vertex-ai/docs/reference/rpc/google.cloud.aiplatform.v1beta1#generationconfig</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">logprobs</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">logprobs</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"response_logprobs"</span><span class="p">]</span> <span class="o">=</span> <span class="n">logprobs</span>
+        <span class="k">elif</span> <span class="n">logprobs</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">logprobs</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"response_logprobs"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"logprobs"</span><span class="p">]</span> <span class="o">=</span> <span class="n">logprobs</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
+
         <span class="k">return</span> <span class="n">GenerationConfig</span><span class="p">(</span>
             <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_prepare_params</span><span class="p">(</span>
                 <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span>
@@ -1463,6 +1509,7 @@
         <span class="n">cached_content</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">tool_choice</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_ToolChoiceType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">logprobs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenerateContentRequest</span><span class="p">:</span>
         <span class="n">system_instruction</span><span class="p">,</span> <span class="n">contents</span> <span class="o">=</span> <span class="n">_parse_chat_history_gemini</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
@@ -1479,8 +1526,9 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">pass</span>
         <span class="n">safety_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_safety_settings_gemini</span><span class="p">(</span><span class="n">safety_settings</span><span class="p">)</span>
+        <span class="n">logprobs</span> <span class="o">=</span> <span class="n">logprobs</span> <span class="k">if</span> <span class="n">logprobs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">logprobs</span>
         <span class="n">generation_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generation_config_gemini</span><span class="p">(</span>
-            <span class="n">stream</span><span class="o">=</span><span class="n">stream</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+            <span class="n">stream</span><span class="o">=</span><span class="n">stream</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="n">logprobs</span><span class="o">=</span><span class="n">logprobs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cached_content</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">cached_content</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
