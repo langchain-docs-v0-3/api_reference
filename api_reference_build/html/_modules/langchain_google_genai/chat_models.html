@@ -44,7 +44,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Oct 30, 2024" name="docbuild:last-update"/>
+<meta content="Oct 31, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -213,10 +213,8 @@
 <span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">asyncio</span>
-<span class="kn">import</span> <span class="nn">base64</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">uuid</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span>
@@ -242,7 +240,6 @@
 
 <span class="c1"># TODO: remove ignore once the google package is published with types</span>
 <span class="kn">import</span> <span class="nn">proto</span>  <span class="c1"># type: ignore[import]</span>
-<span class="kn">import</span> <span class="nn">requests</span>
 <span class="kn">from</span> <span class="nn">google.ai.generativelanguage_v1beta</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">GenerativeServiceAsyncClient</span> <span class="k">as</span> <span class="n">v1betaGenerativeServiceAsyncClient</span><span class="p">,</span>
 <span class="p">)</span>
@@ -501,35 +498,6 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found more than one candidate for </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">!"</span><span class="p">)</span>
     <span class="n">img_bytes</span> <span class="o">=</span> <span class="n">blobs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">download_as_bytes</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">img_bytes</span><span class="p">))</span>
-
-
-<span class="k">def</span> <span class="nf">_url_to_pil</span><span class="p">(</span><span class="n">image_source</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">PIL</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-            <span class="s2">"PIL is required to load images. Please install it "</span>
-            <span class="s2">"with `pip install pillow`"</span>
-        <span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">image_source</span><span class="p">,</span> <span class="n">IMAGE_TYPES</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">image_source</span>  <span class="c1"># type: ignore[return-value]</span>
-        <span class="k">elif</span> <span class="n">_is_url</span><span class="p">(</span><span class="n">image_source</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">image_source</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"gs://"</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">_load_image_from_gcs</span><span class="p">(</span><span class="n">image_source</span><span class="p">)</span>
-            <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">image_source</span><span class="p">)</span>
-            <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
-            <span class="k">return</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="n">_is_b64</span><span class="p">(</span><span class="n">image_source</span><span class="p">):</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">encoded</span> <span class="o">=</span> <span class="n">image_source</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">encoded</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">image_source</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">image_source</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"The provided string is not a valid URL, base64, or file path."</span>
-            <span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unable to process the provided image source: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_convert_to_parts</span><span class="p">(</span>
