@@ -44,7 +44,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Nov 06, 2024" name="docbuild:last-update"/>
+<meta content="Nov 07, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -303,6 +303,7 @@
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">momento</span>
+    <span class="kn">import</span> <span class="nn">pymemcache</span>
     <span class="kn">from</span> <span class="nn">astrapy.db</span> <span class="kn">import</span> <span class="n">AstraDB</span><span class="p">,</span> <span class="n">AsyncAstraDB</span>
     <span class="kn">from</span> <span class="nn">cassandra.cluster</span> <span class="kn">import</span> <span class="n">Session</span> <span class="k">as</span> <span class="n">CassandraSession</span>
 
@@ -3175,6 +3176,114 @@
         <span class="k">if</span> <span class="n">index_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache_dict</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cache_dict</span><span class="p">[</span><span class="n">index_name</span><span class="p">]</span><span class="o">.</span><span class="n">drop</span><span class="p">()</span>
             <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache_dict</span><span class="p">[</span><span class="n">index_name</span><span class="p">]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MemcachedCache">
+<a class="viewcode-back" href="../../community/cache/langchain_community.cache.MemcachedCache.html#langchain_community.cache.MemcachedCache">[docs]</a>
+<span class="k">class</span> <span class="nc">MemcachedCache</span><span class="p">(</span><span class="n">BaseCache</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Cache that uses Memcached backend through pymemcache client lib"""</span>
+
+<div class="viewcode-block" id="MemcachedCache.__init__">
+<a class="viewcode-back" href="../../community/cache/langchain_community.cache.MemcachedCache.html#langchain_community.cache.MemcachedCache.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client_</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Initialize an instance of MemcachedCache.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            client_ (str): An instance of any of pymemcache's Clients</span>
+<span class="sd">                (Client, PooledClient, HashClient)</span>
+<span class="sd">        Example:</span>
+<span class="sd">        .. code-block:: python</span>
+<span class="sd">            ifrom langchain.globals import set_llm_cache</span>
+<span class="sd">            from langchain_openai import OpenAI</span>
+
+<span class="sd">            from langchain_community.cache import MemcachedCache</span>
+<span class="sd">            from pymemcache.client.base import Client</span>
+
+<span class="sd">            llm = OpenAI(model="gpt-3.5-turbo-instruct", n=2, best_of=2)</span>
+<span class="sd">            set_llm_cache(MemcachedCache(Client('localhost')))</span>
+
+<span class="sd">            # The first time, it is not yet in cache, so it should take longer</span>
+<span class="sd">            llm.invoke("Which city is the most crowded city in the USA?")</span>
+
+<span class="sd">            # The second time it is, so it goes faster</span>
+<span class="sd">            llm.invoke("Which city is the most crowded city in the USA?")</span>
+<span class="sd">        """</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">pymemcache.client</span> <span class="kn">import</span> <span class="p">(</span>
+                <span class="n">Client</span><span class="p">,</span>
+                <span class="n">HashClient</span><span class="p">,</span>
+                <span class="n">PooledClient</span><span class="p">,</span>
+                <span class="n">RetryingClient</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">ModuleNotFoundError</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">"Could not import pymemcache python package. "</span>
+                <span class="s2">"Please install it with `pip install -U pymemcache`."</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">client_</span><span class="p">,</span> <span class="n">Client</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client_</span><span class="p">,</span> <span class="n">PooledClient</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client_</span><span class="p">,</span> <span class="n">HashClient</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client_</span><span class="p">,</span> <span class="n">RetryingClient</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Please pass a valid pymemcached client"</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">client_</span></div>
+
+
+<div class="viewcode-block" id="MemcachedCache.lookup">
+<a class="viewcode-back" href="../../community/cache/langchain_community.cache.MemcachedCache.html#langchain_community.cache.MemcachedCache.lookup">[docs]</a>
+    <span class="k">def</span> <span class="nf">lookup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">llm_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RETURN_VAL_TYPE</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Look up based on prompt and llm_string."""</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">_hash</span><span class="p">(</span><span class="n">prompt</span> <span class="o">+</span> <span class="n">llm_string</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">pymemcache</span><span class="o">.</span><span class="n">MemcacheError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">_loads_generations</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="MemcachedCache.update">
+<a class="viewcode-back" href="../../community/cache/langchain_community.cache.MemcachedCache.html#langchain_community.cache.MemcachedCache.update">[docs]</a>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">llm_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">return_val</span><span class="p">:</span> <span class="n">RETURN_VAL_TYPE</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Update cache based on prompt and llm_string."""</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">_hash</span><span class="p">(</span><span class="n">prompt</span> <span class="o">+</span> <span class="n">llm_string</span><span class="p">)</span>
+
+        <span class="c1"># Validate input is made of standard LLM generations</span>
+        <span class="k">for</span> <span class="n">gen</span> <span class="ow">in</span> <span class="n">return_val</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gen</span><span class="p">,</span> <span class="n">Generation</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Memcached only supports caching of normal LLM generations, "</span>
+                    <span class="o">+</span> <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">gen</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Deserialize return_val into string and update cache</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">_dumps_generations</span><span class="p">(</span><span class="n">return_val</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MemcachedCache.clear">
+<a class="viewcode-back" href="../../community/cache/langchain_community.cache.MemcachedCache.html#langchain_community.cache.MemcachedCache.clear">[docs]</a>
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Clear the entire cache. Takes optional kwargs:</span>
+
+<span class="sd">        delay: optional int, the number of seconds to wait before flushing,</span>
+<span class="sd">                or zero to flush immediately (the default). NON-BLOCKING, returns</span>
+<span class="sd">                immediately.</span>
+<span class="sd">        noreply: optional bool, True to not wait for the reply (defaults to</span>
+<span class="sd">                client.default_noreply).</span>
+<span class="sd">        """</span>
+        <span class="n">delay</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"delay"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">noreply</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"noreply"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">flush_all</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="n">noreply</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

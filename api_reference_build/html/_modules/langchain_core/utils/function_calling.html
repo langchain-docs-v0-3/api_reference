@@ -44,7 +44,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Nov 06, 2024" name="docbuild:last-update"/>
+<meta content="Nov 07, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -576,7 +576,7 @@
 <span class="sd">            A dictionary, Pydantic BaseModel class, TypedDict class, a LangChain</span>
 <span class="sd">            Tool object, or a Python function. If a dictionary is passed in, it is</span>
 <span class="sd">            assumed to already be a valid OpenAI function, a JSON schema with</span>
-<span class="sd">            top-level 'title' and 'description' keys specified, an Anthropic format</span>
+<span class="sd">            top-level 'title' key specified, an Anthropic format</span>
 <span class="sd">            tool, or an Amazon Bedrock Converse format tool.</span>
 <span class="sd">        strict:</span>
 <span class="sd">            If True, model output is guaranteed to exactly match the JSON Schema</span>
@@ -601,40 +601,47 @@
 <span class="sd">    .. versionchanged:: 0.3.14</span>
 
 <span class="sd">        Support for Amazon Bedrock Converse format tools added.</span>
+
+<span class="sd">    .. versionchanged:: 0.3.16</span>
+
+<span class="sd">        'description' and 'parameters' keys are now optional. Only 'name' is</span>
+<span class="sd">        required and guaranteed to be part of the output.</span>
 <span class="sd">    """</span>
     <span class="kn">from</span> <span class="nn">langchain_core.tools</span> <span class="kn">import</span> <span class="n">BaseTool</span>
 
-    <span class="c1"># already in OpenAI function format</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
-        <span class="n">k</span> <span class="ow">in</span> <span class="n">function</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">,</span> <span class="s2">"parameters"</span><span class="p">)</span>
-    <span class="p">):</span>
-        <span class="n">oai_function</span> <span class="o">=</span> <span class="n">function</span>
-    <span class="c1"># a JSON schema with title and description</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
-        <span class="n">k</span> <span class="ow">in</span> <span class="n">function</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">)</span>
-    <span class="p">):</span>
-        <span class="n">function</span> <span class="o">=</span> <span class="n">function</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">oai_function</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">"name"</span><span class="p">:</span> <span class="n">function</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"title"</span><span class="p">),</span>
-            <span class="s2">"description"</span><span class="p">:</span> <span class="n">function</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"description"</span><span class="p">),</span>
-            <span class="s2">"parameters"</span><span class="p">:</span> <span class="n">function</span><span class="p">,</span>
-        <span class="p">}</span>
     <span class="c1"># an Anthropic format tool</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
-        <span class="n">k</span> <span class="ow">in</span> <span class="n">function</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">,</span> <span class="s2">"input_schema"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
+        <span class="n">k</span> <span class="ow">in</span> <span class="n">function</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"input_schema"</span><span class="p">)</span>
     <span class="p">):</span>
         <span class="n">oai_function</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"name"</span><span class="p">:</span> <span class="n">function</span><span class="p">[</span><span class="s2">"name"</span><span class="p">],</span>
-            <span class="s2">"description"</span><span class="p">:</span> <span class="n">function</span><span class="p">[</span><span class="s2">"description"</span><span class="p">],</span>
             <span class="s2">"parameters"</span><span class="p">:</span> <span class="n">function</span><span class="p">[</span><span class="s2">"input_schema"</span><span class="p">],</span>
         <span class="p">}</span>
+        <span class="k">if</span> <span class="s2">"description"</span> <span class="ow">in</span> <span class="n">function</span><span class="p">:</span>
+            <span class="n">oai_function</span><span class="p">[</span><span class="s2">"description"</span><span class="p">]</span> <span class="o">=</span> <span class="n">function</span><span class="p">[</span><span class="s2">"description"</span><span class="p">]</span>
     <span class="c1"># an Amazon Bedrock Converse format tool</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"toolSpec"</span> <span class="ow">in</span> <span class="n">function</span><span class="p">:</span>
         <span class="n">oai_function</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"name"</span><span class="p">:</span> <span class="n">function</span><span class="p">[</span><span class="s2">"toolSpec"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">],</span>
-            <span class="s2">"description"</span><span class="p">:</span> <span class="n">function</span><span class="p">[</span><span class="s2">"toolSpec"</span><span class="p">][</span><span class="s2">"description"</span><span class="p">],</span>
             <span class="s2">"parameters"</span><span class="p">:</span> <span class="n">function</span><span class="p">[</span><span class="s2">"toolSpec"</span><span class="p">][</span><span class="s2">"inputSchema"</span><span class="p">][</span><span class="s2">"json"</span><span class="p">],</span>
         <span class="p">}</span>
+        <span class="k">if</span> <span class="s2">"description"</span> <span class="ow">in</span> <span class="n">function</span><span class="p">[</span><span class="s2">"toolSpec"</span><span class="p">]:</span>
+            <span class="n">oai_function</span><span class="p">[</span><span class="s2">"description"</span><span class="p">]</span> <span class="o">=</span> <span class="n">function</span><span class="p">[</span><span class="s2">"toolSpec"</span><span class="p">][</span><span class="s2">"description"</span><span class="p">]</span>
+    <span class="c1"># already in OpenAI function format</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"name"</span> <span class="ow">in</span> <span class="n">function</span><span class="p">:</span>
+        <span class="n">oai_function</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">function</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">,</span> <span class="s2">"parameters"</span><span class="p">,</span> <span class="s2">"strict"</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="c1"># a JSON schema with title and description</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"title"</span> <span class="ow">in</span> <span class="n">function</span><span class="p">:</span>
+        <span class="n">function_copy</span> <span class="o">=</span> <span class="n">function</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">oai_function</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">function_copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"title"</span><span class="p">)}</span>
+        <span class="k">if</span> <span class="s2">"description"</span> <span class="ow">in</span> <span class="n">function_copy</span><span class="p">:</span>
+            <span class="n">oai_function</span><span class="p">[</span><span class="s2">"description"</span><span class="p">]</span> <span class="o">=</span> <span class="n">function_copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"description"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">function_copy</span> <span class="ow">and</span> <span class="s2">"properties"</span> <span class="ow">in</span> <span class="n">function_copy</span><span class="p">:</span>
+            <span class="n">oai_function</span><span class="p">[</span><span class="s2">"parameters"</span><span class="p">]</span> <span class="o">=</span> <span class="n">function_copy</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_basemodel_subclass</span><span class="p">(</span><span class="n">function</span><span class="p">):</span>
         <span class="n">oai_function</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">convert_pydantic_to_openai_function</span><span class="p">(</span><span class="n">function</span><span class="p">))</span>
     <span class="k">elif</span> <span class="n">is_typeddict</span><span class="p">(</span><span class="n">function</span><span class="p">):</span>
@@ -655,6 +662,13 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">strict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">"strict"</span> <span class="ow">in</span> <span class="n">oai_function</span> <span class="ow">and</span> <span class="n">oai_function</span><span class="p">[</span><span class="s2">"strict"</span><span class="p">]</span> <span class="o">!=</span> <span class="n">strict</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Tool/function already has a 'strict' key wth value "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">oai_function</span><span class="p">[</span><span class="s1">'strict'</span><span class="p">]</span><span class="si">}</span><span class="s2"> which is different from the explicit "</span>
+                <span class="sa">f</span><span class="s2">"`strict` arg received </span><span class="si">{</span><span class="n">strict</span><span class="si">=}</span><span class="s2">."</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">oai_function</span><span class="p">[</span><span class="s2">"strict"</span><span class="p">]</span> <span class="o">=</span> <span class="n">strict</span>
         <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
             <span class="c1"># As of 08/06/24, OpenAI requires that additionalProperties be supplied and</span>
@@ -676,12 +690,16 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Convert a tool-like object to an OpenAI tool schema.</span>
 
+<span class="sd">    OpenAI tool schema reference:</span>
+<span class="sd">    https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools</span>
+
 <span class="sd">    Args:</span>
 <span class="sd">        tool:</span>
 <span class="sd">            Either a dictionary, a pydantic.BaseModel class, Python function, or</span>
-<span class="sd">            BaseTool. If a dictionary is passed in, it is assumed to already be a valid</span>
-<span class="sd">            OpenAI tool, OpenAI function, a JSON schema with top-level 'title' and</span>
-<span class="sd">            'description' keys specified, or an Anthropic format tool.</span>
+<span class="sd">            BaseTool. If a dictionary is passed in, it is</span>
+<span class="sd">            assumed to already be a valid OpenAI function, a JSON schema with</span>
+<span class="sd">            top-level 'title' key specified, an Anthropic format</span>
+<span class="sd">            tool, or an Amazon Bedrock Converse format tool.</span>
 <span class="sd">        strict:</span>
 <span class="sd">            If True, model output is guaranteed to exactly match the JSON Schema</span>
 <span class="sd">            provided in the function definition. If None, ``strict`` argument will not</span>
@@ -698,6 +716,15 @@
 <span class="sd">    .. versionchanged:: 0.3.13</span>
 
 <span class="sd">        Support for Anthropic format tools added.</span>
+
+<span class="sd">    .. versionchanged:: 0.3.14</span>
+
+<span class="sd">        Support for Amazon Bedrock Converse format tools added.</span>
+
+<span class="sd">    .. versionchanged:: 0.3.16</span>
+
+<span class="sd">        'description' and 'parameters' keys are now optional. Only 'name' is</span>
+<span class="sd">        required and guaranteed to be part of the output.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">tool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"function"</span> <span class="ow">and</span> <span class="s2">"function"</span> <span class="ow">in</span> <span class="n">tool</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">tool</span>

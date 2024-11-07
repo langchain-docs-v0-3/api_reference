@@ -44,7 +44,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Nov 06, 2024" name="docbuild:last-update"/>
+<meta content="Nov 07, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -320,6 +320,27 @@
         <span class="n">poller</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">begin_analyze_document</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">api_model</span><span class="p">,</span>
             <span class="n">AnalyzeDocumentRequest</span><span class="p">(</span><span class="n">url_source</span><span class="o">=</span><span class="n">url</span><span class="p">),</span>
+            <span class="c1"># content_type="application/octet-stream",</span>
+            <span class="n">output_content_format</span><span class="o">=</span><span class="s2">"markdown"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"markdown"</span> <span class="k">else</span> <span class="s2">"text"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">poller</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"single"</span><span class="p">,</span> <span class="s2">"markdown"</span><span class="p">]:</span>
+            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_docs_single</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"page"</span><span class="p">]:</span>
+            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_docs_page</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid mode: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AzureAIDocumentIntelligenceParser.parse_bytes">
+<a class="viewcode-back" href="../../../../community/document_loaders/langchain_community.document_loaders.parsers.doc_intelligence.AzureAIDocumentIntelligenceParser.html#langchain_community.document_loaders.parsers.doc_intelligence.AzureAIDocumentIntelligenceParser.parse_bytes">[docs]</a>
+    <span class="k">def</span> <span class="nf">parse_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bytes_source</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+        <span class="kn">from</span> <span class="nn">azure.ai.documentintelligence.models</span> <span class="kn">import</span> <span class="n">AnalyzeDocumentRequest</span>
+
+        <span class="n">poller</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">begin_analyze_document</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">api_model</span><span class="p">,</span>
+            <span class="n">analyze_request</span><span class="o">=</span><span class="n">AnalyzeDocumentRequest</span><span class="p">(</span><span class="n">bytes_source</span><span class="o">=</span><span class="n">bytes_source</span><span class="p">),</span>
             <span class="c1"># content_type="application/octet-stream",</span>
             <span class="n">output_content_format</span><span class="o">=</span><span class="s2">"markdown"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"markdown"</span> <span class="k">else</span> <span class="s2">"text"</span><span class="p">,</span>
         <span class="p">)</span>

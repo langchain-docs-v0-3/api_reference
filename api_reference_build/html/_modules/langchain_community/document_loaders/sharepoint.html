@@ -44,7 +44,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Nov 06, 2024" name="docbuild:last-update"/>
+<meta content="Nov 07, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -216,7 +216,7 @@
 
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">requests</span>  <span class="c1"># type: ignore</span>
 <span class="kn">from</span> <span class="nn">langchain_core.document_loaders</span> <span class="kn">import</span> <span class="n">BaseLoader</span>
@@ -225,9 +225,7 @@
 
 <span class="kn">from</span> <span class="nn">langchain_community.document_loaders.base_o365</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">O365BaseLoader</span><span class="p">,</span>
-    <span class="n">_FileType</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">langchain_community.document_loaders.parsers.registry</span> <span class="kn">import</span> <span class="n">get_parser</span>
 
 
 <div class="viewcode-block" id="SharePointLoader">
@@ -249,14 +247,6 @@
 <span class="w">    </span><span class="sd">""" The path to the token to make api calls"""</span>
     <span class="n">load_extended_metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="w">    </span><span class="sd">""" Whether to load extended metadata. Size, Owner and full_path."""</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">_file_types</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">_FileType</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Return supported file types.</span>
-<span class="sd">        Returns:</span>
-<span class="sd">            A sequence of supported file types.</span>
-<span class="sd">        """</span>
-        <span class="k">return</span> <span class="n">_FileType</span><span class="o">.</span><span class="n">DOC</span><span class="p">,</span> <span class="n">_FileType</span><span class="o">.</span><span class="n">DOCX</span><span class="p">,</span> <span class="n">_FileType</span><span class="o">.</span><span class="n">PDF</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_scopes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -283,7 +273,6 @@
         <span class="n">drive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_auth</span><span class="p">()</span><span class="o">.</span><span class="n">storage</span><span class="p">()</span><span class="o">.</span><span class="n">get_drive</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">document_library_id</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">drive</span><span class="p">,</span> <span class="n">Drive</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"There isn't a Drive with id </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">document_library_id</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
-        <span class="n">blob_parser</span> <span class="o">=</span> <span class="n">get_parser</span><span class="p">(</span><span class="s2">"default"</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">folder_path</span><span class="p">:</span>
             <span class="n">target_folder</span> <span class="o">=</span> <span class="n">drive</span><span class="o">.</span><span class="n">get_item_by_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">folder_path</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_folder</span><span class="p">,</span> <span class="n">Folder</span><span class="p">):</span>
@@ -295,7 +284,7 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_extended_metadata</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
                     <span class="n">extended_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_extended_metadata</span><span class="p">(</span><span class="n">file_id</span><span class="p">)</span>
                     <span class="n">extended_metadata</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"source_full_url"</span><span class="p">:</span> <span class="n">target_folder</span><span class="o">.</span><span class="n">web_url</span><span class="p">})</span>
-                <span class="k">for</span> <span class="n">parsed_blob</span> <span class="ow">in</span> <span class="n">blob_parser</span><span class="o">.</span><span class="n">lazy_parse</span><span class="p">(</span><span class="n">blob</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">parsed_blob</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blob_parser</span><span class="o">.</span><span class="n">lazy_parse</span><span class="p">(</span><span class="n">blob</span><span class="p">):</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_auth</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
                         <span class="n">parsed_blob</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"authorized_identities"</span><span class="p">]</span> <span class="o">=</span> <span class="n">auth_identities</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_extended_metadata</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
@@ -312,7 +301,7 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_extended_metadata</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
                     <span class="n">extended_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_extended_metadata</span><span class="p">(</span><span class="n">file_id</span><span class="p">)</span>
                     <span class="n">extended_metadata</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"source_full_url"</span><span class="p">:</span> <span class="n">target_folder</span><span class="o">.</span><span class="n">web_url</span><span class="p">})</span>
-                <span class="k">for</span> <span class="n">parsed_blob</span> <span class="ow">in</span> <span class="n">blob_parser</span><span class="o">.</span><span class="n">lazy_parse</span><span class="p">(</span><span class="n">blob</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">parsed_blob</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blob_parser</span><span class="o">.</span><span class="n">lazy_parse</span><span class="p">(</span><span class="n">blob</span><span class="p">):</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_auth</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
                         <span class="n">parsed_blob</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"authorized_identities"</span><span class="p">]</span> <span class="o">=</span> <span class="n">auth_identities</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_extended_metadata</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
@@ -325,7 +314,7 @@
                     <span class="n">auth_identities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">authorized_identities</span><span class="p">(</span><span class="n">file_id</span><span class="p">)</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_extended_metadata</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
                     <span class="n">extended_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_extended_metadata</span><span class="p">(</span><span class="n">file_id</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">parsed_blob</span> <span class="ow">in</span> <span class="n">blob_parser</span><span class="o">.</span><span class="n">lazy_parse</span><span class="p">(</span><span class="n">blob</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">parsed_blob</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blob_parser</span><span class="o">.</span><span class="n">lazy_parse</span><span class="p">(</span><span class="n">blob</span><span class="p">):</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_auth</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
                         <span class="n">parsed_blob</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"authorized_identities"</span><span class="p">]</span> <span class="o">=</span> <span class="n">auth_identities</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_extended_metadata</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
@@ -342,7 +331,7 @@
                     <span class="n">auth_identities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">authorized_identities</span><span class="p">(</span><span class="n">file_id</span><span class="p">)</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_extended_metadata</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
                     <span class="n">extended_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_extended_metadata</span><span class="p">(</span><span class="n">file_id</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">blob_part</span> <span class="ow">in</span> <span class="n">blob_parser</span><span class="o">.</span><span class="n">lazy_parse</span><span class="p">(</span><span class="n">blob</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">blob_part</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blob_parser</span><span class="o">.</span><span class="n">lazy_parse</span><span class="p">(</span><span class="n">blob</span><span class="p">):</span>
                     <span class="n">blob_part</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">blob</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_auth</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
                         <span class="n">blob_part</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"authorized_identities"</span><span class="p">]</span> <span class="o">=</span> <span class="n">auth_identities</span>
@@ -404,7 +393,7 @@
 
 <div class="viewcode-block" id="SharePointLoader.get_extended_metadata">
 <a class="viewcode-back" href="../../../community/document_loaders/langchain_community.document_loaders.sharepoint.SharePointLoader.html#langchain_community.document_loaders.sharepoint.SharePointLoader.get_extended_metadata">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_extended_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">get_extended_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Retrieve extended metadata for a file in SharePoint.</span>
 <span class="sd">        As of today, following fields are supported in the extended metadata:</span>

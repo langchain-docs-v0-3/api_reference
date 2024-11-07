@@ -44,7 +44,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Nov 06, 2024" name="docbuild:last-update"/>
+<meta content="Nov 07, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -1282,6 +1282,92 @@
 <span class="w">        </span><span class="sd">"""Lazy load given path as pages."""</span>
         <span class="n">blob</span> <span class="o">=</span> <span class="n">Blob</span><span class="o">.</span><span class="n">from_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
         <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">blob</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ZeroxPDFLoader">
+<a class="viewcode-back" href="../../../community/document_loaders/langchain_community.document_loaders.pdf.ZeroxPDFLoader.html#langchain_community.document_loaders.pdf.ZeroxPDFLoader">[docs]</a>
+<span class="k">class</span> <span class="nc">ZeroxPDFLoader</span><span class="p">(</span><span class="n">BasePDFLoader</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Document loader utilizing Zerox library:</span>
+<span class="sd">    https://github.com/getomni-ai/zerox</span>
+
+<span class="sd">    Zerox converts PDF document to serties of images (page-wise) and</span>
+<span class="sd">    uses vision-capable LLM model to generate Markdown representation.</span>
+
+<span class="sd">    Zerox utilizes anyc operations. Therefore when using this loader</span>
+<span class="sd">    inside Jupyter Notebook (or any environment running async)</span>
+<span class="sd">    you will need to:</span>
+<span class="sd">    ```python</span>
+<span class="sd">        import nest_asyncio</span>
+<span class="sd">        nest_asyncio.apply()</span>
+<span class="sd">    ```</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="ZeroxPDFLoader.__init__">
+<a class="viewcode-back" href="../../../community/document_loaders/langchain_community.document_loaders.pdf.ZeroxPDFLoader.html#langchain_community.document_loaders.pdf.ZeroxPDFLoader.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">file_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+        <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"gpt-4o-mini"</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">zerox_kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">file_path</span><span class="o">=</span><span class="n">file_path</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Initialize the parser with arguments to be passed to the zerox function.</span>
+<span class="sd">        Make sure to set necessary environmnet variables such as API key, endpoint, etc.</span>
+<span class="sd">        Check zerox documentation for list of necessary environment variables for</span>
+<span class="sd">        any given model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            file_path:</span>
+<span class="sd">                Path or url of the pdf file</span>
+<span class="sd">            model:</span>
+<span class="sd">                Vision capable model to use. Defaults to "gpt-4o-mini".</span>
+<span class="sd">                Hosted models are passed in format "&lt;provider&gt;/&lt;model&gt;"</span>
+<span class="sd">                Examples: "azure/gpt-4o-mini", "vertex_ai/gemini-1.5-flash-001"</span>
+<span class="sd">                          See more details in zerox documentation.</span>
+<span class="sd">            **zerox_kwargs: </span>
+<span class="sd">                Arguments specific to the zerox function.</span>
+<span class="sd">                see datailed list of arguments here in zerox repository:</span>
+<span class="sd">                https://github.com/getomni-ai/zerox/blob/main/py_zerox/pyzerox/core/zerox.py#L25</span>
+<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zerox_kwargs</span> <span class="o">=</span> <span class="n">zerox_kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="ZeroxPDFLoader.lazy_load">
+<a class="viewcode-back" href="../../../community/document_loaders/langchain_community.document_loaders.pdf.ZeroxPDFLoader.html#langchain_community.document_loaders.pdf.ZeroxPDFLoader.lazy_load">[docs]</a>
+    <span class="k">def</span> <span class="nf">lazy_load</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Loads documnts from pdf utilizing zerox library:</span>
+<span class="sd">        https://github.com/getomni-ai/zerox</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Iterator[Document]: An iterator over parsed Document instances.</span>
+<span class="sd">        """</span>
+        <span class="kn">import</span> <span class="nn">asyncio</span>
+
+        <span class="kn">from</span> <span class="nn">pyzerox</span> <span class="kn">import</span> <span class="n">zerox</span>
+
+        <span class="c1"># Directly call asyncio.run to execute zerox synchronously</span>
+        <span class="n">zerox_output</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="n">zerox</span><span class="p">(</span><span class="n">file_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">zerox_kwargs</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Convert zerox output to Document instances and yield them</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">zerox_output</span><span class="o">.</span><span class="n">pages</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">num_pages</span> <span class="o">=</span> <span class="n">zerox_output</span><span class="o">.</span><span class="n">pages</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">page</span>
+            <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">zerox_output</span><span class="o">.</span><span class="n">pages</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">Document</span><span class="p">(</span>
+                    <span class="n">page_content</span><span class="o">=</span><span class="n">page</span><span class="o">.</span><span class="n">content</span><span class="p">,</span>
+                    <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">"source"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">,</span>
+                        <span class="s2">"page"</span><span class="p">:</span> <span class="n">page</span><span class="o">.</span><span class="n">page</span><span class="p">,</span>
+                        <span class="s2">"num_pages"</span><span class="p">:</span> <span class="n">num_pages</span><span class="p">,</span>
+                    <span class="p">},</span>
+                <span class="p">)</span></div>
 </div>
 
 
