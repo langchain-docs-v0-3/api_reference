@@ -44,7 +44,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Nov 07, 2024" name="docbuild:last-update"/>
+<meta content="Nov 08, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -231,7 +231,7 @@
 <span class="kn">from</span> <span class="nn">langchain_core.documents</span> <span class="kn">import</span> <span class="n">Document</span>
 <span class="kn">from</span> <span class="nn">langchain_core.embeddings</span> <span class="kn">import</span> <span class="n">Embeddings</span>
 <span class="kn">from</span> <span class="nn">langchain_core.vectorstores</span> <span class="kn">import</span> <span class="n">VectorStore</span>
-<span class="kn">from</span> <span class="nn">pymilvus</span> <span class="kn">import</span> <span class="n">RRFRanker</span><span class="p">,</span> <span class="n">WeightedRanker</span>
+<span class="kn">from</span> <span class="nn">pymilvus</span> <span class="kn">import</span> <span class="n">MilvusClient</span><span class="p">,</span> <span class="n">RRFRanker</span><span class="p">,</span> <span class="n">WeightedRanker</span>
 
 <span class="kn">from</span> <span class="nn">langchain_milvus</span> <span class="kn">import</span> <span class="n">MilvusCollectionHybridSearchRetriever</span>
 <span class="kn">from</span> <span class="nn">langchain_milvus.utils.sparse</span> <span class="kn">import</span> <span class="n">BaseSparseEmbedding</span>
@@ -632,7 +632,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_func</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MilvusClient</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Get client."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_milvus_client</span>
 
@@ -642,15 +642,11 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_is_sparse</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
-        <span class="n">indexes_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_as_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_params</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexes_params</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
-        <span class="n">index_type</span> <span class="o">=</span> <span class="n">indexes_params</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"index_type"</span><span class="p">]</span>
-        <span class="k">if</span> <span class="s2">"SPARSE"</span> <span class="ow">in</span> <span class="n">index_type</span><span class="p">:</span>
+        <span class="n">embedding_func</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">EmbeddingType</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_as_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_func</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_sparse_embedding</span><span class="p">(</span><span class="n">embedding_func</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
             <span class="k">return</span> <span class="kc">True</span>
-        <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_is_sparse_embedding</span><span class="p">(</span><span class="n">embeddings_function</span><span class="p">:</span> <span class="n">EmbeddingType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -1643,12 +1639,20 @@
 <span class="sd">        - etc.</span>
 
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No index params provided."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="o">.</span><span class="n">indexes</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"No index params provided. Could not determine relevance function."</span>
+            <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_multi_vector</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No supported normalization function for multi vectors."</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"No supported normalization function for multi vectors. "</span>
+                <span class="s2">"Could not determine relevance function."</span>
+            <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_sparse</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No supported normalization function for sparse indexes."</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"No supported normalization function for sparse indexes. "</span>
+                <span class="s2">"Could not determine relevance function."</span>
+            <span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">_map_l2_to_similarity</span><span class="p">(</span><span class="n">l2_distance</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">            </span><span class="sd">"""Return a similarity score on a scale [0, 1].</span>
@@ -1670,6 +1674,12 @@
 <span class="sd">            """</span>
             <span class="k">return</span> <span class="p">(</span><span class="n">ip_score</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
 
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"No index params provided. Could not determine relevance function. "</span>
+                <span class="s2">"Use L2 distance as default."</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">_map_l2_to_similarity</span>
         <span class="n">indexes_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_as_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_params</span><span class="p">)</span>
         <span class="n">metric_type</span> <span class="o">=</span> <span class="n">indexes_params</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"metric_type"</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">metric_type</span> <span class="o">==</span> <span class="s2">"L2"</span><span class="p">:</span>

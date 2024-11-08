@@ -44,7 +44,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Nov 07, 2024" name="docbuild:last-update"/>
+<meta content="Nov 08, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -947,6 +947,15 @@
     <span class="k">return</span> <span class="n">bedrock_messages</span><span class="p">,</span> <span class="n">bedrock_system</span>
 
 
+<span class="k">def</span> <span class="nf">_extract_response_metadata</span><span class="p">(</span><span class="n">response</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="n">response_metadata</span> <span class="o">=</span> <span class="n">response</span>
+    <span class="c1"># response_metadata only supports string, list or dict</span>
+    <span class="k">if</span> <span class="s2">"metrics"</span> <span class="ow">in</span> <span class="n">response</span> <span class="ow">and</span> <span class="s2">"latencyMs"</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">"metrics"</span><span class="p">]:</span>
+        <span class="n">response_metadata</span><span class="p">[</span><span class="s2">"metrics"</span><span class="p">][</span><span class="s2">"latencyMs"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">response</span><span class="p">[</span><span class="s2">"metrics"</span><span class="p">][</span><span class="s2">"latencyMs"</span><span class="p">]]</span>
+
+    <span class="k">return</span> <span class="n">response_metadata</span>
+
+
 <span class="k">def</span> <span class="nf">_parse_response</span><span class="p">(</span><span class="n">response</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">AIMessage</span><span class="p">:</span>
     <span class="n">anthropic_content</span> <span class="o">=</span> <span class="n">_bedrock_to_anthropic</span><span class="p">(</span>
         <span class="n">response</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"output"</span><span class="p">)[</span><span class="s2">"message"</span><span class="p">][</span><span class="s2">"content"</span><span class="p">]</span>
@@ -956,7 +965,7 @@
     <span class="k">return</span> <span class="n">AIMessage</span><span class="p">(</span>
         <span class="n">content</span><span class="o">=</span><span class="n">_str_if_single_text_block</span><span class="p">(</span><span class="n">anthropic_content</span><span class="p">),</span>  <span class="c1"># type: ignore[arg-type]</span>
         <span class="n">usage_metadata</span><span class="o">=</span><span class="n">usage</span><span class="p">,</span>
-        <span class="n">response_metadata</span><span class="o">=</span><span class="n">response</span><span class="p">,</span>
+        <span class="n">response_metadata</span><span class="o">=</span><span class="n">_extract_response_metadata</span><span class="p">(</span><span class="n">response</span><span class="p">),</span>
         <span class="n">tool_calls</span><span class="o">=</span><span class="n">tool_calls</span><span class="p">,</span>
     <span class="p">)</span>
 
