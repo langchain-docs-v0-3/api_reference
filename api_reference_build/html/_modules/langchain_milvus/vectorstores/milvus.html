@@ -44,7 +44,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Nov 10, 2024" name="docbuild:last-update"/>
+<meta content="Nov 11, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -231,7 +231,19 @@
 <span class="kn">from</span> <span class="nn">langchain_core.documents</span> <span class="kn">import</span> <span class="n">Document</span>
 <span class="kn">from</span> <span class="nn">langchain_core.embeddings</span> <span class="kn">import</span> <span class="n">Embeddings</span>
 <span class="kn">from</span> <span class="nn">langchain_core.vectorstores</span> <span class="kn">import</span> <span class="n">VectorStore</span>
-<span class="kn">from</span> <span class="nn">pymilvus</span> <span class="kn">import</span> <span class="n">MilvusClient</span><span class="p">,</span> <span class="n">RRFRanker</span><span class="p">,</span> <span class="n">WeightedRanker</span>
+<span class="kn">from</span> <span class="nn">pymilvus</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Collection</span><span class="p">,</span>
+    <span class="n">CollectionSchema</span><span class="p">,</span>
+    <span class="n">DataType</span><span class="p">,</span>
+    <span class="n">FieldSchema</span><span class="p">,</span>
+    <span class="n">MilvusClient</span><span class="p">,</span>
+    <span class="n">MilvusException</span><span class="p">,</span>
+    <span class="n">RRFRanker</span><span class="p">,</span>
+    <span class="n">WeightedRanker</span><span class="p">,</span>
+    <span class="n">utility</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pymilvus.client.types</span> <span class="kn">import</span> <span class="n">LoadState</span>  <span class="c1"># type: ignore</span>
+<span class="kn">from</span> <span class="nn">pymilvus.orm.types</span> <span class="kn">import</span> <span class="n">infer_dtype_bydata</span>  <span class="c1"># type: ignore</span>
 
 <span class="kn">from</span> <span class="nn">langchain_milvus</span> <span class="kn">import</span> <span class="n">MilvusCollectionHybridSearchRetriever</span>
 <span class="kn">from</span> <span class="nn">langchain_milvus.utils.sparse</span> <span class="kn">import</span> <span class="n">BaseSparseEmbedding</span>
@@ -502,14 +514,6 @@
         <span class="n">metadata_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Initialize the Milvus vector store."""</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">pymilvus</span> <span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">MilvusClient</span><span class="p">,</span> <span class="n">utility</span>
-        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"Could not import pymilvus python package. "</span>
-                <span class="s2">"Please install it with `pip install pymilvus`."</span>
-            <span class="p">)</span>
-
         <span class="c1"># Default search params when one is not provided.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">default_search_params</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"FLAT"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"metric_type"</span><span class="p">:</span> <span class="s2">"L2"</span><span class="p">,</span> <span class="s2">"params"</span><span class="p">:</span> <span class="p">{}},</span>
@@ -674,15 +678,6 @@
     <span class="k">def</span> <span class="nf">_create_collection</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">list</span><span class="p">],</span> <span class="n">metadatas</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">pymilvus</span> <span class="kn">import</span> <span class="p">(</span>
-            <span class="n">Collection</span><span class="p">,</span>
-            <span class="n">CollectionSchema</span><span class="p">,</span>
-            <span class="n">DataType</span><span class="p">,</span>
-            <span class="n">FieldSchema</span><span class="p">,</span>
-            <span class="n">MilvusException</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="kn">from</span> <span class="nn">pymilvus.orm.types</span> <span class="kn">import</span> <span class="n">infer_dtype_bydata</span>  <span class="c1"># type: ignore</span>
-
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">vector_fields</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_as_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_vector_field</span><span class="p">)</span>
         <span class="c1"># If enable_dynamic_field, we don't need to create fields, and just pass it.</span>
@@ -855,8 +850,6 @@
             <span class="k">raise</span> <span class="n">e</span>
 
     <span class="k">def</span> <span class="nf">_get_field_schema_from_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">schema_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>  <span class="c1"># type: ignore[no-untyped-def]</span>
-        <span class="kn">from</span> <span class="nn">pymilvus</span> <span class="kn">import</span> <span class="n">FieldSchema</span>
-
         <span class="k">assert</span> <span class="s2">"dtype"</span> <span class="ow">in</span> <span class="n">schema_dict</span><span class="p">,</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Please provide `dtype` in the schema dict. "</span>
             <span class="sa">f</span><span class="s2">"Existing keys are: </span><span class="si">{</span><span class="n">schema_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
@@ -868,8 +861,6 @@
 
     <span class="k">def</span> <span class="nf">_extract_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Grab the existing fields from the Collection"""</span>
-        <span class="kn">from</span> <span class="nn">pymilvus</span> <span class="kn">import</span> <span class="n">Collection</span>
-
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="p">,</span> <span class="n">Collection</span><span class="p">):</span>
             <span class="n">schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="o">.</span><span class="n">schema</span>
             <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
@@ -877,8 +868,6 @@
 
     <span class="k">def</span> <span class="nf">_get_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Return the vector index information if it exists"""</span>
-        <span class="kn">from</span> <span class="nn">pymilvus</span> <span class="kn">import</span> <span class="n">Collection</span>
-
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_multi_vector</span><span class="p">:</span>
             <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field_name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vector_field</span>  <span class="c1"># type: ignore</span>
 
@@ -890,8 +879,6 @@
 
     <span class="k">def</span> <span class="nf">_create_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Create an index on the collection"""</span>
-        <span class="kn">from</span> <span class="nn">pymilvus</span> <span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">MilvusException</span>
-
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="p">,</span> <span class="n">Collection</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_index</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">embeddings_functions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">EmbeddingType</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_as_list</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">embedding_func</span>
@@ -963,8 +950,6 @@
 <span class="w">        </span><span class="sd">"""Generate search params based on the current index type"""</span>
         <span class="kn">import</span> <span class="nn">copy</span>
 
-        <span class="kn">from</span> <span class="nn">pymilvus</span> <span class="kn">import</span> <span class="n">Collection</span>
-
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="p">,</span> <span class="n">Collection</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">vector_fields</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_as_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_vector_field</span><span class="p">)</span>
             <span class="n">search_params_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -991,9 +976,6 @@
         <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Load the collection if available."""</span>
-        <span class="kn">from</span> <span class="nn">pymilvus</span> <span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">utility</span>
-        <span class="kn">from</span> <span class="nn">pymilvus.client.types</span> <span class="kn">import</span> <span class="n">LoadState</span>  <span class="c1"># type: ignore</span>
-
         <span class="n">timeout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="ow">or</span> <span class="n">timeout</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="p">,</span> <span class="n">Collection</span><span class="p">)</span>
@@ -1162,7 +1144,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            List[str]: The resulting keys for each inserted element.</span>
 <span class="sd">        """</span>
-        <span class="kn">from</span> <span class="nn">pymilvus</span> <span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">MilvusException</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_multi_vector</span><span class="p">:</span>
             <span class="n">embeddings</span> <span class="o">=</span> <span class="p">[[</span><span class="n">embedding</span><span class="p">]</span> <span class="k">for</span> <span class="n">embedding</span> <span class="ow">in</span> <span class="n">embeddings</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
@@ -1846,8 +1827,6 @@
 <span class="sd">            List[int]: List of IDs (Primary Keys)</span>
 <span class="sd">        """</span>
 
-        <span class="kn">from</span> <span class="nn">pymilvus</span> <span class="kn">import</span> <span class="n">MilvusException</span>
-
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"No existing collection to get pk."</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">None</span>
@@ -1880,8 +1859,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            List[str]: IDs of the added texts.</span>
 <span class="sd">        """</span>
-
-        <span class="kn">from</span> <span class="nn">pymilvus</span> <span class="kn">import</span> <span class="n">MilvusException</span>
 
         <span class="k">if</span> <span class="n">documents</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"No documents to upsert."</span><span class="p">)</span>
