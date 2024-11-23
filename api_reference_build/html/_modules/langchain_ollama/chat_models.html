@@ -545,23 +545,32 @@
 <span class="sd">    For a full list of the params, see [this link](https://pydoc.dev/httpx/latest/httpx.Client.html)</span>
 <span class="sd">    """</span>
 
-    <span class="n">_client</span><span class="p">:</span> <span class="n">Client</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">_client</span><span class="p">:</span> <span class="n">Client</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    The client to use for making requests.</span>
 <span class="sd">    """</span>
 
-    <span class="n">_async_client</span><span class="p">:</span> <span class="n">AsyncClient</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">_async_client</span><span class="p">:</span> <span class="n">AsyncClient</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    The async client to use for making requests.</span>
 <span class="sd">    """</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">_default_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the default parameters for calling Ollama."""</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">"model"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
-            <span class="s2">"format"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">format</span><span class="p">,</span>
-            <span class="s2">"options"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="k">def</span> <span class="nf">_chat_params</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">messages</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">],</span>
+        <span class="n">stop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="n">ollama_messages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_messages_to_ollama_messages</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`stop` found in both the input and default params."</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span>
+
+        <span class="n">options_dict</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span>
+            <span class="s2">"options"</span><span class="p">,</span>
+            <span class="p">{</span>
                 <span class="s2">"mirostat"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mirostat</span><span class="p">,</span>
                 <span class="s2">"mirostat_eta"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mirostat_eta</span><span class="p">,</span>
                 <span class="s2">"mirostat_tau"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mirostat_tau</span><span class="p">,</span>
@@ -573,13 +582,30 @@
                 <span class="s2">"repeat_penalty"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">repeat_penalty</span><span class="p">,</span>
                 <span class="s2">"temperature"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span>
                 <span class="s2">"seed"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
-                <span class="s2">"stop"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
+                <span class="s2">"stop"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span> <span class="k">if</span> <span class="n">stop</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">stop</span><span class="p">,</span>
                 <span class="s2">"tfs_z"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tfs_z</span><span class="p">,</span>
                 <span class="s2">"top_k"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">top_k</span><span class="p">,</span>
                 <span class="s2">"top_p"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">top_p</span><span class="p">,</span>
             <span class="p">},</span>
-            <span class="s2">"keep_alive"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">tools</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tools"</span><span class="p">)</span>
+        <span class="n">default_stream</span> <span class="o">=</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">tools</span><span class="p">)</span>
+
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"messages"</span><span class="p">:</span> <span class="n">ollama_messages</span><span class="p">,</span>
+            <span class="s2">"stream"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"stream"</span><span class="p">,</span> <span class="n">default_stream</span><span class="p">),</span>
+            <span class="s2">"model"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"model"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">),</span>
+            <span class="s2">"format"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"format"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">format</span><span class="p">),</span>
+            <span class="s2">"options"</span><span class="p">:</span> <span class="n">Options</span><span class="p">(</span><span class="o">**</span><span class="n">options_dict</span><span class="p">),</span>
+            <span class="s2">"keep_alive"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"keep_alive"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span><span class="p">),</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">tools</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="s2">"tools"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tools</span>
+
+        <span class="k">return</span> <span class="n">params</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">_set_clients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
@@ -678,34 +704,9 @@
         <span class="n">stop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]:</span>
-        <span class="n">ollama_messages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_messages_to_ollama_messages</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
+        <span class="n">chat_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chat_params</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="n">stop</span> <span class="o">=</span> <span class="n">stop</span> <span class="k">if</span> <span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span>
-
-        <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_params</span>
-
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_params</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-                <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-
-        <span class="n">params</span><span class="p">[</span><span class="s2">"options"</span><span class="p">][</span><span class="s2">"stop"</span><span class="p">]</span> <span class="o">=</span> <span class="n">stop</span>
-
-        <span class="n">tools</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tools"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">stream</span> <span class="o">=</span> <span class="n">tools</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">tools</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
-
-        <span class="n">chat_params</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">"model"</span><span class="p">:</span> <span class="n">params</span><span class="p">[</span><span class="s2">"model"</span><span class="p">],</span>
-            <span class="s2">"messages"</span><span class="p">:</span> <span class="n">ollama_messages</span><span class="p">,</span>
-            <span class="s2">"stream"</span><span class="p">:</span> <span class="n">stream</span><span class="p">,</span>
-            <span class="s2">"options"</span><span class="p">:</span> <span class="n">Options</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">[</span><span class="s2">"options"</span><span class="p">]),</span>
-            <span class="s2">"keep_alive"</span><span class="p">:</span> <span class="n">params</span><span class="p">[</span><span class="s2">"keep_alive"</span><span class="p">],</span>
-            <span class="s2">"format"</span><span class="p">:</span> <span class="n">params</span><span class="p">[</span><span class="s2">"format"</span><span class="p">],</span>
-        <span class="p">}</span>
-
-        <span class="k">if</span> <span class="n">tools</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">chat_params</span><span class="p">[</span><span class="s2">"tools"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tools</span>
-
-        <span class="k">if</span> <span class="n">stream</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">chat_params</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">]:</span>
             <span class="k">async</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_client</span><span class="o">.</span><span class="n">chat</span><span class="p">(</span><span class="o">**</span><span class="n">chat_params</span><span class="p">):</span>
                 <span class="k">yield</span> <span class="n">part</span>
         <span class="k">else</span><span class="p">:</span>
@@ -717,34 +718,9 @@
         <span class="n">stop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]:</span>
-        <span class="n">ollama_messages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_messages_to_ollama_messages</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
+        <span class="n">chat_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chat_params</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="n">stop</span> <span class="o">=</span> <span class="n">stop</span> <span class="k">if</span> <span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span>
-
-        <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_params</span>
-
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_params</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-                <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-
-        <span class="n">params</span><span class="p">[</span><span class="s2">"options"</span><span class="p">][</span><span class="s2">"stop"</span><span class="p">]</span> <span class="o">=</span> <span class="n">stop</span>
-
-        <span class="n">tools</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tools"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">stream</span> <span class="o">=</span> <span class="n">tools</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">tools</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
-
-        <span class="n">chat_params</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">"model"</span><span class="p">:</span> <span class="n">params</span><span class="p">[</span><span class="s2">"model"</span><span class="p">],</span>
-            <span class="s2">"messages"</span><span class="p">:</span> <span class="n">ollama_messages</span><span class="p">,</span>
-            <span class="s2">"stream"</span><span class="p">:</span> <span class="n">stream</span><span class="p">,</span>
-            <span class="s2">"options"</span><span class="p">:</span> <span class="n">Options</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">[</span><span class="s2">"options"</span><span class="p">]),</span>
-            <span class="s2">"keep_alive"</span><span class="p">:</span> <span class="n">params</span><span class="p">[</span><span class="s2">"keep_alive"</span><span class="p">],</span>
-            <span class="s2">"format"</span><span class="p">:</span> <span class="n">params</span><span class="p">[</span><span class="s2">"format"</span><span class="p">],</span>
-        <span class="p">}</span>
-
-        <span class="k">if</span> <span class="n">tools</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">chat_params</span><span class="p">[</span><span class="s2">"tools"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tools</span>
-
-        <span class="k">if</span> <span class="n">stream</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">chat_params</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">]:</span>
             <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">chat</span><span class="p">(</span><span class="o">**</span><span class="n">chat_params</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">chat</span><span class="p">(</span><span class="o">**</span><span class="n">chat_params</span><span class="p">)</span>
