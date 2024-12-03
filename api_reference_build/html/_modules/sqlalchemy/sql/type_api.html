@@ -44,7 +44,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 02, 2024" name="docbuild:last-update"/>
+<meta content="Dec 03, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -394,6 +394,9 @@
         <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">ColumnElement</span><span class="p">[</span><span class="n">_CT</span><span class="p">]):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">expr</span> <span class="o">=</span> <span class="n">expr</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">type</span>
+
+        <span class="k">def</span> <span class="nf">__reduce__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">,)</span>
 
         <span class="nd">@util</span><span class="o">.</span><span class="n">preload_module</span><span class="p">(</span><span class="s2">"sqlalchemy.sql.default_comparator"</span><span class="p">)</span>
         <span class="k">def</span> <span class="nf">operate</span><span class="p">(</span>
@@ -1933,20 +1936,38 @@
             <span class="n">kwargs</span><span class="p">[</span><span class="s2">"_python_is_types"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">coerce_to_is_types</span>
             <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">reverse_operate</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_reduce_td_comparator</span><span class="p">(</span>
+        <span class="n">impl</span><span class="p">:</span> <span class="n">TypeEngine</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">expr</span><span class="p">:</span> <span class="n">ColumnElement</span><span class="p">[</span><span class="n">_T</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">TypeDecorator</span><span class="o">.</span><span class="n">_create_td_comparator_type</span><span class="p">(</span><span class="n">impl</span><span class="p">)(</span><span class="n">expr</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_create_td_comparator_type</span><span class="p">(</span>
+        <span class="n">impl</span><span class="p">:</span> <span class="n">TypeEngine</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ComparatorFactory</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+
+        <span class="k">def</span> <span class="nf">__reduce__</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">TypeDecorator</span><span class="o">.</span><span class="n">Comparator</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">TypeDecorator</span><span class="o">.</span><span class="n">_reduce_td_comparator</span><span class="p">,</span> <span class="p">(</span><span class="n">impl</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">expr</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span>
+            <span class="s2">"TDComparator"</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">TypeDecorator</span><span class="o">.</span><span class="n">Comparator</span><span class="p">,</span> <span class="n">impl</span><span class="o">.</span><span class="n">comparator_factory</span><span class="p">),</span>  <span class="c1"># type: ignore # noqa: E501</span>
+            <span class="p">{</span><span class="s2">"__reduce__"</span><span class="p">:</span> <span class="n">__reduce__</span><span class="p">},</span>
+        <span class="p">)</span>
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">comparator_factory</span><span class="p">(</span>  <span class="c1"># type: ignore  # mypy properties bug</span>
         <span class="bp">self</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ComparatorFactory</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
         <span class="k">if</span> <span class="n">TypeDecorator</span><span class="o">.</span><span class="n">Comparator</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">comparator_factory</span><span class="o">.</span><span class="vm">__mro__</span><span class="p">:</span>  <span class="c1"># type: ignore # noqa: E501</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">comparator_factory</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">impl_instance</span><span class="o">.</span><span class="n">comparator_factory</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># reconcile the Comparator class on the impl with that</span>
-            <span class="c1"># of TypeDecorator</span>
-            <span class="k">return</span> <span class="nb">type</span><span class="p">(</span>
-                <span class="s2">"TDComparator"</span><span class="p">,</span>
-                <span class="p">(</span><span class="n">TypeDecorator</span><span class="o">.</span><span class="n">Comparator</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">comparator_factory</span><span class="p">),</span>  <span class="c1"># type: ignore # noqa: E501</span>
-                <span class="p">{},</span>
-            <span class="p">)</span>
+            <span class="c1"># of TypeDecorator.</span>
+            <span class="c1"># the use of multiple staticmethods is to support repeated</span>
+            <span class="c1"># pickling of the Comparator itself</span>
+            <span class="k">return</span> <span class="n">TypeDecorator</span><span class="o">.</span><span class="n">_create_td_comparator_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">impl_instance</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_copy_with_check</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
         <span class="n">tt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
