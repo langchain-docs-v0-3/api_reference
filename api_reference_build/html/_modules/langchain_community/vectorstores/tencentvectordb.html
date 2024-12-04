@@ -44,7 +44,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 03, 2024" name="docbuild:last-update"/>
+<meta content="Dec 04, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -218,7 +218,18 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Any</span><span class="p">,</span>
+    <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">Dict</span><span class="p">,</span>
+    <span class="n">Iterable</span><span class="p">,</span>
+    <span class="n">List</span><span class="p">,</span>
+    <span class="n">Optional</span><span class="p">,</span>
+    <span class="n">Sequence</span><span class="p">,</span>
+    <span class="n">Tuple</span><span class="p">,</span>
+    <span class="n">Union</span><span class="p">,</span>
+    <span class="n">cast</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">langchain_core.documents</span> <span class="kn">import</span> <span class="n">Document</span>
@@ -402,8 +413,8 @@
         <span class="n">tcvectordb</span> <span class="o">=</span> <span class="n">guard_import</span><span class="p">(</span><span class="s2">"tcvectordb"</span><span class="p">)</span>
         <span class="n">tcollection</span> <span class="o">=</span> <span class="n">guard_import</span><span class="p">(</span><span class="s2">"tcvectordb.model.collection"</span><span class="p">)</span>
         <span class="n">enum</span> <span class="o">=</span> <span class="n">guard_import</span><span class="p">(</span><span class="s2">"tcvectordb.model.enum"</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">t_vdb_embedding</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embedding_model</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">embedding</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">t_vdb_embedding</span><span class="p">:</span>
             <span class="n">embedding_model</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">model</span>
                 <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">enum</span><span class="o">.</span><span class="n">EmbeddingModel</span>
@@ -827,7 +838,21 @@
         <span class="p">)</span>
         <span class="c1"># Reorder the values and return.</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">documents</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">new_ordering</span> <span class="k">if</span> <span class="n">x</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
-</div>
+
+
+    <span class="k">def</span> <span class="nf">_select_relevance_score_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="n">metric_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_params</span><span class="o">.</span><span class="n">metric_type</span>
+        <span class="k">if</span> <span class="n">metric_type</span> <span class="o">==</span> <span class="s2">"COSINE"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cosine_relevance_score_fn</span>
+        <span class="k">elif</span> <span class="n">metric_type</span> <span class="o">==</span> <span class="s2">"L2"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_euclidean_relevance_score_fn</span>
+        <span class="k">elif</span> <span class="n">metric_type</span> <span class="o">==</span> <span class="s2">"IP"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_inner_product_relevance_score_fn</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"No supported normalization function"</span>
+                <span class="sa">f</span><span class="s2">" for distance metric of type: </span><span class="si">{</span><span class="n">metric_type</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span></div>
 
 </pre></div>
 </article>

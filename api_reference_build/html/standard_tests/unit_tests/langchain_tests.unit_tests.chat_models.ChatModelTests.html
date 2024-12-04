@@ -46,7 +46,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 03, 2024" name="docbuild:last-update"/>
+<meta content="Dec 04, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -299,41 +299,211 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="langchain_tests.unit_tests.chat_models.ChatModelTests">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">langchain_tests.unit_tests.chat_models.</span></span><span class="sig-name descname"><span class="pre">ChatModelTests</span></span><a class="reference internal" href="../../_modules/langchain_tests/unit_tests/chat_models.html#ChatModelTests"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_tests.unit_tests.chat_models.ChatModelTests" title="Link to this definition">#</a></dt>
-<dd><p class="rubric">Attributes</p>
+<dd><p>Base class for chat model tests.</p>
+<p>Test subclasses must implement the following two properties:</p>
+<dl>
+<dt>chat_model_class</dt><dd><p>The chat model class to test, e.g., <code class="docutils literal notranslate"><span class="pre">ChatParrotLink</span></code>.</p>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@property</span>
+<span class="k">def</span> <span class="nf">chat_model_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">ChatParrotLink</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">ChatParrotLink</span>
+</pre></div>
+</div>
+</dd>
+<dt>chat_model_params</dt><dd><p>Initialization parameters for the chat model.</p>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@property</span>
+<span class="k">def</span> <span class="nf">chat_model_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"model"</span><span class="p">:</span> <span class="s2">"bird-brain-001"</span><span class="p">,</span> <span class="s2">"temperature"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>In addition, test subclasses can control what features are tested (such as tool
+calling or multi-modality) by selectively overriding the following properties.
+Expand to see details:</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">has_tool_calling</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">Boolean property indicating whether the chat model supports tool calling.</p>
+<p class="sd-card-text">By default, this is determined by whether the chat model’s <cite>bind_tools</cite> method
+is overridden. It typically does not need to be overridden on the test class.</p>
+</div>
+</details><details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">tool_choice_value</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">Value to use for tool choice when used in tests.</p>
+<p class="sd-card-text">Some tests for tool calling features attempt to force tool calling via a
+<cite>tool_choice</cite> parameter. A common value for this parameter is “any”. Defaults
+to <cite>None</cite>.</p>
+<p class="sd-card-text">Note: if the value is set to “tool_name”, the name of the tool used in each
+test will be set as the value for <cite>tool_choice</cite>.</p>
+<p class="sd-card-text">Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@property</span>
+<span class="k">def</span> <span class="nf">tool_choice_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="s2">"any"</span>
+</pre></div>
+</div>
+</div>
+</details><details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">has_structured_output</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">Boolean property indicating whether the chat model supports structured
+output.</p>
+<p class="sd-card-text">By default, this is determined by whether the chat model’s
+<cite>with_structured_output</cite> method is overridden. If the base implementation is
+intended to be used, this method should be overridden.</p>
+<p class="sd-card-text">See: <a class="reference external" href="https://python.langchain.com/docs/concepts/structured_outputs/">https://python.langchain.com/docs/concepts/structured_outputs/</a></p>
+<p class="sd-card-text">Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@property</span>
+<span class="k">def</span> <span class="nf">has_structured_output</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="kc">True</span>
+</pre></div>
+</div>
+</div>
+</details><details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">supports_image_inputs</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">Boolean property indicating whether the chat model supports image inputs.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+<p class="sd-card-text">If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, the chat model will be tested using content blocks of the
+form</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
+    <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"describe the weather in this image"</span><span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"image_url"</span><span class="p">,</span>
+        <span class="s2">"image_url"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"url"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"data:image/jpeg;base64,</span><span class="si">{</span><span class="n">image_data</span><span class="si">}</span><span class="s2">"</span><span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p class="sd-card-text">See <a class="reference external" href="https://python.langchain.com/docs/concepts/multimodality/">https://python.langchain.com/docs/concepts/multimodality/</a></p>
+<p class="sd-card-text">Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@property</span>
+<span class="k">def</span> <span class="nf">supports_image_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="kc">True</span>
+</pre></div>
+</div>
+</div>
+</details><details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">supports_video_inputs</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">Boolean property indicating whether the chat model supports image inputs.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>. No current tests are written for this feature.</p>
+</div>
+</details><details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">returns_usage_metadata</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">Boolean property indicating whether the chat model returns usage metadata
+on invoke and streaming responses.</p>
+<p class="sd-card-text"><code class="docutils literal notranslate"><span class="pre">usage_metadata</span></code> is an optional dict attribute on AIMessages that track input
+and output tokens: <a class="reference external" href="https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.UsageMetadata.html">https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.UsageMetadata.html</a></p>
+<p class="sd-card-text">Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@property</span>
+<span class="k">def</span> <span class="nf">returns_usage_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="kc">False</span>
+</pre></div>
+</div>
+</div>
+</details><details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">supports_anthropic_inputs</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">Boolean property indicating whether the chat model supports Anthropic-style
+inputs.</p>
+<p class="sd-card-text">These inputs might feature “tool use” and “tool result” content blocks, e.g.,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
+    <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"Hmm let me think about that"</span><span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"tool_use"</span><span class="p">,</span>
+        <span class="s2">"input"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"fav_color"</span><span class="p">:</span> <span class="s2">"green"</span><span class="p">},</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"foo"</span><span class="p">,</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"color_picker"</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p class="sd-card-text">If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, the chat model will be tested using content blocks of this
+form.</p>
+<p class="sd-card-text">Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@property</span>
+<span class="k">def</span> <span class="nf">supports_anthropic_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="kc">False</span>
+</pre></div>
+</div>
+</div>
+</details><details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">supports_image_tool_message</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">Boolean property indicating whether the chat model supports ToolMessages
+that include image content, e.g.,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ToolMessage</span><span class="p">(</span>
+    <span class="n">content</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"image_url"</span><span class="p">,</span>
+            <span class="s2">"image_url"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"url"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"data:image/jpeg;base64,</span><span class="si">{</span><span class="n">image_data</span><span class="si">}</span><span class="s2">"</span><span class="p">},</span>
+        <span class="p">},</span>
+    <span class="p">],</span>
+    <span class="n">tool_call_id</span><span class="o">=</span><span class="s2">"1"</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"random_image"</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p class="sd-card-text">If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, the chat model will be tested with message sequences that
+include ToolMessages of this form.</p>
+<p class="sd-card-text">Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@property</span>
+<span class="k">def</span> <span class="nf">supports_image_tool_message</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="kc">False</span>
+</pre></div>
+</div>
+</div>
+</details><details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">supported_usage_metadata_details</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">Property controlling what usage metadata details are emitted in both invoke
+and stream.</p>
+<p class="sd-card-text"><code class="docutils literal notranslate"><span class="pre">usage_metadata</span></code> is an optional dict attribute on AIMessages that track input
+and output tokens: <a class="reference external" href="https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.UsageMetadata.html">https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.UsageMetadata.html</a></p>
+<p class="sd-card-text">It includes optional keys <code class="docutils literal notranslate"><span class="pre">input_token_details</span></code> and <code class="docutils literal notranslate"><span class="pre">output_token_details</span></code>
+that can track usage details associated with special types of tokens, such as
+cached, audio, or reasoning.</p>
+<p class="sd-card-text">Only needs to be overridden if these details are supplied.</p>
+</div>
+</details><p class="rubric">Attributes</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">chat_model_class</span></code></p></td>
-<td><p></p></td>
+<td><p>The chat model class to test, e.g., <cite>ChatParrotLink</cite>.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">chat_model_params</span></code></p></td>
-<td><p></p></td>
+<td><p>Initialization parameters for the chat mobdel.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_structured_output</span></code></p></td>
-<td><p></p></td>
+<td><p>Boolean property indicating whether the chat model supports structured output.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_tool_calling</span></code></p></td>
-<td><p></p></td>
+<td><p>Boolean property indicating whether the model supports tool calling.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">returns_usage_metadata</span></code></p></td>
-<td><p></p></td>
+<td><p>Boolean property indicating whether the chat model returns usage metadata on invoke and streaming responses.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">standard_chat_model_params</span></code></p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_usage_metadata_details</span></code></p></td>
-<td><p></p></td>
+<td><p>Property controlling what usage metadata details are emitted in both invoke and stream.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_anthropic_inputs</span></code></p></td>
-<td><p></p></td>
+<td><p>Boolean property indicating whether the chat model supports Anthropic-style inputs.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_image_inputs</span></code></p></td>
-<td><p></p></td>
+<td><p>Boolean property indicating whether the chat model supports image inputs.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_image_tool_message</span></code></p></td>
-<td><p></p></td>
+<td><p>Boolean property indicating whether the chat model supports ToolMessages that include image content.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_video_inputs</span></code></p></td>
-<td><p></p></td>
+<td><p>Boolean property indicating whether the chat model supports image inputs.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">tool_choice_value</span></code></p></td>
 <td><p>Value to use for tool choice when used in tests.</p></td>
@@ -348,7 +518,7 @@
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelTests.model" title="langchain_tests.unit_tests.chat_models.ChatModelTests.model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model</span></code></a>()</p></td>
-<td><p></p></td>
+<td><p>Fixture that returns an instance of the chat model.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelTests.test_no_overrides_DO_NOT_OVERRIDE" title="langchain_tests.unit_tests.chat_models.ChatModelTests.test_no_overrides_DO_NOT_OVERRIDE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_no_overrides_DO_NOT_OVERRIDE</span></code></a>()</p></td>
 <td><p>Test that no standard tests are overridden.</p></td>
@@ -363,7 +533,9 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_tests.unit_tests.chat_models.ChatModelTests.model">
 <span class="sig-name descname"><span class="pre">model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="../../core/language_models/langchain_core.language_models.chat_models.BaseChatModel.html#langchain_core.language_models.chat_models.BaseChatModel" title="langchain_core.language_models.chat_models.BaseChatModel"><span class="pre">BaseChatModel</span></a></span></span><a class="reference internal" href="../../_modules/langchain_tests/unit_tests/chat_models.html#ChatModelTests.model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_tests.unit_tests.chat_models.ChatModelTests.model" title="Link to this definition">#</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Fixture that returns an instance of the chat model. Should not be
+overridden.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="../../core/language_models/langchain_core.language_models.chat_models.BaseChatModel.html#langchain_core.language_models.chat_models.BaseChatModel" title="langchain_core.language_models.chat_models.BaseChatModel"><em>BaseChatModel</em></a></p>
 </dd>

@@ -44,7 +44,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 03, 2024" name="docbuild:last-update"/>
+<meta content="Dec 04, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -603,7 +603,8 @@
 <span class="w">    </span><span class="sd">"""Which types of tool_choice values the model supports.</span>
 <span class="sd">    </span>
 <span class="sd">    Inferred if not specified. Inferred as ('auto', 'any', 'tool') if a 'claude-3' </span>
-<span class="sd">    model is used, ('auto', 'any') if a 'mistral-large' model is used, empty otherwise.</span>
+<span class="sd">    model is used, ('auto', 'any') if a 'mistral-large' model is used, </span>
+<span class="sd">    ('auto') if a 'nova' model is used, empty otherwise.</span>
 <span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span>
@@ -620,11 +621,13 @@
             <span class="n">model_parts</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">model_parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">model_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="p">)</span>
 
-        <span class="c1"># As of 09/15/24 Anthropic and Cohere models support streamed tool calling</span>
+        <span class="c1"># As of 12/03/24:</span>
+        <span class="c1"># Anthropic, Cohere and Amazon Nova models support streamed tool calling</span>
         <span class="k">if</span> <span class="s2">"disable_streaming"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
             <span class="n">values</span><span class="p">[</span><span class="s2">"disable_streaming"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="kc">False</span>
                 <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="s2">"provider"</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"anthropic"</span><span class="p">,</span> <span class="s2">"cohere"</span><span class="p">]</span>
+                <span class="ow">or</span> <span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">"provider"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"amazon"</span> <span class="ow">and</span> <span class="s2">"nova"</span> <span class="ow">in</span> <span class="n">model_id</span><span class="p">)</span>
                 <span class="k">else</span> <span class="s2">"tool_calling"</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">values</span>
@@ -633,13 +636,16 @@
     <span class="k">def</span> <span class="nf">validate_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validate that AWS credentials to and python package exists in environment."""</span>
 
-        <span class="c1"># As of 08/05/24 only claude-3 and mistral-large models support tool choice:</span>
+        <span class="c1"># As of 12/03/24:</span>
+        <span class="c1"># only claude-3, mistral-large, and nova models support tool choice:</span>
         <span class="c1"># https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ToolChoice.html</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports_tool_choice_values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="s2">"claude-3"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_id</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">supports_tool_choice_values</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"any"</span><span class="p">,</span> <span class="s2">"tool"</span><span class="p">)</span>
             <span class="k">elif</span> <span class="s2">"mistral-large"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_id</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">supports_tool_choice_values</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"any"</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="s2">"nova"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_id</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">supports_tool_choice_values</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"auto"</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">supports_tool_choice_values</span> <span class="o">=</span> <span class="p">()</span>
 
@@ -768,6 +774,7 @@
                     <span class="sa">f</span><span class="s2">"for the latest documentation on models that support tool choice."</span>
                 <span class="p">)</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s2">"tool_choice"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_format_tool_choice</span><span class="p">(</span><span class="n">tool_choice</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">tools</span><span class="o">=</span><span class="n">formatted_tools</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
@@ -911,7 +918,7 @@
     <span class="c1"># system message then alternating human/ai messages.</span>
     <span class="n">messages</span> <span class="o">=</span> <span class="n">merge_message_runs</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">:</span>
-        <span class="n">content</span> <span class="o">=</span> <span class="n">_anthropic_to_bedrock</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">_lc_content_to_bedrock</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">HumanMessage</span><span class="p">):</span>
             <span class="c1"># If there's a human, tool, human message sequence, the</span>
             <span class="c1"># tool message will be merged with the first human message, so the second</span>
@@ -957,13 +964,11 @@
 
 
 <span class="k">def</span> <span class="nf">_parse_response</span><span class="p">(</span><span class="n">response</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">AIMessage</span><span class="p">:</span>
-    <span class="n">anthropic_content</span> <span class="o">=</span> <span class="n">_bedrock_to_anthropic</span><span class="p">(</span>
-        <span class="n">response</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"output"</span><span class="p">)[</span><span class="s2">"message"</span><span class="p">][</span><span class="s2">"content"</span><span class="p">]</span>
-    <span class="p">)</span>
-    <span class="n">tool_calls</span> <span class="o">=</span> <span class="n">_extract_tool_calls</span><span class="p">(</span><span class="n">anthropic_content</span><span class="p">)</span>
+    <span class="n">lc_content</span> <span class="o">=</span> <span class="n">_bedrock_to_lc</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"output"</span><span class="p">)[</span><span class="s2">"message"</span><span class="p">][</span><span class="s2">"content"</span><span class="p">])</span>
+    <span class="n">tool_calls</span> <span class="o">=</span> <span class="n">_extract_tool_calls</span><span class="p">(</span><span class="n">lc_content</span><span class="p">)</span>
     <span class="n">usage</span> <span class="o">=</span> <span class="n">UsageMetadata</span><span class="p">(</span><span class="n">_camel_to_snake_keys</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"usage"</span><span class="p">)))</span>  <span class="c1"># type: ignore[misc]</span>
     <span class="k">return</span> <span class="n">AIMessage</span><span class="p">(</span>
-        <span class="n">content</span><span class="o">=</span><span class="n">_str_if_single_text_block</span><span class="p">(</span><span class="n">anthropic_content</span><span class="p">),</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="n">content</span><span class="o">=</span><span class="n">_str_if_single_text_block</span><span class="p">(</span><span class="n">lc_content</span><span class="p">),</span>  <span class="c1"># type: ignore[arg-type]</span>
         <span class="n">usage_metadata</span><span class="o">=</span><span class="n">usage</span><span class="p">,</span>
         <span class="n">response_metadata</span><span class="o">=</span><span class="n">_extract_response_metadata</span><span class="p">(</span><span class="n">response</span><span class="p">),</span>
         <span class="n">tool_calls</span><span class="o">=</span><span class="n">tool_calls</span><span class="p">,</span>
@@ -980,7 +985,7 @@
         <span class="p">)</span>
     <span class="k">elif</span> <span class="s2">"contentBlockStart"</span> <span class="ow">in</span> <span class="n">event</span><span class="p">:</span>
         <span class="n">block</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="o">**</span><span class="n">_bedrock_to_anthropic</span><span class="p">([</span><span class="n">event</span><span class="p">[</span><span class="s2">"contentBlockStart"</span><span class="p">][</span><span class="s2">"start"</span><span class="p">]])[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="o">**</span><span class="n">_bedrock_to_lc</span><span class="p">([</span><span class="n">event</span><span class="p">[</span><span class="s2">"contentBlockStart"</span><span class="p">][</span><span class="s2">"start"</span><span class="p">]])[</span><span class="mi">0</span><span class="p">],</span>
             <span class="s2">"index"</span><span class="p">:</span> <span class="n">event</span><span class="p">[</span><span class="s2">"contentBlockStart"</span><span class="p">][</span><span class="s2">"contentBlockIndex"</span><span class="p">],</span>
         <span class="p">}</span>
         <span class="n">tool_call_chunks</span> <span class="o">=</span> <span class="p">[]</span>
@@ -996,7 +1001,7 @@
         <span class="k">return</span> <span class="n">AIMessageChunk</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="p">[</span><span class="n">block</span><span class="p">],</span> <span class="n">tool_call_chunks</span><span class="o">=</span><span class="n">tool_call_chunks</span><span class="p">)</span>
     <span class="k">elif</span> <span class="s2">"contentBlockDelta"</span> <span class="ow">in</span> <span class="n">event</span><span class="p">:</span>
         <span class="n">block</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="o">**</span><span class="n">_bedrock_to_anthropic</span><span class="p">([</span><span class="n">event</span><span class="p">[</span><span class="s2">"contentBlockDelta"</span><span class="p">][</span><span class="s2">"delta"</span><span class="p">]])[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="o">**</span><span class="n">_bedrock_to_lc</span><span class="p">([</span><span class="n">event</span><span class="p">[</span><span class="s2">"contentBlockDelta"</span><span class="p">][</span><span class="s2">"delta"</span><span class="p">]])[</span><span class="mi">0</span><span class="p">],</span>
             <span class="s2">"index"</span><span class="p">:</span> <span class="n">event</span><span class="p">[</span><span class="s2">"contentBlockDelta"</span><span class="p">][</span><span class="s2">"contentBlockIndex"</span><span class="p">],</span>
         <span class="p">}</span>
         <span class="n">tool_call_chunks</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1032,7 +1037,7 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Received unsupported stream event:</span><span class="se">\n\n</span><span class="si">{</span><span class="n">event</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_anthropic_to_bedrock</span><span class="p">(</span>
+<span class="k">def</span> <span class="nf">_lc_content_to_bedrock</span><span class="p">(</span>
     <span class="n">content</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -1066,6 +1071,36 @@
             <span class="n">bedrock_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span><span class="s2">"image"</span><span class="p">:</span> <span class="n">_format_openai_image_url</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"imageUrl"</span><span class="p">][</span><span class="s2">"url"</span><span class="p">])}</span>
             <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">block</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"video"</span><span class="p">:</span>
+            <span class="c1"># Assume block is already in bedrock format.</span>
+            <span class="k">if</span> <span class="s2">"video"</span> <span class="ow">in</span> <span class="n">block</span><span class="p">:</span>
+                <span class="n">bedrock_content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"video"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"video"</span><span class="p">]})</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">block</span><span class="p">[</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"base64"</span><span class="p">:</span>
+                    <span class="n">bedrock_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="s2">"video"</span><span class="p">:</span> <span class="p">{</span>
+                                <span class="s2">"format"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"mediaType"</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
+                                <span class="s2">"source"</span><span class="p">:</span> <span class="p">{</span>
+                                    <span class="s2">"bytes"</span><span class="p">:</span> <span class="n">_b64str_to_bytes</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"data"</span><span class="p">])</span>
+                                <span class="p">},</span>
+                            <span class="p">}</span>
+                        <span class="p">}</span>
+                    <span class="p">)</span>
+                <span class="k">elif</span> <span class="n">block</span><span class="p">[</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"s3Location"</span><span class="p">:</span>
+                    <span class="n">bedrock_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="s2">"video"</span><span class="p">:</span> <span class="p">{</span>
+                                <span class="s2">"format"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"mediaType"</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
+                                <span class="s2">"source"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"s3Location"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"data"</span><span class="p">]},</span>
+                            <span class="p">}</span>
+                        <span class="p">}</span>
+                    <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">block</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"video_url"</span><span class="p">:</span>
+            <span class="c1"># Support OpenAI image format as well.</span>
+            <span class="n">bedrock_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span><span class="s2">"video"</span><span class="p">:</span> <span class="n">_format_openai_video_url</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"videoUrl"</span><span class="p">][</span><span class="s2">"url"</span><span class="p">])}</span>
+            <span class="p">)</span>
         <span class="k">elif</span> <span class="n">block</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"document"</span><span class="p">:</span>
             <span class="c1"># Assume block in bedrock document format</span>
             <span class="n">bedrock_content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"document"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"document"</span><span class="p">]})</span>
@@ -1084,7 +1119,7 @@
                 <span class="p">{</span>
                     <span class="s2">"toolResult"</span><span class="p">:</span> <span class="p">{</span>
                         <span class="s2">"toolUseId"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"toolUseId"</span><span class="p">],</span>
-                        <span class="s2">"content"</span><span class="p">:</span> <span class="n">_anthropic_to_bedrock</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"content"</span><span class="p">]),</span>
+                        <span class="s2">"content"</span><span class="p">:</span> <span class="n">_lc_content_to_bedrock</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"content"</span><span class="p">]),</span>
                         <span class="s2">"status"</span><span class="p">:</span> <span class="s2">"error"</span> <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"isError"</span><span class="p">)</span> <span class="k">else</span> <span class="s2">"success"</span><span class="p">,</span>
                     <span class="p">}</span>
                 <span class="p">}</span>
@@ -1100,16 +1135,16 @@
     <span class="k">return</span> <span class="p">[</span><span class="n">block</span> <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">bedrock_content</span> <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"text"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)]</span>
 
 
-<span class="k">def</span> <span class="nf">_bedrock_to_anthropic</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-    <span class="n">anthropic_content</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">def</span> <span class="nf">_bedrock_to_lc</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+    <span class="n">lc_content</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">_camel_to_snake_keys</span><span class="p">(</span><span class="n">content</span><span class="p">):</span>
         <span class="k">if</span> <span class="s2">"text"</span> <span class="ow">in</span> <span class="n">block</span><span class="p">:</span>
-            <span class="n">anthropic_content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"text"</span><span class="p">]})</span>
+            <span class="n">lc_content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"text"</span><span class="p">]})</span>
         <span class="k">elif</span> <span class="s2">"tool_use"</span> <span class="ow">in</span> <span class="n">block</span><span class="p">:</span>
             <span class="n">block</span><span class="p">[</span><span class="s2">"tool_use"</span><span class="p">][</span><span class="s2">"id"</span><span class="p">]</span> <span class="o">=</span> <span class="n">block</span><span class="p">[</span><span class="s2">"tool_use"</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"tool_use_id"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="n">anthropic_content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"tool_use"</span><span class="p">,</span> <span class="o">**</span><span class="n">block</span><span class="p">[</span><span class="s2">"tool_use"</span><span class="p">]})</span>
+            <span class="n">lc_content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"tool_use"</span><span class="p">,</span> <span class="o">**</span><span class="n">block</span><span class="p">[</span><span class="s2">"tool_use"</span><span class="p">]})</span>
         <span class="k">elif</span> <span class="s2">"image"</span> <span class="ow">in</span> <span class="n">block</span><span class="p">:</span>
-            <span class="n">anthropic_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">lc_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"image"</span><span class="p">,</span>
                     <span class="s2">"source"</span><span class="p">:</span> <span class="p">{</span>
@@ -1119,20 +1154,48 @@
                     <span class="p">},</span>
                 <span class="p">}</span>
             <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"video"</span> <span class="ow">in</span> <span class="n">block</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"bytes"</span> <span class="ow">in</span> <span class="n">block</span><span class="p">[</span><span class="s2">"video"</span><span class="p">][</span><span class="s2">"source"</span><span class="p">]:</span>
+                <span class="n">lc_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"video"</span><span class="p">,</span>
+                        <span class="s2">"source"</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">"media_type"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"video/</span><span class="si">{</span><span class="n">block</span><span class="p">[</span><span class="s1">'video'</span><span class="p">][</span><span class="s1">'format'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"base64"</span><span class="p">,</span>
+                            <span class="s2">"data"</span><span class="p">:</span> <span class="n">_bytes_to_b64_str</span><span class="p">(</span>
+                                <span class="n">block</span><span class="p">[</span><span class="s2">"video"</span><span class="p">][</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"bytes"</span><span class="p">]</span>
+                            <span class="p">),</span>
+                        <span class="p">},</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="s2">"s3location"</span> <span class="ow">in</span> <span class="n">block</span><span class="p">[</span><span class="s2">"video"</span><span class="p">][</span><span class="s2">"source"</span><span class="p">]:</span>
+                <span class="n">lc_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"video"</span><span class="p">,</span>
+                        <span class="s2">"source"</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">"media_type"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"video/</span><span class="si">{</span><span class="n">block</span><span class="p">[</span><span class="s1">'video'</span><span class="p">][</span><span class="s1">'format'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"s3Location"</span><span class="p">,</span>
+                            <span class="s2">"data"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"video"</span><span class="p">][</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"s3location"</span><span class="p">],</span>
+                        <span class="p">},</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"document"</span> <span class="ow">in</span> <span class="n">block</span><span class="p">:</span>
+            <span class="c1"># Request syntax assumes bedrock format; returning in same bedrock format</span>
+            <span class="n">lc_content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"document"</span><span class="p">,</span> <span class="o">**</span><span class="n">block</span><span class="p">})</span>
         <span class="k">elif</span> <span class="s2">"tool_result"</span> <span class="ow">in</span> <span class="n">block</span><span class="p">:</span>
-            <span class="n">anthropic_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">lc_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"tool_result"</span><span class="p">,</span>
                     <span class="s2">"tool_use_id"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"tool_result"</span><span class="p">][</span><span class="s2">"tool_use_id"</span><span class="p">],</span>
                     <span class="s2">"is_error"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"tool_result"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"status"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"error"</span><span class="p">,</span>
-                    <span class="s2">"content"</span><span class="p">:</span> <span class="n">_bedrock_to_anthropic</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"tool_result"</span><span class="p">][</span><span class="s2">"content"</span><span class="p">]),</span>
+                    <span class="s2">"content"</span><span class="p">:</span> <span class="n">_bedrock_to_lc</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"tool_result"</span><span class="p">][</span><span class="s2">"content"</span><span class="p">]),</span>
                 <span class="p">}</span>
             <span class="p">)</span>
         <span class="c1"># Only occurs in content blocks of a tool_result:</span>
         <span class="k">elif</span> <span class="s2">"json"</span> <span class="ow">in</span> <span class="n">block</span><span class="p">:</span>
-            <span class="n">anthropic_content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"json"</span><span class="p">,</span> <span class="o">**</span><span class="n">block</span><span class="p">})</span>
+            <span class="n">lc_content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"json"</span><span class="p">,</span> <span class="o">**</span><span class="n">block</span><span class="p">})</span>
         <span class="k">elif</span> <span class="s2">"guard_content"</span> <span class="ow">in</span> <span class="n">block</span><span class="p">:</span>
-            <span class="n">anthropic_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">lc_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"guard_content"</span><span class="p">,</span>
                     <span class="s2">"guard_content"</span><span class="p">:</span> <span class="p">{</span>
@@ -1147,7 +1210,7 @@
                 <span class="s2">"'text', 'tool_use', 'image', or 'tool_result' keys. Received:</span><span class="se">\n\n</span><span class="s2">"</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">block</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
-    <span class="k">return</span> <span class="n">anthropic_content</span>
+    <span class="k">return</span> <span class="n">lc_content</span>
 
 
 <span class="k">def</span> <span class="nf">_format_tools</span><span class="p">(</span>
@@ -1247,11 +1310,11 @@
 
 
 <span class="k">def</span> <span class="nf">_str_if_single_text_block</span><span class="p">(</span>
-    <span class="n">anthropic_content</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+    <span class="n">content</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">anthropic_content</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">anthropic_content</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"text"</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">anthropic_content</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"text"</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">anthropic_content</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"text"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"text"</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">content</span>
 
 
 <span class="k">def</span> <span class="nf">_upsert_tool_calls_to_bedrock_content</span><span class="p">(</span>
@@ -1293,8 +1356,28 @@
     <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">regex</span><span class="p">,</span> <span class="n">image_url</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">"Bedrock does not currently support OpenAI-format image URLs, only "</span>
+            <span class="s2">"The image URL provided is not supported. Expected image URL format is "</span>
             <span class="s2">"base64-encoded images. Example: data:image/png;base64,'/9j/4AAQSk'..."</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"media_type"</span><span class="p">),</span>
+        <span class="s2">"source"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"bytes"</span><span class="p">:</span> <span class="n">_b64str_to_bytes</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"data"</span><span class="p">))},</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">_format_openai_video_url</span><span class="p">(</span><span class="n">video_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Formats a video of format data:video/mp4;base64,{b64_string}</span>
+<span class="sd">    to a dict for bedrock api.</span>
+
+<span class="sd">    And throws an error if url is not a b64 video.</span>
+<span class="sd">    """</span>
+    <span class="n">regex</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"^data:video/(?P&lt;media_type&gt;.+);base64,(?P&lt;data&gt;.+)$"</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">regex</span><span class="p">,</span> <span class="n">video_url</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"The video URL provided is not supported. Expected video URL format is "</span>
+            <span class="s2">"base64-encoded video. Example: data:video/mp4;base64,'/9j/4AAQSk'..."</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"format"</span><span class="p">:</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"media_type"</span><span class="p">),</span>

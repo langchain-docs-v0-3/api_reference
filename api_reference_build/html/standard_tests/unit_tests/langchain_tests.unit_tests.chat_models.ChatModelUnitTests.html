@@ -46,7 +46,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 03, 2024" name="docbuild:last-update"/>
+<meta content="Dec 04, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -299,44 +299,107 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="langchain_tests.unit_tests.chat_models.ChatModelUnitTests">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">langchain_tests.unit_tests.chat_models.</span></span><span class="sig-name descname"><span class="pre">ChatModelUnitTests</span></span><a class="reference internal" href="../../_modules/langchain_tests/unit_tests/chat_models.html#ChatModelUnitTests"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests" title="Link to this definition">#</a></dt>
-<dd><p class="rubric">Attributes</p>
+<dd><p>Base class for chat model unit tests.</p>
+<p>Test subclasses must implement the following two properties:</p>
+<dl>
+<dt>chat_model_class</dt><dd><p>The chat model class to test, e.g., <code class="docutils literal notranslate"><span class="pre">ChatParrotLink</span></code>.</p>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@property</span>
+<span class="k">def</span> <span class="nf">chat_model_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">ChatParrotLink</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">ChatParrotLink</span>
+</pre></div>
+</div>
+</dd>
+<dt>chat_model_params</dt><dd><p>Initialization parameters for the chat model.</p>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@property</span>
+<span class="k">def</span> <span class="nf">chat_model_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"model"</span><span class="p">:</span> <span class="s2">"bird-brain-001"</span><span class="p">,</span> <span class="s2">"temperature"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>API references for individual test methods include troubleshooting tips.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Test subclasses can control what features are tested (such as tool
+calling or multi-modality) by selectively overriding the properties on the
+class. Relevant properties are mentioned in the references for each method.
+See this page for detail on all properties:
+<a class="reference external" href="https://python.langchain.com/api_reference/standard_tests/unit_tests/langchain_tests.unit_tests.chat_models.ChatModelTests.html">https://python.langchain.com/api_reference/standard_tests/unit_tests/langchain_tests.unit_tests.chat_models.ChatModelTests.html</a></p>
+</div>
+<dl>
+<dt>Testing initialization from environment variables</dt><dd><p>Some unit tests may require testing initialization from environment variables.
+These tests can be enabled by overriding the <code class="docutils literal notranslate"><span class="pre">init_from_env_params</span></code>
+property (see below):</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">init_from_env_params</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">This property is used in unit tests to test initialization from
+environment variables. It should return a tuple of three dictionaries
+that specify the environment variables, additional initialization args,
+and expected instance attributes to check.</p>
+<p class="sd-card-text">Defaults to empty dicts. If not overridden, the test is skipped.</p>
+<p class="sd-card-text">Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@property</span>
+<span class="k">def</span> <span class="nf">init_from_env_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"MY_API_KEY"</span><span class="p">:</span> <span class="s2">"api_key"</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">"model"</span><span class="p">:</span> <span class="s2">"bird-brain-001"</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">"my_api_key"</span><span class="p">:</span> <span class="s2">"api_key"</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</details></dd>
+</dl>
+<p class="rubric">Attributes</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">chat_model_class</span></code></p></td>
-<td><p></p></td>
+<td><p>The chat model class to test, e.g., <cite>ChatParrotLink</cite>.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">chat_model_params</span></code></p></td>
-<td><p></p></td>
+<td><p>Initialization parameters for the chat mobdel.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_structured_output</span></code></p></td>
-<td><p></p></td>
+<td><p>Boolean property indicating whether the chat model supports structured output.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_tool_calling</span></code></p></td>
-<td><p></p></td>
+<td><p>Boolean property indicating whether the model supports tool calling.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_from_env_params</span></code></p></td>
-<td><p>Return env vars, init args, and expected instance attrs for initializing from env vars.</p></td>
+<td><p>This property is used in unit tests to test initialization from environment variables.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">returns_usage_metadata</span></code></p></td>
-<td><p></p></td>
+<td><p>Boolean property indicating whether the chat model returns usage metadata on invoke and streaming responses.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">standard_chat_model_params</span></code></p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_usage_metadata_details</span></code></p></td>
-<td><p></p></td>
+<td><p>Property controlling what usage metadata details are emitted in both invoke and stream.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_anthropic_inputs</span></code></p></td>
-<td><p></p></td>
+<td><p>Boolean property indicating whether the chat model supports Anthropic-style inputs.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_image_inputs</span></code></p></td>
-<td><p></p></td>
+<td><p>Boolean property indicating whether the chat model supports image inputs.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_image_tool_message</span></code></p></td>
-<td><p></p></td>
+<td><p>Boolean property indicating whether the chat model supports ToolMessages that include image content.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_video_inputs</span></code></p></td>
-<td><p></p></td>
+<td><p>Boolean property indicating whether the chat model supports image inputs.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">tool_choice_value</span></code></p></td>
 <td><p>Value to use for tool choice when used in tests.</p></td>
@@ -351,31 +414,31 @@
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.model" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model</span></code></a>()</p></td>
-<td><p></p></td>
+<td><p>Fixture that returns an instance of the chat model.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_bind_tool_pydantic" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_bind_tool_pydantic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_bind_tool_pydantic</span></code></a>(model)</p></td>
-<td><p></p></td>
+<td><p>Test that chat model correctly handles Pydantic models that are passed into <code class="docutils literal notranslate"><span class="pre">bind_tools</span></code>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_init</span></code></a>()</p></td>
-<td><p></p></td>
+<td><p>Test model initialization.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_from_env" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_from_env"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_init_from_env</span></code></a>()</p></td>
-<td><p></p></td>
+<td><p>Test initialization from environment variables.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_streaming" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_streaming"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_init_streaming</span></code></a>()</p></td>
-<td><p></p></td>
+<td><p>Test that model can be initialized with <code class="docutils literal notranslate"><span class="pre">streaming=True</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_no_overrides_DO_NOT_OVERRIDE" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_no_overrides_DO_NOT_OVERRIDE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_no_overrides_DO_NOT_OVERRIDE</span></code></a>()</p></td>
 <td><p>Test that no standard tests are overridden.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_serdes" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_serdes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_serdes</span></code></a>(model, snapshot)</p></td>
-<td><p></p></td>
+<td><p>Test serialization and deserialization of the model.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_standard_params" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_standard_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_standard_params</span></code></a>(model)</p></td>
-<td><p></p></td>
+<td><p>Test that model properly generates standard parameters.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_with_structured_output" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_with_structured_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_with_structured_output</span></code></a>(model, schema)</p></td>
-<td><p></p></td>
+<td><p>Test <code class="docutils literal notranslate"><span class="pre">with_structured_output</span></code> method.</p></td>
 </tr>
 </tbody>
 </table>
@@ -387,7 +450,9 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.model">
 <span class="sig-name descname"><span class="pre">model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="../../core/language_models/langchain_core.language_models.chat_models.BaseChatModel.html#langchain_core.language_models.chat_models.BaseChatModel" title="langchain_core.language_models.chat_models.BaseChatModel"><span class="pre">BaseChatModel</span></a></span></span><a class="headerlink" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.model" title="Link to this definition">#</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Fixture that returns an instance of the chat model. Should not be
+overridden.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="../../core/language_models/langchain_core.language_models.chat_models.BaseChatModel.html#langchain_core.language_models.chat_models.BaseChatModel" title="langchain_core.language_models.chat_models.BaseChatModel"><em>BaseChatModel</em></a></p>
 </dd>
@@ -396,7 +461,18 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_bind_tool_pydantic">
 <span class="sig-name descname"><span class="pre">test_bind_tool_pydantic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../core/language_models/langchain_core.language_models.chat_models.BaseChatModel.html#langchain_core.language_models.chat_models.BaseChatModel" title="langchain_core.language_models.chat_models.BaseChatModel"><span class="pre">BaseChatModel</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_tests/unit_tests/chat_models.html#ChatModelUnitTests.test_bind_tool_pydantic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_bind_tool_pydantic" title="Link to this definition">#</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Test that chat model correctly handles Pydantic models that are passed
+into <code class="docutils literal notranslate"><span class="pre">bind_tools</span></code>. Test is skipped if the <code class="docutils literal notranslate"><span class="pre">has_tool_calling</span></code> property
+on the test class is False.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Troubleshooting</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">If this test fails, ensure that the model’s <code class="docutils literal notranslate"><span class="pre">bind_tools</span></code> method
+properly handles Pydantic V2 models. <code class="docutils literal notranslate"><span class="pre">langchain_core</span></code> implements
+a utility function that will accommodate most formats: <a class="reference external" href="https://python.langchain.com/api_reference/core/utils/langchain_core.utils.function_calling.convert_to_openai_tool.html">https://python.langchain.com/api_reference/core/utils/langchain_core.utils.function_calling.convert_to_openai_tool.html</a></p>
+<p class="sd-card-text">See example implementation of <code class="docutils literal notranslate"><span class="pre">bind_tools</span></code> here: <a class="reference external" href="https://python.langchain.com/api_reference/_modules/langchain_openai/chat_models/base.html#BaseChatOpenAI.bind_tools">https://python.langchain.com/api_reference/_modules/langchain_openai/chat_models/base.html#BaseChatOpenAI.bind_tools</a></p>
+</div>
+</details><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="../../core/language_models/langchain_core.language_models.chat_models.BaseChatModel.html#langchain_core.language_models.chat_models.BaseChatModel" title="langchain_core.language_models.chat_models.BaseChatModel"><em>BaseChatModel</em></a>)</p>
 </dd>
@@ -408,7 +484,17 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init">
 <span class="sig-name descname"><span class="pre">test_init</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_tests/unit_tests/chat_models.html#ChatModelUnitTests.test_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init" title="Link to this definition">#</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Test model initialization. This should pass for all integrations.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Troubleshooting</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">If this test fails, ensure that:</p>
+<ol class="arabic simple">
+<li><p class="sd-card-text"><code class="docutils literal notranslate"><span class="pre">chat_model_params</span></code> is specified and the model can be initialized from those params;</p></li>
+<li><p class="sd-card-text">The model accommodates standard parameters: <a class="reference external" href="https://python.langchain.com/docs/concepts/chat_models/#standard-parameters">https://python.langchain.com/docs/concepts/chat_models/#standard-parameters</a></p></li>
+</ol>
+</div>
+</details><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
@@ -417,7 +503,16 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_from_env">
 <span class="sig-name descname"><span class="pre">test_init_from_env</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_tests/unit_tests/chat_models.html#ChatModelUnitTests.test_init_from_env"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_from_env" title="Link to this definition">#</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Test initialization from environment variables. Relies on the
+<code class="docutils literal notranslate"><span class="pre">init_from_env_params</span></code> property. Test is skipped if that property is not
+set.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Troubleshooting</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">If this test fails, ensure that <code class="docutils literal notranslate"><span class="pre">init_from_env_params</span></code> is specified
+correctly.</p>
+</div>
+</details><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
@@ -426,7 +521,15 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_streaming">
 <span class="sig-name descname"><span class="pre">test_init_streaming</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_tests/unit_tests/chat_models.html#ChatModelUnitTests.test_init_streaming"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_streaming" title="Link to this definition">#</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Test that model can be initialized with <code class="docutils literal notranslate"><span class="pre">streaming=True</span></code>. This is for
+backward-compatibility purposes.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Troubleshooting</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">If this test fails, ensure that the model can be initialized with a
+boolean <code class="docutils literal notranslate"><span class="pre">streaming</span></code> parameter.</p>
+</div>
+</details><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
@@ -445,7 +548,16 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_serdes">
 <span class="sig-name descname"><span class="pre">test_serdes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../core/language_models/langchain_core.language_models.chat_models.BaseChatModel.html#langchain_core.language_models.chat_models.BaseChatModel" title="langchain_core.language_models.chat_models.BaseChatModel"><span class="pre">BaseChatModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">snapshot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SnapshotAssertion</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_tests/unit_tests/chat_models.html#ChatModelUnitTests.test_serdes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_serdes" title="Link to this definition">#</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Test serialization and deserialization of the model. Test is skipped if the
+<code class="docutils literal notranslate"><span class="pre">is_lc_serializable</span></code> property on the chat model class is not overwritten
+to return <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Troubleshooting</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">If this test fails, check that the <code class="docutils literal notranslate"><span class="pre">init_from_env_params</span></code> property is
+correctly set on the test class.</p>
+</div>
+</details><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="../../core/language_models/langchain_core.language_models.chat_models.BaseChatModel.html#langchain_core.language_models.chat_models.BaseChatModel" title="langchain_core.language_models.chat_models.BaseChatModel"><em>BaseChatModel</em></a>)</p></li>
@@ -460,7 +572,17 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_standard_params">
 <span class="sig-name descname"><span class="pre">test_standard_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../core/language_models/langchain_core.language_models.chat_models.BaseChatModel.html#langchain_core.language_models.chat_models.BaseChatModel" title="langchain_core.language_models.chat_models.BaseChatModel"><span class="pre">BaseChatModel</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_tests/unit_tests/chat_models.html#ChatModelUnitTests.test_standard_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_standard_params" title="Link to this definition">#</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Test that model properly generates standard parameters. These are used
+for tracing purposes.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Troubleshooting</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">If this test fails, check that the model accommodates standard parameters:
+<a class="reference external" href="https://python.langchain.com/docs/concepts/chat_models/#standard-parameters">https://python.langchain.com/docs/concepts/chat_models/#standard-parameters</a></p>
+<p class="sd-card-text">Check also that the model class is named according to convention
+(e.g., <code class="docutils literal notranslate"><span class="pre">ChatProviderName</span></code>).</p>
+</div>
+</details><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="../../core/language_models/langchain_core.language_models.chat_models.BaseChatModel.html#langchain_core.language_models.chat_models.BaseChatModel" title="langchain_core.language_models.chat_models.BaseChatModel"><em>BaseChatModel</em></a>)</p>
 </dd>
@@ -472,7 +594,17 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_with_structured_output">
 <span class="sig-name descname"><span class="pre">test_with_structured_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../core/language_models/langchain_core.language_models.chat_models.BaseChatModel.html#langchain_core.language_models.chat_models.BaseChatModel" title="langchain_core.language_models.chat_models.BaseChatModel"><span class="pre">BaseChatModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_tests/unit_tests/chat_models.html#ChatModelUnitTests.test_with_structured_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_with_structured_output" title="Link to this definition">#</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Test <code class="docutils literal notranslate"><span class="pre">with_structured_output</span></code> method. Test is skipped if the
+<code class="docutils literal notranslate"><span class="pre">has_structured_output</span></code> property on the test class is False.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Troubleshooting</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">If this test fails, ensure that the model’s <code class="docutils literal notranslate"><span class="pre">bind_tools</span></code> method
+properly handles Pydantic V2 models. <code class="docutils literal notranslate"><span class="pre">langchain_core</span></code> implements
+a utility function that will accommodate most formats: <a class="reference external" href="https://python.langchain.com/api_reference/core/utils/langchain_core.utils.function_calling.convert_to_openai_tool.html">https://python.langchain.com/api_reference/core/utils/langchain_core.utils.function_calling.convert_to_openai_tool.html</a></p>
+<p class="sd-card-text">See example implementation of <code class="docutils literal notranslate"><span class="pre">with_structured_output</span></code> here: <a class="reference external" href="https://python.langchain.com/api_reference/_modules/langchain_openai/chat_models/base.html#BaseChatOpenAI.with_structured_output">https://python.langchain.com/api_reference/_modules/langchain_openai/chat_models/base.html#BaseChatOpenAI.with_structured_output</a></p>
+</div>
+</details><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="../../core/language_models/langchain_core.language_models.chat_models.BaseChatModel.html#langchain_core.language_models.chat_models.BaseChatModel" title="langchain_core.language_models.chat_models.BaseChatModel"><em>BaseChatModel</em></a>)</p></li>
