@@ -26,7 +26,7 @@
 <link href="../../../_static/autodoc_pydantic.css" rel="stylesheet" type="text/css"/>
 <link href="../../../_static/copybutton.css?v=76b2166b" rel="stylesheet" type="text/css"/>
 <link href="../../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../../_static/css/custom.css?v=b95e2228" rel="stylesheet" type="text/css"/>
+<link href="../../../_static/css/custom.css?v=540515bc" rel="stylesheet" type="text/css"/>
 <!-- So that users can add custom icons -->
 <script src="../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
 <!-- Pre-loaded scripts that we'll load fully later -->
@@ -220,9 +220,49 @@
 <div class="viewcode-block" id="EmbeddingsIntegrationTests">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.embeddings.EmbeddingsIntegrationTests.html#langchain_tests.integration_tests.embeddings.EmbeddingsIntegrationTests">[docs]</a>
 <span class="k">class</span> <span class="nc">EmbeddingsIntegrationTests</span><span class="p">(</span><span class="n">EmbeddingsTests</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Base class for embeddings integration tests.</span>
+
+<span class="sd">    Test subclasses must implement the ``embeddings_class`` property to specify the</span>
+<span class="sd">    embeddings model to be tested. You can also override the</span>
+<span class="sd">    ``embedding_model_params`` property to specify initialization parameters.</span>
+
+<span class="sd">    Example:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        from typing import Type</span>
+
+<span class="sd">        from langchain_tests.integration_tests import EmbeddingsIntegrationTests</span>
+<span class="sd">        from my_package.embeddings import MyEmbeddingsModel</span>
+
+
+<span class="sd">        class TestMyEmbeddingsModelIntegration(EmbeddingsIntegrationTests):</span>
+<span class="sd">            @property</span>
+<span class="sd">            def embeddings_class(self) -&gt; Type[MyEmbeddingsModel]:</span>
+<span class="sd">                # Return the embeddings model class to test here</span>
+<span class="sd">                return MyEmbeddingsModel</span>
+
+<span class="sd">            @property</span>
+<span class="sd">            def embedding_model_params(self) -&gt; dict:</span>
+<span class="sd">                # Return initialization parameters for the model.</span>
+<span class="sd">                return {"model": "model-001"}</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">          API references for individual test methods include troubleshooting tips.</span>
+<span class="sd">    """</span>
+
 <div class="viewcode-block" id="EmbeddingsIntegrationTests.test_embed_query">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.embeddings.EmbeddingsIntegrationTests.html#langchain_tests.integration_tests.embeddings.EmbeddingsIntegrationTests.test_embed_query">[docs]</a>
     <span class="k">def</span> <span class="nf">test_embed_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Embeddings</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Test embedding a string query.</span>
+
+<span class="sd">        .. dropdown:: Troubleshooting</span>
+
+<span class="sd">            If this test fails, check that:</span>
+
+<span class="sd">            1. The model will generate a list of floats when calling ``.embed_query`` on a string.</span>
+<span class="sd">            2. The length of the list is consistent across different inputs.</span>
+<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
         <span class="n">embedding_1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="s2">"foo"</span><span class="p">)</span>
 
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">embedding_1</span><span class="p">,</span> <span class="n">List</span><span class="p">)</span>
@@ -237,6 +277,15 @@
 <div class="viewcode-block" id="EmbeddingsIntegrationTests.test_embed_documents">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.embeddings.EmbeddingsIntegrationTests.html#langchain_tests.integration_tests.embeddings.EmbeddingsIntegrationTests.test_embed_documents">[docs]</a>
     <span class="k">def</span> <span class="nf">test_embed_documents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Embeddings</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Test embedding a list of strings.</span>
+
+<span class="sd">        .. dropdown:: Troubleshooting</span>
+
+<span class="sd">            If this test fails, check that:</span>
+
+<span class="sd">            1. The model will generate a list of lists of floats when calling ``.embed_documents`` on a list of strings.</span>
+<span class="sd">            2. The length of each list is the same.</span>
+<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"foo"</span><span class="p">,</span> <span class="s2">"bar"</span><span class="p">,</span> <span class="s2">"baz"</span><span class="p">]</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">embed_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
 
@@ -250,6 +299,15 @@
 <div class="viewcode-block" id="EmbeddingsIntegrationTests.test_aembed_query">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.embeddings.EmbeddingsIntegrationTests.html#langchain_tests.integration_tests.embeddings.EmbeddingsIntegrationTests.test_aembed_query">[docs]</a>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">test_aembed_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Embeddings</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Test embedding a string query async.</span>
+
+<span class="sd">        .. dropdown:: Troubleshooting</span>
+
+<span class="sd">            If this test fails, check that:</span>
+
+<span class="sd">            1. The model will generate a list of floats when calling ``.aembed_query`` on a string.</span>
+<span class="sd">            2. The length of the list is consistent across different inputs.</span>
+<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
         <span class="n">embedding_1</span> <span class="o">=</span> <span class="k">await</span> <span class="n">model</span><span class="o">.</span><span class="n">aembed_query</span><span class="p">(</span><span class="s2">"foo"</span><span class="p">)</span>
 
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">embedding_1</span><span class="p">,</span> <span class="n">List</span><span class="p">)</span>
@@ -264,6 +322,15 @@
 <div class="viewcode-block" id="EmbeddingsIntegrationTests.test_aembed_documents">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.embeddings.EmbeddingsIntegrationTests.html#langchain_tests.integration_tests.embeddings.EmbeddingsIntegrationTests.test_aembed_documents">[docs]</a>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">test_aembed_documents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Embeddings</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Test embedding a list of strings async.</span>
+
+<span class="sd">        .. dropdown:: Troubleshooting</span>
+
+<span class="sd">            If this test fails, check that:</span>
+
+<span class="sd">            1. The model will generate a list of lists of floats when calling ``.aembed_documents`` on a list of strings.</span>
+<span class="sd">            2. The length of each list is the same.</span>
+<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"foo"</span><span class="p">,</span> <span class="s2">"bar"</span><span class="p">,</span> <span class="s2">"baz"</span><span class="p">]</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="k">await</span> <span class="n">model</span><span class="o">.</span><span class="n">aembed_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
 

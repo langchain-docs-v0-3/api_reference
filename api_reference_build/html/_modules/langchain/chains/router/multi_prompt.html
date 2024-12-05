@@ -26,7 +26,7 @@
 <link href="../../../../_static/autodoc_pydantic.css" rel="stylesheet" type="text/css"/>
 <link href="../../../../_static/copybutton.css?v=76b2166b" rel="stylesheet" type="text/css"/>
 <link href="../../../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../../../_static/css/custom.css?v=b95e2228" rel="stylesheet" type="text/css"/>
+<link href="../../../../_static/css/custom.css?v=540515bc" rel="stylesheet" type="text/css"/>
 <!-- So that users can add custom icons -->
 <script src="../../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
 <!-- Pre-loaded scripts that we'll load fully later -->
@@ -234,9 +234,8 @@
     <span class="n">since</span><span class="o">=</span><span class="s2">"0.2.12"</span><span class="p">,</span>
     <span class="n">removal</span><span class="o">=</span><span class="s2">"1.0"</span><span class="p">,</span>
     <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-        <span class="s2">"Use RunnableLambda to select from multiple prompt templates. See example "</span>
-        <span class="s2">"in API reference: "</span>
-        <span class="s2">"https://api.python.langchain.com/en/latest/chains/langchain.chains.router.multi_prompt.MultiPromptChain.html"</span>  <span class="c1"># noqa: E501</span>
+        <span class="s2">"Please see migration guide here for recommended implementation: "</span>
+        <span class="s2">"https://python.langchain.com/docs/versions/migrating_chains/multi_prompt_chain/"</span>  <span class="c1"># noqa: E501</span>
     <span class="p">),</span>
 <span class="p">)</span>
 <span class="k">class</span> <span class="nc">MultiPromptChain</span><span class="p">(</span><span class="n">MultiRouteChain</span><span class="p">):</span>
@@ -251,60 +250,109 @@
 
 <span class="sd">            from operator import itemgetter</span>
 <span class="sd">            from typing import Literal</span>
-<span class="sd">            from typing_extensions import TypedDict</span>
 
 <span class="sd">            from langchain_core.output_parsers import StrOutputParser</span>
 <span class="sd">            from langchain_core.prompts import ChatPromptTemplate</span>
-<span class="sd">            from langchain_core.runnables import RunnableLambda, RunnablePassthrough</span>
+<span class="sd">            from langchain_core.runnables import RunnableConfig</span>
 <span class="sd">            from langchain_openai import ChatOpenAI</span>
+<span class="sd">            from langgraph.graph import END, START, StateGraph</span>
+<span class="sd">            from typing_extensions import TypedDict</span>
 
 <span class="sd">            llm = ChatOpenAI(model="gpt-4o-mini")</span>
 
+<span class="sd">            # Define the prompts we will route to</span>
 <span class="sd">            prompt_1 = ChatPromptTemplate.from_messages(</span>
 <span class="sd">                [</span>
 <span class="sd">                    ("system", "You are an expert on animals."),</span>
-<span class="sd">                    ("human", "{query}"),</span>
+<span class="sd">                    ("human", "{input}"),</span>
 <span class="sd">                ]</span>
 <span class="sd">            )</span>
 <span class="sd">            prompt_2 = ChatPromptTemplate.from_messages(</span>
 <span class="sd">                [</span>
 <span class="sd">                    ("system", "You are an expert on vegetables."),</span>
-<span class="sd">                    ("human", "{query}"),</span>
+<span class="sd">                    ("human", "{input}"),</span>
 <span class="sd">                ]</span>
 <span class="sd">            )</span>
 
+<span class="sd">            # Construct the chains we will route to. These format the input query</span>
+<span class="sd">            # into the respective prompt, run it through a chat model, and cast</span>
+<span class="sd">            # the result to a string.</span>
 <span class="sd">            chain_1 = prompt_1 | llm | StrOutputParser()</span>
 <span class="sd">            chain_2 = prompt_2 | llm | StrOutputParser()</span>
 
+
+<span class="sd">            # Next: define the chain that selects which branch to route to.</span>
+<span class="sd">            # Here we will take advantage of tool-calling features to force</span>
+<span class="sd">            # the output to select one of two desired branches.</span>
 <span class="sd">            route_system = "Route the user's query to either the animal or vegetable expert."</span>
 <span class="sd">            route_prompt = ChatPromptTemplate.from_messages(</span>
 <span class="sd">                [</span>
 <span class="sd">                    ("system", route_system),</span>
-<span class="sd">                    ("human", "{query}"),</span>
+<span class="sd">                    ("human", "{input}"),</span>
 <span class="sd">                ]</span>
 <span class="sd">            )</span>
 
 
+<span class="sd">            # Define schema for output:</span>
 <span class="sd">            class RouteQuery(TypedDict):</span>
-<span class="sd">                \"\"\"Route query to destination.\"\"\"</span>
+<span class="sd">                \"\"\"Route query to destination expert.\"\"\"</span>
+
 <span class="sd">                destination: Literal["animal", "vegetable"]</span>
 
 
-<span class="sd">            route_chain = (</span>
-<span class="sd">                route_prompt</span>
-<span class="sd">                | llm.with_structured_output(RouteQuery)</span>
-<span class="sd">                | itemgetter("destination")</span>
-<span class="sd">            )</span>
+<span class="sd">            route_chain = route_prompt | llm.with_structured_output(RouteQuery)</span>
 
-<span class="sd">            chain = {</span>
-<span class="sd">                "destination": route_chain,  # "animal" or "vegetable"</span>
-<span class="sd">                "query": lambda x: x["query"],  # pass through input query</span>
-<span class="sd">            } | RunnableLambda(</span>
-<span class="sd">                # if animal, chain_1. otherwise, chain_2.</span>
-<span class="sd">                lambda x: chain_1 if x["destination"] == "animal" else chain_2,</span>
-<span class="sd">            )</span>
 
-<span class="sd">            chain.invoke({"query": "what color are carrots"})</span>
+<span class="sd">            # For LangGraph, we will define the state of the graph to hold the query,</span>
+<span class="sd">            # destination, and final answer.</span>
+<span class="sd">            class State(TypedDict):</span>
+<span class="sd">                query: str</span>
+<span class="sd">                destination: RouteQuery</span>
+<span class="sd">                answer: str</span>
+
+
+<span class="sd">            # We define functions for each node, including routing the query:</span>
+<span class="sd">            async def route_query(state: State, config: RunnableConfig):</span>
+<span class="sd">                destination = await route_chain.ainvoke(state["query"], config)</span>
+<span class="sd">                return {"destination": destination}</span>
+
+
+<span class="sd">            # And one node for each prompt</span>
+<span class="sd">            async def prompt_1(state: State, config: RunnableConfig):</span>
+<span class="sd">                return {"answer": await chain_1.ainvoke(state["query"], config)}</span>
+
+
+<span class="sd">            async def prompt_2(state: State, config: RunnableConfig):</span>
+<span class="sd">                return {"answer": await chain_2.ainvoke(state["query"], config)}</span>
+
+
+<span class="sd">            # We then define logic that selects the prompt based on the classification</span>
+<span class="sd">            def select_node(state: State) -&gt; Literal["prompt_1", "prompt_2"]:</span>
+<span class="sd">                if state["destination"] == "animal":</span>
+<span class="sd">                    return "prompt_1"</span>
+<span class="sd">                else:</span>
+<span class="sd">                    return "prompt_2"</span>
+
+
+<span class="sd">            # Finally, assemble the multi-prompt chain. This is a sequence of two steps:</span>
+<span class="sd">            # 1) Select "animal" or "vegetable" via the route_chain, and collect the answer</span>
+<span class="sd">            # alongside the input query.</span>
+<span class="sd">            # 2) Route the input query to chain_1 or chain_2, based on the</span>
+<span class="sd">            # selection.</span>
+<span class="sd">            graph = StateGraph(State)</span>
+<span class="sd">            graph.add_node("route_query", route_query)</span>
+<span class="sd">            graph.add_node("prompt_1", prompt_1)</span>
+<span class="sd">            graph.add_node("prompt_2", prompt_2)</span>
+
+<span class="sd">            graph.add_edge(START, "route_query")</span>
+<span class="sd">            graph.add_conditional_edges("route_query", select_node)</span>
+<span class="sd">            graph.add_edge("prompt_1", END)</span>
+<span class="sd">            graph.add_edge("prompt_2", END)</span>
+<span class="sd">            app = graph.compile()</span>
+
+<span class="sd">            result = await app.ainvoke({"query": "what color are carrots"})</span>
+<span class="sd">            print(result["destination"])</span>
+<span class="sd">            print(result["answer"])</span>
 <span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
 
     <span class="nd">@property</span>

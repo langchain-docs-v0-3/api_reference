@@ -26,7 +26,7 @@
 <link href="../../../_static/autodoc_pydantic.css" rel="stylesheet" type="text/css"/>
 <link href="../../../_static/copybutton.css?v=76b2166b" rel="stylesheet" type="text/css"/>
 <link href="../../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../../_static/css/custom.css?v=b95e2228" rel="stylesheet" type="text/css"/>
+<link href="../../../_static/css/custom.css?v=540515bc" rel="stylesheet" type="text/css"/>
 <!-- So that users can add custom icons -->
 <script src="../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
 <!-- Pre-loaded scripts that we'll load fully later -->
@@ -245,22 +245,103 @@
 <div class="viewcode-block" id="EmbeddingsUnitTests">
 <a class="viewcode-back" href="../../../standard_tests/unit_tests/langchain_tests.unit_tests.embeddings.EmbeddingsUnitTests.html#langchain_tests.integration_tests.embeddings.EmbeddingsUnitTests">[docs]</a>
 <span class="k">class</span> <span class="nc">EmbeddingsUnitTests</span><span class="p">(</span><span class="n">EmbeddingsTests</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Base class for embeddings unit tests.</span>
+
+<span class="sd">    Test subclasses must implement the ``embeddings_class`` property to specify the</span>
+<span class="sd">    embeddings model to be tested. You can also override the</span>
+<span class="sd">    ``embedding_model_params`` property to specify initialization parameters.</span>
+
+<span class="sd">    Example:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        from typing import Type</span>
+
+<span class="sd">        from langchain_tests.unit_tests import EmbeddingsUnitTests</span>
+<span class="sd">        from my_package.embeddings import MyEmbeddingsModel</span>
+
+
+<span class="sd">        class TestMyEmbeddingsModelUnit(EmbeddingsUnitTests):</span>
+<span class="sd">            @property</span>
+<span class="sd">            def embeddings_class(self) -&gt; Type[MyEmbeddingsModel]:</span>
+<span class="sd">                # Return the embeddings model class to test here</span>
+<span class="sd">                return MyEmbeddingsModel</span>
+
+<span class="sd">            @property</span>
+<span class="sd">            def embedding_model_params(self) -&gt; dict:</span>
+<span class="sd">                # Return initialization parameters for the model.</span>
+<span class="sd">                return {"model": "model-001"}</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">          API references for individual test methods include troubleshooting tips.</span>
+
+<span class="sd">    Testing initialization from environment variables</span>
+<span class="sd">        Overriding the ``init_from_env_params`` property will enable additional tests</span>
+<span class="sd">        for initialization from environment variables. See below for details.</span>
+
+<span class="sd">        .. dropdown:: init_from_env_params</span>
+
+<span class="sd">            This property is used in unit tests to test initialization from</span>
+<span class="sd">            environment variables. It should return a tuple of three dictionaries</span>
+<span class="sd">            that specify the environment variables, additional initialization args,</span>
+<span class="sd">            and expected instance attributes to check.</span>
+
+<span class="sd">            Defaults to empty dicts. If not overridden, the test is skipped.</span>
+
+<span class="sd">            Example:</span>
+
+<span class="sd">            .. code-block:: python</span>
+
+<span class="sd">                @property</span>
+<span class="sd">                def init_from_env_params(self) -&gt; Tuple[dict, dict, dict]:</span>
+<span class="sd">                    return (</span>
+<span class="sd">                        {</span>
+<span class="sd">                            "MY_API_KEY": "api_key",</span>
+<span class="sd">                        },</span>
+<span class="sd">                        {</span>
+<span class="sd">                            "model": "model-001",</span>
+<span class="sd">                        },</span>
+<span class="sd">                        {</span>
+<span class="sd">                            "my_api_key": "api_key",</span>
+<span class="sd">                        },</span>
+<span class="sd">                    )</span>
+<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+
 <div class="viewcode-block" id="EmbeddingsUnitTests.test_init">
 <a class="viewcode-back" href="../../../standard_tests/unit_tests/langchain_tests.unit_tests.embeddings.EmbeddingsUnitTests.html#langchain_tests.integration_tests.embeddings.EmbeddingsUnitTests.test_init">[docs]</a>
     <span class="k">def</span> <span class="nf">test_init</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Test model initialization.</span>
+
+<span class="sd">        .. dropdown:: Troubleshooting</span>
+
+<span class="sd">            If this test fails, ensure that ``embedding_model_params`` is specified</span>
+<span class="sd">            and the model can be initialized from those params.</span>
+<span class="sd">        """</span>
         <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings_class</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_model_params</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
 
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">init_from_env_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Return env vars, init args, and expected instance attrs for initializing</span>
-<span class="sd">        from env vars."""</span>
+<span class="w">        </span><span class="sd">"""This property is used in unit tests to test initialization from environment</span>
+<span class="sd">        variables. It should return a tuple of three dictionaries that specify the</span>
+<span class="sd">        environment variables, additional initialization args, and expected instance</span>
+<span class="sd">        attributes to check."""</span>
         <span class="k">return</span> <span class="p">{},</span> <span class="p">{},</span> <span class="p">{}</span>
 
 <div class="viewcode-block" id="EmbeddingsUnitTests.test_init_from_env">
 <a class="viewcode-back" href="../../../standard_tests/unit_tests/langchain_tests.unit_tests.embeddings.EmbeddingsUnitTests.html#langchain_tests.integration_tests.embeddings.EmbeddingsUnitTests.test_init_from_env">[docs]</a>
     <span class="k">def</span> <span class="nf">test_init_from_env</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Test initialization from environment variables. Relies on the</span>
+<span class="sd">        ``init_from_env_params`` property. Test is skipped if that property is not</span>
+<span class="sd">        set.</span>
+
+<span class="sd">        .. dropdown:: Troubleshooting</span>
+
+<span class="sd">            If this test fails, ensure that ``init_from_env_params`` is specified</span>
+<span class="sd">            correctly and that model parameters are properly set from environment</span>
+<span class="sd">            variables during initialization.</span>
+<span class="sd">        """</span>
         <span class="n">env_params</span><span class="p">,</span> <span class="n">embeddings_params</span><span class="p">,</span> <span class="n">expected_attrs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_from_env_params</span>
         <span class="k">if</span> <span class="n">env_params</span><span class="p">:</span>
             <span class="k">with</span> <span class="n">mock</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">dict</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">,</span> <span class="n">env_params</span><span class="p">):</span>

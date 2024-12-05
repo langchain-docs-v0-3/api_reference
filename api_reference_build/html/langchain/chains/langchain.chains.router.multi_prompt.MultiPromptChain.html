@@ -26,7 +26,7 @@
 <link href="../../_static/autodoc_pydantic.css" rel="stylesheet" type="text/css"/>
 <link href="../../_static/copybutton.css?v=76b2166b" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../_static/css/custom.css?v=b95e2228" rel="stylesheet" type="text/css"/>
+<link href="../../_static/css/custom.css?v=540515bc" rel="stylesheet" type="text/css"/>
 <!-- So that users can add custom icons -->
 <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
 <!-- Pre-loaded scripts that we'll load fully later -->
@@ -408,7 +408,7 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">langchain.chains.router.multi_prompt.</span></span><span class="sig-name descname"><span class="pre">MultiPromptChain</span></span><a class="reference internal" href="../../_modules/langchain/chains/router/multi_prompt.html#MultiPromptChain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain.chains.router.multi_prompt.MultiPromptChain" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="langchain.chains.router.base.MultiRouteChain.html#langchain.chains.router.base.MultiRouteChain" title="langchain.chains.router.base.MultiRouteChain"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiRouteChain</span></code></a></p>
 <div class="deprecated">
-<p><span class="versionmodified deprecated">Deprecated since version 0.2.12: </span>Use RunnableLambda to select from multiple prompt templates. See example in API reference: <a class="reference external" href="https://api.python.langchain.com/en/latest/chains/langchain.chains.router.multi_prompt.MultiPromptChain.html">https://api.python.langchain.com/en/latest/chains/langchain.chains.router.multi_prompt.MultiPromptChain.html</a></p>
+<p><span class="versionmodified deprecated">Deprecated since version 0.2.12: </span>Please see migration guide here for recommended implementation: <a class="reference external" href="https://python.langchain.com/docs/versions/migrating_chains/multi_prompt_chain/">https://python.langchain.com/docs/versions/migrating_chains/multi_prompt_chain/</a></p>
 </div>
 <p>A multi-route chain that uses an LLM router chain to choose amongst prompts.</p>
 <p>This class is deprecated. See below for a replacement, which offers several
@@ -417,60 +417,109 @@ benefits, including streaming and batch support.</p>
 <blockquote>
 <div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">itemgetter</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">TypedDict</span>
 
 <span class="kn">from</span> <span class="nn">langchain_core.output_parsers</span> <span class="kn">import</span> <span class="n">StrOutputParser</span>
 <span class="kn">from</span> <span class="nn">langchain_core.prompts</span> <span class="kn">import</span> <span class="n">ChatPromptTemplate</span>
-<span class="kn">from</span> <span class="nn">langchain_core.runnables</span> <span class="kn">import</span> <span class="n">RunnableLambda</span><span class="p">,</span> <span class="n">RunnablePassthrough</span>
+<span class="kn">from</span> <span class="nn">langchain_core.runnables</span> <span class="kn">import</span> <span class="n">RunnableConfig</span>
 <span class="kn">from</span> <span class="nn">langchain_openai</span> <span class="kn">import</span> <span class="n">ChatOpenAI</span>
+<span class="kn">from</span> <span class="nn">langgraph.graph</span> <span class="kn">import</span> <span class="n">END</span><span class="p">,</span> <span class="n">START</span><span class="p">,</span> <span class="n">StateGraph</span>
+<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">TypedDict</span>
 
 <span class="n">llm</span> <span class="o">=</span> <span class="n">ChatOpenAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"gpt-4o-mini"</span><span class="p">)</span>
 
+<span class="c1"># Define the prompts we will route to</span>
 <span class="n">prompt_1</span> <span class="o">=</span> <span class="n">ChatPromptTemplate</span><span class="o">.</span><span class="n">from_messages</span><span class="p">(</span>
     <span class="p">[</span>
         <span class="p">(</span><span class="s2">"system"</span><span class="p">,</span> <span class="s2">"You are an expert on animals."</span><span class="p">),</span>
-        <span class="p">(</span><span class="s2">"human"</span><span class="p">,</span> <span class="s2">"</span><span class="si">{query}</span><span class="s2">"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"human"</span><span class="p">,</span> <span class="s2">"</span><span class="si">{input}</span><span class="s2">"</span><span class="p">),</span>
     <span class="p">]</span>
 <span class="p">)</span>
 <span class="n">prompt_2</span> <span class="o">=</span> <span class="n">ChatPromptTemplate</span><span class="o">.</span><span class="n">from_messages</span><span class="p">(</span>
     <span class="p">[</span>
         <span class="p">(</span><span class="s2">"system"</span><span class="p">,</span> <span class="s2">"You are an expert on vegetables."</span><span class="p">),</span>
-        <span class="p">(</span><span class="s2">"human"</span><span class="p">,</span> <span class="s2">"</span><span class="si">{query}</span><span class="s2">"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"human"</span><span class="p">,</span> <span class="s2">"</span><span class="si">{input}</span><span class="s2">"</span><span class="p">),</span>
     <span class="p">]</span>
 <span class="p">)</span>
 
+<span class="c1"># Construct the chains we will route to. These format the input query</span>
+<span class="c1"># into the respective prompt, run it through a chat model, and cast</span>
+<span class="c1"># the result to a string.</span>
 <span class="n">chain_1</span> <span class="o">=</span> <span class="n">prompt_1</span> <span class="o">|</span> <span class="n">llm</span> <span class="o">|</span> <span class="n">StrOutputParser</span><span class="p">()</span>
 <span class="n">chain_2</span> <span class="o">=</span> <span class="n">prompt_2</span> <span class="o">|</span> <span class="n">llm</span> <span class="o">|</span> <span class="n">StrOutputParser</span><span class="p">()</span>
 
+
+<span class="c1"># Next: define the chain that selects which branch to route to.</span>
+<span class="c1"># Here we will take advantage of tool-calling features to force</span>
+<span class="c1"># the output to select one of two desired branches.</span>
 <span class="n">route_system</span> <span class="o">=</span> <span class="s2">"Route the user's query to either the animal or vegetable expert."</span>
 <span class="n">route_prompt</span> <span class="o">=</span> <span class="n">ChatPromptTemplate</span><span class="o">.</span><span class="n">from_messages</span><span class="p">(</span>
     <span class="p">[</span>
         <span class="p">(</span><span class="s2">"system"</span><span class="p">,</span> <span class="n">route_system</span><span class="p">),</span>
-        <span class="p">(</span><span class="s2">"human"</span><span class="p">,</span> <span class="s2">"</span><span class="si">{query}</span><span class="s2">"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"human"</span><span class="p">,</span> <span class="s2">"</span><span class="si">{input}</span><span class="s2">"</span><span class="p">),</span>
     <span class="p">]</span>
 <span class="p">)</span>
 
 
+<span class="c1"># Define schema for output:</span>
 <span class="k">class</span> <span class="nc">RouteQuery</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Route query to destination."""</span>
+<span class="w">    </span><span class="sd">"""Route query to destination expert."""</span>
+
     <span class="n">destination</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"animal"</span><span class="p">,</span> <span class="s2">"vegetable"</span><span class="p">]</span>
 
 
-<span class="n">route_chain</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">route_prompt</span>
-    <span class="o">|</span> <span class="n">llm</span><span class="o">.</span><span class="n">with_structured_output</span><span class="p">(</span><span class="n">RouteQuery</span><span class="p">)</span>
-    <span class="o">|</span> <span class="n">itemgetter</span><span class="p">(</span><span class="s2">"destination"</span><span class="p">)</span>
-<span class="p">)</span>
+<span class="n">route_chain</span> <span class="o">=</span> <span class="n">route_prompt</span> <span class="o">|</span> <span class="n">llm</span><span class="o">.</span><span class="n">with_structured_output</span><span class="p">(</span><span class="n">RouteQuery</span><span class="p">)</span>
 
-<span class="n">chain</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"destination"</span><span class="p">:</span> <span class="n">route_chain</span><span class="p">,</span>  <span class="c1"># "animal" or "vegetable"</span>
-    <span class="s2">"query"</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s2">"query"</span><span class="p">],</span>  <span class="c1"># pass through input query</span>
-<span class="p">}</span> <span class="o">|</span> <span class="n">RunnableLambda</span><span class="p">(</span>
-    <span class="c1"># if animal, chain_1. otherwise, chain_2.</span>
-    <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">chain_1</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="s2">"destination"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"animal"</span> <span class="k">else</span> <span class="n">chain_2</span><span class="p">,</span>
-<span class="p">)</span>
 
-<span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">"query"</span><span class="p">:</span> <span class="s2">"what color are carrots"</span><span class="p">})</span>
+<span class="c1"># For LangGraph, we will define the state of the graph to hold the query,</span>
+<span class="c1"># destination, and final answer.</span>
+<span class="k">class</span> <span class="nc">State</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="n">query</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">destination</span><span class="p">:</span> <span class="n">RouteQuery</span>
+    <span class="n">answer</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="c1"># We define functions for each node, including routing the query:</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">route_query</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">RunnableConfig</span><span class="p">):</span>
+    <span class="n">destination</span> <span class="o">=</span> <span class="k">await</span> <span class="n">route_chain</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">"query"</span><span class="p">],</span> <span class="n">config</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"destination"</span><span class="p">:</span> <span class="n">destination</span><span class="p">}</span>
+
+
+<span class="c1"># And one node for each prompt</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">prompt_1</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">RunnableConfig</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"answer"</span><span class="p">:</span> <span class="k">await</span> <span class="n">chain_1</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">"query"</span><span class="p">],</span> <span class="n">config</span><span class="p">)}</span>
+
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">prompt_2</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">RunnableConfig</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"answer"</span><span class="p">:</span> <span class="k">await</span> <span class="n">chain_2</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">"query"</span><span class="p">],</span> <span class="n">config</span><span class="p">)}</span>
+
+
+<span class="c1"># We then define logic that selects the prompt based on the classification</span>
+<span class="k">def</span> <span class="nf">select_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"prompt_1"</span><span class="p">,</span> <span class="s2">"prompt_2"</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">state</span><span class="p">[</span><span class="s2">"destination"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"animal"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"prompt_1"</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"prompt_2"</span>
+
+
+<span class="c1"># Finally, assemble the multi-prompt chain. This is a sequence of two steps:</span>
+<span class="c1"># 1) Select "animal" or "vegetable" via the route_chain, and collect the answer</span>
+<span class="c1"># alongside the input query.</span>
+<span class="c1"># 2) Route the input query to chain_1 or chain_2, based on the</span>
+<span class="c1"># selection.</span>
+<span class="n">graph</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span><span class="n">State</span><span class="p">)</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"route_query"</span><span class="p">,</span> <span class="n">route_query</span><span class="p">)</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"prompt_1"</span><span class="p">,</span> <span class="n">prompt_1</span><span class="p">)</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"prompt_2"</span><span class="p">,</span> <span class="n">prompt_2</span><span class="p">)</span>
+
+<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span> <span class="s2">"route_query"</span><span class="p">)</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_conditional_edges</span><span class="p">(</span><span class="s2">"route_query"</span><span class="p">,</span> <span class="n">select_node</span><span class="p">)</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"prompt_1"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"prompt_2"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">app</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">({</span><span class="s2">"query"</span><span class="p">:</span> <span class="s2">"what color are carrots"</span><span class="p">})</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">"destination"</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">"answer"</span><span class="p">])</span>
 </pre></div>
 </div>
 </div></blockquote>

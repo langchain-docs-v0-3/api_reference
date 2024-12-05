@@ -26,7 +26,7 @@
 <link href="../../_static/autodoc_pydantic.css" rel="stylesheet" type="text/css"/>
 <link href="../../_static/copybutton.css?v=76b2166b" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../_static/css/custom.css?v=b95e2228" rel="stylesheet" type="text/css"/>
+<link href="../../_static/css/custom.css?v=540515bc" rel="stylesheet" type="text/css"/>
 <!-- So that users can add custom icons -->
 <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
 <!-- Pre-loaded scripts that we'll load fully later -->
@@ -299,7 +299,64 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="langchain_tests.unit_tests.embeddings.EmbeddingsUnitTests">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">langchain_tests.unit_tests.embeddings.</span></span><span class="sig-name descname"><span class="pre">EmbeddingsUnitTests</span></span><a class="reference internal" href="../../_modules/langchain_tests/unit_tests/embeddings.html#EmbeddingsUnitTests"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_tests.unit_tests.embeddings.EmbeddingsUnitTests" title="Link to this definition">#</a></dt>
-<dd><p class="rubric">Attributes</p>
+<dd><p>Base class for embeddings unit tests.</p>
+<p>Test subclasses must implement the <code class="docutils literal notranslate"><span class="pre">embeddings_class</span></code> property to specify the
+embeddings model to be tested. You can also override the
+<code class="docutils literal notranslate"><span class="pre">embedding_model_params</span></code> property to specify initialization parameters.</p>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Type</span>
+
+<span class="kn">from</span> <span class="nn">langchain_tests.unit_tests</span> <span class="kn">import</span> <span class="n">EmbeddingsUnitTests</span>
+<span class="kn">from</span> <span class="nn">my_package.embeddings</span> <span class="kn">import</span> <span class="n">MyEmbeddingsModel</span>
+
+
+<span class="k">class</span> <span class="nc">TestMyEmbeddingsModelUnit</span><span class="p">(</span><span class="n">EmbeddingsUnitTests</span><span class="p">):</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">embeddings_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">MyEmbeddingsModel</span><span class="p">]:</span>
+        <span class="c1"># Return the embeddings model class to test here</span>
+        <span class="k">return</span> <span class="n">MyEmbeddingsModel</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">embedding_model_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="c1"># Return initialization parameters for the model.</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"model"</span><span class="p">:</span> <span class="s2">"model-001"</span><span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>API references for individual test methods include troubleshooting tips.</p>
+</div>
+<dl>
+<dt>Testing initialization from environment variables</dt><dd><p>Overriding the <code class="docutils literal notranslate"><span class="pre">init_from_env_params</span></code> property will enable additional tests
+for initialization from environment variables. See below for details.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">init_from_env_params</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">This property is used in unit tests to test initialization from
+environment variables. It should return a tuple of three dictionaries
+that specify the environment variables, additional initialization args,
+and expected instance attributes to check.</p>
+<p class="sd-card-text">Defaults to empty dicts. If not overridden, the test is skipped.</p>
+<p class="sd-card-text">Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@property</span>
+<span class="k">def</span> <span class="nf">init_from_env_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"MY_API_KEY"</span><span class="p">:</span> <span class="s2">"api_key"</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">"model"</span><span class="p">:</span> <span class="s2">"model-001"</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">"my_api_key"</span><span class="p">:</span> <span class="s2">"api_key"</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</details></dd>
+</dl>
+<p class="rubric">Attributes</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">embedding_model_params</span></code></p></td>
@@ -309,7 +366,7 @@
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_from_env_params</span></code></p></td>
-<td><p>Return env vars, init args, and expected instance attrs for initializing from env vars.</p></td>
+<td><p>This property is used in unit tests to test initialization from environment variables.</p></td>
 </tr>
 </tbody>
 </table>
@@ -324,10 +381,10 @@
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.embeddings.EmbeddingsUnitTests.test_init" title="langchain_tests.unit_tests.embeddings.EmbeddingsUnitTests.test_init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_init</span></code></a>()</p></td>
-<td><p></p></td>
+<td><p>Test model initialization.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.embeddings.EmbeddingsUnitTests.test_init_from_env" title="langchain_tests.unit_tests.embeddings.EmbeddingsUnitTests.test_init_from_env"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_init_from_env</span></code></a>()</p></td>
-<td><p></p></td>
+<td><p>Test initialization from environment variables.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.embeddings.EmbeddingsUnitTests.test_no_overrides_DO_NOT_OVERRIDE" title="langchain_tests.unit_tests.embeddings.EmbeddingsUnitTests.test_no_overrides_DO_NOT_OVERRIDE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_no_overrides_DO_NOT_OVERRIDE</span></code></a>()</p></td>
 <td><p>Test that no standard tests are overridden.</p></td>
@@ -351,7 +408,14 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_tests.unit_tests.embeddings.EmbeddingsUnitTests.test_init">
 <span class="sig-name descname"><span class="pre">test_init</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_tests/unit_tests/embeddings.html#EmbeddingsUnitTests.test_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_tests.unit_tests.embeddings.EmbeddingsUnitTests.test_init" title="Link to this definition">#</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Test model initialization.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Troubleshooting</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">If this test fails, ensure that <code class="docutils literal notranslate"><span class="pre">embedding_model_params</span></code> is specified
+and the model can be initialized from those params.</p>
+</div>
+</details><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
@@ -360,7 +424,17 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_tests.unit_tests.embeddings.EmbeddingsUnitTests.test_init_from_env">
 <span class="sig-name descname"><span class="pre">test_init_from_env</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_tests/unit_tests/embeddings.html#EmbeddingsUnitTests.test_init_from_env"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_tests.unit_tests.embeddings.EmbeddingsUnitTests.test_init_from_env" title="Link to this definition">#</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Test initialization from environment variables. Relies on the
+<code class="docutils literal notranslate"><span class="pre">init_from_env_params</span></code> property. Test is skipped if that property is not
+set.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Troubleshooting</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">If this test fails, ensure that <code class="docutils literal notranslate"><span class="pre">init_from_env_params</span></code> is specified
+correctly and that model parameters are properly set from environment
+variables during initialization.</p>
+</div>
+</details><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
