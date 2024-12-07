@@ -44,7 +44,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 06, 2024" name="docbuild:last-update"/>
+<meta content="Dec 07, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -228,7 +228,7 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">langchain_core.output_parsers</span> <span class="kn">import</span> <span class="n">StrOutputParser</span>
 <span class="kn">from</span> <span class="nn">langchain_core.prompts</span> <span class="kn">import</span> <span class="n">ChatPromptTemplate</span>
-<span class="kn">from</span> <span class="nn">langchain_core.tools</span> <span class="kn">import</span> <span class="n">tool</span>
+<span class="kn">from</span> <span class="nn">langchain_core.tools</span> <span class="kn">import</span> <span class="n">BaseTool</span><span class="p">,</span> <span class="n">tool</span>
 <span class="kn">from</span> <span class="nn">langchain_core.utils.function_calling</span> <span class="kn">import</span> <span class="n">tool_example_to_messages</span>
 <span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
 <span class="kn">from</span> <span class="nn">pydantic.v1</span> <span class="kn">import</span> <span class="n">BaseModel</span> <span class="k">as</span> <span class="n">BaseModelV1</span>
@@ -236,19 +236,29 @@
 
 <span class="kn">from</span> <span class="nn">langchain_tests.unit_tests.chat_models</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ChatModelTests</span><span class="p">,</span>
-    <span class="n">my_adder_tool</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">langchain_tests.utils.pydantic</span> <span class="kn">import</span> <span class="n">PYDANTIC_MAJOR_VERSION</span>
 
 
-<div class="viewcode-block" id="MagicFunctionSchema">
-<a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.MagicFunctionSchema.html#langchain_tests.integration_tests.chat_models.MagicFunctionSchema">[docs]</a>
-<span class="k">class</span> <span class="nc">MagicFunctionSchema</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="nb">input</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">gt</span><span class="o">=-</span><span class="mi">1000</span><span class="p">,</span> <span class="n">lt</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span></div>
+<span class="k">def</span> <span class="nf">_get_joke_class</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    :private:</span>
+<span class="sd">    """</span>
+
+    <span class="k">class</span> <span class="nc">Joke</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Joke to tell user."""</span>
+
+        <span class="n">setup</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"question to set up a joke"</span><span class="p">)</span>
+        <span class="n">punchline</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"answer to resolve the joke"</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Joke</span>
 
 
+<span class="k">class</span> <span class="nc">_MagicFunctionSchema</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="nb">input</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">gt</span><span class="o">=-</span><span class="mi">1000</span><span class="p">,</span> <span class="n">lt</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 
-<span class="nd">@tool</span><span class="p">(</span><span class="n">args_schema</span><span class="o">=</span><span class="n">MagicFunctionSchema</span><span class="p">)</span>
+
+<span class="nd">@tool</span><span class="p">(</span><span class="n">args_schema</span><span class="o">=</span><span class="n">_MagicFunctionSchema</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">magic_function</span><span class="p">(</span><span class="nb">input</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Applies a magic function to an input."""</span>
     <span class="k">return</span> <span class="nb">input</span> <span class="o">+</span> <span class="mi">2</span>
@@ -258,16 +268,6 @@
 <span class="k">def</span> <span class="nf">magic_function_no_args</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Calculates a magic function."""</span>
     <span class="k">return</span> <span class="mi">5</span>
-
-
-<div class="viewcode-block" id="Joke">
-<a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.Joke.html#langchain_tests.integration_tests.chat_models.Joke">[docs]</a>
-<span class="k">class</span> <span class="nc">Joke</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Joke to tell user."""</span>
-
-    <span class="n">setup</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"question to set up a joke"</span><span class="p">)</span>
-    <span class="n">punchline</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"answer to resolve the joke"</span><span class="p">)</span></div>
-
 
 
 <span class="k">def</span> <span class="nf">_validate_tool_call_message</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="n">BaseMessage</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -323,17 +323,214 @@
 <span class="sd">    .. note::</span>
 <span class="sd">          API references for individual test methods include troubleshooting tips.</span>
 
-<span class="sd">    .. note::</span>
-<span class="sd">        Test subclasses can control what features are tested (such as tool</span>
-<span class="sd">        calling or multi-modality) by selectively overriding the properties on the</span>
-<span class="sd">        class. Relevant properties are mentioned in the references for each method.</span>
-<span class="sd">        See this page for detail on all properties:</span>
-<span class="sd">        https://python.langchain.com/api_reference/standard_tests/unit_tests/langchain_tests.unit_tests.chat_models.ChatModelTests.html</span>
+
+<span class="sd">    Test subclasses must implement the following two properties:</span>
+
+<span class="sd">    chat_model_class</span>
+<span class="sd">        The chat model class to test, e.g., ``ChatParrotLink``.</span>
+
+<span class="sd">        Example:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            @property</span>
+<span class="sd">            def chat_model_class(self) -&gt; Type[ChatParrotLink]:</span>
+<span class="sd">                return ChatParrotLink</span>
+
+<span class="sd">    chat_model_params</span>
+<span class="sd">        Initialization parameters for the chat model.</span>
+
+<span class="sd">        Example:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            @property</span>
+<span class="sd">            def chat_model_params(self) -&gt; dict:</span>
+<span class="sd">                return {"model": "bird-brain-001", "temperature": 0}</span>
+
+<span class="sd">    In addition, test subclasses can control what features are tested (such as tool</span>
+<span class="sd">    calling or multi-modality) by selectively overriding the following properties.</span>
+<span class="sd">    Expand to see details:</span>
+
+<span class="sd">    .. dropdown:: has_tool_calling</span>
+
+<span class="sd">        Boolean property indicating whether the chat model supports tool calling.</span>
+
+<span class="sd">        By default, this is determined by whether the chat model's `bind_tools` method</span>
+<span class="sd">        is overridden. It typically does not need to be overridden on the test class.</span>
+
+<span class="sd">        Example override:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            @property</span>
+<span class="sd">            def has_tool_calling(self) -&gt; bool:</span>
+<span class="sd">                return True</span>
+
+<span class="sd">    .. dropdown:: tool_choice_value</span>
+
+<span class="sd">        Value to use for tool choice when used in tests.</span>
+
+<span class="sd">        Some tests for tool calling features attempt to force tool calling via a</span>
+<span class="sd">        `tool_choice` parameter. A common value for this parameter is "any". Defaults</span>
+<span class="sd">        to `None`.</span>
+
+<span class="sd">        Note: if the value is set to "tool_name", the name of the tool used in each</span>
+<span class="sd">        test will be set as the value for `tool_choice`.</span>
+
+<span class="sd">        Example:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            @property</span>
+<span class="sd">            def tool_choice_value(self) -&gt; Optional[str]:</span>
+<span class="sd">                return "any"</span>
+
+<span class="sd">    .. dropdown:: has_structured_output</span>
+
+<span class="sd">        Boolean property indicating whether the chat model supports structured</span>
+<span class="sd">        output.</span>
+
+<span class="sd">        By default, this is determined by whether the chat model's</span>
+<span class="sd">        `with_structured_output` method is overridden. If the base implementation is</span>
+<span class="sd">        intended to be used, this method should be overridden.</span>
+
+<span class="sd">        See: https://python.langchain.com/docs/concepts/structured_outputs/</span>
+
+<span class="sd">        Example:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            @property</span>
+<span class="sd">            def has_structured_output(self) -&gt; bool:</span>
+<span class="sd">                return True</span>
+
+<span class="sd">    .. dropdown:: supports_image_inputs</span>
+
+<span class="sd">        Boolean property indicating whether the chat model supports image inputs.</span>
+<span class="sd">        Defaults to ``False``.</span>
+
+<span class="sd">        If set to ``True``, the chat model will be tested using content blocks of the</span>
+<span class="sd">        form</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            [</span>
+<span class="sd">                {"type": "text", "text": "describe the weather in this image"},</span>
+<span class="sd">                {</span>
+<span class="sd">                    "type": "image_url",</span>
+<span class="sd">                    "image_url": {"url": f"data:image/jpeg;base64,{image_data}"},</span>
+<span class="sd">                },</span>
+<span class="sd">            ]</span>
+
+<span class="sd">        See https://python.langchain.com/docs/concepts/multimodality/</span>
+
+<span class="sd">        Example:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            @property</span>
+<span class="sd">            def supports_image_inputs(self) -&gt; bool:</span>
+<span class="sd">                return True</span>
+
+<span class="sd">    .. dropdown:: supports_video_inputs</span>
+
+<span class="sd">        Boolean property indicating whether the chat model supports image inputs.</span>
+<span class="sd">        Defaults to ``False``. No current tests are written for this feature.</span>
+
+<span class="sd">    .. dropdown:: returns_usage_metadata</span>
+
+<span class="sd">        Boolean property indicating whether the chat model returns usage metadata</span>
+<span class="sd">        on invoke and streaming responses.</span>
+
+<span class="sd">        ``usage_metadata`` is an optional dict attribute on AIMessages that track input</span>
+<span class="sd">        and output tokens: https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.UsageMetadata.html</span>
+
+<span class="sd">        Example:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            @property</span>
+<span class="sd">            def returns_usage_metadata(self) -&gt; bool:</span>
+<span class="sd">                return False</span>
+
+<span class="sd">    .. dropdown:: supports_anthropic_inputs</span>
+
+<span class="sd">        Boolean property indicating whether the chat model supports Anthropic-style</span>
+<span class="sd">        inputs.</span>
+
+<span class="sd">        These inputs might feature "tool use" and "tool result" content blocks, e.g.,</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            [</span>
+<span class="sd">                {"type": "text", "text": "Hmm let me think about that"},</span>
+<span class="sd">                {</span>
+<span class="sd">                    "type": "tool_use",</span>
+<span class="sd">                    "input": {"fav_color": "green"},</span>
+<span class="sd">                    "id": "foo",</span>
+<span class="sd">                    "name": "color_picker",</span>
+<span class="sd">                },</span>
+<span class="sd">            ]</span>
+
+<span class="sd">        If set to ``True``, the chat model will be tested using content blocks of this</span>
+<span class="sd">        form.</span>
+
+<span class="sd">        Example:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            @property</span>
+<span class="sd">            def supports_anthropic_inputs(self) -&gt; bool:</span>
+<span class="sd">                return False</span>
+
+<span class="sd">    .. dropdown:: supports_image_tool_message</span>
+
+<span class="sd">        Boolean property indicating whether the chat model supports ToolMessages</span>
+<span class="sd">        that include image content, e.g.,</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            ToolMessage(</span>
+<span class="sd">                content=[</span>
+<span class="sd">                    {</span>
+<span class="sd">                        "type": "image_url",</span>
+<span class="sd">                        "image_url": {"url": f"data:image/jpeg;base64,{image_data}"},</span>
+<span class="sd">                    },</span>
+<span class="sd">                ],</span>
+<span class="sd">                tool_call_id="1",</span>
+<span class="sd">                name="random_image",</span>
+<span class="sd">            )</span>
+
+<span class="sd">        If set to ``True``, the chat model will be tested with message sequences that</span>
+<span class="sd">        include ToolMessages of this form.</span>
+
+<span class="sd">        Example:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            @property</span>
+<span class="sd">            def supports_image_tool_message(self) -&gt; bool:</span>
+<span class="sd">                return False</span>
+
+<span class="sd">    .. dropdown:: supported_usage_metadata_details</span>
+
+<span class="sd">        Property controlling what usage metadata details are emitted in both invoke</span>
+<span class="sd">        and stream.</span>
+
+<span class="sd">        ``usage_metadata`` is an optional dict attribute on AIMessages that track input</span>
+<span class="sd">        and output tokens: https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.UsageMetadata.html</span>
+
+<span class="sd">        It includes optional keys ``input_token_details`` and ``output_token_details``</span>
+<span class="sd">        that can track usage details associated with special types of tokens, such as</span>
+<span class="sd">        cached, audio, or reasoning.</span>
+
+<span class="sd">        Only needs to be overridden if these details are supplied.</span>
 <span class="sd">    """</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">standard_chat_model_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">""":meta private:"""</span>
+<span class="w">        </span><span class="sd">""":private:"""</span>
         <span class="k">return</span> <span class="p">{}</span>
 
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_invoke">
@@ -1172,6 +1369,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
 
+        <span class="n">Joke</span> <span class="o">=</span> <span class="n">_get_joke_class</span><span class="p">()</span>
         <span class="c1"># Pydantic class</span>
         <span class="c1"># Type ignoring since the interface only officially supports pydantic 1</span>
         <span class="c1"># or pydantic.v1.BaseModel but not pydantic.BaseModel from pydantic 2.</span>
@@ -1226,6 +1424,8 @@
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
+
+        <span class="n">Joke</span> <span class="o">=</span> <span class="n">_get_joke_class</span><span class="p">()</span>
 
         <span class="c1"># Pydantic class</span>
         <span class="c1"># Type ignoring since the interface only officially supports pydantic 1</span>
@@ -1365,7 +1565,9 @@
 
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_tool_message_histories_string_content">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_tool_message_histories_string_content">[docs]</a>
-    <span class="k">def</span> <span class="nf">test_tool_message_histories_string_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">test_tool_message_histories_string_content</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">,</span> <span class="n">my_adder_tool</span><span class="p">:</span> <span class="n">BaseTool</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Test that message histories are compatible with string tool contents</span>
 <span class="sd">        (e.g. OpenAI format). If a model passes this test, it should be compatible</span>
 <span class="sd">        with messages generated from providers following OpenAI format.</span>
@@ -1399,8 +1601,8 @@
 <span class="sd">            .. code-block:: python</span>
 
 <span class="sd">                @pytest.mark.xfail(reason=("Not implemented."))</span>
-<span class="sd">                def test_tool_message_histories_string_content(self, model: BaseChatModel) -&gt; None:</span>
-<span class="sd">                    super().test_tool_message_histories_string_content(model)</span>
+<span class="sd">                def test_tool_message_histories_string_content(self, *args: Any) -&gt; None:</span>
+<span class="sd">                    super().test_tool_message_histories_string_content(*args)</span>
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
@@ -1437,6 +1639,7 @@
     <span class="k">def</span> <span class="nf">test_tool_message_histories_list_content</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">,</span>
+        <span class="n">my_adder_tool</span><span class="p">:</span> <span class="n">BaseTool</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Test that message histories are compatible with list tool contents</span>
 <span class="sd">        (e.g. Anthropic format).</span>
@@ -1485,8 +1688,8 @@
 <span class="sd">            .. code-block:: python</span>
 
 <span class="sd">                @pytest.mark.xfail(reason=("Not implemented."))</span>
-<span class="sd">                def test_tool_message_histories_list_content(self, model: BaseChatModel) -&gt; None:</span>
-<span class="sd">                    super().test_tool_message_histories_list_content(model)</span>
+<span class="sd">                def test_tool_message_histories_list_content(self, *args: Any) -&gt; None:</span>
+<span class="sd">                    super().test_tool_message_histories_list_content(*args)</span>
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
@@ -1528,7 +1731,9 @@
 
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_structured_few_shot_examples">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_structured_few_shot_examples">[docs]</a>
-    <span class="k">def</span> <span class="nf">test_structured_few_shot_examples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">test_structured_few_shot_examples</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">,</span> <span class="n">my_adder_tool</span><span class="p">:</span> <span class="n">BaseTool</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Test that the model can process few-shot examples with tool calls.</span>
 
 <span class="sd">        These are represented as a sequence of messages of the following form:</span>
@@ -1568,8 +1773,8 @@
 <span class="sd">            .. code-block:: python</span>
 
 <span class="sd">                @pytest.mark.xfail(reason=("Not implemented."))</span>
-<span class="sd">                def test_structured_few_shot_examples(self, model: BaseChatModel) -&gt; None:</span>
-<span class="sd">                    super().test_structured_few_shot_examples(model)</span>
+<span class="sd">                def test_structured_few_shot_examples(self, *args: Any) -&gt; None:</span>
+<span class="sd">                    super().test_structured_few_shot_examples(*args)</span>
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
@@ -1851,7 +2056,9 @@
 
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_tool_message_error_status">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_tool_message_error_status">[docs]</a>
-    <span class="k">def</span> <span class="nf">test_tool_message_error_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">test_tool_message_error_status</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">,</span> <span class="n">my_adder_tool</span><span class="p">:</span> <span class="n">BaseTool</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Test that ToolMessage with ``status="error"`` can be handled.</span>
 
 <span class="sd">        These messages may take the form:</span>
@@ -1944,35 +2151,25 @@
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span></div>
 
 
-<div class="viewcode-block" id="ChatModelIntegrationTests.invoke_with_audio_input">
-<a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.invoke_with_audio_input">[docs]</a>
     <span class="k">def</span> <span class="nf">invoke_with_audio_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AIMessage</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+<span class="w">        </span><span class="sd">""":private:"""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
-
-<div class="viewcode-block" id="ChatModelIntegrationTests.invoke_with_audio_output">
-<a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.invoke_with_audio_output">[docs]</a>
     <span class="k">def</span> <span class="nf">invoke_with_audio_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AIMessage</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+<span class="w">        </span><span class="sd">""":private:"""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
-
-<div class="viewcode-block" id="ChatModelIntegrationTests.invoke_with_reasoning_output">
-<a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.invoke_with_reasoning_output">[docs]</a>
     <span class="k">def</span> <span class="nf">invoke_with_reasoning_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AIMessage</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+<span class="w">        </span><span class="sd">""":private:"""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
-
-<div class="viewcode-block" id="ChatModelIntegrationTests.invoke_with_cache_read_input">
-<a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.invoke_with_cache_read_input">[docs]</a>
     <span class="k">def</span> <span class="nf">invoke_with_cache_read_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AIMessage</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+<span class="w">        </span><span class="sd">""":private:"""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
-
-<div class="viewcode-block" id="ChatModelIntegrationTests.invoke_with_cache_creation_input">
-<a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.invoke_with_cache_creation_input">[docs]</a>
     <span class="k">def</span> <span class="nf">invoke_with_cache_creation_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AIMessage</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">""":private:"""</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
-</div>
 
 </pre></div>
 </article>
