@@ -46,7 +46,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 09, 2024" name="docbuild:last-update"/>
+<meta content="Dec 10, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -446,17 +446,132 @@
 <dt class="sig sig-object py" id="langchain_community.chat_models.moonshot.MoonshotChat">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">langchain_community.chat_models.moonshot.</span></span><span class="sig-name descname"><span class="pre">MoonshotChat</span></span><a class="reference internal" href="../../_modules/langchain_community/chat_models/moonshot.html#MoonshotChat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_community.chat_models.moonshot.MoonshotChat" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="../llms/langchain_community.llms.moonshot.MoonshotCommon.html#langchain_community.llms.moonshot.MoonshotCommon" title="langchain_community.llms.moonshot.MoonshotCommon"><code class="xref py py-class docutils literal notranslate"><span class="pre">MoonshotCommon</span></code></a>, <a class="reference internal" href="langchain_community.chat_models.openai.ChatOpenAI.html#langchain_community.chat_models.openai.ChatOpenAI" title="langchain_community.chat_models.openai.ChatOpenAI"><code class="xref py py-class docutils literal notranslate"><span class="pre">ChatOpenAI</span></code></a></p>
-<p>Moonshot large language models.</p>
-<p>To use, you should have the <code class="docutils literal notranslate"><span class="pre">openai</span></code> python package installed, and the
-environment variable <code class="docutils literal notranslate"><span class="pre">MOONSHOT_API_KEY</span></code> set with your API key.
-(Moonshot’s chat API is compatible with OpenAI’s SDK.)</p>
-<p>Referenced from <a class="reference external" href="https://platform.moonshot.cn/docs">https://platform.moonshot.cn/docs</a></p>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">langchain_community.chat_models.moonshot</span> <span class="kn">import</span> <span class="n">MoonshotChat</span>
-
-<span class="n">moonshot</span> <span class="o">=</span> <span class="n">MoonshotChat</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"moonshot-v1-8k"</span><span class="p">)</span>
+<p>Moonshot chat model integration.</p>
+<dl>
+<dt>Setup:</dt><dd><p>Install <code class="docutils literal notranslate"><span class="pre">openai</span></code> and set environment variables <code class="docutils literal notranslate"><span class="pre">MOONSHOT_API_KEY</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>openai
+<span class="nb">export</span><span class="w"> </span><span class="nv">MOONSHOT_API_KEY</span><span class="o">=</span><span class="s2">"your-api-key"</span>
 </pre></div>
 </div>
+</dd>
+<dt>Key init args — completion params:</dt><dd><dl class="simple">
+<dt>model: str</dt><dd><p>Name of Moonshot model to use.</p>
+</dd>
+<dt>temperature: float</dt><dd><p>Sampling temperature.</p>
+</dd>
+<dt>max_tokens: Optional[int]</dt><dd><p>Max number of tokens to generate.</p>
+</dd>
+</dl>
+</dd>
+<dt>Key init args — client params:</dt><dd><dl class="simple">
+<dt>api_key: Optional[str]</dt><dd><p>Moonshot API KEY. If not passed in will be read from env var MOONSHOT_API_KEY.</p>
+</dd>
+<dt>api_base: Optional[str]</dt><dd><p>Base URL for API requests.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>See full list of supported init args and their descriptions in the params section.</p>
+<dl>
+<dt>Instantiate:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">langchain_community.chat_models</span> <span class="kn">import</span> <span class="n">MoonshotChat</span>
+
+<span class="n">chat</span> <span class="o">=</span> <span class="n">MoonshotChat</span><span class="p">(</span>
+    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">api_key</span><span class="o">=</span><span class="s2">"your-api-key"</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">"moonshot-v1-8k"</span><span class="p">,</span>
+    <span class="c1"># api_base="...",</span>
+    <span class="c1"># other params...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+<dt>Invoke:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s2">"system"</span><span class="p">,</span> <span class="s2">"你是一名专业的翻译家，可以将用户的中文翻译为英文。"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"human"</span><span class="p">,</span> <span class="s2">"我喜欢编程。"</span><span class="p">),</span>
+<span class="p">]</span>
+<span class="n">chat</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">AIMessage</span><span class="p">(</span>
+    <span class="n">content</span><span class="o">=</span><span class="s1">'I like programming.'</span><span class="p">,</span>
+    <span class="n">additional_kwargs</span><span class="o">=</span><span class="p">{},</span>
+    <span class="n">response_metadata</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">'token_usage'</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">'completion_tokens'</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+            <span class="s1">'prompt_tokens'</span><span class="p">:</span> <span class="mi">27</span><span class="p">,</span>
+            <span class="s1">'total_tokens'</span><span class="p">:</span> <span class="mi">32</span>
+        <span class="p">},</span>
+        <span class="s1">'model_name'</span><span class="p">:</span> <span class="s1">'moonshot-v1-8k'</span><span class="p">,</span>
+        <span class="s1">'system_fingerprint'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s1">'finish_reason'</span><span class="p">:</span> <span class="s1">'stop'</span><span class="p">,</span>
+        <span class="s1">'logprobs'</span><span class="p">:</span> <span class="kc">None</span>
+    <span class="p">},</span>
+    <span class="nb">id</span><span class="o">=</span><span class="s1">'run-71c03f4e-6628-41d5-beb6-d2559ae68266-0'</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+<dt>Stream:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chat</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">messages</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">content</span><span class="o">=</span><span class="s1">''</span> <span class="n">additional_kwargs</span><span class="o">=</span><span class="p">{}</span> <span class="n">response_metadata</span><span class="o">=</span><span class="p">{}</span> <span class="nb">id</span><span class="o">=</span><span class="s1">'run-80d77096-8b83-4c39-a84d-71d9c746da92'</span>
+<span class="n">content</span><span class="o">=</span><span class="s1">'I'</span> <span class="n">additional_kwargs</span><span class="o">=</span><span class="p">{}</span> <span class="n">response_metadata</span><span class="o">=</span><span class="p">{}</span> <span class="nb">id</span><span class="o">=</span><span class="s1">'run-80d77096-8b83-4c39-a84d-71d9c746da92'</span>
+<span class="n">content</span><span class="o">=</span><span class="s1">' like'</span> <span class="n">additional_kwargs</span><span class="o">=</span><span class="p">{}</span> <span class="n">response_metadata</span><span class="o">=</span><span class="p">{}</span> <span class="nb">id</span><span class="o">=</span><span class="s1">'run-80d77096-8b83-4c39-a84d-71d9c746da92'</span>
+<span class="n">content</span><span class="o">=</span><span class="s1">' programming'</span> <span class="n">additional_kwargs</span><span class="o">=</span><span class="p">{}</span> <span class="n">response_metadata</span><span class="o">=</span><span class="p">{}</span> <span class="nb">id</span><span class="o">=</span><span class="s1">'run-80d77096-8b83-4c39-a84d-71d9c746da92'</span>
+<span class="n">content</span><span class="o">=</span><span class="s1">'.'</span> <span class="n">additional_kwargs</span><span class="o">=</span><span class="p">{}</span> <span class="n">response_metadata</span><span class="o">=</span><span class="p">{}</span> <span class="nb">id</span><span class="o">=</span><span class="s1">'run-80d77096-8b83-4c39-a84d-71d9c746da92'</span>
+<span class="n">content</span><span class="o">=</span><span class="s1">''</span> <span class="n">additional_kwargs</span><span class="o">=</span><span class="p">{}</span> <span class="n">response_metadata</span><span class="o">=</span><span class="p">{</span><span class="s1">'finish_reason'</span><span class="p">:</span> <span class="s1">'stop'</span><span class="p">}</span> <span class="nb">id</span><span class="o">=</span><span class="s1">'run-80d77096-8b83-4c39-a84d-71d9c746da92'</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">stream</span> <span class="o">=</span> <span class="n">chat</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
+<span class="n">full</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
+    <span class="n">full</span> <span class="o">+=</span> <span class="n">chunk</span>
+<span class="n">full</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">AIMessageChunk</span><span class="p">(</span>
+    <span class="n">content</span><span class="o">=</span><span class="s1">'I like programming.'</span><span class="p">,</span>
+    <span class="n">additional_kwargs</span><span class="o">=</span><span class="p">{},</span>
+    <span class="n">response_metadata</span><span class="o">=</span><span class="p">{</span><span class="s1">'finish_reason'</span><span class="p">:</span> <span class="s1">'stop'</span><span class="p">},</span>
+    <span class="nb">id</span><span class="o">=</span><span class="s1">'run-10c80976-7aa5-4ff7-ba3e-1251665557ef'</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+<dt>Async:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">await</span> <span class="n">chat</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
+
+<span class="c1"># stream:</span>
+<span class="c1"># async for chunk in chat.astream(messages):</span>
+<span class="c1">#    print(chunk)</span>
+
+<span class="c1"># batch:</span>
+<span class="c1"># await chat.abatch([messages])</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">AIMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s1">'I like programming.'</span><span class="p">,</span> <span class="n">additional_kwargs</span><span class="o">=</span><span class="p">{},</span> <span class="n">response_metadata</span><span class="o">=</span><span class="p">{</span><span class="s1">'token_usage'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'completion_tokens'</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">'prompt_tokens'</span><span class="p">:</span> <span class="mi">27</span><span class="p">,</span> <span class="s1">'total_tokens'</span><span class="p">:</span> <span class="mi">32</span><span class="p">},</span> <span class="s1">'model_name'</span><span class="p">:</span> <span class="s1">'moonshot-v1-8k'</span><span class="p">,</span> <span class="s1">'system_fingerprint'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">'finish_reason'</span><span class="p">:</span> <span class="s1">'stop'</span><span class="p">,</span> <span class="s1">'logprobs'</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="s1">'run-2938b005-9204-4b9f-b273-1c3272fce9e5-0'</span><span class="p">)]</span>
+</pre></div>
+</div>
+</dd>
+<dt>Response metadata</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ai_msg</span> <span class="o">=</span> <span class="n">chat</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
+<span class="n">ai_msg</span><span class="o">.</span><span class="n">response_metadata</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s1">'token_usage'</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">'completion_tokens'</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="s1">'prompt_tokens'</span><span class="p">:</span> <span class="mi">27</span><span class="p">,</span>
+        <span class="s1">'total_tokens'</span><span class="p">:</span> <span class="mi">32</span>
+    <span class="p">},</span>
+    <span class="s1">'model_name'</span><span class="p">:</span> <span class="s1">'moonshot-v1-8k'</span><span class="p">,</span>
+    <span class="s1">'system_fingerprint'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="s1">'finish_reason'</span><span class="p">:</span> <span class="s1">'stop'</span><span class="p">,</span>
+    <span class="s1">'logprobs'</span><span class="p">:</span> <span class="kc">None</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>MoonshotChat implements the standard <a class="reference internal" href="../../core/runnables/langchain_core.runnables.base.Runnable.html#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Runnable</span> <span class="pre">Interface</span></code></a>. 🏃</p>

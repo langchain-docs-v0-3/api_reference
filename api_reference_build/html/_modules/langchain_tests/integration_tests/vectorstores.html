@@ -44,7 +44,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 09, 2024" name="docbuild:last-update"/>
+<meta content="Dec 10, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -290,6 +290,21 @@
 <span class="sd">                    store.delete_collection()</span>
 <span class="sd">                    pass</span>
 
+<span class="sd">    Note that by default we enable both sync and async tests. To disable either,</span>
+<span class="sd">    override the ``has_sync`` or ``has_async`` properties to ``False`` in the</span>
+<span class="sd">    subclass. For example:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">       class TestParrotVectorStore(VectorStoreIntegrationTests):</span>
+<span class="sd">            @pytest.fixture()</span>
+<span class="sd">            def vectorstore(self) -&gt; Generator[VectorStore, None, None]:  # type: ignore</span>
+<span class="sd">                ...</span>
+
+<span class="sd">            @property</span>
+<span class="sd">            def has_async(self) -&gt; bool:</span>
+<span class="sd">                return False</span>
+
 <span class="sd">    .. note::</span>
 <span class="sd">          API references for individual test methods include troubleshooting tips.</span>
 <span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
@@ -304,6 +319,20 @@
 <span class="sd">        The returned vectorstore should be EMPTY.</span>
 <span class="sd">        """</span></div>
 
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">has_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Configurable property to enable or disable sync tests.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">has_async</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Configurable property to enable or disable async tests.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
 <div class="viewcode-block" id="VectorStoreIntegrationTests.get_embeddings">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.vectorstores.VectorStoreIntegrationTests.html#langchain_tests.integration_tests.vectorstores.VectorStoreIntegrationTests.get_embeddings">[docs]</a>
@@ -332,6 +361,9 @@
 <span class="sd">            ``VectorStoreIntegrationTests``) initializes an empty vector store in the</span>
 <span class="sd">            ``vectorestore`` fixture.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_sync</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Sync tests not supported."</span><span class="p">)</span>
+
         <span class="k">assert</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">similarity_search</span><span class="p">(</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="p">[]</span></div>
 
 
@@ -348,6 +380,9 @@
 <span class="sd">            2. Calling ``.similarity_search`` for the top ``k`` similar documents does not threshold by score.</span>
 <span class="sd">            3. We do not mutate the original document object when adding it to the vector store (e.g., by adding an ID).</span>
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_sync</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Sync tests not supported."</span><span class="p">)</span>
+
         <span class="n">original_documents</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
@@ -380,6 +415,9 @@
 <span class="sd">            ``VectorStoreIntegrationTests``) correctly clears the vector store in the</span>
 <span class="sd">            ``finally`` block.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_sync</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Sync tests not supported."</span><span class="p">)</span>
+
         <span class="k">assert</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">similarity_search</span><span class="p">(</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="p">[]</span></div>
 
 
@@ -394,6 +432,9 @@
 <span class="sd">            passed in through ``ids``, and that ``delete`` correctly removes</span>
 <span class="sd">            documents.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_sync</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Sync tests not supported."</span><span class="p">)</span>
+
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
@@ -415,6 +456,9 @@
 <span class="sd">            If this test fails, check that ``delete`` correctly removes multiple</span>
 <span class="sd">            documents when given a list of IDs.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_sync</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Sync tests not supported."</span><span class="p">)</span>
+
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
@@ -437,6 +481,9 @@
 <span class="sd">            If this test fails, check that ``delete`` does not raise an exception</span>
 <span class="sd">            when deleting IDs that do not exist.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_sync</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Sync tests not supported."</span><span class="p">)</span>
+
         <span class="n">vectorstore</span><span class="o">.</span><span class="n">delete</span><span class="p">([</span><span class="s2">"1"</span><span class="p">])</span>
         <span class="n">vectorstore</span><span class="o">.</span><span class="n">delete</span><span class="p">([</span><span class="s2">"1"</span><span class="p">,</span> <span class="s2">"2"</span><span class="p">,</span> <span class="s2">"3"</span><span class="p">])</span></div>
 
@@ -454,6 +501,9 @@
 <span class="sd">            same IDs has the same effect as adding it once (i.e., it does not</span>
 <span class="sd">            duplicate the documents).</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_sync</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Sync tests not supported."</span><span class="p">)</span>
+
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
@@ -478,6 +528,9 @@
 <span class="sd">            ID that already exists in the vector store, the content is updated</span>
 <span class="sd">            rather than duplicated.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_sync</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Sync tests not supported."</span><span class="p">)</span>
+
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
@@ -529,6 +582,9 @@
 <span class="sd">                    def test_get_by_ids(self, vectorstore: VectorStore) -&gt; None:</span>
 <span class="sd">                        super().test_get_by_ids(vectorstore)</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_sync</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Sync tests not supported."</span><span class="p">)</span>
+
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
@@ -562,6 +618,9 @@
 <span class="sd">                    def test_get_by_ids_missing(self, vectorstore: VectorStore) -&gt; None:</span>
 <span class="sd">                        super().test_get_by_ids_missing(vectorstore)</span>
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_sync</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Sync tests not supported."</span><span class="p">)</span>
+
         <span class="c1"># This should not raise an exception</span>
         <span class="n">documents</span> <span class="o">=</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">get_by_ids</span><span class="p">([</span><span class="s2">"1"</span><span class="p">,</span> <span class="s2">"2"</span><span class="p">,</span> <span class="s2">"3"</span><span class="p">])</span>
         <span class="k">assert</span> <span class="n">documents</span> <span class="o">==</span> <span class="p">[]</span></div>
@@ -591,6 +650,9 @@
 <span class="sd">                    def test_add_documents_documents(self, vectorstore: VectorStore) -&gt; None:</span>
 <span class="sd">                        super().test_add_documents_documents(vectorstore)</span>
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_sync</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Sync tests not supported."</span><span class="p">)</span>
+
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
@@ -628,6 +690,9 @@
 <span class="sd">                    def test_add_documents_with_existing_ids(self, vectorstore: VectorStore) -&gt; None:</span>
 <span class="sd">                        super().test_add_documents_with_existing_ids(vectorstore)</span>
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_sync</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Sync tests not supported."</span><span class="p">)</span>
+
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
@@ -651,6 +716,9 @@
 <span class="sd">            ``VectorStoreIntegrationTests``) initializes an empty vector store in the</span>
 <span class="sd">            ``vectorestore`` fixture.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_async</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Async tests not supported."</span><span class="p">)</span>
+
         <span class="k">assert</span> <span class="k">await</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">asimilarity_search</span><span class="p">(</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="p">[]</span></div>
 
 
@@ -667,6 +735,9 @@
 <span class="sd">            2. Calling ``.asimilarity_search`` for the top ``k`` similar documents does not threshold by score.</span>
 <span class="sd">            3. We do not mutate the original document object when adding it to the vector store (e.g., by adding an ID).</span>
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_async</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Async tests not supported."</span><span class="p">)</span>
+
         <span class="n">original_documents</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
@@ -702,6 +773,9 @@
 <span class="sd">            ``VectorStoreIntegrationTests``) correctly clears the vector store in the</span>
 <span class="sd">            ``finally`` block.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_async</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Async tests not supported."</span><span class="p">)</span>
+
         <span class="k">assert</span> <span class="k">await</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">asimilarity_search</span><span class="p">(</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="p">[]</span></div>
 
 
@@ -716,6 +790,9 @@
 <span class="sd">            passed in through ``ids``, and that ``delete`` correctly removes</span>
 <span class="sd">            documents.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_async</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Async tests not supported."</span><span class="p">)</span>
+
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
@@ -739,6 +816,9 @@
 <span class="sd">            If this test fails, check that ``adelete`` correctly removes multiple</span>
 <span class="sd">            documents when given a list of IDs.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_async</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Async tests not supported."</span><span class="p">)</span>
+
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
@@ -761,6 +841,9 @@
 <span class="sd">            If this test fails, check that ``adelete`` does not raise an exception</span>
 <span class="sd">            when deleting IDs that do not exist.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_async</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Async tests not supported."</span><span class="p">)</span>
+
         <span class="k">await</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">adelete</span><span class="p">([</span><span class="s2">"1"</span><span class="p">])</span>
         <span class="k">await</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">adelete</span><span class="p">([</span><span class="s2">"1"</span><span class="p">,</span> <span class="s2">"2"</span><span class="p">,</span> <span class="s2">"3"</span><span class="p">])</span></div>
 
@@ -778,6 +861,9 @@
 <span class="sd">            same IDs has the same effect as adding it once (i.e., it does not</span>
 <span class="sd">            duplicate the documents).</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_async</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Async tests not supported."</span><span class="p">)</span>
+
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
@@ -804,6 +890,9 @@
 <span class="sd">            ID that already exists in the vector store, the content is updated</span>
 <span class="sd">            rather than duplicated.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_async</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Async tests not supported."</span><span class="p">)</span>
+
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
@@ -855,6 +944,9 @@
 <span class="sd">                    async def test_get_by_ids(self, vectorstore: VectorStore) -&gt; None:</span>
 <span class="sd">                        await super().test_get_by_ids(vectorstore)</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_async</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Async tests not supported."</span><span class="p">)</span>
+
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
@@ -888,6 +980,9 @@
 <span class="sd">                    async def test_get_by_ids_missing(self, vectorstore: VectorStore) -&gt; None:</span>
 <span class="sd">                        await super().test_get_by_ids_missing(vectorstore)</span>
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_async</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Async tests not supported."</span><span class="p">)</span>
+
         <span class="c1"># This should not raise an exception</span>
         <span class="k">assert</span> <span class="k">await</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">aget_by_ids</span><span class="p">([</span><span class="s2">"1"</span><span class="p">,</span> <span class="s2">"2"</span><span class="p">,</span> <span class="s2">"3"</span><span class="p">])</span> <span class="o">==</span> <span class="p">[]</span></div>
 
@@ -918,6 +1013,9 @@
 <span class="sd">                    async def test_add_documents_documents(self, vectorstore: VectorStore) -&gt; None:</span>
 <span class="sd">                        await super().test_add_documents_documents(vectorstore)</span>
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_async</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Async tests not supported."</span><span class="p">)</span>
+
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
@@ -957,6 +1055,9 @@
 <span class="sd">                    async def test_add_documents_with_existing_ids(self, vectorstore: VectorStore) -&gt; None:</span>
 <span class="sd">                        await super().test_add_documents_with_existing_ids(vectorstore)</span>
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_async</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Async tests not supported."</span><span class="p">)</span>
+
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>

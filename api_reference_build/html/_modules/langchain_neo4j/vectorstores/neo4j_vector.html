@@ -44,7 +44,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 09, 2024" name="docbuild:last-update"/>
+<meta content="Dec 10, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -307,15 +307,17 @@
     <span class="k">if</span> <span class="n">index_type</span> <span class="o">==</span> <span class="n">IndexType</span><span class="o">.</span><span class="n">NODE</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">search_type</span> <span class="o">==</span> <span class="n">SearchType</span><span class="o">.</span><span class="n">VECTOR</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">(</span>
-                <span class="s2">"CALL db.index.vector.queryNodes($index, $k, $embedding) "</span>
+                <span class="s2">"CALL db.index.vector.queryNodes($index, $k * $ef, $embedding) "</span>
                 <span class="s2">"YIELD node, score "</span>
+                <span class="s2">"WITH node, score LIMIT $k "</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">search_type</span> <span class="o">==</span> <span class="n">SearchType</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">:</span>
             <span class="n">call_prefix</span> <span class="o">=</span> <span class="s2">"CALL () { "</span> <span class="k">if</span> <span class="n">neo4j_version_is_5_23_or_above</span> <span class="k">else</span> <span class="s2">"CALL { "</span>
 
             <span class="n">query_body</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="s2">"CALL db.index.vector.queryNodes($index, $k, $embedding) "</span>
+                <span class="s2">"CALL db.index.vector.queryNodes($index, $k * $ef, $embedding) "</span>
                 <span class="s2">"YIELD node, score "</span>
+                <span class="s2">"WITH node, score LIMIT $k "</span>
                 <span class="s2">"WITH collect({node:node, score:score}) AS nodes, max(score) AS max "</span>
                 <span class="s2">"UNWIND nodes AS n "</span>
                 <span class="s2">"RETURN n.node AS node, (n.score / max) AS score UNION "</span>
@@ -335,8 +337,9 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unsupported SearchType: </span><span class="si">{</span><span class="n">search_type</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="s2">"CALL db.index.vector.queryRelationships($index, $k, $embedding) "</span>
+            <span class="s2">"CALL db.index.vector.queryRelationships($index, $k * $ef, $embedding) "</span>
             <span class="s2">"YIELD relationship, score "</span>
+            <span class="s2">"WITH relationship, score LIMIT $k "</span>
         <span class="p">)</span>
 
 
@@ -702,6 +705,8 @@
 <span class="sd">            'NODE' or 'RELATIONSHIP'</span>
 <span class="sd">        pre_delete_collection: If True, will delete existing data if it exists.</span>
 <span class="sd">            (default: False). Useful for testing.</span>
+<span class="sd">        effective_search_ratio: Controls the candidate pool size by multiplying $k</span>
+<span class="sd">            to balance query accuracy and performance.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        .. code-block:: python</span>
@@ -830,6 +835,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">retrieval_query</span> <span class="o">=</span> <span class="n">retrieval_query</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">search_type</span> <span class="o">=</span> <span class="n">search_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_index_type</span> <span class="o">=</span> <span class="n">index_type</span>
+
         <span class="c1"># Calculate embedding dimension</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">embedding_dimension</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">embedding</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="s2">"foo"</span><span class="p">))</span>
 
@@ -895,21 +901,23 @@
                         <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">code</span>
                         <span class="o">==</span> <span class="s2">"Neo.DatabaseError.Transaction.TransactionStartFailed"</span>
                     <span class="p">)</span>
-                    <span class="ow">and</span> <span class="s2">"in an implicit transaction"</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">message</span>  <span class="c1"># type: ignore</span>
+                    <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">message</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="ow">and</span> <span class="s2">"in an implicit transaction"</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">message</span>
                 <span class="p">)</span>
                 <span class="ow">or</span> <span class="p">(</span>  <span class="c1"># isPeriodicCommitError</span>
                     <span class="n">e</span><span class="o">.</span><span class="n">code</span> <span class="o">==</span> <span class="s2">"Neo.ClientError.Statement.SemanticError"</span>
+                    <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">message</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                     <span class="ow">and</span> <span class="p">(</span>
-                        <span class="s2">"in an open transaction is not possible"</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">message</span>  <span class="c1"># type: ignore</span>
-                        <span class="ow">or</span> <span class="s2">"tried to execute in an explicit transaction"</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">message</span>  <span class="c1"># type: ignore</span>
+                        <span class="s2">"in an open transaction is not possible"</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">message</span>
+                        <span class="ow">or</span> <span class="s2">"tried to execute in an explicit transaction"</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">message</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
             <span class="p">):</span>
                 <span class="k">raise</span>
         <span class="c1"># Fallback to allow implicit transactions</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_driver</span><span class="o">.</span><span class="n">session</span><span class="p">(</span><span class="n">database</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_database</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">Query</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">query</span><span class="p">),</span> <span class="n">params</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">data</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]</span></div>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">Query</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">query</span><span class="p">),</span> <span class="n">params</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">data</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="Neo4jVector.verify_version">
@@ -1254,6 +1262,7 @@
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
         <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">effective_search_ratio</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Run similarity search with Neo4jVector.</span>
@@ -1266,7 +1275,9 @@
 <span class="sd">            filter (Optional[Dict[str, Any]]): Dictionary of argument(s) to</span>
 <span class="sd">                    filter on metadata.</span>
 <span class="sd">                Defaults to None.</span>
-
+<span class="sd">            effective_search_ratio (int): Controls the candidate pool size</span>
+<span class="sd">               by multiplying $k to balance query accuracy and performance.</span>
+<span class="sd">               Defaults to 1.</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            List of Documents most similar to the query.</span>
 <span class="sd">        """</span>
@@ -1277,6 +1288,7 @@
             <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
             <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
             <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
+            <span class="n">effective_search_ratio</span><span class="o">=</span><span class="n">effective_search_ratio</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span></div>
 
@@ -1289,6 +1301,7 @@
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
         <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">effective_search_ratio</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Return docs most similar to query.</span>
@@ -1301,6 +1314,9 @@
 <span class="sd">            filter (Optional[Dict[str, Any]]): Dictionary of argument(s) to</span>
 <span class="sd">                    filter on metadata.</span>
 <span class="sd">                Defaults to None.</span>
+<span class="sd">            effective_search_ratio (int): Controls the candidate pool size</span>
+<span class="sd">               by multiplying $k to balance query accuracy and performance.</span>
+<span class="sd">               Defaults to 1.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of Documents most similar to the query and score for each</span>
@@ -1312,6 +1328,7 @@
             <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
             <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
             <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
+            <span class="n">effective_search_ratio</span><span class="o">=</span><span class="n">effective_search_ratio</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">docs</span></div>
@@ -1325,6 +1342,7 @@
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
+        <span class="n">effective_search_ratio</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""</span>
@@ -1345,6 +1363,9 @@
 <span class="sd">                Defaults to None.</span>
 <span class="sd">            params (Dict[str, Any]): The search params for the index type.</span>
 <span class="sd">                Defaults to empty dict.</span>
+<span class="sd">            effective_search_ratio (int): Controls the candidate pool size</span>
+<span class="sd">               by multiplying $k to balance query accuracy and performance.</span>
+<span class="sd">               Defaults to 1.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List[Tuple[Document, float]]: A list of tuples, each containing</span>
@@ -1430,6 +1451,7 @@
             <span class="s2">"embedding"</span><span class="p">:</span> <span class="n">embedding</span><span class="p">,</span>
             <span class="s2">"keyword_index"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyword_index_name</span><span class="p">,</span>
             <span class="s2">"query"</span><span class="p">:</span> <span class="n">remove_lucene_chars</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">"query"</span><span class="p">]),</span>
+            <span class="s2">"ef"</span><span class="p">:</span> <span class="n">effective_search_ratio</span><span class="p">,</span>
             <span class="o">**</span><span class="n">params</span><span class="p">,</span>
             <span class="o">**</span><span class="n">filter_params</span><span class="p">,</span>
         <span class="p">}</span>
@@ -1488,6 +1510,7 @@
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
+        <span class="n">effective_search_ratio</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Return docs most similar to embedding vector.</span>
@@ -1505,7 +1528,12 @@
 <span class="sd">            List of Documents most similar to the query vector.</span>
 <span class="sd">        """</span>
         <span class="n">docs_and_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_with_score_by_vector</span><span class="p">(</span>
-            <span class="n">embedding</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+            <span class="n">embedding</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
+            <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+            <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+            <span class="n">effective_search_ratio</span><span class="o">=</span><span class="n">effective_search_ratio</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">doc</span> <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">docs_and_scores</span><span class="p">]</span></div>
 
