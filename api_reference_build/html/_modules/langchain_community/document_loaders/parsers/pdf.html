@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 13, 2024" name="docbuild:last-update"/>
+<meta content="Dec 14, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -476,17 +476,39 @@
 
         <span class="n">images</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="k">for</span> <span class="n">img</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="n">get_image</span><span class="p">,</span> <span class="n">page</span><span class="p">))):</span>
-            <span class="k">if</span> <span class="n">img</span><span class="o">.</span><span class="n">stream</span><span class="p">[</span><span class="s2">"Filter"</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">_PDF_FILTER_WITHOUT_LOSS</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">img</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="n">get_image</span><span class="p">,</span> <span class="n">page</span><span class="p">)):</span>
+            <span class="n">img_filter</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">stream</span><span class="p">[</span><span class="s2">"Filter"</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">img_filter</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">filter_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">img_filter</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">filter_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">img_filter</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+
+            <span class="n">without_loss</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="n">name</span> <span class="ow">in</span> <span class="n">_PDF_FILTER_WITHOUT_LOSS</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">filter_names</span>
+            <span class="p">)</span>
+            <span class="n">with_loss</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="n">_PDF_FILTER_WITH_LOSS</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">filter_names</span><span class="p">)</span>
+            <span class="n">non_matching</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">filter_names</span><span class="p">}</span> <span class="o">-</span> <span class="p">{</span>
+                <span class="o">*</span><span class="n">_PDF_FILTER_WITHOUT_LOSS</span><span class="p">,</span>
+                <span class="o">*</span><span class="n">_PDF_FILTER_WITH_LOSS</span><span class="p">,</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="n">without_loss</span> <span class="ow">and</span> <span class="n">with_loss</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s2">"Image has both lossy and lossless filters. Defaulting to lossless"</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">non_matching</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown PDF Filter(s): </span><span class="si">{</span><span class="n">non_matching</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">without_loss</span><span class="p">:</span>
                 <span class="n">images</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">get_data</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
                         <span class="n">img</span><span class="o">.</span><span class="n">stream</span><span class="p">[</span><span class="s2">"Height"</span><span class="p">],</span> <span class="n">img</span><span class="o">.</span><span class="n">stream</span><span class="p">[</span><span class="s2">"Width"</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
-            <span class="k">elif</span> <span class="n">img</span><span class="o">.</span><span class="n">stream</span><span class="p">[</span><span class="s2">"Filter"</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">_PDF_FILTER_WITH_LOSS</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">with_loss</span><span class="p">:</span>
                 <span class="n">images</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">get_data</span><span class="p">())</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"Unknown PDF Filter!"</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="n">extract_from_images_with_rapidocr</span><span class="p">(</span><span class="n">images</span><span class="p">)</span></div>
 
 

@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 13, 2024" name="docbuild:last-update"/>
+<meta content="Dec 14, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -385,8 +385,6 @@
         <span class="c1"># and prevent the user from getting a cryptic error later on.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_content_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_content_key</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_metadata_func</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sample</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
             <span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_text</span><span class="p">(</span><span class="n">sample</span><span class="o">=</span><span class="n">sample</span><span class="p">)</span>
@@ -406,7 +404,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">content</span> <span class="o">=</span> <span class="n">sample</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_text_content</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_text_content</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">content</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Expected page_content is string, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">content</span><span class="p">)</span><span class="si">}</span><span class="s2"> instead. </span><span class="se">\</span>
 <span class="s2">                    Set `text_content=False` if the desired input for </span><span class="se">\</span>
@@ -431,7 +429,13 @@
 <span class="sd">        :return:</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_func</span><span class="p">(</span><span class="n">sample</span><span class="p">,</span> <span class="n">additional_fields</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_func</span><span class="p">(</span><span class="n">sample</span><span class="p">,</span> <span class="n">additional_fields</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Expected the metadata_func to return a dict but got </span><span class="se">\</span>
+<span class="s2">                                `</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="si">}</span><span class="s2">`"</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="n">result</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">additional_fields</span>
 
@@ -460,19 +464,7 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Expected the jq schema to result in a list of objects (dict) </span><span class="se">\</span>
 <span class="s2">                    with the key `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_content_key</span><span class="si">}</span><span class="s2">` which should be parsable by jq"</span>
-            <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_validate_metadata_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Check if the metadata_func output is valid"""</span>
-
-        <span class="n">sample</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">sample_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_func</span><span class="p">(</span><span class="n">sample</span><span class="p">,</span> <span class="p">{})</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_metadata</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Expected the metadata_func to return a dict but got </span><span class="se">\</span>
-<span class="s2">                        `</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">sample_metadata</span><span class="p">)</span><span class="si">}</span><span class="s2">`"</span>
-                <span class="p">)</span></div>
+            <span class="p">)</span></div>
 
 </pre></div>
 </article>

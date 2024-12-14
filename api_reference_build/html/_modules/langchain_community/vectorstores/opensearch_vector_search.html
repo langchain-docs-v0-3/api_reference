@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 13, 2024" name="docbuild:last-update"/>
+<meta content="Dec 14, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -242,6 +242,7 @@
 <span class="n">SCRIPT_SCORING_SEARCH</span> <span class="o">=</span> <span class="s2">"script_scoring"</span>
 <span class="n">PAINLESS_SCRIPTING_SEARCH</span> <span class="o">=</span> <span class="s2">"painless_scripting"</span>
 <span class="n">MATCH_ALL_QUERY</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"match_all"</span><span class="p">:</span> <span class="p">{}}</span>  <span class="c1"># type: Dict</span>
+<span class="n">HYBRID_SEARCH</span> <span class="o">=</span> <span class="s2">"hybrid_search"</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">opensearchpy</span> <span class="kn">import</span> <span class="n">AsyncOpenSearch</span><span class="p">,</span> <span class="n">OpenSearch</span>
@@ -590,6 +591,65 @@
             <span class="p">}</span>
         <span class="p">},</span>
     <span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">_default_hybrid_search_query</span><span class="p">(</span>
+    <span class="n">query_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query_vector</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Returns payload for performing hybrid search for given options.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        query_text: The query text to search for.</span>
+<span class="sd">        query_vector: The embedding vector (query) to search for.</span>
+<span class="sd">        k: Number of Documents to return. Defaults to 4.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: The payload for hybrid search.</span>
+<span class="sd">    """</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"_source"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"exclude"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"vector_field"</span><span class="p">]},</span>
+        <span class="s2">"query"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"hybrid"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"queries"</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s2">"match"</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">"text"</span><span class="p">:</span> <span class="p">{</span>
+                                <span class="s2">"query"</span><span class="p">:</span> <span class="n">query_text</span><span class="p">,</span>
+                            <span class="p">}</span>
+                        <span class="p">}</span>
+                    <span class="p">},</span>
+                    <span class="p">{</span><span class="s2">"knn"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"vector_field"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"vector"</span><span class="p">:</span> <span class="n">query_vector</span><span class="p">,</span> <span class="s2">"k"</span><span class="p">:</span> <span class="n">k</span><span class="p">}}},</span>
+                <span class="p">]</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="s2">"size"</span><span class="p">:</span> <span class="n">k</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">payload</span>
+
+
+<span class="k">def</span> <span class="nf">_hybrid_search_query_with_post_filter</span><span class="p">(</span>
+    <span class="n">query_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">query_vector</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">post_filter</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Returns payload for performing hybrid search with post filter.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        query_text: The query text to search for.</span>
+<span class="sd">        query_vector: The embedding vector to search for.</span>
+<span class="sd">        k: Number of Documents to return.</span>
+<span class="sd">        post_filter: The post filter to apply.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: The payload for hybrid search with post filter.</span>
+<span class="sd">    """</span>
+    <span class="n">search_query</span> <span class="o">=</span> <span class="n">_default_hybrid_search_query</span><span class="p">(</span><span class="n">query_text</span><span class="p">,</span> <span class="n">query_vector</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+
+    <span class="n">search_query</span><span class="p">[</span><span class="s2">"post_filter"</span><span class="p">]</span> <span class="o">=</span> <span class="n">post_filter</span>
+
+    <span class="k">return</span> <span class="n">search_query</span>
 
 
 <div class="viewcode-block" id="OpenSearchVectorSearch">
@@ -962,6 +1022,131 @@
         <span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="OpenSearchVectorSearch.configure_search_pipelines">
+<a class="viewcode-back" href="../../../community/vectorstores/langchain_community.vectorstores.opensearch_vector_search.OpenSearchVectorSearch.html#langchain_community.vectorstores.opensearch_vector_search.OpenSearchVectorSearch.configure_search_pipelines">[docs]</a>
+    <span class="k">def</span> <span class="nf">configure_search_pipelines</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">pipeline_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">keyword_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.7</span><span class="p">,</span>
+        <span class="n">vector_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Configures a search pipeline for hybrid search.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            pipeline_name: Name of the pipeline</span>
+<span class="sd">            keyword_weight: Weight for keyword search</span>
+<span class="sd">            vector_weight: Weight for vector search</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            response: Acknowledgement of the pipeline creation.</span>
+<span class="sd">            (if there is any error while configuring the pipeline, it will return None)</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            Exception: If an error occurs</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">pipeline_name</span><span class="o">.</span><span class="n">isidentifier</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid pipeline name: </span><span class="si">{</span><span class="n">pipeline_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="n">path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"/_search/pipeline/</span><span class="si">{</span><span class="n">pipeline_name</span><span class="si">}</span><span class="s2">"</span>
+
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Post processor for hybrid search"</span><span class="p">,</span>
+            <span class="s2">"phase_results_processors"</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">"normalization-processor"</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">"normalization"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"technique"</span><span class="p">:</span> <span class="s2">"min_max"</span><span class="p">},</span>
+                        <span class="s2">"combination"</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">"technique"</span><span class="p">:</span> <span class="s2">"arithmetic_mean"</span><span class="p">,</span>
+                            <span class="s2">"parameters"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"weights"</span><span class="p">:</span> <span class="p">[</span><span class="n">keyword_weight</span><span class="p">,</span> <span class="n">vector_weight</span><span class="p">]},</span>
+                        <span class="p">},</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">],</span>
+        <span class="p">}</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">perform_request</span><span class="p">(</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"PUT"</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">payload</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span></div>
+
+
+<div class="viewcode-block" id="OpenSearchVectorSearch.search_pipeline_exists">
+<a class="viewcode-back" href="../../../community/vectorstores/langchain_community.vectorstores.opensearch_vector_search.OpenSearchVectorSearch.html#langchain_community.vectorstores.opensearch_vector_search.OpenSearchVectorSearch.search_pipeline_exists">[docs]</a>
+    <span class="k">def</span> <span class="nf">search_pipeline_exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pipeline_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Checks if a search pipeline exists.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pipeline_name: Name of the pipeline</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True if the pipeline exists, False otherwise</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            Exception: If an error occurs</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; search_pipeline_exists("my_pipeline_1")</span>
+<span class="sd">            True</span>
+<span class="sd">            &gt;&gt;&gt; search_pipeline_exists("my_pipeline_2")</span>
+<span class="sd">            False</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">pipeline_name</span><span class="o">.</span><span class="n">isidentifier</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid pipeline name: </span><span class="si">{</span><span class="n">pipeline_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="n">existed_pipelines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">perform_request</span><span class="p">(</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"GET"</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="s2">"/_search/pipeline/"</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pipeline_name</span> <span class="ow">in</span> <span class="n">existed_pipelines</span></div>
+
+
+<div class="viewcode-block" id="OpenSearchVectorSearch.get_search_pipeline_info">
+<a class="viewcode-back" href="../../../community/vectorstores/langchain_community.vectorstores.opensearch_vector_search.OpenSearchVectorSearch.html#langchain_community.vectorstores.opensearch_vector_search.OpenSearchVectorSearch.get_search_pipeline_info">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_search_pipeline_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pipeline_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Get information about a search pipeline.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pipeline_name: Name of the pipeline</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: Information about the pipeline</span>
+<span class="sd">            None: If pipeline does not exist</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            Exception: If an error occurs</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; get_search_pipeline_info("my_pipeline_1")</span>
+<span class="sd">            {'search_pipeline_1': {</span>
+<span class="sd">                "description": "Post processor for hybrid search",</span>
+<span class="sd">                "phase_results_processors": [</span>
+<span class="sd">                    {</span>
+<span class="sd">                        "normalization-processor": {</span>
+<span class="sd">                            "normalization": {"technique": "min_max"},</span>
+<span class="sd">                            "combination": {</span>
+<span class="sd">                                "technique": "arithmetic_mean",</span>
+<span class="sd">                                "parameters": {"weights": [0.7, 0.3]}</span>
+<span class="sd">                            }</span>
+<span class="sd">                        }</span>
+<span class="sd">                    }</span>
+<span class="sd">                ]</span>
+<span class="sd">            }</span>
+<span class="sd">            }</span>
+<span class="sd">            &gt;&gt;&gt; get_search_pipeline_info("my_pipeline_2")</span>
+<span class="sd">            None</span>
+<span class="sd">        """</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">pipeline_name</span><span class="o">.</span><span class="n">isidentifier</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid pipeline name: </span><span class="si">{</span><span class="n">pipeline_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">perform_request</span><span class="p">(</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"GET"</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"/_search/pipeline/</span><span class="si">{</span><span class="n">pipeline_name</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span></div>
+
+
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_identity_fn</span><span class="p">(</span><span class="n">score</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">score</span>
@@ -1094,6 +1279,8 @@
 <span class="sd">        Optional Args:</span>
 <span class="sd">            same as `similarity_search`</span>
 <span class="sd">        """</span>
+        <span class="c1"># added query_text to kwargs for Hybrid Search</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"query_text"</span><span class="p">]</span> <span class="o">=</span> <span class="n">query</span>
         <span class="n">embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_function</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_with_score_by_vector</span><span class="p">(</span>
             <span class="n">embedding</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">score_threshold</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
@@ -1285,6 +1472,38 @@
                 <span class="n">vector_field</span><span class="p">,</span>
                 <span class="n">score_threshold</span><span class="o">=</span><span class="n">score_threshold</span><span class="p">,</span>
             <span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">search_type</span> <span class="o">==</span> <span class="n">HYBRID_SEARCH</span><span class="p">:</span>
+            <span class="n">search_pipeline</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"search_pipeline"</span><span class="p">)</span>
+            <span class="n">post_filter</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"post_filter"</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">query_text</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"query_text"</span><span class="p">)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"/</span><span class="si">{</span><span class="n">index_name</span><span class="si">}</span><span class="s2">/_search?search_pipeline=</span><span class="si">{</span><span class="n">search_pipeline</span><span class="si">}</span><span class="s2">"</span>
+
+            <span class="k">if</span> <span class="n">query_text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"query_text must be provided for hybrid search"</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">search_pipeline</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"search_pipeline must be provided for hybrid search"</span><span class="p">)</span>
+
+            <span class="c1"># embedding the query_text</span>
+            <span class="n">embeded_query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_function</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query_text</span><span class="p">)</span>
+
+            <span class="c1"># if post filter is provided</span>
+            <span class="k">if</span> <span class="n">post_filter</span> <span class="o">!=</span> <span class="p">{}:</span>
+                <span class="c1"># hybrid search with post filter</span>
+                <span class="n">payload</span> <span class="o">=</span> <span class="n">_hybrid_search_query_with_post_filter</span><span class="p">(</span>
+                    <span class="n">query_text</span><span class="p">,</span> <span class="n">embeded_query</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">post_filter</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># hybrid search without post filter</span>
+                <span class="n">payload</span> <span class="o">=</span> <span class="n">_default_hybrid_search_query</span><span class="p">(</span><span class="n">query_text</span><span class="p">,</span> <span class="n">embeded_query</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">perform_request</span><span class="p">(</span>
+                <span class="n">method</span><span class="o">=</span><span class="s2">"GET"</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">payload</span>
+            <span class="p">)</span>
+
+            <span class="k">return</span> <span class="p">[</span><span class="n">hit</span> <span class="k">for</span> <span class="n">hit</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">"hits"</span><span class="p">][</span><span class="s2">"hits"</span><span class="p">]]</span>
+
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid `search_type` provided as an argument"</span><span class="p">)</span>
 

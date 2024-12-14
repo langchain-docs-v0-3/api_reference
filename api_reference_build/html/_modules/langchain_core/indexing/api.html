@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 13, 2024" name="docbuild:last-update"/>
+<meta content="Dec 14, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -242,6 +242,7 @@
 
 <span class="kn">from</span> <span class="nn">langchain_core.document_loaders.base</span> <span class="kn">import</span> <span class="n">BaseLoader</span>
 <span class="kn">from</span> <span class="nn">langchain_core.documents</span> <span class="kn">import</span> <span class="n">Document</span>
+<span class="kn">from</span> <span class="nn">langchain_core.exceptions</span> <span class="kn">import</span> <span class="n">LangChainException</span>
 <span class="kn">from</span> <span class="nn">langchain_core.indexing.base</span> <span class="kn">import</span> <span class="n">DocumentIndex</span><span class="p">,</span> <span class="n">RecordManager</span>
 <span class="kn">from</span> <span class="nn">langchain_core.vectorstores</span> <span class="kn">import</span> <span class="n">VectorStore</span>
 
@@ -395,6 +396,35 @@
             <span class="k">yield</span> <span class="n">hashed_doc</span>
 
 
+<div class="viewcode-block" id="IndexingException">
+<a class="viewcode-back" href="../../../core/indexing/langchain_core.indexing.api.IndexingException.html#langchain_core.indexing.api.IndexingException">[docs]</a>
+<span class="k">class</span> <span class="nc">IndexingException</span><span class="p">(</span><span class="n">LangChainException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Raised when an indexing operation fails."""</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_delete</span><span class="p">(</span>
+    <span class="n">vector_store</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">VectorStore</span><span class="p">,</span> <span class="n">DocumentIndex</span><span class="p">],</span>
+    <span class="n">ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vector_store</span><span class="p">,</span> <span class="n">VectorStore</span><span class="p">):</span>
+        <span class="n">delete_ok</span> <span class="o">=</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">delete_ok</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">delete_ok</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"The delete operation to VectorStore failed."</span>
+            <span class="k">raise</span> <span class="n">IndexingException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vector_store</span><span class="p">,</span> <span class="n">DocumentIndex</span><span class="p">):</span>
+        <span class="n">delete_response</span> <span class="o">=</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"num_failed"</span> <span class="ow">in</span> <span class="n">delete_response</span> <span class="ow">and</span> <span class="n">delete_response</span><span class="p">[</span><span class="s2">"num_failed"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"The delete operation to DocumentIndex failed."</span>
+            <span class="k">raise</span> <span class="n">IndexingException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Vectorstore should be either a VectorStore or a DocumentIndex. "</span>
+            <span class="sa">f</span><span class="s2">"Got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">vector_store</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+
 <span class="c1"># PUBLIC API</span>
 
 
@@ -422,7 +452,7 @@
     <span class="n">vector_store</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">VectorStore</span><span class="p">,</span> <span class="n">DocumentIndex</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
-    <span class="n">cleanup</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"incremental"</span><span class="p">,</span> <span class="s2">"full"</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">cleanup</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"incremental"</span><span class="p">,</span> <span class="s2">"full"</span><span class="p">,</span> <span class="s2">"scoped_full"</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">source_id_key</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Document</span><span class="p">],</span> <span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">cleanup_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_000</span><span class="p">,</span>
     <span class="n">force_update</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -440,7 +470,7 @@
 <span class="sd">     are not able to specify the uid of the document.</span>
 
 <span class="sd">    IMPORTANT:</span>
-<span class="sd">       * if auto_cleanup is set to True, the loader should be returning</span>
+<span class="sd">       * In full mode, the loader should be returning</span>
 <span class="sd">         the entire dataset, and not just a subset of the dataset.</span>
 <span class="sd">         Otherwise, the auto_cleanup will remove documents that it is not</span>
 <span class="sd">         supposed to.</span>
@@ -452,6 +482,11 @@
 <span class="sd">         chunks, and we index them using a batch size of 5, we'll have 3 batches</span>
 <span class="sd">         all with the same source id. In general, to avoid doing too much</span>
 <span class="sd">         redundant work select as big a batch size as possible.</span>
+<span class="sd">        * The `scoped_full` mode is suitable if determining an appropriate batch size</span>
+<span class="sd">          is challenging or if your data loader cannot return the entire dataset at</span>
+<span class="sd">          once. This mode keeps track of source IDs in memory, which should be fine</span>
+<span class="sd">          for most use cases. If your dataset is large (10M+ docs), you will likely</span>
+<span class="sd">          need to parallelize the indexing process regardless.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        docs_source: Data loader or iterable of documents to index.</span>
@@ -460,16 +495,19 @@
 <span class="sd">        vector_store: VectorStore or DocumentIndex to index the documents into.</span>
 <span class="sd">        batch_size: Batch size to use when indexing. Default is 100.</span>
 <span class="sd">        cleanup: How to handle clean up of documents. Default is None.</span>
-<span class="sd">            - Incremental: Cleans up all documents that haven't been updated AND</span>
+<span class="sd">            - incremental: Cleans up all documents that haven't been updated AND</span>
 <span class="sd">                           that are associated with source ids that were seen</span>
 <span class="sd">                           during indexing.</span>
 <span class="sd">                           Clean up is done continuously during indexing helping</span>
 <span class="sd">                           to minimize the probability of users seeing duplicated</span>
 <span class="sd">                           content.</span>
-<span class="sd">            - Full: Delete all documents that have not been returned by the loader</span>
+<span class="sd">            - full: Delete all documents that have not been returned by the loader</span>
 <span class="sd">                    during this run of indexing.</span>
 <span class="sd">                    Clean up runs after all documents have been indexed.</span>
 <span class="sd">                    This means that users may see duplicated content during indexing.</span>
+<span class="sd">            - scoped_full: Similar to Full, but only deletes all documents</span>
+<span class="sd">                           that haven't been updated AND that are associated with</span>
+<span class="sd">                           source ids that were seen during indexing.</span>
 <span class="sd">            - None: Do not delete any documents.</span>
 <span class="sd">        source_id_key: Optional key that helps identify the original source</span>
 <span class="sd">            of the document. Default is None.</span>
@@ -495,16 +533,22 @@
 <span class="sd">        ValueError: If vectorstore does not have</span>
 <span class="sd">            "delete" and "add_documents" required methods.</span>
 <span class="sd">        ValueError: If source_id_key is not None, but is not a string or callable.</span>
+
+<span class="sd">    .. version_modified:: 0.3.25</span>
+
+<span class="sd">        * Added `scoped_full` cleanup mode.</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="n">cleanup</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"incremental"</span><span class="p">,</span> <span class="s2">"full"</span><span class="p">,</span> <span class="kc">None</span><span class="p">}:</span>
+    <span class="k">if</span> <span class="n">cleanup</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"incremental"</span><span class="p">,</span> <span class="s2">"full"</span><span class="p">,</span> <span class="s2">"scoped_full"</span><span class="p">,</span> <span class="kc">None</span><span class="p">}:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"cleanup should be one of 'incremental', 'full' or None. "</span>
+            <span class="sa">f</span><span class="s2">"cleanup should be one of 'incremental', 'full', 'scoped_full' or None. "</span>
             <span class="sa">f</span><span class="s2">"Got </span><span class="si">{</span><span class="n">cleanup</span><span class="si">}</span><span class="s2">."</span>
         <span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"incremental"</span> <span class="ow">and</span> <span class="n">source_id_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Source id key is required when cleanup mode is incremental."</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"incremental"</span> <span class="ow">or</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"scoped_full"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">source_id_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"Source id key is required when cleanup mode is incremental or scoped_full."</span>
+        <span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="n">destination</span> <span class="o">=</span> <span class="n">vector_store</span>  <span class="c1"># Renaming internally for clarity</span>
@@ -551,6 +595,7 @@
     <span class="n">num_skipped</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">num_updated</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">num_deleted</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">scoped_full_cleanup_source_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
     <span class="k">for</span> <span class="n">doc_batch</span> <span class="ow">in</span> <span class="n">_batch</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">doc_iterator</span><span class="p">):</span>
         <span class="n">hashed_docs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
@@ -563,17 +608,20 @@
             <span class="n">source_id_assigner</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">hashed_docs</span>
         <span class="p">]</span>
 
-        <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"incremental"</span><span class="p">:</span>
-            <span class="c1"># If the cleanup mode is incremental, source ids are required.</span>
+        <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"incremental"</span> <span class="ow">or</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"scoped_full"</span><span class="p">:</span>
+            <span class="c1"># source ids are required.</span>
             <span class="k">for</span> <span class="n">source_id</span><span class="p">,</span> <span class="n">hashed_doc</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">source_ids</span><span class="p">,</span> <span class="n">hashed_docs</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">source_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="s2">"Source ids are required when cleanup mode is incremental. "</span>
+                        <span class="sa">f</span><span class="s2">"Source ids are required when cleanup mode is "</span>
+                        <span class="sa">f</span><span class="s2">"incremental or scoped_full. "</span>
                         <span class="sa">f</span><span class="s2">"Document that starts with "</span>
                         <span class="sa">f</span><span class="s2">"content: </span><span class="si">{</span><span class="n">hashed_doc</span><span class="o">.</span><span class="n">page_content</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span><span class="si">}</span><span class="s2"> was not assigned "</span>
                         <span class="sa">f</span><span class="s2">"as source id."</span>
                     <span class="p">)</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"scoped_full"</span><span class="p">:</span>
+                    <span class="n">scoped_full_cleanup_source_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">source_id</span><span class="p">)</span>
             <span class="c1"># source ids cannot be None after for loop above.</span>
             <span class="n">source_ids</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">source_ids</span><span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
 
@@ -633,30 +681,35 @@
 
             <span class="c1"># mypy isn't good enough to determine that source ids cannot be None</span>
             <span class="c1"># here due to a check that's happening above, so we check again.</span>
-            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">source_id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">source_id</span> <span class="ow">in</span> <span class="n">source_ids</span><span class="p">):</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Source ids cannot be if cleanup=='incremental'."</span>
-                <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">source_id</span> <span class="ow">in</span> <span class="n">source_ids</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">source_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="s2">"source_id cannot be None at this point. "</span>
+                        <span class="s2">"Reached unreachable code."</span>
+                    <span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
-            <span class="n">indexed_source_ids</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
-                <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="p">[</span><span class="n">source_id_assigner</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">docs_to_index</span><span class="p">]</span>
-            <span class="p">)</span>
+            <span class="n">_source_ids</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">source_ids</span><span class="p">)</span>
 
             <span class="n">uids_to_delete</span> <span class="o">=</span> <span class="n">record_manager</span><span class="o">.</span><span class="n">list_keys</span><span class="p">(</span>
-                <span class="n">group_ids</span><span class="o">=</span><span class="n">indexed_source_ids</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="n">index_start_dt</span>
+                <span class="n">group_ids</span><span class="o">=</span><span class="n">_source_ids</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="n">index_start_dt</span>
             <span class="p">)</span>
-            <span class="k">if</span> <span class="n">indexed_source_ids</span> <span class="ow">and</span> <span class="n">uids_to_delete</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">uids_to_delete</span><span class="p">:</span>
                 <span class="c1"># Then delete from vector store.</span>
-                <span class="n">destination</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">uids_to_delete</span><span class="p">)</span>
+                <span class="n">_delete</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="n">uids_to_delete</span><span class="p">)</span>
                 <span class="c1"># First delete from record store.</span>
                 <span class="n">record_manager</span><span class="o">.</span><span class="n">delete_keys</span><span class="p">(</span><span class="n">uids_to_delete</span><span class="p">)</span>
                 <span class="n">num_deleted</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">uids_to_delete</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"full"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"full"</span> <span class="ow">or</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"scoped_full"</span><span class="p">:</span>
+        <span class="n">delete_group_ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"scoped_full"</span><span class="p">:</span>
+            <span class="n">delete_group_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">scoped_full_cleanup_source_ids</span><span class="p">)</span>
         <span class="k">while</span> <span class="n">uids_to_delete</span> <span class="o">:=</span> <span class="n">record_manager</span><span class="o">.</span><span class="n">list_keys</span><span class="p">(</span>
-            <span class="n">before</span><span class="o">=</span><span class="n">index_start_dt</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">cleanup_batch_size</span>
+            <span class="n">group_ids</span><span class="o">=</span><span class="n">delete_group_ids</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="n">index_start_dt</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">cleanup_batch_size</span>
         <span class="p">):</span>
             <span class="c1"># First delete from record store.</span>
-            <span class="n">destination</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">uids_to_delete</span><span class="p">)</span>
+            <span class="n">_delete</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="n">uids_to_delete</span><span class="p">)</span>
             <span class="c1"># Then delete from record manager.</span>
             <span class="n">record_manager</span><span class="o">.</span><span class="n">delete_keys</span><span class="p">(</span><span class="n">uids_to_delete</span><span class="p">)</span>
             <span class="n">num_deleted</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">uids_to_delete</span><span class="p">)</span>
@@ -677,6 +730,28 @@
         <span class="k">yield</span> <span class="n">item</span>
 
 
+<span class="k">async</span> <span class="k">def</span> <span class="nf">_adelete</span><span class="p">(</span>
+    <span class="n">vector_store</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">VectorStore</span><span class="p">,</span> <span class="n">DocumentIndex</span><span class="p">],</span>
+    <span class="n">ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vector_store</span><span class="p">,</span> <span class="n">VectorStore</span><span class="p">):</span>
+        <span class="n">delete_ok</span> <span class="o">=</span> <span class="k">await</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">adelete</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">delete_ok</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">delete_ok</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"The delete operation to VectorStore failed."</span>
+            <span class="k">raise</span> <span class="n">IndexingException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vector_store</span><span class="p">,</span> <span class="n">DocumentIndex</span><span class="p">):</span>
+        <span class="n">delete_response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">adelete</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"num_failed"</span> <span class="ow">in</span> <span class="n">delete_response</span> <span class="ow">and</span> <span class="n">delete_response</span><span class="p">[</span><span class="s2">"num_failed"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"The delete operation to DocumentIndex failed."</span>
+            <span class="k">raise</span> <span class="n">IndexingException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Vectorstore should be either a VectorStore or a DocumentIndex. "</span>
+            <span class="sa">f</span><span class="s2">"Got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">vector_store</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="aindex">
 <a class="viewcode-back" href="../../../core/indexing/langchain_core.indexing.api.aindex.html#langchain_core.indexing.api.aindex">[docs]</a>
 <span class="k">async</span> <span class="k">def</span> <span class="nf">aindex</span><span class="p">(</span>
@@ -685,7 +760,7 @@
     <span class="n">vector_store</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">VectorStore</span><span class="p">,</span> <span class="n">DocumentIndex</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
-    <span class="n">cleanup</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"incremental"</span><span class="p">,</span> <span class="s2">"full"</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">cleanup</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"incremental"</span><span class="p">,</span> <span class="s2">"full"</span><span class="p">,</span> <span class="s2">"scoped_full"</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">source_id_key</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Document</span><span class="p">],</span> <span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">cleanup_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_000</span><span class="p">,</span>
     <span class="n">force_update</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -703,10 +778,23 @@
 <span class="sd">     are not able to specify the uid of the document.</span>
 
 <span class="sd">    IMPORTANT:</span>
-<span class="sd">       if auto_cleanup is set to True, the loader should be returning</span>
-<span class="sd">       the entire dataset, and not just a subset of the dataset.</span>
-<span class="sd">       Otherwise, the auto_cleanup will remove documents that it is not</span>
-<span class="sd">       supposed to.</span>
+<span class="sd">       * In full mode, the loader should be returning</span>
+<span class="sd">         the entire dataset, and not just a subset of the dataset.</span>
+<span class="sd">         Otherwise, the auto_cleanup will remove documents that it is not</span>
+<span class="sd">         supposed to.</span>
+<span class="sd">       * In incremental mode, if documents associated with a particular</span>
+<span class="sd">         source id appear across different batches, the indexing API</span>
+<span class="sd">         will do some redundant work. This will still result in the</span>
+<span class="sd">         correct end state of the index, but will unfortunately not be</span>
+<span class="sd">         100% efficient. For example, if a given document is split into 15</span>
+<span class="sd">         chunks, and we index them using a batch size of 5, we'll have 3 batches</span>
+<span class="sd">         all with the same source id. In general, to avoid doing too much</span>
+<span class="sd">         redundant work select as big a batch size as possible.</span>
+<span class="sd">       * The `scoped_full` mode is suitable if determining an appropriate batch size</span>
+<span class="sd">         is challenging or if your data loader cannot return the entire dataset at</span>
+<span class="sd">         once. This mode keeps track of source IDs in memory, which should be fine</span>
+<span class="sd">         for most use cases. If your dataset is large (10M+ docs), you will likely</span>
+<span class="sd">         need to parallelize the indexing process regardless.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        docs_source: Data loader or iterable of documents to index.</span>
@@ -715,15 +803,18 @@
 <span class="sd">        vector_store: VectorStore or DocumentIndex to index the documents into.</span>
 <span class="sd">        batch_size: Batch size to use when indexing. Default is 100.</span>
 <span class="sd">        cleanup: How to handle clean up of documents. Default is None.</span>
-<span class="sd">            - Incremental: Cleans up all documents that haven't been updated AND</span>
+<span class="sd">            - incremental: Cleans up all documents that haven't been updated AND</span>
 <span class="sd">                           that are associated with source ids that were seen</span>
 <span class="sd">                           during indexing.</span>
 <span class="sd">                           Clean up is done continuously during indexing helping</span>
 <span class="sd">                           to minimize the probability of users seeing duplicated</span>
 <span class="sd">                           content.</span>
-<span class="sd">            - Full: Delete all documents that haven to been returned by the loader.</span>
+<span class="sd">            - full: Delete all documents that haven to been returned by the loader.</span>
 <span class="sd">                    Clean up runs after all documents have been indexed.</span>
 <span class="sd">                    This means that users may see duplicated content during indexing.</span>
+<span class="sd">            - scoped_full: Similar to Full, but only deletes all documents</span>
+<span class="sd">                           that haven't been updated AND that are associated with</span>
+<span class="sd">                           source ids that were seen during indexing.</span>
 <span class="sd">            - None: Do not delete any documents.</span>
 <span class="sd">        source_id_key: Optional key that helps identify the original source</span>
 <span class="sd">            of the document. Default is None.</span>
@@ -749,17 +840,23 @@
 <span class="sd">        ValueError: If vectorstore does not have</span>
 <span class="sd">            "adelete" and "aadd_documents" required methods.</span>
 <span class="sd">        ValueError: If source_id_key is not None, but is not a string or callable.</span>
+
+<span class="sd">    .. version_modified:: 0.3.25</span>
+
+<span class="sd">        * Added `scoped_full` cleanup mode.</span>
 <span class="sd">    """</span>
 
-    <span class="k">if</span> <span class="n">cleanup</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"incremental"</span><span class="p">,</span> <span class="s2">"full"</span><span class="p">,</span> <span class="kc">None</span><span class="p">}:</span>
+    <span class="k">if</span> <span class="n">cleanup</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"incremental"</span><span class="p">,</span> <span class="s2">"full"</span><span class="p">,</span> <span class="s2">"scoped_full"</span><span class="p">,</span> <span class="kc">None</span><span class="p">}:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"cleanup should be one of 'incremental', 'full' or None. "</span>
+            <span class="sa">f</span><span class="s2">"cleanup should be one of 'incremental', 'full', 'scoped_full' or None. "</span>
             <span class="sa">f</span><span class="s2">"Got </span><span class="si">{</span><span class="n">cleanup</span><span class="si">}</span><span class="s2">."</span>
         <span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"incremental"</span> <span class="ow">and</span> <span class="n">source_id_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Source id key is required when cleanup mode is incremental."</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"incremental"</span> <span class="ow">or</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"scoped_full"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">source_id_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"Source id key is required when cleanup mode is incremental or scoped_full."</span>
+        <span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="n">destination</span> <span class="o">=</span> <span class="n">vector_store</span>  <span class="c1"># Renaming internally for clarity</span>
@@ -815,6 +912,7 @@
     <span class="n">num_skipped</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">num_updated</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">num_deleted</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">scoped_full_cleanup_source_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
     <span class="k">async</span> <span class="k">for</span> <span class="n">doc_batch</span> <span class="ow">in</span> <span class="n">_abatch</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">async_doc_iterator</span><span class="p">):</span>
         <span class="n">hashed_docs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
@@ -827,17 +925,20 @@
             <span class="n">source_id_assigner</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">hashed_docs</span>
         <span class="p">]</span>
 
-        <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"incremental"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"incremental"</span> <span class="ow">or</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"scoped_full"</span><span class="p">:</span>
             <span class="c1"># If the cleanup mode is incremental, source ids are required.</span>
             <span class="k">for</span> <span class="n">source_id</span><span class="p">,</span> <span class="n">hashed_doc</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">source_ids</span><span class="p">,</span> <span class="n">hashed_docs</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">source_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="s2">"Source ids are required when cleanup mode is incremental. "</span>
+                        <span class="sa">f</span><span class="s2">"Source ids are required when cleanup mode is "</span>
+                        <span class="sa">f</span><span class="s2">"incremental or scoped_full. "</span>
                         <span class="sa">f</span><span class="s2">"Document that starts with "</span>
                         <span class="sa">f</span><span class="s2">"content: </span><span class="si">{</span><span class="n">hashed_doc</span><span class="o">.</span><span class="n">page_content</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span><span class="si">}</span><span class="s2"> was not assigned "</span>
                         <span class="sa">f</span><span class="s2">"as source id."</span>
                     <span class="p">)</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"scoped_full"</span><span class="p">:</span>
+                    <span class="n">scoped_full_cleanup_source_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">source_id</span><span class="p">)</span>
             <span class="c1"># source ids cannot be None after for loop above.</span>
             <span class="n">source_ids</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">source_ids</span><span class="p">)</span>
 
@@ -897,30 +998,35 @@
 
             <span class="c1"># mypy isn't good enough to determine that source ids cannot be None</span>
             <span class="c1"># here due to a check that's happening above, so we check again.</span>
-            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">source_id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">source_id</span> <span class="ow">in</span> <span class="n">source_ids</span><span class="p">):</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Source ids cannot be if cleanup=='incremental'."</span>
-                <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">source_id</span> <span class="ow">in</span> <span class="n">source_ids</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">source_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="s2">"source_id cannot be None at this point. "</span>
+                        <span class="s2">"Reached unreachable code."</span>
+                    <span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
-            <span class="n">indexed_source_ids</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
-                <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="p">[</span><span class="n">source_id_assigner</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">docs_to_index</span><span class="p">]</span>
-            <span class="p">)</span>
+            <span class="n">_source_ids</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">source_ids</span><span class="p">)</span>
 
             <span class="n">uids_to_delete</span> <span class="o">=</span> <span class="k">await</span> <span class="n">record_manager</span><span class="o">.</span><span class="n">alist_keys</span><span class="p">(</span>
-                <span class="n">group_ids</span><span class="o">=</span><span class="n">indexed_source_ids</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="n">index_start_dt</span>
+                <span class="n">group_ids</span><span class="o">=</span><span class="n">_source_ids</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="n">index_start_dt</span>
             <span class="p">)</span>
-            <span class="k">if</span> <span class="n">indexed_source_ids</span> <span class="ow">and</span> <span class="n">uids_to_delete</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">uids_to_delete</span><span class="p">:</span>
                 <span class="c1"># Then delete from vector store.</span>
-                <span class="k">await</span> <span class="n">destination</span><span class="o">.</span><span class="n">adelete</span><span class="p">(</span><span class="n">uids_to_delete</span><span class="p">)</span>
+                <span class="k">await</span> <span class="n">_adelete</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="n">uids_to_delete</span><span class="p">)</span>
                 <span class="c1"># First delete from record store.</span>
                 <span class="k">await</span> <span class="n">record_manager</span><span class="o">.</span><span class="n">adelete_keys</span><span class="p">(</span><span class="n">uids_to_delete</span><span class="p">)</span>
                 <span class="n">num_deleted</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">uids_to_delete</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"full"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"full"</span> <span class="ow">or</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"scoped_full"</span><span class="p">:</span>
+        <span class="n">delete_group_ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"scoped_full"</span><span class="p">:</span>
+            <span class="n">delete_group_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">scoped_full_cleanup_source_ids</span><span class="p">)</span>
         <span class="k">while</span> <span class="n">uids_to_delete</span> <span class="o">:=</span> <span class="k">await</span> <span class="n">record_manager</span><span class="o">.</span><span class="n">alist_keys</span><span class="p">(</span>
-            <span class="n">before</span><span class="o">=</span><span class="n">index_start_dt</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">cleanup_batch_size</span>
+            <span class="n">group_ids</span><span class="o">=</span><span class="n">delete_group_ids</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="n">index_start_dt</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">cleanup_batch_size</span>
         <span class="p">):</span>
             <span class="c1"># First delete from record store.</span>
-            <span class="k">await</span> <span class="n">destination</span><span class="o">.</span><span class="n">adelete</span><span class="p">(</span><span class="n">uids_to_delete</span><span class="p">)</span>
+            <span class="k">await</span> <span class="n">_adelete</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="n">uids_to_delete</span><span class="p">)</span>
             <span class="c1"># Then delete from record manager.</span>
             <span class="k">await</span> <span class="n">record_manager</span><span class="o">.</span><span class="n">adelete_keys</span><span class="p">(</span><span class="n">uids_to_delete</span><span class="p">)</span>
             <span class="n">num_deleted</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">uids_to_delete</span><span class="p">)</span>

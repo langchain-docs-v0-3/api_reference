@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 13, 2024" name="docbuild:last-update"/>
+<meta content="Dec 14, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -278,21 +278,21 @@
             <span class="kn">import</span> <span class="nn">gliner_spacy</span>  <span class="c1"># type: ignore # noqa: F401</span>
         <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-                <span class="s2">"Could not import relik python package. "</span>
+                <span class="s2">"Could not import gliner-spacy python package. "</span>
                 <span class="s2">"Please install it with `pip install gliner-spacy`."</span>
             <span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">import</span> <span class="nn">spacy</span>  <span class="c1"># type: ignore</span>
         <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-                <span class="s2">"Could not import relik python package. "</span>
+                <span class="s2">"Could not import spacy python package. "</span>
                 <span class="s2">"Please install it with `pip install spacy`."</span>
             <span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">import</span> <span class="nn">glirel</span>  <span class="c1"># type: ignore # noqa: F401</span>
         <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-                <span class="s2">"Could not import relik python package. "</span>
+                <span class="s2">"Could not import gliner python package. "</span>
                 <span class="s2">"Please install it with `pip install gliner`."</span>
             <span class="p">)</span>
 
@@ -328,15 +328,17 @@
                 <span class="p">[(</span><span class="n">document</span><span class="o">.</span><span class="n">page_content</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">allowed_relationships</span><span class="p">)],</span> <span class="n">as_tuples</span><span class="o">=</span><span class="kc">True</span>
             <span class="p">)</span>
         <span class="p">)</span>
-        <span class="c1"># Convert nodes</span>
-        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ents</span><span class="p">:</span>
-            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">Node</span><span class="p">(</span>
-                    <span class="nb">id</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
-                    <span class="nb">type</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">label_</span><span class="p">,</span>
-                <span class="p">)</span>
+        <span class="c1"># Deduplicate nodes</span>
+        <span class="n">deduplicated_nodes</span> <span class="o">=</span> <span class="p">{(</span><span class="n">node</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">label_</span><span class="p">)</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ents</span><span class="p">}</span>
+
+        <span class="c1"># Step 2: Convert back to Node objects</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">Node</span><span class="p">(</span>
+                <span class="nb">id</span><span class="o">=</span><span class="n">node_text</span><span class="p">,</span>
+                <span class="nb">type</span><span class="o">=</span><span class="n">node_label</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="k">for</span> <span class="n">node_text</span><span class="p">,</span> <span class="n">node_label</span> <span class="ow">in</span> <span class="n">deduplicated_nodes</span>
+        <span class="p">]</span>
         <span class="c1"># Convert relationships</span>
         <span class="n">relationships</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">relations</span> <span class="o">=</span> <span class="n">docs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">relations</span>
