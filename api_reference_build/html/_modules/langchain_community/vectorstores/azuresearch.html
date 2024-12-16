@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 15, 2024" name="docbuild:last-update"/>
+<meta content="Dec 16, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -339,6 +339,21 @@
         <span class="n">VectorSearchProfile</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="k">class</span> <span class="nc">AzureBearerTokenCredential</span><span class="p">(</span><span class="n">TokenCredential</span><span class="p">):</span>
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="c1"># set the expiry to an hour from now.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="o">=</span> <span class="n">AccessToken</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span> <span class="o">+</span> <span class="mi">3600</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">get_token</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">scopes</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="n">claims</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">tenant_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">enable_cae</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AccessToken</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_token</span>
+
     <span class="n">additional_search_client_options</span> <span class="o">=</span> <span class="n">additional_search_client_options</span> <span class="ow">or</span> <span class="p">{}</span>
     <span class="n">default_fields</span> <span class="o">=</span> <span class="n">default_fields</span> <span class="ow">or</span> <span class="p">[]</span>
     <span class="n">credential</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">AzureKeyCredential</span><span class="p">,</span> <span class="n">TokenCredential</span><span class="p">,</span> <span class="n">InteractiveBrowserCredential</span><span class="p">]</span>
@@ -351,11 +366,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">credential</span> <span class="o">=</span> <span class="n">AzureKeyCredential</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">azure_ad_access_token</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">credential</span> <span class="o">=</span> <span class="n">TokenCredential</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="o">*</span><span class="n">scopes</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">AccessToken</span><span class="p">(</span>
-                <span class="n">azure_ad_access_token</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span> <span class="o">+</span> <span class="mi">3600</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">credential</span> <span class="o">=</span> <span class="n">AzureBearerTokenCredential</span><span class="p">(</span><span class="n">azure_ad_access_token</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">credential</span> <span class="o">=</span> <span class="n">DefaultAzureCredential</span><span class="p">()</span>
     <span class="n">index_client</span><span class="p">:</span> <span class="n">SearchIndexClient</span> <span class="o">=</span> <span class="n">SearchIndexClient</span><span class="p">(</span>

@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 15, 2024" name="docbuild:last-update"/>
+<meta content="Dec 16, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -222,17 +222,51 @@
 
 <span class="kn">import</span> <span class="nn">uuid</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">langchain_core.documents</span> <span class="kn">import</span> <span class="n">Document</span>
 <span class="kn">from</span> <span class="nn">langchain_core.embeddings</span> <span class="kn">import</span> <span class="n">Embeddings</span>
 <span class="kn">from</span> <span class="nn">langchain_core.vectorstores</span> <span class="kn">import</span> <span class="n">VectorStore</span>
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
 
 <span class="kn">from</span> <span class="nn">langchain_community.vectorstores.utils</span> <span class="kn">import</span> <span class="n">maximal_marginal_relevance</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">azure.cosmos.cosmos_client</span> <span class="kn">import</span> <span class="n">CosmosClient</span>
+    <span class="kn">from</span> <span class="nn">azure.cosmos</span> <span class="kn">import</span> <span class="n">CosmosClient</span>
+    <span class="kn">from</span> <span class="nn">azure.identity</span> <span class="kn">import</span> <span class="n">DefaultAzureCredential</span>
+
+<span class="n">USER_AGENT</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"LangChain-CDBNoSql-VectorStore-Python"</span><span class="p">,)</span>
+
+
+<div class="viewcode-block" id="Condition">
+<a class="viewcode-back" href="../../../community/vectorstores/langchain_community.vectorstores.azure_cosmos_db_no_sql.Condition.html#langchain_community.vectorstores.azure_cosmos_db_no_sql.Condition">[docs]</a>
+<span class="k">class</span> <span class="nc">Condition</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="nb">property</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">operator</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">value</span><span class="p">:</span> <span class="n">Any</span></div>
+
+
+
+<div class="viewcode-block" id="PreFilter">
+<a class="viewcode-back" href="../../../community/vectorstores/langchain_community.vectorstores.azure_cosmos_db_no_sql.PreFilter.html#langchain_community.vectorstores.azure_cosmos_db_no_sql.PreFilter">[docs]</a>
+<span class="k">class</span> <span class="nc">PreFilter</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">conditions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Condition</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">logical_operator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="CosmosDBQueryType">
+<a class="viewcode-back" href="../../../community/vectorstores/langchain_community.vectorstores.azure_cosmos_db_no_sql.CosmosDBQueryType.html#langchain_community.vectorstores.azure_cosmos_db_no_sql.CosmosDBQueryType">[docs]</a>
+<span class="k">class</span> <span class="nc">CosmosDBQueryType</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""CosmosDB Query Type"""</span>
+
+    <span class="n">VECTOR</span> <span class="o">=</span> <span class="s2">"vector"</span>
+    <span class="n">FULL_TEXT_SEARCH</span> <span class="o">=</span> <span class="s2">"full_text_search"</span>
+    <span class="n">FULL_TEXT_RANK</span> <span class="o">=</span> <span class="s2">"full_text_rank"</span>
+    <span class="n">HYBRID</span> <span class="o">=</span> <span class="s2">"hybrid"</span></div>
+
 
 
 <div class="viewcode-block" id="AzureCosmosDBNoSqlVectorSearch">
@@ -243,8 +277,11 @@
 <span class="sd">    To use, you should have both:</span>
 <span class="sd">        - the ``azure-cosmos`` python package installed</span>
 
-<span class="sd">    You can read more about vector search using AzureCosmosDBNoSQL here:</span>
+<span class="sd">    You can read more about vector search, full text search</span>
+<span class="sd">    and hybrid search using AzureCosmosDBNoSQL here:</span>
 <span class="sd">    https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/vector-search</span>
+<span class="sd">    https://learn.microsoft.com/en-us/azure/cosmos-db/gen-ai/full-text-search</span>
+<span class="sd">    https://learn.microsoft.com/en-us/azure/cosmos-db/gen-ai/hybrid-search</span>
 <span class="sd">    """</span>
 
 <div class="viewcode-block" id="AzureCosmosDBNoSqlVectorSearch.__init__">
@@ -258,9 +295,14 @@
         <span class="n">indexing_policy</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">cosmos_container_properties</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">cosmos_database_properties</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">full_text_policy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">database_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"vectorSearchDB"</span><span class="p">,</span>
         <span class="n">container_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"vectorSearchContainer"</span><span class="p">,</span>
+        <span class="n">text_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"text"</span><span class="p">,</span>
+        <span class="n">embedding_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"embedding"</span><span class="p">,</span>
+        <span class="n">metadata_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"metadata"</span><span class="p">,</span>
         <span class="n">create_container</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">full_text_search_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Constructor for AzureCosmosDBNoSqlVectorSearch</span>
@@ -271,30 +313,42 @@
 <span class="sd">            container_name: Name of the container to be created.</span>
 <span class="sd">            embedding: Text embedding model to use.</span>
 <span class="sd">            vector_embedding_policy: Vector Embedding Policy for the container.</span>
+<span class="sd">            full_text_policy: Full Text Policy for the container.</span>
 <span class="sd">            indexing_policy: Indexing Policy for the container.</span>
 <span class="sd">            cosmos_container_properties: Container Properties for the container.</span>
 <span class="sd">            cosmos_database_properties: Database Properties for the container.</span>
+<span class="sd">            text_key: Text key to use for text property which will be</span>
+<span class="sd">                      embedded in the data schema.</span>
+<span class="sd">            embedding_key: Embedding key to use for vector embedding.</span>
+<span class="sd">            metadata_key: Metadata key to use for data schema.</span>
+<span class="sd">            create_container: Set to true if the container does not exist.</span>
+<span class="sd">            full_text_search_enabled: Set to true if the full text search is enabled.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cosmos_client</span> <span class="o">=</span> <span class="n">cosmos_client</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_database_name</span> <span class="o">=</span> <span class="n">database_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_container_name</span> <span class="o">=</span> <span class="n">container_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_embedding</span> <span class="o">=</span> <span class="n">embedding</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_vector_embedding_policy</span> <span class="o">=</span> <span class="n">vector_embedding_policy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_full_text_policy</span> <span class="o">=</span> <span class="n">full_text_policy</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_indexing_policy</span> <span class="o">=</span> <span class="n">indexing_policy</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cosmos_container_properties</span> <span class="o">=</span> <span class="n">cosmos_container_properties</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cosmos_database_properties</span> <span class="o">=</span> <span class="n">cosmos_database_properties</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_text_key</span> <span class="o">=</span> <span class="n">text_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_key</span> <span class="o">=</span> <span class="n">embedding_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_key</span> <span class="o">=</span> <span class="n">metadata_key</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_create_container</span> <span class="o">=</span> <span class="n">create_container</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_full_text_search_enabled</span> <span class="o">=</span> <span class="n">full_text_search_enabled</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_container</span><span class="p">:</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="n">indexing_policy</span><span class="p">[</span><span class="s2">"vectorIndexes"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span>
-                <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexing_policy</span><span class="p">[</span><span class="s2">"vectorIndexes"</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_indexing_policy</span><span class="p">[</span><span class="s2">"vectorIndexes"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_indexing_policy</span><span class="p">[</span><span class="s2">"vectorIndexes"</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span>
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="s2">"vectorIndexes cannot be null or empty in the indexing_policy."</span>
                 <span class="p">)</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="n">vector_embedding_policy</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_vector_embedding_policy</span> <span class="ow">is</span> <span class="kc">None</span>
                 <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">vector_embedding_policy</span><span class="p">[</span><span class="s2">"vectorEmbeddings"</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span>
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -305,6 +359,23 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="s2">"partition_key cannot be null or empty for a container."</span>
                 <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_text_search_enabled</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_indexing_policy</span><span class="p">[</span><span class="s2">"fullTextIndexes"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span>
+                    <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_indexing_policy</span><span class="p">[</span><span class="s2">"fullTextIndexes"</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span>
+                <span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">"fullTextIndexes cannot be null or empty in the "</span>
+                        <span class="s2">"indexing_policy if full text search is enabled."</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_full_text_policy</span> <span class="ow">is</span> <span class="kc">None</span>
+                    <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_text_policy</span><span class="p">[</span><span class="s2">"fullTextPaths"</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span>
+                <span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">"fullTextPaths cannot be null or empty in the "</span>
+                        <span class="s2">"full_text_policy if full text search is enabled."</span>
+                    <span class="p">)</span>
 
         <span class="c1"># Create the database if it already doesn't exist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_database</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cosmos_client</span><span class="o">.</span><span class="n">create_database_if_not_exists</span><span class="p">(</span>
@@ -340,11 +411,8 @@
             <span class="n">session_token</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_cosmos_container_properties</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"session_token"</span><span class="p">),</span>
             <span class="n">initial_headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_cosmos_container_properties</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"initial_headers"</span><span class="p">),</span>
             <span class="n">vector_embedding_policy</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_vector_embedding_policy</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vector_embedding_policy</span><span class="p">[</span><span class="s2">"vectorEmbeddings"</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span>
-            <span class="s2">"path"</span>
-        <span class="p">][</span><span class="mi">1</span><span class="p">:]</span></div>
+            <span class="n">full_text_policy</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_text_policy</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="AzureCosmosDBNoSqlVectorSearch.add_texts">
@@ -415,9 +483,14 @@
         <span class="n">indexing_policy</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">cosmos_container_properties</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">cosmos_database_properties</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">full_text_policy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">database_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"vectorSearchDB"</span><span class="p">,</span>
         <span class="n">container_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"vectorSearchContainer"</span><span class="p">,</span>
+        <span class="n">text_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"text"</span><span class="p">,</span>
+        <span class="n">embedding_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"embedding"</span><span class="p">,</span>
+        <span class="n">metadata_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"metadata"</span><span class="p">,</span>
         <span class="n">create_container</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">full_text_search_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AzureCosmosDBNoSqlVectorSearch</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
@@ -433,12 +506,17 @@
             <span class="n">embedding</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
             <span class="n">cosmos_client</span><span class="o">=</span><span class="n">cosmos_client</span><span class="p">,</span>
             <span class="n">vector_embedding_policy</span><span class="o">=</span><span class="n">vector_embedding_policy</span><span class="p">,</span>
+            <span class="n">full_text_policy</span><span class="o">=</span><span class="n">full_text_policy</span><span class="p">,</span>
             <span class="n">indexing_policy</span><span class="o">=</span><span class="n">indexing_policy</span><span class="p">,</span>
             <span class="n">cosmos_container_properties</span><span class="o">=</span><span class="n">cosmos_container_properties</span><span class="p">,</span>
             <span class="n">cosmos_database_properties</span><span class="o">=</span><span class="n">cosmos_database_properties</span><span class="p">,</span>
             <span class="n">database_name</span><span class="o">=</span><span class="n">database_name</span><span class="p">,</span>
             <span class="n">container_name</span><span class="o">=</span><span class="n">container_name</span><span class="p">,</span>
+            <span class="n">text_key</span><span class="o">=</span><span class="n">text_key</span><span class="p">,</span>
+            <span class="n">embedding_key</span><span class="o">=</span><span class="n">embedding_key</span><span class="p">,</span>
+            <span class="n">metadata_key</span><span class="o">=</span><span class="n">metadata_key</span><span class="p">,</span>
             <span class="n">create_container</span><span class="o">=</span><span class="n">create_container</span><span class="p">,</span>
+            <span class="n">full_text_search_enabled</span><span class="o">=</span><span class="n">full_text_search_enabled</span><span class="p">,</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="AzureCosmosDBNoSqlVectorSearch.from_texts">
@@ -473,6 +551,52 @@
         <span class="k">return</span> <span class="n">vectorstore</span></div>
 
 
+<div class="viewcode-block" id="AzureCosmosDBNoSqlVectorSearch.from_connection_string_and_aad">
+<a class="viewcode-back" href="../../../community/vectorstores/langchain_community.vectorstores.azure_cosmos_db_no_sql.AzureCosmosDBNoSqlVectorSearch.html#langchain_community.vectorstores.azure_cosmos_db_no_sql.AzureCosmosDBNoSqlVectorSearch.from_connection_string_and_aad">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_connection_string_and_aad</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">connection_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">defaultAzureCredential</span><span class="p">:</span> <span class="n">DefaultAzureCredential</span><span class="p">,</span>
+        <span class="n">texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">embedding</span><span class="p">:</span> <span class="n">Embeddings</span><span class="p">,</span>
+        <span class="n">metadatas</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AzureCosmosDBNoSqlVectorSearch</span><span class="p">:</span>
+        <span class="n">cosmos_client</span> <span class="o">=</span> <span class="n">CosmosClient</span><span class="p">(</span>
+            <span class="n">connection_string</span><span class="p">,</span> <span class="n">defaultAzureCredential</span><span class="p">,</span> <span class="n">user_agent</span><span class="o">=</span><span class="n">USER_AGENT</span>
+        <span class="p">)</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"cosmos_client"</span><span class="p">]</span> <span class="o">=</span> <span class="n">cosmos_client</span>
+        <span class="n">vectorstore</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_kwargs</span><span class="p">(</span><span class="n">embedding</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">vectorstore</span><span class="o">.</span><span class="n">add_texts</span><span class="p">(</span>
+            <span class="n">texts</span><span class="o">=</span><span class="n">texts</span><span class="p">,</span>
+            <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">vectorstore</span></div>
+
+
+<div class="viewcode-block" id="AzureCosmosDBNoSqlVectorSearch.from_connection_string_and_key">
+<a class="viewcode-back" href="../../../community/vectorstores/langchain_community.vectorstores.azure_cosmos_db_no_sql.AzureCosmosDBNoSqlVectorSearch.html#langchain_community.vectorstores.azure_cosmos_db_no_sql.AzureCosmosDBNoSqlVectorSearch.from_connection_string_and_key">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_connection_string_and_key</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">connection_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">embedding</span><span class="p">:</span> <span class="n">Embeddings</span><span class="p">,</span>
+        <span class="n">metadatas</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AzureCosmosDBNoSqlVectorSearch</span><span class="p">:</span>
+        <span class="n">cosmos_client</span> <span class="o">=</span> <span class="n">CosmosClient</span><span class="p">(</span><span class="n">connection_string</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">user_agent</span><span class="o">=</span><span class="n">USER_AGENT</span><span class="p">)</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"cosmos_client"</span><span class="p">]</span> <span class="o">=</span> <span class="n">cosmos_client</span>
+        <span class="n">vectorstore</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_kwargs</span><span class="p">(</span><span class="n">embedding</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">vectorstore</span><span class="o">.</span><span class="n">add_texts</span><span class="p">(</span>
+            <span class="n">texts</span><span class="o">=</span><span class="n">texts</span><span class="p">,</span>
+            <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">vectorstore</span></div>
+
+
 <div class="viewcode-block" id="AzureCosmosDBNoSqlVectorSearch.delete">
 <a class="viewcode-back" href="../../../community/vectorstores/langchain_community.vectorstores.azure_cosmos_db_no_sql.AzureCosmosDBNoSqlVectorSearch.html#langchain_community.vectorstores.azure_cosmos_db_no_sql.AzureCosmosDBNoSqlVectorSearch.delete">[docs]</a>
     <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
@@ -499,54 +623,90 @@
 
     <span class="k">def</span> <span class="nf">_similarity_search_with_score</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
+        <span class="n">query_type</span><span class="p">:</span> <span class="n">CosmosDBQueryType</span><span class="p">,</span>
         <span class="n">embeddings</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-        <span class="n">pre_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PreFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">with_embedding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">offset_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">projection_mapping</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-        <span class="n">query</span> <span class="o">=</span> <span class="s2">"SELECT "</span>
-
-        <span class="c1"># If limit_offset_clause is not specified, add TOP clause</span>
-        <span class="k">if</span> <span class="n">pre_filter</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">pre_filter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"limit_offset_clause"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">query</span> <span class="o">+=</span> <span class="s2">"TOP @limit "</span>
-
-        <span class="n">query</span> <span class="o">+=</span> <span class="p">(</span>
-            <span class="s2">"c.id, c[@embeddingKey], c.text, c.metadata, "</span>
-            <span class="s2">"VectorDistance(c[@embeddingKey], @embeddings) AS SimilarityScore FROM c"</span>
+        <span class="n">query</span><span class="p">,</span> <span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_construct_query</span><span class="p">(</span>
+            <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+            <span class="n">query_type</span><span class="o">=</span><span class="n">query_type</span><span class="p">,</span>
+            <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span>
+            <span class="n">pre_filter</span><span class="o">=</span><span class="n">pre_filter</span><span class="p">,</span>
+            <span class="n">offset_limit</span><span class="o">=</span><span class="n">offset_limit</span><span class="p">,</span>
+            <span class="n">projection_mapping</span><span class="o">=</span><span class="n">projection_mapping</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="c1"># Add where_clause if specified</span>
-        <span class="k">if</span> <span class="n">pre_filter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">pre_filter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"where_clause"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">query</span> <span class="o">+=</span> <span class="s2">" </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pre_filter</span><span class="p">[</span><span class="s2">"where_clause"</span><span class="p">])</span>
-
-        <span class="n">query</span> <span class="o">+=</span> <span class="s2">" ORDER BY VectorDistance(c[@embeddingKey], @embeddings)"</span>
-
-        <span class="c1"># Add limit_offset_clause if specified</span>
-        <span class="k">if</span> <span class="n">pre_filter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">pre_filter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"limit_offset_clause"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">query</span> <span class="o">+=</span> <span class="s2">" </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pre_filter</span><span class="p">[</span><span class="s2">"limit_offset_clause"</span><span class="p">])</span>
-        <span class="n">parameters</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"@limit"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">k</span><span class="p">},</span>
-            <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"@embeddingKey"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_key</span><span class="p">},</span>
-            <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"@embeddings"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">embeddings</span><span class="p">},</span>
-        <span class="p">]</span>
-
-        <span class="n">docs_and_scores</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="n">items</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_container</span><span class="o">.</span><span class="n">query_items</span><span class="p">(</span>
-                <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span> <span class="n">enable_cross_partition_query</span><span class="o">=</span><span class="kc">True</span>
-            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_query</span><span class="p">(</span>
+            <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+            <span class="n">query_type</span><span class="o">=</span><span class="n">query_type</span><span class="p">,</span>
+            <span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span>
+            <span class="n">with_embedding</span><span class="o">=</span><span class="n">with_embedding</span><span class="p">,</span>
+            <span class="n">projection_mapping</span><span class="o">=</span><span class="n">projection_mapping</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"text"</span><span class="p">]</span>
-            <span class="n">metadata</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">]</span>
-            <span class="n">score</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"SimilarityScore"</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">with_embedding</span><span class="p">:</span>
-                <span class="n">metadata</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_embedding_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_embedding_key</span><span class="p">]</span>
-            <span class="n">docs_and_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">(</span><span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">),</span> <span class="n">score</span><span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">return</span> <span class="n">docs_and_scores</span>
+
+    <span class="k">def</span> <span class="nf">_full_text_search</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">query_type</span><span class="p">:</span> <span class="n">CosmosDBQueryType</span><span class="p">,</span>
+        <span class="n">search_text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">pre_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PreFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">offset_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">projection_mapping</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+        <span class="n">query</span><span class="p">,</span> <span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_construct_query</span><span class="p">(</span>
+            <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+            <span class="n">query_type</span><span class="o">=</span><span class="n">query_type</span><span class="p">,</span>
+            <span class="n">search_text</span><span class="o">=</span><span class="n">search_text</span><span class="p">,</span>
+            <span class="n">pre_filter</span><span class="o">=</span><span class="n">pre_filter</span><span class="p">,</span>
+            <span class="n">offset_limit</span><span class="o">=</span><span class="n">offset_limit</span><span class="p">,</span>
+            <span class="n">projection_mapping</span><span class="o">=</span><span class="n">projection_mapping</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_query</span><span class="p">(</span>
+            <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+            <span class="n">query_type</span><span class="o">=</span><span class="n">query_type</span><span class="p">,</span>
+            <span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span>
+            <span class="n">with_embedding</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">projection_mapping</span><span class="o">=</span><span class="n">projection_mapping</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_hybrid_search_with_score</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">query_type</span><span class="p">:</span> <span class="n">CosmosDBQueryType</span><span class="p">,</span>
+        <span class="n">embeddings</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">search_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">pre_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PreFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">with_embedding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">offset_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">projection_mapping</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+        <span class="n">query</span><span class="p">,</span> <span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_construct_query</span><span class="p">(</span>
+            <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+            <span class="n">query_type</span><span class="o">=</span><span class="n">query_type</span><span class="p">,</span>
+            <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span>
+            <span class="n">search_text</span><span class="o">=</span><span class="n">search_text</span><span class="p">,</span>
+            <span class="n">pre_filter</span><span class="o">=</span><span class="n">pre_filter</span><span class="p">,</span>
+            <span class="n">offset_limit</span><span class="o">=</span><span class="n">offset_limit</span><span class="p">,</span>
+            <span class="n">projection_mapping</span><span class="o">=</span><span class="n">projection_mapping</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_query</span><span class="p">(</span>
+            <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+            <span class="n">query_type</span><span class="o">=</span><span class="n">query_type</span><span class="p">,</span>
+            <span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span>
+            <span class="n">with_embedding</span><span class="o">=</span><span class="n">with_embedding</span><span class="p">,</span>
+            <span class="n">projection_mapping</span><span class="o">=</span><span class="n">projection_mapping</span><span class="p">,</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="AzureCosmosDBNoSqlVectorSearch.similarity_search_with_score">
 <a class="viewcode-back" href="../../../community/vectorstores/langchain_community.vectorstores.azure_cosmos_db_no_sql.AzureCosmosDBNoSqlVectorSearch.html#langchain_community.vectorstores.azure_cosmos_db_no_sql.AzureCosmosDBNoSqlVectorSearch.similarity_search_with_score">[docs]</a>
@@ -554,16 +714,53 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-        <span class="n">pre_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PreFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">with_embedding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">query_type</span><span class="p">:</span> <span class="n">CosmosDBQueryType</span> <span class="o">=</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">VECTOR</span><span class="p">,</span>
+        <span class="n">offset_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-        <span class="n">docs_and_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_similarity_search_with_score</span><span class="p">(</span>
-            <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span>
-            <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
-            <span class="n">pre_filter</span><span class="o">=</span><span class="n">pre_filter</span><span class="p">,</span>
-            <span class="n">with_embedding</span><span class="o">=</span><span class="n">with_embedding</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">docs_and_scores</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">VECTOR</span><span class="p">:</span>
+            <span class="n">docs_and_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_similarity_search_with_score</span><span class="p">(</span>
+                <span class="n">query_type</span><span class="o">=</span><span class="n">query_type</span><span class="p">,</span>
+                <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span>
+                <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+                <span class="n">pre_filter</span><span class="o">=</span><span class="n">pre_filter</span><span class="p">,</span>
+                <span class="n">with_embedding</span><span class="o">=</span><span class="n">with_embedding</span><span class="p">,</span>
+                <span class="n">offset_limit</span><span class="o">=</span><span class="n">offset_limit</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">FULL_TEXT_SEARCH</span><span class="p">:</span>
+            <span class="n">docs_and_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_text_search</span><span class="p">(</span>
+                <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+                <span class="n">query_type</span><span class="o">=</span><span class="n">query_type</span><span class="p">,</span>
+                <span class="n">pre_filter</span><span class="o">=</span><span class="n">pre_filter</span><span class="p">,</span>
+                <span class="n">offset_limit</span><span class="o">=</span><span class="n">offset_limit</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">FULL_TEXT_RANK</span><span class="p">:</span>
+            <span class="n">docs_and_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_text_search</span><span class="p">(</span>
+                <span class="n">search_text</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+                <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+                <span class="n">query_type</span><span class="o">=</span><span class="n">query_type</span><span class="p">,</span>
+                <span class="n">pre_filter</span><span class="o">=</span><span class="n">pre_filter</span><span class="p">,</span>
+                <span class="n">offset_limit</span><span class="o">=</span><span class="n">offset_limit</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">:</span>
+            <span class="n">docs_and_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hybrid_search_with_score</span><span class="p">(</span>
+                <span class="n">query_type</span><span class="o">=</span><span class="n">query_type</span><span class="p">,</span>
+                <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span>
+                <span class="n">search_text</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+                <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+                <span class="n">pre_filter</span><span class="o">=</span><span class="n">pre_filter</span><span class="p">,</span>
+                <span class="n">with_embedding</span><span class="o">=</span><span class="n">with_embedding</span><span class="p">,</span>
+                <span class="n">offset_limit</span><span class="o">=</span><span class="n">offset_limit</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="n">docs_and_scores</span></div>
 
 
@@ -573,16 +770,27 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-        <span class="n">pre_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PreFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">with_embedding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">query_type</span><span class="p">:</span> <span class="n">CosmosDBQueryType</span> <span class="o">=</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">VECTOR</span><span class="p">,</span>
+        <span class="n">offset_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
-        <span class="n">docs_and_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_with_score</span><span class="p">(</span>
-            <span class="n">query</span><span class="p">,</span>
-            <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
-            <span class="n">pre_filter</span><span class="o">=</span><span class="n">pre_filter</span><span class="p">,</span>
-            <span class="n">with_embedding</span><span class="o">=</span><span class="n">with_embedding</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">query_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">__members__</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Invalid query_type: </span><span class="si">{</span><span class="n">query_type</span><span class="si">}</span><span class="s2">. "</span>
+                <span class="sa">f</span><span class="s2">"Expected one of: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">value</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">CosmosDBQueryType</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">docs_and_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_with_score</span><span class="p">(</span>
+                <span class="n">query</span><span class="p">,</span>
+                <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+                <span class="n">pre_filter</span><span class="o">=</span><span class="n">pre_filter</span><span class="p">,</span>
+                <span class="n">with_embedding</span><span class="o">=</span><span class="n">with_embedding</span><span class="p">,</span>
+                <span class="n">query_type</span><span class="o">=</span><span class="n">query_type</span><span class="p">,</span>
+                <span class="n">offset_limit</span><span class="o">=</span><span class="n">offset_limit</span><span class="p">,</span>
+                <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
 
         <span class="k">return</span> <span class="p">[</span><span class="n">doc</span> <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">docs_and_scores</span><span class="p">]</span></div>
 
@@ -595,18 +803,20 @@
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="n">fetch_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">lambda_mult</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">query_type</span><span class="p">:</span> <span class="n">CosmosDBQueryType</span> <span class="o">=</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">VECTOR</span><span class="p">,</span>
+        <span class="n">pre_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PreFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">with_embedding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
         <span class="c1"># Retrieves the docs with similarity scores</span>
-        <span class="n">pre_filter</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">with_embedding</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"pre_filter"</span><span class="p">]:</span>
-            <span class="n">pre_filter</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"pre_filter"</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"with_embedding"</span><span class="p">]:</span>
-            <span class="n">with_embedding</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"with_embedding"</span><span class="p">]</span>
+        <span class="c1"># if kwargs["pre_filter"]:</span>
+        <span class="c1">#     pre_filter = kwargs["pre_filter"]</span>
+        <span class="c1"># if kwargs["with_embedding"]:</span>
+        <span class="c1">#     with_embedding = kwargs["with_embedding"]</span>
         <span class="n">docs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_similarity_search_with_score</span><span class="p">(</span>
             <span class="n">embeddings</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
             <span class="n">k</span><span class="o">=</span><span class="n">fetch_k</span><span class="p">,</span>
+            <span class="n">query_type</span><span class="o">=</span><span class="n">query_type</span><span class="p">,</span>
             <span class="n">pre_filter</span><span class="o">=</span><span class="n">pre_filter</span><span class="p">,</span>
             <span class="n">with_embedding</span><span class="o">=</span><span class="n">with_embedding</span><span class="p">,</span>
         <span class="p">)</span>
@@ -631,15 +841,16 @@
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="n">fetch_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">lambda_mult</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">query_type</span><span class="p">:</span> <span class="n">CosmosDBQueryType</span> <span class="o">=</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">VECTOR</span><span class="p">,</span>
+        <span class="n">pre_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PreFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">with_embedding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
         <span class="c1"># compute the embeddings vector from the query string</span>
-        <span class="n">pre_filter</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">with_embedding</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"pre_filter"</span><span class="p">]:</span>
-            <span class="n">pre_filter</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"pre_filter"</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"with_embedding"</span><span class="p">]:</span>
-            <span class="n">with_embedding</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"with_embedding"</span><span class="p">]</span>
+        <span class="c1"># if kwargs["pre_filter"]:</span>
+        <span class="c1">#     pre_filter = kwargs["pre_filter"]</span>
+        <span class="c1"># if kwargs["with_embedding"]:</span>
+        <span class="c1">#     with_embedding = kwargs["with_embedding"]</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
 
         <span class="n">docs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_marginal_relevance_search_by_vector</span><span class="p">(</span>
@@ -648,10 +859,270 @@
             <span class="n">fetch_k</span><span class="o">=</span><span class="n">fetch_k</span><span class="p">,</span>
             <span class="n">lambda_mult</span><span class="o">=</span><span class="n">lambda_mult</span><span class="p">,</span>
             <span class="n">pre_filter</span><span class="o">=</span><span class="n">pre_filter</span><span class="p">,</span>
+            <span class="n">query_type</span><span class="o">=</span><span class="n">query_type</span><span class="p">,</span>
             <span class="n">with_embedding</span><span class="o">=</span><span class="n">with_embedding</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">docs</span></div>
-</div>
+
+
+    <span class="k">def</span> <span class="nf">_construct_query</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">query_type</span><span class="p">:</span> <span class="n">CosmosDBQueryType</span><span class="p">,</span>
+        <span class="n">embeddings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">search_text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pre_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PreFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">offset_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">projection_mapping</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">FULL_TEXT_RANK</span>
+            <span class="ow">or</span> <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">HYBRID</span>
+        <span class="p">):</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"SELECT </span><span class="si">{</span><span class="s1">'TOP '</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">' '</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="ow">not</span><span class="w"> </span><span class="n">offset_limit</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""SELECT </span><span class="si">{</span><span class="s1">'TOP @limit '</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="ow">not</span><span class="w"> </span><span class="n">offset_limit</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">"""</span>
+        <span class="n">query</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_projection_fields</span><span class="p">(</span>
+            <span class="n">projection_mapping</span><span class="p">,</span> <span class="n">query_type</span><span class="p">,</span> <span class="n">embeddings</span>
+        <span class="p">)</span>
+        <span class="n">query</span> <span class="o">+=</span> <span class="s2">" FROM c "</span>
+
+        <span class="c1"># Add where_clause if specified</span>
+        <span class="k">if</span> <span class="n">pre_filter</span><span class="p">:</span>
+            <span class="n">where_clause</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_where_clause</span><span class="p">(</span><span class="n">pre_filter</span><span class="p">)</span>
+            <span class="n">query</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">"""</span><span class="si">{</span><span class="n">where_clause</span><span class="si">}</span><span class="s2">"""</span>
+
+        <span class="c1"># TODO: Update the code to use parameters once parametrized queries</span>
+        <span class="c1">#  are allowed for these query functions</span>
+        <span class="k">if</span> <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">FULL_TEXT_RANK</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">search_text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"search text cannot be None for FULL_TEXT_RANK queries."</span>
+                <span class="p">)</span>
+            <span class="n">query</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">""" ORDER BY RANK FullTextScore(c.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_text_key</span><span class="si">}</span><span class="s2">, </span>
+<span class="s2">            [</span><span class="si">{</span><span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">term</span><span class="si">}</span><span class="s2">'"</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">term</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">search_text</span><span class="o">.</span><span class="n">split</span><span class="p">())</span><span class="si">}</span><span class="s2">])"""</span>
+        <span class="k">elif</span> <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">VECTOR</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">+=</span> <span class="s2">" ORDER BY VectorDistance(c[@embeddingKey], @embeddings)"</span>
+        <span class="k">elif</span> <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">search_text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"search text cannot be None for HYBRID queries."</span><span class="p">)</span>
+            <span class="n">query</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">""" ORDER BY RANK RRF(FullTextScore(c.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_text_key</span><span class="si">}</span><span class="s2">, </span>
+<span class="s2">            [</span><span class="si">{</span><span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">term</span><span class="si">}</span><span class="s2">'"</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">term</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">search_text</span><span class="o">.</span><span class="n">split</span><span class="p">())</span><span class="si">}</span><span class="s2">]), </span>
+<span class="s2">            VectorDistance(c.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_embedding_key</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">embeddings</span><span class="si">}</span><span class="s2">))"""</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">+=</span> <span class="s2">""</span>
+
+        <span class="c1"># Add limit_offset_clause if specified</span>
+        <span class="k">if</span> <span class="n">offset_limit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">""" </span><span class="si">{</span><span class="n">offset_limit</span><span class="si">}</span><span class="s2">"""</span>
+
+        <span class="c1"># TODO: Remove this if check once parametrized queries</span>
+        <span class="c1">#  are allowed for these query functions</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">FULL_TEXT_SEARCH</span>
+            <span class="ow">or</span> <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">VECTOR</span>
+        <span class="p">):</span>
+            <span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_parameters</span><span class="p">(</span>
+                <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+                <span class="n">query_type</span><span class="o">=</span><span class="n">query_type</span><span class="p">,</span>
+                <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span>
+                <span class="n">projection_mapping</span><span class="o">=</span><span class="n">projection_mapping</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">query</span><span class="p">,</span> <span class="n">parameters</span>
+
+    <span class="k">def</span> <span class="nf">_generate_projection_fields</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">projection_mapping</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+        <span class="n">query_type</span><span class="p">:</span> <span class="n">CosmosDBQueryType</span><span class="p">,</span>
+        <span class="n">embeddings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="c1"># TODO: Remove this if check once parametrized queries</span>
+        <span class="c1">#  are allowed for these query functions</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">FULL_TEXT_RANK</span>
+            <span class="ow">or</span> <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">HYBRID</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">projection_mapping</span><span class="p">:</span>
+                <span class="n">projection</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"c.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> as </span><span class="si">{</span><span class="n">alias</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">projection_mapping</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">projection</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"c.id, c.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_text_key</span><span class="si">}</span><span class="s2"> as text, "</span>
+                    <span class="sa">f</span><span class="s2">"c.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata_key</span><span class="si">}</span><span class="s2"> as metadata"</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">:</span>
+                <span class="n">projection</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">", c.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_embedding_key</span><span class="si">}</span><span class="s2"> as embedding, "</span>
+                    <span class="sa">f</span><span class="s2">"VectorDistance(c.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_embedding_key</span><span class="si">}</span><span class="s2">, "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">embeddings</span><span class="si">}</span><span class="s2">) as SimilarityScore"</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">projection_mapping</span><span class="p">:</span>
+                <span class="n">projection</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"c.[@</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">] as </span><span class="si">{</span><span class="n">alias</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">projection_mapping</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">projection</span> <span class="o">=</span> <span class="s2">"c.id, c[@textKey] as text, c[@metadataKey] as metadata"</span>
+
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">VECTOR</span>
+                <span class="ow">or</span> <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">HYBRID</span>
+            <span class="p">):</span>
+                <span class="n">projection</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="s2">", c[@embeddingKey] as embedding, "</span>
+                    <span class="s2">"VectorDistance(c[@embeddingKey], "</span>
+                    <span class="s2">"@embeddings) as SimilarityScore"</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">projection</span>
+
+    <span class="k">def</span> <span class="nf">_build_parameters</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">query_type</span><span class="p">:</span> <span class="n">CosmosDBQueryType</span><span class="p">,</span>
+        <span class="n">embeddings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+        <span class="n">search_terms</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">projection_mapping</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"@limit"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">k</span><span class="p">},</span>
+            <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"@textKey"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_text_key</span><span class="p">},</span>
+        <span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">projection_mapping</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">projection_mapping</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">parameters</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"name"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"@</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">key</span><span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">parameters</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"@metadataKey"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_key</span><span class="p">})</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">FULL_TEXT_RANK</span>
+            <span class="ow">or</span> <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">HYBRID</span>
+        <span class="p">):</span>
+            <span class="n">parameters</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"@searchTerms"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">search_terms</span><span class="p">})</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">VECTOR</span>
+            <span class="ow">or</span> <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">HYBRID</span>
+        <span class="p">):</span>
+            <span class="n">parameters</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"@embeddingKey"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_key</span><span class="p">})</span>
+            <span class="n">parameters</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"@embeddings"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">embeddings</span><span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">parameters</span>
+
+    <span class="k">def</span> <span class="nf">_build_where_clause</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pre_filter</span><span class="p">:</span> <span class="n">PreFilter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Builds a where clause based on the given pre_filter.</span>
+<span class="sd">        """</span>
+
+        <span class="n">operator_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_where_clause_operator_map</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">pre_filter</span><span class="o">.</span><span class="n">logical_operator</span>
+            <span class="ow">and</span> <span class="n">pre_filter</span><span class="o">.</span><span class="n">logical_operator</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">operator_map</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"unsupported logical_operator: </span><span class="si">{</span><span class="n">pre_filter</span><span class="o">.</span><span class="n">logical_operator</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
+        <span class="n">sql_logical_operator</span> <span class="o">=</span> <span class="n">operator_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pre_filter</span><span class="o">.</span><span class="n">logical_operator</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="n">clauses</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="n">pre_filter</span><span class="o">.</span><span class="n">conditions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">condition</span><span class="o">.</span><span class="n">operator</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">operator_map</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unsupported operator: </span><span class="si">{</span><span class="n">condition</span><span class="o">.</span><span class="n">operator</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="s2">"full_text"</span> <span class="ow">in</span> <span class="n">condition</span><span class="o">.</span><span class="n">operator</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">condition</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Expected a string for </span><span class="si">{</span><span class="n">condition</span><span class="o">.</span><span class="n">operator</span><span class="si">}</span><span class="s2">, "</span>
+                        <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">condition</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+                <span class="n">search_terms</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">term</span><span class="si">}</span><span class="s2">'"</span> <span class="k">for</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">condition</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                <span class="p">)</span>
+                <span class="n">sql_function</span> <span class="o">=</span> <span class="n">operator_map</span><span class="p">[</span><span class="n">condition</span><span class="o">.</span><span class="n">operator</span><span class="p">]</span>
+                <span class="n">clauses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">sql_function</span><span class="si">}</span><span class="s2">(c.</span><span class="si">{</span><span class="n">condition</span><span class="o">.</span><span class="n">property</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">search_terms</span><span class="si">}</span><span class="s2">)"</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sql_operator</span> <span class="o">=</span> <span class="n">operator_map</span><span class="p">[</span><span class="n">condition</span><span class="o">.</span><span class="n">operator</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">condition</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">condition</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">'"</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">condition</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="c1"># e.g., for IN clauses</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">condition</span><span class="o">.</span><span class="n">value</span><span class="p">))</span><span class="si">}</span><span class="s2">)"</span>
+                <span class="n">clauses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"c.</span><span class="si">{</span><span class="n">condition</span><span class="o">.</span><span class="n">property</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">sql_operator</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">""" WHERE </span><span class="si">{</span><span class="s1">' </span><span class="si">{}</span><span class="s1"> '</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sql_logical_operator</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">clauses</span><span class="p">)</span><span class="si">}</span><span class="s2">"""</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_execute_query</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">query_type</span><span class="p">:</span> <span class="n">CosmosDBQueryType</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+        <span class="n">with_embedding</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">projection_mapping</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+        <span class="n">docs_and_scores</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_container</span><span class="o">.</span><span class="n">query_items</span><span class="p">(</span>
+                <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span> <span class="n">enable_cross_partition_query</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_text_key</span><span class="p">]</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata_key</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+            <span class="k">if</span> <span class="n">projection_mapping</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">projection_mapping</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_text_key</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="n">metadata</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">VECTOR</span>
+                <span class="ow">or</span> <span class="n">query_type</span> <span class="o">==</span> <span class="n">CosmosDBQueryType</span><span class="o">.</span><span class="n">HYBRID</span>
+            <span class="p">):</span>
+                <span class="n">score</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s2">"SimilarityScore"</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">with_embedding</span><span class="p">:</span>
+                    <span class="n">metadata</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_embedding_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_embedding_key</span><span class="p">]</span>
+            <span class="n">docs_and_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">),</span> <span class="n">score</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">docs_and_scores</span>
+
+    <span class="k">def</span> <span class="nf">_where_clause_operator_map</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+        <span class="n">operator_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"$eq"</span><span class="p">:</span> <span class="s2">"="</span><span class="p">,</span>
+            <span class="s2">"$ne"</span><span class="p">:</span> <span class="s2">"!="</span><span class="p">,</span>
+            <span class="s2">"$lt"</span><span class="p">:</span> <span class="s2">"&lt;"</span><span class="p">,</span>
+            <span class="s2">"$lte"</span><span class="p">:</span> <span class="s2">"&lt;="</span><span class="p">,</span>
+            <span class="s2">"$gt"</span><span class="p">:</span> <span class="s2">"&gt;"</span><span class="p">,</span>
+            <span class="s2">"$gte"</span><span class="p">:</span> <span class="s2">"&gt;="</span><span class="p">,</span>
+            <span class="s2">"$add"</span><span class="p">:</span> <span class="s2">"+"</span><span class="p">,</span>
+            <span class="s2">"$sub"</span><span class="p">:</span> <span class="s2">"-"</span><span class="p">,</span>
+            <span class="s2">"$mul"</span><span class="p">:</span> <span class="s2">"*"</span><span class="p">,</span>
+            <span class="s2">"$div"</span><span class="p">:</span> <span class="s2">"/"</span><span class="p">,</span>
+            <span class="s2">"$mod"</span><span class="p">:</span> <span class="s2">"%"</span><span class="p">,</span>
+            <span class="s2">"$or"</span><span class="p">:</span> <span class="s2">"OR"</span><span class="p">,</span>
+            <span class="s2">"$and"</span><span class="p">:</span> <span class="s2">"AND"</span><span class="p">,</span>
+            <span class="s2">"$not"</span><span class="p">:</span> <span class="s2">"NOT"</span><span class="p">,</span>
+            <span class="s2">"$concat"</span><span class="p">:</span> <span class="s2">"||"</span><span class="p">,</span>
+            <span class="s2">"$bit_or"</span><span class="p">:</span> <span class="s2">"|"</span><span class="p">,</span>
+            <span class="s2">"$bit_and"</span><span class="p">:</span> <span class="s2">"&amp;"</span><span class="p">,</span>
+            <span class="s2">"$bit_xor"</span><span class="p">:</span> <span class="s2">"^"</span><span class="p">,</span>
+            <span class="s2">"$bit_lshift"</span><span class="p">:</span> <span class="s2">"&lt;&lt;"</span><span class="p">,</span>
+            <span class="s2">"$bit_rshift"</span><span class="p">:</span> <span class="s2">"&gt;&gt;"</span><span class="p">,</span>
+            <span class="s2">"$bit_zerofill_rshift"</span><span class="p">:</span> <span class="s2">"&gt;&gt;&gt;"</span><span class="p">,</span>
+            <span class="s2">"$full_text_contains"</span><span class="p">:</span> <span class="s2">"FullTextContains"</span><span class="p">,</span>
+            <span class="s2">"$full_text_contains_all"</span><span class="p">:</span> <span class="s2">"FullTextContainsAll"</span><span class="p">,</span>
+            <span class="s2">"$full_text_contains_any"</span><span class="p">:</span> <span class="s2">"FullTextContainsAny"</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">operator_map</span></div>
 
 </pre></div>
 </article>

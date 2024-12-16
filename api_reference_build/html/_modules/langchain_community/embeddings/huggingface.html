@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 15, 2024" name="docbuild:last-update"/>
+<meta content="Dec 16, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -484,6 +484,11 @@
 
 <div class="viewcode-block" id="HuggingFaceBgeEmbeddings">
 <a class="viewcode-back" href="../../../community/embeddings/langchain_community.embeddings.huggingface.HuggingFaceBgeEmbeddings.html#langchain_community.embeddings.huggingface.HuggingFaceBgeEmbeddings">[docs]</a>
+<span class="nd">@deprecated</span><span class="p">(</span>
+    <span class="n">since</span><span class="o">=</span><span class="s2">"0.2.2"</span><span class="p">,</span>
+    <span class="n">removal</span><span class="o">=</span><span class="s2">"1.0"</span><span class="p">,</span>
+    <span class="n">alternative_import</span><span class="o">=</span><span class="s2">"langchain_huggingface.HuggingFaceEmbeddings"</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="k">class</span> <span class="nc">HuggingFaceBgeEmbeddings</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">,</span> <span class="n">Embeddings</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""HuggingFace sentence_transformers embedding models.</span>
 
@@ -562,11 +567,25 @@
         <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
                 <span class="s2">"Could not import sentence_transformers python package. "</span>
-                <span class="s2">"Please install it with `pip install sentence_transformers`."</span>
+                <span class="s2">"Please install it with `pip install sentence-transformers`."</span>
             <span class="p">)</span> <span class="kn">from</span> <span class="nn">exc</span>
-
+        <span class="n">extra_model_kwargs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">"torch_dtype"</span><span class="p">,</span>
+            <span class="s2">"attn_implementation"</span><span class="p">,</span>
+            <span class="s2">"provider"</span><span class="p">,</span>
+            <span class="s2">"file_name"</span><span class="p">,</span>
+            <span class="s2">"export"</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="n">extra_model_kwargs_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">extra_model_kwargs</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span>
+        <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">sentence_transformers</span><span class="o">.</span><span class="n">SentenceTransformer</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span> <span class="n">cache_folder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_folder</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
+            <span class="n">cache_folder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_folder</span><span class="p">,</span>
+            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">,</span>
+            <span class="n">model_kwargs</span><span class="o">=</span><span class="n">extra_model_kwargs_dict</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="s2">"-zh"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span>
