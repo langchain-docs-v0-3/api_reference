@@ -18,8 +18,8 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-<!-- 
-    this give us a css class that will be invisible only if js is disabled 
+<!--
+    this give us a css class that will be invisible only if js is disabled
   -->
 <noscript>
 <style>
@@ -28,18 +28,18 @@
     </style>
 </noscript>
 <!-- Loaded before other Sphinx assets -->
-<link href="../../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet"/>
-<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet"/>
+<link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet"/>
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet"/>
 <link href="../../../_static/pygments.css?v=a746c00c" rel="stylesheet" type="text/css"/>
 <link href="../../../_static/autodoc_pydantic.css" rel="stylesheet" type="text/css"/>
 <link href="../../../_static/copybutton.css?v=76b2166b" rel="stylesheet" type="text/css"/>
 <link href="../../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
 <link href="../../../_static/css/custom.css?v=488f4e83" rel="stylesheet" type="text/css"/>
 <!-- So that users can add custom icons -->
-<script src="../../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+<script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
 <!-- Pre-loaded scripts that we'll load fully later -->
-<link as="script" href="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" rel="preload"/>
-<link as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" rel="preload"/>
+<link as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" rel="preload"/>
+<link as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" rel="preload"/>
 <script src="../../../_static/documentation_options.js?v=3b5cce75"></script>
 <script src="../../../_static/doctools.js?v=9bcbadda"></script>
 <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 16, 2024" name="docbuild:last-update"/>
+<meta content="Dec 17, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -190,8 +190,10 @@
 </div>
 </div>
 <div class="sidebar-primary-items__end sidebar-primary__section">
+<div class="sidebar-primary-item">
+<div class="flat" data-ea-manual="true" data-ea-publisher="readthedocs" data-ea-type="readthedocs-sidebar" id="ethical-ad-placement">
+</div></div>
 </div>
-<div id="rtd-footer-container"></div>
 </div>
 <main class="bd-main" id="main-content" role="main">
 <div class="bd-content">
@@ -220,12 +222,24 @@
 <h1>Source code for langchain_community.chat_models.mlx</h1><div class="highlight"><pre>
 <span></span><span class="sd">"""MLX Chat Wrapper."""</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Any</span><span class="p">,</span>
+    <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">Dict</span><span class="p">,</span>
+    <span class="n">Iterator</span><span class="p">,</span>
+    <span class="n">List</span><span class="p">,</span>
+    <span class="n">Literal</span><span class="p">,</span>
+    <span class="n">Optional</span><span class="p">,</span>
+    <span class="n">Sequence</span><span class="p">,</span>
+    <span class="n">Type</span><span class="p">,</span>
+    <span class="n">Union</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">langchain_core.callbacks.manager</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">AsyncCallbackManagerForLLMRun</span><span class="p">,</span>
     <span class="n">CallbackManagerForLLMRun</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">langchain_core.language_models</span> <span class="kn">import</span> <span class="n">LanguageModelInput</span>
 <span class="kn">from</span> <span class="nn">langchain_core.language_models.chat_models</span> <span class="kn">import</span> <span class="n">BaseChatModel</span>
 <span class="kn">from</span> <span class="nn">langchain_core.messages</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">AIMessage</span><span class="p">,</span>
@@ -240,6 +254,9 @@
     <span class="n">ChatResult</span><span class="p">,</span>
     <span class="n">LLMResult</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">langchain_core.runnables</span> <span class="kn">import</span> <span class="n">Runnable</span>
+<span class="kn">from</span> <span class="nn">langchain_core.tools</span> <span class="kn">import</span> <span class="n">BaseTool</span>
+<span class="kn">from</span> <span class="nn">langchain_core.utils.function_calling</span> <span class="kn">import</span> <span class="n">convert_to_openai_tool</span>
 
 <span class="kn">from</span> <span class="nn">langchain_community.llms.mlx_pipeline</span> <span class="kn">import</span> <span class="n">MLXPipeline</span>
 
@@ -316,7 +333,6 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Last message must be a HumanMessage!"</span><span class="p">)</span>
 
         <span class="n">messages_dicts</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_to_chatml_format</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">]</span>
-
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">apply_chat_template</span><span class="p">(</span>
             <span class="n">messages_dicts</span><span class="p">,</span>
             <span class="n">tokenize</span><span class="o">=</span><span class="n">tokenize</span><span class="p">,</span>
@@ -395,15 +411,18 @@
             <span class="n">generate_step</span><span class="p">(</span>
                 <span class="n">prompt_tokens</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
-                <span class="n">temp</span><span class="p">,</span>
-                <span class="n">repetition_penalty</span><span class="p">,</span>
-                <span class="n">repetition_context_size</span><span class="p">,</span>
+                <span class="n">temp</span><span class="o">=</span><span class="n">temp</span><span class="p">,</span>
+                <span class="n">repetition_penalty</span><span class="o">=</span><span class="n">repetition_penalty</span><span class="p">,</span>
+                <span class="n">repetition_context_size</span><span class="o">=</span><span class="n">repetition_context_size</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="nb">range</span><span class="p">(</span><span class="n">max_new_tokens</span><span class="p">),</span>
         <span class="p">):</span>
             <span class="c1"># identify text to yield</span>
             <span class="n">text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
 
             <span class="c1"># yield text, if any</span>
             <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
@@ -414,7 +433,66 @@
 
             <span class="c1"># break if stop sequence found</span>
             <span class="k">if</span> <span class="n">token</span> <span class="o">==</span> <span class="n">eos_token_id</span> <span class="ow">or</span> <span class="p">(</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">stop</span><span class="p">):</span>
-                <span class="k">break</span></div>
+                <span class="k">break</span>
+
+<div class="viewcode-block" id="ChatMLX.bind_tools">
+<a class="viewcode-back" href="../../../community/chat_models/langchain_community.chat_models.mlx.ChatMLX.html#langchain_community.chat_models.mlx.ChatMLX.bind_tools">[docs]</a>
+    <span class="k">def</span> <span class="nf">bind_tools</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tools</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">BaseTool</span><span class="p">]],</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">tool_choice</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"none"</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Runnable</span><span class="p">[</span><span class="n">LanguageModelInput</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Bind tool-like objects to this chat model.</span>
+
+<span class="sd">        Assumes model is compatible with OpenAI tool-calling API.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tools: A list of tool definitions to bind to this chat model.</span>
+<span class="sd">                Supports any tool definition handled by</span>
+<span class="sd">                :meth:`langchain_core.utils.function_calling.convert_to_openai_tool`.</span>
+<span class="sd">            tool_choice: Which tool to require the model to call.</span>
+<span class="sd">                Must be the name of the single provided function or</span>
+<span class="sd">                "auto" to automatically determine which function to call</span>
+<span class="sd">                (if any), or a dict of the form:</span>
+<span class="sd">                {"type": "function", "function": {"name": &lt;&lt;tool_name&gt;&gt;}}.</span>
+<span class="sd">            **kwargs: Any additional parameters to pass to the</span>
+<span class="sd">                :class:`~langchain.runnable.Runnable` constructor.</span>
+<span class="sd">        """</span>
+
+        <span class="n">formatted_tools</span> <span class="o">=</span> <span class="p">[</span><span class="n">convert_to_openai_tool</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span> <span class="k">for</span> <span class="n">tool</span> <span class="ow">in</span> <span class="n">tools</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">tool_choice</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">tool_choice</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">formatted_tools</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"When specifying `tool_choice`, you must provide exactly one "</span>
+                    <span class="sa">f</span><span class="s2">"tool. Received </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">formatted_tools</span><span class="p">)</span><span class="si">}</span><span class="s2"> tools."</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool_choice</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">tool_choice</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"none"</span><span class="p">):</span>
+                    <span class="n">tool_choice</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"function"</span><span class="p">,</span>
+                        <span class="s2">"function"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">tool_choice</span><span class="p">},</span>
+                    <span class="p">}</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool_choice</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+                <span class="n">tool_choice</span> <span class="o">=</span> <span class="n">formatted_tools</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool_choice</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">formatted_tools</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"function"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">]</span>
+                    <span class="o">!=</span> <span class="n">tool_choice</span><span class="p">[</span><span class="s2">"function"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">]</span>
+                <span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Tool choice </span><span class="si">{</span><span class="n">tool_choice</span><span class="si">}</span><span class="s2"> was specified, but the only "</span>
+                        <span class="sa">f</span><span class="s2">"provided tool was </span><span class="si">{</span><span class="n">formatted_tools</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">'function'</span><span class="p">][</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">."</span>
+                    <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Unrecognized tool_choice type. Expected str, bool or dict. "</span>
+                    <span class="sa">f</span><span class="s2">"Received: </span><span class="si">{</span><span class="n">tool_choice</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"tool_choice"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tool_choice</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">tools</span><span class="o">=</span><span class="n">formatted_tools</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+</div>
 
 </pre></div>
 </article>
@@ -426,8 +504,8 @@
 </div>
 </div>
 <!-- Scripts loaded after <body> so the DOM is not blocked -->
-<script defer="" src="../../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
-<script defer="" src="../../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer="" src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer="" src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
 <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
 <div class="footer-items__start">
