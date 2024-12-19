@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 18, 2024" name="docbuild:last-update"/>
+<meta content="Dec 19, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -254,6 +254,7 @@
 <span class="kn">from</span> <span class="nn">langchain_community.utilities.requests</span> <span class="kn">import</span> <span class="n">Requests</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">DEFAULT_INFERENCE_ENDPOINT</span> <span class="o">=</span> <span class="s2">"/v1/completions"</span>
 
 
 <span class="n">DEFAULT_TIME_OUT</span> <span class="o">=</span> <span class="mi">300</span>
@@ -311,6 +312,9 @@
     <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="w">    </span><span class="sd">"""Maximum number of retries to make when generating."""</span>
 
+    <span class="n">default_headers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">"""The headers to be added to the Model Deployment request."""</span>
+
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">validate_environment</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
@@ -350,12 +354,12 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Dict: A dictionary containing the appropriate headers for the request.</span>
 <span class="sd">        """</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_headers</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">is_async</span><span class="p">:</span>
             <span class="n">signer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">auth</span><span class="p">[</span><span class="s2">"signer"</span><span class="p">]</span>
             <span class="n">_req</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="s2">"POST"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">body</span><span class="p">)</span>
             <span class="n">req</span> <span class="o">=</span> <span class="n">_req</span><span class="o">.</span><span class="n">prepare</span><span class="p">()</span>
             <span class="n">req</span> <span class="o">=</span> <span class="n">signer</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
-            <span class="n">headers</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">req</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="n">headers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
@@ -365,7 +369,7 @@
                 <span class="p">)</span>
             <span class="k">return</span> <span class="n">headers</span>
 
-        <span class="k">return</span> <span class="p">(</span>
+        <span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
             <span class="p">{</span>
                 <span class="s2">"Content-Type"</span><span class="p">:</span> <span class="n">DEFAULT_CONTENT_TYPE_JSON</span><span class="p">,</span>
                 <span class="s2">"enable-streaming"</span><span class="p">:</span> <span class="s2">"true"</span><span class="p">,</span>
@@ -376,6 +380,8 @@
                 <span class="s2">"Content-Type"</span><span class="p">:</span> <span class="n">DEFAULT_CONTENT_TYPE_JSON</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">headers</span>
 
 <div class="viewcode-block" id="BaseOCIModelDeployment.completion_with_retry">
 <a class="viewcode-back" href="../../../community/llms/langchain_community.llms.oci_data_science_model_deployment_endpoint.BaseOCIModelDeployment.html#langchain_community.llms.oci_data_science_model_deployment_endpoint.BaseOCIModelDeployment.completion_with_retry">[docs]</a>
@@ -622,6 +628,10 @@
 <span class="sd">                model="odsc-llm",</span>
 <span class="sd">                streaming=True,</span>
 <span class="sd">                model_kwargs={"frequency_penalty": 1.0},</span>
+<span class="sd">                headers={</span>
+<span class="sd">                    "route": "/v1/completions",</span>
+<span class="sd">                    # other request headers ...</span>
+<span class="sd">                }</span>
 <span class="sd">            )</span>
 <span class="sd">            llm.invoke("tell me a joke.")</span>
 
@@ -665,7 +675,7 @@
     <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span>
 <span class="w">    </span><span class="sd">"""A non-negative float that tunes the degree of randomness in generation."""</span>
 
-    <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span>
 <span class="w">    </span><span class="sd">"""Number of most likely tokens to consider at each step."""</span>
 
     <span class="n">p</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.75</span>
@@ -709,6 +719,25 @@
         <span class="k">return</span> <span class="p">{</span>
             <span class="o">**</span><span class="p">{</span><span class="s2">"endpoint"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="p">,</span> <span class="s2">"model_kwargs"</span><span class="p">:</span> <span class="n">_model_kwargs</span><span class="p">},</span>
             <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_default_params</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">_headers</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">is_async</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Construct and return the headers for a request.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            is_async (bool, optional): Indicates if the request is asynchronous.</span>
+<span class="sd">                Defaults to `False`.</span>
+<span class="sd">            body (optional): The request body to be included in the headers if</span>
+<span class="sd">                the request is asynchronous.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict: A dictionary containing the appropriate headers for the request.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"route"</span><span class="p">:</span> <span class="n">DEFAULT_INFERENCE_ENDPOINT</span><span class="p">,</span>
+            <span class="o">**</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_headers</span><span class="p">(</span><span class="n">is_async</span><span class="o">=</span><span class="n">is_async</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">body</span><span class="p">),</span>
         <span class="p">}</span>
 
     <span class="k">def</span> <span class="nf">_generate</span><span class="p">(</span>

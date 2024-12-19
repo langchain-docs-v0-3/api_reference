@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 18, 2024" name="docbuild:last-update"/>
+<meta content="Dec 19, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -269,6 +269,7 @@
 <span class="p">)</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">DEFAULT_INFERENCE_ENDPOINT_CHAT</span> <span class="o">=</span> <span class="s2">"/v1/chat/completions"</span>
 
 
 <span class="k">def</span> <span class="nf">_is_pydantic_class</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -279,6 +280,13 @@
 <a class="viewcode-back" href="../../../community/chat_models/langchain_community.chat_models.oci_data_science.ChatOCIModelDeployment.html#langchain_community.chat_models.oci_data_science.ChatOCIModelDeployment">[docs]</a>
 <span class="k">class</span> <span class="nc">ChatOCIModelDeployment</span><span class="p">(</span><span class="n">BaseChatModel</span><span class="p">,</span> <span class="n">BaseOCIModelDeployment</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""OCI Data Science Model Deployment chat model integration.</span>
+
+<span class="sd">    Prerequisite</span>
+<span class="sd">        The OCI Model Deployment plugins are installable only on</span>
+<span class="sd">        python version 3.9 and above. If you're working inside the notebook,</span>
+<span class="sd">        try installing the python 3.10 based conda pack and running the</span>
+<span class="sd">        following setup.</span>
+
 
 <span class="sd">    Setup:</span>
 <span class="sd">        Install ``oracle-ads`` and ``langchain-openai``.</span>
@@ -314,6 +322,8 @@
 <span class="sd">    Key init args — client params:</span>
 <span class="sd">        auth: dict</span>
 <span class="sd">            ADS auth dictionary for OCI authentication.</span>
+<span class="sd">        default_headers: Optional[Dict]</span>
+<span class="sd">            The headers to be added to the Model Deployment request.</span>
 
 <span class="sd">    Instantiate:</span>
 <span class="sd">        .. code-block:: python</span>
@@ -322,13 +332,17 @@
 
 <span class="sd">            chat = ChatOCIModelDeployment(</span>
 <span class="sd">                endpoint="https://modeldeployment.&lt;region&gt;.oci.customer-oci.com/&lt;ocid&gt;/predict",</span>
-<span class="sd">                model="odsc-llm",</span>
+<span class="sd">                model="odsc-llm", # this is the default model name if deployed with AQUA</span>
 <span class="sd">                streaming=True,</span>
 <span class="sd">                max_retries=3,</span>
 <span class="sd">                model_kwargs={</span>
 <span class="sd">                    "max_token": 512,</span>
 <span class="sd">                    "temperature": 0.2,</span>
 <span class="sd">                    # other model parameters ...</span>
+<span class="sd">                },</span>
+<span class="sd">                default_headers={</span>
+<span class="sd">                    "route": "/v1/chat/completions",</span>
+<span class="sd">                    # other request headers ...</span>
 <span class="sd">                },</span>
 <span class="sd">            )</span>
 
@@ -510,6 +524,25 @@
             <span class="s2">"model"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
             <span class="s2">"stop"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
             <span class="s2">"stream"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">streaming</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">_headers</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">is_async</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Construct and return the headers for a request.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            is_async (bool, optional): Indicates if the request is asynchronous.</span>
+<span class="sd">                Defaults to `False`.</span>
+<span class="sd">            body (optional): The request body to be included in the headers if</span>
+<span class="sd">                the request is asynchronous.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict: A dictionary containing the appropriate headers for the request.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"route"</span><span class="p">:</span> <span class="n">DEFAULT_INFERENCE_ENDPOINT_CHAT</span><span class="p">,</span>
+            <span class="o">**</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_headers</span><span class="p">(</span><span class="n">is_async</span><span class="o">=</span><span class="n">is_async</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">body</span><span class="p">),</span>
         <span class="p">}</span>
 
     <span class="k">def</span> <span class="nf">_generate</span><span class="p">(</span>
@@ -928,7 +961,7 @@
 
         <span class="k">for</span> <span class="n">choice</span> <span class="ow">in</span> <span class="n">choices</span><span class="p">:</span>
             <span class="n">message</span> <span class="o">=</span> <span class="n">_convert_dict_to_message</span><span class="p">(</span><span class="n">choice</span><span class="p">[</span><span class="s2">"message"</span><span class="p">])</span>
-            <span class="n">generation_info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">finish_reason</span><span class="o">=</span><span class="n">choice</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"finish_reason"</span><span class="p">))</span>
+            <span class="n">generation_info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"finish_reason"</span><span class="p">:</span> <span class="n">choice</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"finish_reason"</span><span class="p">)}</span>
             <span class="k">if</span> <span class="s2">"logprobs"</span> <span class="ow">in</span> <span class="n">choice</span><span class="p">:</span>
                 <span class="n">generation_info</span><span class="p">[</span><span class="s2">"logprobs"</span><span class="p">]</span> <span class="o">=</span> <span class="n">choice</span><span class="p">[</span><span class="s2">"logprobs"</span><span class="p">]</span>
 

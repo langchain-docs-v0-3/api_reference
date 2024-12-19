@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 18, 2024" name="docbuild:last-update"/>
+<meta content="Dec 19, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -452,14 +452,14 @@
 <span class="sd">        tool_call_id: (str) the tool call id. Default is None.</span>
 <span class="sd">        tool_calls: (list[dict[str, Any]]) the tool calls. Default is None.</span>
 <span class="sd">        id: (str) the id of the message. Default is None.</span>
-<span class="sd">        **additional_kwargs: (dict[str, Any]) additional keyword arguments.</span>
+<span class="sd">        additional_kwargs: (dict[str, Any]) additional keyword arguments.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        a message of the appropriate type.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: if the message type is not one of "human", "user", "ai",</span>
-<span class="sd">            "assistant", "system", "function", or "tool".</span>
+<span class="sd">            "assistant", "function", "tool", "system", or "developer".</span>
 <span class="sd">    """</span>
     <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -492,7 +492,10 @@
         <span class="n">message</span><span class="p">:</span> <span class="n">BaseMessage</span> <span class="o">=</span> <span class="n">HumanMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">message_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"ai"</span><span class="p">,</span> <span class="s2">"assistant"</span><span class="p">):</span>
         <span class="n">message</span> <span class="o">=</span> <span class="n">AIMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">message_type</span> <span class="o">==</span> <span class="s2">"system"</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">message_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"system"</span><span class="p">,</span> <span class="s2">"developer"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">message_type</span> <span class="o">==</span> <span class="s2">"developer"</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"additional_kwargs"</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"additional_kwargs"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"additional_kwargs"</span><span class="p">][</span><span class="s2">"__openai_role__"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"developer"</span>
         <span class="n">message</span> <span class="o">=</span> <span class="n">SystemMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">message_type</span> <span class="o">==</span> <span class="s2">"function"</span><span class="p">:</span>
         <span class="n">message</span> <span class="o">=</span> <span class="n">FunctionMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -504,7 +507,7 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Unexpected message type: '</span><span class="si">{</span><span class="n">message_type</span><span class="si">}</span><span class="s2">'. Use one of 'human',"</span>
-            <span class="sa">f</span><span class="s2">" 'user', 'ai', 'assistant', 'function', 'tool', or 'system'."</span>
+            <span class="sa">f</span><span class="s2">" 'user', 'ai', 'assistant', 'function', 'tool', 'system', or 'developer'."</span>
         <span class="p">)</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="n">create_message</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span> <span class="n">error_code</span><span class="o">=</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">MESSAGE_COERCION_FAILURE</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
@@ -1631,7 +1634,7 @@
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">ToolMessage</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">"tool"</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">SystemMessage</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">"system"</span>
+        <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"__openai_role__"</span><span class="p">,</span> <span class="s2">"system"</span><span class="p">)</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">FunctionMessage</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">"function"</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">ChatMessage</span><span class="p">):</span>

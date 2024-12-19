@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Dec 18, 2024" name="docbuild:last-update"/>
+<meta content="Dec 19, 2024" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -692,6 +692,13 @@
 <span class="sd">            text_kwargs: Keyword arguments to pass to ``pdfplumber.Page.extract_text()``</span>
 <span class="sd">            dedupe: Avoiding the error of duplicate characters if `dedupe=True`.</span>
 <span class="sd">        """</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">PIL</span>  <span class="c1"># noqa:F401</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">"pillow package not found, please install it with"</span>
+                <span class="s2">" `pip install pillow`"</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">text_kwargs</span> <span class="o">=</span> <span class="n">text_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dedupe</span> <span class="o">=</span> <span class="n">dedupe</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">extract_images</span> <span class="o">=</span> <span class="n">extract_images</span></div>
@@ -737,17 +744,30 @@
 
     <span class="k">def</span> <span class="nf">_extract_images_from_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">page</span><span class="p">:</span> <span class="n">pdfplumber</span><span class="o">.</span><span class="n">page</span><span class="o">.</span><span class="n">Page</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Extract images from page and get the text with RapidOCR."""</span>
+        <span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_images</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">""</span>
 
         <span class="n">images</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">img</span> <span class="ow">in</span> <span class="n">page</span><span class="o">.</span><span class="n">images</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">img</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">][</span><span class="s2">"Filter"</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">_PDF_FILTER_WITHOUT_LOSS</span><span class="p">:</span>
-                <span class="n">images</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">img</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
-                        <span class="n">img</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">][</span><span class="s2">"Height"</span><span class="p">],</span> <span class="n">img</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">][</span><span class="s2">"Width"</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span>
+                <span class="k">if</span> <span class="n">img</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">][</span><span class="s2">"BitsPerComponent"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">images</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                            <span class="n">Image</span><span class="o">.</span><span class="n">frombytes</span><span class="p">(</span>
+                                <span class="s2">"1"</span><span class="p">,</span>
+                                <span class="p">(</span><span class="n">img</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">][</span><span class="s2">"Width"</span><span class="p">],</span> <span class="n">img</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">][</span><span class="s2">"Height"</span><span class="p">]),</span>
+                                <span class="n">img</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">(),</span>
+                            <span class="p">)</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">"L"</span><span class="p">)</span>
+                        <span class="p">)</span>
                     <span class="p">)</span>
-                <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">images</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">img</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                            <span class="n">img</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">][</span><span class="s2">"Height"</span><span class="p">],</span> <span class="n">img</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">][</span><span class="s2">"Width"</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
             <span class="k">elif</span> <span class="n">img</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">][</span><span class="s2">"Filter"</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">_PDF_FILTER_WITH_LOSS</span><span class="p">:</span>
                 <span class="n">images</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">img</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">())</span>
             <span class="k">else</span><span class="p">:</span>
