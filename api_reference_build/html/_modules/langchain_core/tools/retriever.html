@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jan 03, 2025" name="docbuild:last-update"/>
+<meta content="Jan 04, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -223,11 +223,12 @@
 <span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
 
 <span class="kn">from</span> <span class="nn">langchain_core.callbacks</span> <span class="kn">import</span> <span class="n">Callbacks</span>
+<span class="kn">from</span> <span class="nn">langchain_core.documents</span> <span class="kn">import</span> <span class="n">Document</span>
 <span class="kn">from</span> <span class="nn">langchain_core.prompts</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">BasePromptTemplate</span><span class="p">,</span>
     <span class="n">PromptTemplate</span><span class="p">,</span>
@@ -253,11 +254,16 @@
     <span class="n">document_prompt</span><span class="p">:</span> <span class="n">BasePromptTemplate</span><span class="p">,</span>
     <span class="n">document_separator</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">response_format</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"content"</span><span class="p">,</span> <span class="s2">"content_and_artifact"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"content"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]]]:</span>
     <span class="n">docs</span> <span class="o">=</span> <span class="n">retriever</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">"callbacks"</span><span class="p">:</span> <span class="n">callbacks</span><span class="p">})</span>
-    <span class="k">return</span> <span class="n">document_separator</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="n">document_separator</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
         <span class="n">format_document</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">document_prompt</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">docs</span>
     <span class="p">)</span>
+    <span class="k">if</span> <span class="n">response_format</span> <span class="o">==</span> <span class="s2">"content_and_artifact"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">docs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">content</span>
 
 
 <span class="k">async</span> <span class="k">def</span> <span class="nf">_aget_relevant_documents</span><span class="p">(</span>
@@ -266,11 +272,17 @@
     <span class="n">document_prompt</span><span class="p">:</span> <span class="n">BasePromptTemplate</span><span class="p">,</span>
     <span class="n">document_separator</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">response_format</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"content"</span><span class="p">,</span> <span class="s2">"content_and_artifact"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"content"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]]]:</span>
     <span class="n">docs</span> <span class="o">=</span> <span class="k">await</span> <span class="n">retriever</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">"callbacks"</span><span class="p">:</span> <span class="n">callbacks</span><span class="p">})</span>
-    <span class="k">return</span> <span class="n">document_separator</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="n">document_separator</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
         <span class="p">[</span><span class="k">await</span> <span class="n">aformat_document</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">document_prompt</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">]</span>
     <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">response_format</span> <span class="o">==</span> <span class="s2">"content_and_artifact"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">docs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">content</span>
 
 
 <div class="viewcode-block" id="create_retriever_tool">
@@ -282,6 +294,7 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">document_prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BasePromptTemplate</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">document_separator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">,</span>
+    <span class="n">response_format</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"content"</span><span class="p">,</span> <span class="s2">"content_and_artifact"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"content"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Create a tool to do retrieval of documents.</span>
 
@@ -293,6 +306,11 @@
 <span class="sd">            model, so should be descriptive.</span>
 <span class="sd">        document_prompt: The prompt to use for the document. Defaults to None.</span>
 <span class="sd">        document_separator: The separator to use between documents. Defaults to "\n\n".</span>
+<span class="sd">        response_format: The tool response format. If "content" then the output of</span>
+<span class="sd">                the tool is interpreted as the contents of a ToolMessage. If</span>
+<span class="sd">                "content_and_artifact" then the output is expected to be a two-tuple</span>
+<span class="sd">                corresponding to the (content, artifact) of a ToolMessage (artifact</span>
+<span class="sd">                being a list of documents in this case). Defaults to "content".</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Tool class to pass to an agent.</span>
@@ -303,12 +321,14 @@
         <span class="n">retriever</span><span class="o">=</span><span class="n">retriever</span><span class="p">,</span>
         <span class="n">document_prompt</span><span class="o">=</span><span class="n">document_prompt</span><span class="p">,</span>
         <span class="n">document_separator</span><span class="o">=</span><span class="n">document_separator</span><span class="p">,</span>
+        <span class="n">response_format</span><span class="o">=</span><span class="n">response_format</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">afunc</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
         <span class="n">_aget_relevant_documents</span><span class="p">,</span>
         <span class="n">retriever</span><span class="o">=</span><span class="n">retriever</span><span class="p">,</span>
         <span class="n">document_prompt</span><span class="o">=</span><span class="n">document_prompt</span><span class="p">,</span>
         <span class="n">document_separator</span><span class="o">=</span><span class="n">document_separator</span><span class="p">,</span>
+        <span class="n">response_format</span><span class="o">=</span><span class="n">response_format</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">Tool</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
@@ -316,6 +336,7 @@
         <span class="n">func</span><span class="o">=</span><span class="n">func</span><span class="p">,</span>
         <span class="n">coroutine</span><span class="o">=</span><span class="n">afunc</span><span class="p">,</span>
         <span class="n">args_schema</span><span class="o">=</span><span class="n">RetrieverInput</span><span class="p">,</span>
+        <span class="n">response_format</span><span class="o">=</span><span class="n">response_format</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 </pre></div>
