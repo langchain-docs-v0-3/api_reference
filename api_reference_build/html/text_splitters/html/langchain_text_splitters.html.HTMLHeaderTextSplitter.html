@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jan 20, 2025" name="docbuild:last-update"/>
+<meta content="Jan 21, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -308,16 +308,92 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="langchain_text_splitters.html.HTMLHeaderTextSplitter">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">langchain_text_splitters.html.</span></span><span class="sig-name descname"><span class="pre">HTMLHeaderTextSplitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">headers_to_split_on</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_each_element</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/langchain_text_splitters/html.html#HTMLHeaderTextSplitter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter" title="Link to this definition">#</a></dt>
-<dd><p>Splitting HTML files based on specified headers.</p>
-<p>Requires lxml package.</p>
-<p>Create a new HTMLHeaderTextSplitter.</p>
+<dd><p>Split HTML content into structured Documents based on specified headers.</p>
+<p>Splits HTML content by detecting specified header tags (e.g., &lt;h1&gt;, &lt;h2&gt;) and
+creating hierarchical Document objects that reflect the semantic structure
+of the original content. For each identified section, the splitter associates
+the extracted text with metadata corresponding to the encountered headers.</p>
+<p>If no specified headers are found, the entire content is returned as a single
+Document. This allows for flexible handling of HTML input, ensuring that
+information is organized according to its semantic headers.</p>
+<p>The splitter provides the option to return each HTML element as a separate
+Document or aggregate them into semantically meaningful chunks. It also
+gracefully handles multiple levels of nested headers, creating a rich,
+hierarchical representation of the content.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>headers_to_split_on</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>) – list of tuples of headers we want to track mapped to
-(arbitrary) keys for metadata. Allowed header values: h1, h2, h3, h4,
-h5, h6 e.g. [(“h1”, “Header 1”), (“h2”, “Header 2)].</p></li>
-<li><p><strong>return_each_element</strong> (<em>bool</em>) – Return each element w/ associated headers.</p></li>
+<li><p><strong>headers_to_split_on</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>) – A list of (header_tag,
+header_name) pairs representing the headers that define splitting
+boundaries. For example, [(“h1”, “Header 1”), (“h2”, “Header 2”)]
+will split content by &lt;h1&gt; and &lt;h2&gt; tags, assigning their textual
+content to the Document metadata.</p></li>
+<li><p><strong>return_each_element</strong> (<em>bool</em>) – If True, every HTML element encountered
+(including headers, paragraphs, etc.) is returned as a separate
+Document. If False, content under the same header hierarchy is
+aggregated into fewer Documents.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of Document objects. Each Document contains
+<cite>page_content</cite> holding the extracted text and <cite>metadata</cite> that maps
+the header hierarchy to their corresponding titles.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[<a class="reference internal" href="../../core/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document" title="langchain_core.documents.base.Document">Document</a>]</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_text_splitters.html_header_text_splitter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">HTMLHeaderTextSplitter</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Define headers for splitting on h1 and h2 tags.</span>
+<span class="n">headers_to_split_on</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">"h1"</span><span class="p">,</span> <span class="s2">"Main Topic"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"h2"</span><span class="p">,</span> <span class="s2">"Sub Topic"</span><span class="p">)]</span>
+
+<span class="n">splitter</span> <span class="o">=</span> <span class="n">HTMLHeaderTextSplitter</span><span class="p">(</span>
+    <span class="n">headers_to_split_on</span><span class="o">=</span><span class="n">headers_to_split_on</span><span class="p">,</span>
+    <span class="n">return_each_element</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+
+<span class="n">html_content</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">&lt;html&gt;</span>
+<span class="s2">  &lt;body&gt;</span>
+<span class="s2">    &lt;h1&gt;Introduction&lt;/h1&gt;</span>
+<span class="s2">    &lt;p&gt;Welcome to the introduction section.&lt;/p&gt;</span>
+<span class="s2">    &lt;h2&gt;Background&lt;/h2&gt;</span>
+<span class="s2">    &lt;p&gt;Some background details here.&lt;/p&gt;</span>
+<span class="s2">    &lt;h1&gt;Conclusion&lt;/h1&gt;</span>
+<span class="s2">    &lt;p&gt;Final thoughts.&lt;/p&gt;</span>
+<span class="s2">  &lt;/body&gt;</span>
+<span class="s2">&lt;/html&gt;</span>
+<span class="s2">"""</span>
+
+<span class="n">documents</span> <span class="o">=</span> <span class="n">splitter</span><span class="o">.</span><span class="n">split_text</span><span class="p">(</span><span class="n">html_content</span><span class="p">)</span>
+
+<span class="c1"># 'documents' now contains Document objects reflecting the hierarchy:</span>
+<span class="c1"># - Document with metadata={"Main Topic": "Introduction"} and</span>
+<span class="c1">#   content="Introduction"</span>
+<span class="c1"># - Document with metadata={"Main Topic": "Introduction"} and</span>
+<span class="c1">#   content="Welcome to the introduction section."</span>
+<span class="c1"># - Document with metadata={"Main Topic": "Introduction",</span>
+<span class="c1">#   "Sub Topic": "Background"} and content="Background"</span>
+<span class="c1"># - Document with metadata={"Main Topic": "Introduction",</span>
+<span class="c1">#   "Sub Topic": "Background"} and content="Some background details here."</span>
+<span class="c1"># - Document with metadata={"Main Topic": "Conclusion"} and</span>
+<span class="c1">#   content="Conclusion"</span>
+<span class="c1"># - Document with metadata={"Main Topic": "Conclusion"} and</span>
+<span class="c1">#   content="Final thoughts."</span>
+</pre></div>
+</div>
+<p>Initialize with headers to split on.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>headers_to_split_on</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>) – A list of tuples where
+each tuple contains a header tag and its corresponding value.</p></li>
+<li><p><strong>return_each_element</strong> (<em>bool</em>) – Whether to return each HTML
+element as a separate Document. Defaults to False.</p></li>
 </ul>
 </dd>
 </dl>
@@ -325,88 +401,87 @@ h5, h6 e.g. [(“h1”, “Header 1”), (“h2”, “Header 2)].</p></li>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.__init__" title="langchain_text_splitters.html.HTMLHeaderTextSplitter.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(headers_to_split_on[, ...])</p></td>
-<td><p>Create a new HTMLHeaderTextSplitter.</p></td>
+<td><p>Initialize with headers to split on.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.aggregate_elements_to_chunks" title="langchain_text_splitters.html.HTMLHeaderTextSplitter.aggregate_elements_to_chunks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aggregate_elements_to_chunks</span></code></a>(elements)</p></td>
-<td><p>Combine elements with common metadata into chunks.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text" title="langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_text</span></code></a>(text)</p></td>
+<td><p>Split the given text into a list of Document objects.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text" title="langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_text</span></code></a>(text)</p></td>
-<td><p>Split HTML text string.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_file" title="langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_text_from_file</span></code></a>(file)</p></td>
+<td><p>Split HTML content from a file into a list of Document objects.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_file" title="langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_text_from_file</span></code></a>(file)</p></td>
-<td><p>Split HTML file.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_url" title="langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_url"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_text_from_url</span></code></a>(url, **kwargs)</p></td>
-<td><p>Split HTML from web URL.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_url" title="langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_url"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_text_from_url</span></code></a>(url[, timeout])</p></td>
+<td><p>Fetch text content from a URL and split it into documents.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_text_splitters.html.HTMLHeaderTextSplitter.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">headers_to_split_on</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_each_element</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/langchain_text_splitters/html.html#HTMLHeaderTextSplitter.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.__init__" title="Link to this definition">#</a></dt>
-<dd><p>Create a new HTMLHeaderTextSplitter.</p>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">headers_to_split_on</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_each_element</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_text_splitters/html.html#HTMLHeaderTextSplitter.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.__init__" title="Link to this definition">#</a></dt>
+<dd><p>Initialize with headers to split on.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>headers_to_split_on</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>) – list of tuples of headers we want to track mapped to
-(arbitrary) keys for metadata. Allowed header values: h1, h2, h3, h4,
-h5, h6 e.g. [(“h1”, “Header 1”), (“h2”, “Header 2)].</p></li>
-<li><p><strong>return_each_element</strong> (<em>bool</em>) – Return each element w/ associated headers.</p></li>
+<li><p><strong>headers_to_split_on</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>) – A list of tuples where
+each tuple contains a header tag and its corresponding value.</p></li>
+<li><p><strong>return_each_element</strong> (<em>bool</em>) – Whether to return each HTML
+element as a separate Document. Defaults to False.</p></li>
 </ul>
 </dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="langchain_text_splitters.html.HTMLHeaderTextSplitter.aggregate_elements_to_chunks">
-<span class="sig-name descname"><span class="pre">aggregate_elements_to_chunks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="langchain_text_splitters.html.ElementType.html#langchain_text_splitters.html.ElementType" title="langchain_text_splitters.html.ElementType"><span class="pre">ElementType</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../core/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document" title="langchain_core.documents.base.Document"><span class="pre">Document</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/langchain_text_splitters/html.html#HTMLHeaderTextSplitter.aggregate_elements_to_chunks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.aggregate_elements_to_chunks" title="Link to this definition">#</a></dt>
-<dd><p>Combine elements with common metadata into chunks.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>elements</strong> (<em>List</em><em>[</em><a class="reference internal" href="langchain_text_splitters.html.ElementType.html#langchain_text_splitters.html.ElementType" title="langchain_text_splitters.html.ElementType"><em>ElementType</em></a><em>]</em>) – HTML element content with associated identifying info and metadata</p>
-</dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[<a class="reference internal" href="../../core/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document" title="langchain_core.documents.base.Document"><em>Document</em></a>]</p>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text">
 <span class="sig-name descname"><span class="pre">split_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../core/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document" title="langchain_core.documents.base.Document"><span class="pre">Document</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/langchain_text_splitters/html.html#HTMLHeaderTextSplitter.split_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text" title="Link to this definition">#</a></dt>
-<dd><p>Split HTML text string.</p>
+<dd><p>Split the given text into a list of Document objects.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – HTML text</p>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – The HTML text to split.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[<a class="reference internal" href="../../core/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document" title="langchain_core.documents.base.Document"><em>Document</em></a>]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of split Document objects.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em>[<a class="reference internal" href="../../core/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document" title="langchain_core.documents.base.Document"><em>Document</em></a>]</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_file">
 <span class="sig-name descname"><span class="pre">split_text_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../core/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document" title="langchain_core.documents.base.Document"><span class="pre">Document</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/langchain_text_splitters/html.html#HTMLHeaderTextSplitter.split_text_from_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_file" title="Link to this definition">#</a></dt>
-<dd><p>Split HTML file.</p>
+<dd><p>Split HTML content from a file into a list of Document objects.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>file</strong> (<em>Any</em>) – HTML file</p>
+<dd class="field-odd"><p><strong>file</strong> (<em>Any</em>) – A file path or a file-like object containing HTML content.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>List</em>[<a class="reference internal" href="../../core/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document" title="langchain_core.documents.base.Document"><em>Document</em></a>]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of split Document objects.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em>[<a class="reference internal" href="../../core/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document" title="langchain_core.documents.base.Document"><em>Document</em></a>]</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_url">
-<span class="sig-name descname"><span class="pre">split_text_from_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../core/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document" title="langchain_core.documents.base.Document"><span class="pre">Document</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/langchain_text_splitters/html.html#HTMLHeaderTextSplitter.split_text_from_url"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_url" title="Link to this definition">#</a></dt>
-<dd><p>Split HTML from web URL.</p>
+<span class="sig-name descname"><span class="pre">split_text_from_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../core/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document" title="langchain_core.documents.base.Document"><span class="pre">Document</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/langchain_text_splitters/html.html#HTMLHeaderTextSplitter.split_text_from_url"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_url" title="Link to this definition">#</a></dt>
+<dd><p>Fetch text content from a URL and split it into documents.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>url</strong> (<em>str</em>) – web URL</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Arbitrary additional keyword arguments. These are usually passed
-to the fetch url content request.</p></li>
+<li><p><strong>url</strong> (<em>str</em>) – The URL to fetch content from.</p></li>
+<li><p><strong>timeout</strong> (<em>int</em>) – Timeout for the request. Defaults to 10.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Additional keyword arguments for the request.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of split Document objects.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>requests.RequestException</strong> – If the HTTP request fails.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>List</em>[<a class="reference internal" href="../../core/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document" title="langchain_core.documents.base.Document"><em>Document</em></a>]</p>
@@ -431,7 +506,6 @@ to the fetch url content request.</p></li>
 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter"><code class="docutils literal notranslate"><span class="pre">HTMLHeaderTextSplitter</span></code></a><ul class="visible nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.__init__"><code class="docutils literal notranslate"><span class="pre">__init__()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.aggregate_elements_to_chunks"><code class="docutils literal notranslate"><span class="pre">aggregate_elements_to_chunks()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text"><code class="docutils literal notranslate"><span class="pre">split_text()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_file"><code class="docutils literal notranslate"><span class="pre">split_text_from_file()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_url"><code class="docutils literal notranslate"><span class="pre">split_text_from_url()</span></code></a></li>

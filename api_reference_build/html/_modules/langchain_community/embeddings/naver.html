@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jan 20, 2025" name="docbuild:last-update"/>
+<meta content="Jan 21, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -237,6 +237,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
 
 <span class="n">_DEFAULT_BASE_URL</span> <span class="o">=</span> <span class="s2">"https://clovastudio.apigw.ntruss.com"</span>
+<span class="n">_DEFAULT_BASE_URL_ON_NEW_API_KEY</span> <span class="o">=</span> <span class="s2">"https://clovastudio.stream.ntruss.com"</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -315,20 +316,28 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">lc_secrets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">"ncp_clovastudio_api_key"</span><span class="p">:</span> <span class="s2">"NCP_CLOVASTUDIO_API_KEY"</span><span class="p">,</span>
-            <span class="s2">"ncp_apigw_api_key"</span><span class="p">:</span> <span class="s2">"NCP_APIGW_API_KEY"</span><span class="p">,</span>
-        <span class="p">}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_new_api_key</span><span class="p">():</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">"ncp_clovastudio_api_key"</span><span class="p">:</span> <span class="s2">"NCP_CLOVASTUDIO_API_KEY"</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">"ncp_clovastudio_api_key"</span><span class="p">:</span> <span class="s2">"NCP_CLOVASTUDIO_API_KEY"</span><span class="p">,</span>
+                <span class="s2">"ncp_apigw_api_key"</span><span class="p">:</span> <span class="s2">"NCP_APIGW_API_KEY"</span><span class="p">,</span>
+            <span class="p">}</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_api_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""GET embedding api url"""</span>
         <span class="n">app_type</span> <span class="o">=</span> <span class="s2">"serviceapp"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">service_app</span> <span class="k">else</span> <span class="s2">"testapp"</span>
         <span class="n">model_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="o">!=</span> <span class="s2">"bge-m3"</span> <span class="k">else</span> <span class="s2">"v2"</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">app_type</span><span class="si">}</span><span class="s2">"</span>
-            <span class="sa">f</span><span class="s2">"/v1/api-tools/embedding/</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="si">}</span><span class="s2">"</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_new_api_key</span><span class="p">():</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">app_type</span><span class="si">}</span><span class="s2">"</span> <span class="sa">f</span><span class="s2">"/v1/api-tools/embedding/</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">app_type</span><span class="si">}</span><span class="s2">"</span>
+                <span class="sa">f</span><span class="s2">"/v1/api-tools/embedding/</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_model_after</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
@@ -337,18 +346,13 @@
                 <span class="n">get_from_env</span><span class="p">(</span><span class="s2">"ncp_clovastudio_api_key"</span><span class="p">,</span> <span class="s2">"NCP_CLOVASTUDIO_API_KEY"</span><span class="p">)</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncp_apigw_api_key</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ncp_apigw_api_key</span> <span class="o">=</span> <span class="n">convert_to_secret_str</span><span class="p">(</span>
-                <span class="n">get_from_env</span><span class="p">(</span><span class="s2">"ncp_apigw_api_key"</span><span class="p">,</span> <span class="s2">"NCP_APIGW_API_KEY"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
-            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_new_api_key</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_fields_on_new_api_key</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_fields_on_old_api_key</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span> <span class="o">=</span> <span class="n">get_from_env</span><span class="p">(</span>
-                <span class="s2">"base_url"</span><span class="p">,</span> <span class="s2">"NCP_CLOVASTUDIO_API_BASE_URL"</span><span class="p">,</span> <span class="n">_DEFAULT_BASE_URL</span>
-            <span class="p">)</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">app_id</span> <span class="o">=</span> <span class="n">get_from_env</span><span class="p">(</span><span class="s2">"app_id"</span><span class="p">,</span> <span class="s2">"NCP_CLOVASTUDIO_APP_ID"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"base_url dose not exist."</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span>
@@ -357,7 +361,7 @@
                 <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span> <span class="o">=</span> <span class="n">httpx</span><span class="o">.</span><span class="n">AsyncClient</span><span class="p">(</span>
                 <span class="n">base_url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">,</span>
                 <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">default_headers</span><span class="p">(),</span>
@@ -365,6 +369,32 @@
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_new_api_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncp_clovastudio_api_key</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncp_clovastudio_api_key</span><span class="o">.</span><span class="n">get_secret_value</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"nv-"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_fields_on_new_api_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span> <span class="o">=</span> <span class="n">get_from_env</span><span class="p">(</span>
+                <span class="s2">"base_url"</span><span class="p">,</span>
+                <span class="s2">"NCP_CLOVASTUDIO_API_BASE_URL"</span><span class="p">,</span>
+                <span class="n">_DEFAULT_BASE_URL_ON_NEW_API_KEY</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_fields_on_old_api_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncp_apigw_api_key</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ncp_apigw_api_key</span> <span class="o">=</span> <span class="n">convert_to_secret_str</span><span class="p">(</span>
+                <span class="n">get_from_env</span><span class="p">(</span><span class="s2">"ncp_apigw_api_key"</span><span class="p">,</span> <span class="s2">"NCP_APIGW_API_KEY"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span> <span class="o">=</span> <span class="n">get_from_env</span><span class="p">(</span>
+                <span class="s2">"base_url"</span><span class="p">,</span> <span class="s2">"NCP_CLOVASTUDIO_API_BASE_URL"</span><span class="p">,</span> <span class="n">_DEFAULT_BASE_URL</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_id</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">app_id</span> <span class="o">=</span> <span class="n">get_from_env</span><span class="p">(</span><span class="s2">"app_id"</span><span class="p">,</span> <span class="s2">"NCP_CLOVASTUDIO_APP_ID"</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ClovaXEmbeddings.default_headers">
 <a class="viewcode-back" href="../../../community/embeddings/langchain_community.embeddings.naver.ClovaXEmbeddings.html#langchain_community.embeddings.naver.ClovaXEmbeddings.default_headers">[docs]</a>
@@ -379,16 +409,22 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncp_clovastudio_api_key</span>
             <span class="k">else</span> <span class="kc">None</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="n">clovastudio_api_key</span><span class="p">:</span>
-            <span class="n">headers</span><span class="p">[</span><span class="s2">"X-NCP-CLOVASTUDIO-API-KEY"</span><span class="p">]</span> <span class="o">=</span> <span class="n">clovastudio_api_key</span>
 
-        <span class="n">apigw_api_key</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ncp_apigw_api_key</span><span class="o">.</span><span class="n">get_secret_value</span><span class="p">()</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncp_apigw_api_key</span>
-            <span class="k">else</span> <span class="kc">None</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">apigw_api_key</span><span class="p">:</span>
-            <span class="n">headers</span><span class="p">[</span><span class="s2">"X-NCP-APIGW-API-KEY"</span><span class="p">]</span> <span class="o">=</span> <span class="n">apigw_api_key</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_new_api_key</span><span class="p">():</span>
+            <span class="c1">### headers on new api key</span>
+            <span class="n">headers</span><span class="p">[</span><span class="s2">"Authorization"</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Bearer </span><span class="si">{</span><span class="n">clovastudio_api_key</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1">### headers on old api key</span>
+            <span class="k">if</span> <span class="n">clovastudio_api_key</span><span class="p">:</span>
+                <span class="n">headers</span><span class="p">[</span><span class="s2">"X-NCP-CLOVASTUDIO-API-KEY"</span><span class="p">]</span> <span class="o">=</span> <span class="n">clovastudio_api_key</span>
+
+            <span class="n">apigw_api_key</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ncp_apigw_api_key</span><span class="o">.</span><span class="n">get_secret_value</span><span class="p">()</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncp_apigw_api_key</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">apigw_api_key</span><span class="p">:</span>
+                <span class="n">headers</span><span class="p">[</span><span class="s2">"X-NCP-APIGW-API-KEY"</span><span class="p">]</span> <span class="o">=</span> <span class="n">apigw_api_key</span>
 
         <span class="k">return</span> <span class="n">headers</span></div>
 
@@ -402,7 +438,7 @@
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_aembed_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"text"</span><span class="p">:</span> <span class="n">text</span><span class="p">}</span>
-        <span class="n">async_client</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">httpx</span><span class="o">.</span><span class="n">AsyncClient</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">)</span>
+        <span class="n">async_client</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">httpx</span><span class="o">.</span><span class="n">AsyncClient</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="p">)</span>
         <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">async_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_api_url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
         <span class="k">await</span> <span class="n">_araise_on_error</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">"result"</span><span class="p">][</span><span class="s2">"embedding"</span><span class="p">]</span>

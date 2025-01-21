@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jan 20, 2025" name="docbuild:last-update"/>
+<meta content="Jan 21, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -224,12 +224,18 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">html</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">TYPE_CHECKING</span><span class="p">,</span>
     <span class="n">Any</span><span class="p">,</span>
     <span class="n">Iterable</span><span class="p">,</span>
     <span class="n">Iterator</span><span class="p">,</span>
+    <span class="n">Literal</span><span class="p">,</span>
     <span class="n">Mapping</span><span class="p">,</span>
     <span class="n">Optional</span><span class="p">,</span>
     <span class="n">Sequence</span><span class="p">,</span>
@@ -237,16 +243,21 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">urlparse</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.document_loaders.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseBlobParser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.document_loaders.blob_loaders</span><span class="w"> </span><span class="kn">import</span> <span class="n">Blob</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.document_loaders.parsers.images</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseImageBlobParser</span><span class="p">,</span>
+    <span class="n">RapidOCRBlobParser</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">fitz</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">pdfminer</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">pdfplumber</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pymupdf</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">pypdf</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">pypdfium2</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">textractor.data.text_linearization_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextLinearizationConfig</span>
@@ -303,6 +314,156 @@
 
 
 
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">_FORMAT_IMAGE_STR</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n\n</span><span class="si">{image_text}</span><span class="se">\n\n</span><span class="s2">"</span>
+<span class="n">_JOIN_IMAGES</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
+<span class="n">_JOIN_TABLES</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
+<span class="n">_DEFAULT_PAGES_DELIMITER</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n\f</span><span class="s2">"</span>
+
+<span class="n">_STD_METADATA_KEYS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"source"</span><span class="p">,</span> <span class="s2">"total_pages"</span><span class="p">,</span> <span class="s2">"creationdate"</span><span class="p">,</span> <span class="s2">"creator"</span><span class="p">,</span> <span class="s2">"producer"</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_inner_image</span><span class="p">(</span><span class="n">blob</span><span class="p">:</span> <span class="n">Blob</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Format the content of the image with the source of the blob.</span>
+
+<span class="sd">    blob: The blob containing the image.</span>
+<span class="sd">    format::</span>
+<span class="sd">      The format for the parsed output.</span>
+<span class="sd">      - "text" = return the content as is</span>
+<span class="sd">      - "markdown-img" = wrap the content into an image markdown link, w/ link</span>
+<span class="sd">      pointing to (`![body)(#)`]</span>
+<span class="sd">      - "html-img" = wrap the content as the `alt` text of an tag and link to</span>
+<span class="sd">      (`&lt;img alt="{body}" src="#"/&gt;`)</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">content</span><span class="p">:</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">blob</span><span class="o">.</span><span class="n">source</span> <span class="ow">or</span> <span class="s2">"#"</span>
+        <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s2">"markdown-img"</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"]"</span><span class="p">,</span> <span class="sa">r</span><span class="s2">"</span><span class="se">\\</span><span class="s2">]"</span><span class="p">)</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"![</span><span class="si">{</span><span class="n">content</span><span class="si">}</span><span class="s2">](</span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="k">elif</span> <span class="nb">format</span> <span class="o">==</span> <span class="s2">"html-img"</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s1">'&lt;img alt="</span><span class="si">{</span><span class="n">html</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">content</span><span class="p">,</span><span class="w"> </span><span class="n">quote</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="si">}</span><span class="s1"> '</span> <span class="sa">f</span><span class="s1">'src="</span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s1">" /&gt;'</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">content</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Validate that the metadata has all the standard keys and the page is an integer.</span>
+
+<span class="sd">    The standard keys are:</span>
+<span class="sd">    - source</span>
+<span class="sd">    - total_page</span>
+<span class="sd">    - creationdate</span>
+<span class="sd">    - creator</span>
+<span class="sd">    - producer</span>
+
+<span class="sd">    Validate that page is an integer if it is present.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_STD_METADATA_KEYS</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"The PDF parser must valorize the standard metadata."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"page"</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"The PDF metadata page must be a integer."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">metadata</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_purge_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Purge metadata from unwanted keys and normalize key names.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        metadata: The original metadata dictionary.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The cleaned and normalized the key format of metadata dictionary.</span>
+<span class="sd">    """</span>
+    <span class="n">new_metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">map_key</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"page_count"</span><span class="p">:</span> <span class="s2">"total_pages"</span><span class="p">,</span>
+        <span class="s2">"file_path"</span><span class="p">:</span> <span class="s2">"source"</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"/"</span><span class="p">):</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"creationdate"</span><span class="p">,</span> <span class="s2">"moddate"</span><span class="p">]:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">new_metadata</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span>
+                    <span class="n">v</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"'"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span> <span class="s2">"D:%Y%m</span><span class="si">%d</span><span class="s2">%H%M%S%z"</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(</span><span class="s2">"T"</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="n">new_metadata</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">map_key</span><span class="p">:</span>
+            <span class="c1"># Normalize key with others PDF parser</span>
+            <span class="n">new_metadata</span><span class="p">[</span><span class="n">map_key</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="n">new_metadata</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">new_metadata</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">new_metadata</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="n">new_metadata</span>
+
+
+<span class="n">_PARAGRAPH_DELIMITER</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"</span><span class="se">\n\n\n</span><span class="s2">"</span><span class="p">,</span>
+    <span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">,</span>
+<span class="p">]</span>  <span class="c1"># To insert images or table in the middle of the page.</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_merge_text_and_extras</span><span class="p">(</span><span class="n">extras</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">text_from_page</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Insert extras such as image/table in a text between two paragraphs if possible,</span>
+<span class="sd">    else at the end of the text.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        extras: List of extra content (images/tables) to insert.</span>
+<span class="sd">        text_from_page: The text content from the page.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The merged text with extras inserted.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_recurs_merge_text_and_extras</span><span class="p">(</span>
+        <span class="n">extras</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">text_from_page</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">recurs</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">extras</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">delim</span> <span class="ow">in</span> <span class="n">_PARAGRAPH_DELIMITER</span><span class="p">:</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="n">text_from_page</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="n">delim</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">pos</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="c1"># search penultimate, to bypass an error in footer</span>
+                    <span class="n">previous_text</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="k">if</span> <span class="n">recurs</span><span class="p">:</span>
+                        <span class="n">previous_text</span> <span class="o">=</span> <span class="n">_recurs_merge_text_and_extras</span><span class="p">(</span>
+                            <span class="n">extras</span><span class="p">,</span> <span class="n">text_from_page</span><span class="p">[:</span><span class="n">pos</span><span class="p">],</span> <span class="kc">False</span>
+                        <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">previous_text</span><span class="p">:</span>
+                        <span class="n">all_text</span> <span class="o">=</span> <span class="n">previous_text</span> <span class="o">+</span> <span class="n">text_from_page</span><span class="p">[</span><span class="n">pos</span><span class="p">:]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">all_extras</span> <span class="o">=</span> <span class="s2">""</span>
+                        <span class="n">str_extras</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="n">extras</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">str_extras</span><span class="p">:</span>
+                            <span class="n">all_extras</span> <span class="o">=</span> <span class="n">delim</span> <span class="o">+</span> <span class="n">str_extras</span>
+                        <span class="n">all_text</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="n">text_from_page</span><span class="p">[:</span><span class="n">pos</span><span class="p">]</span> <span class="o">+</span> <span class="n">all_extras</span> <span class="o">+</span> <span class="n">text_from_page</span><span class="p">[</span><span class="n">pos</span><span class="p">:]</span>
+                        <span class="p">)</span>
+                    <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">all_text</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">all_text</span> <span class="o">=</span> <span class="n">text_from_page</span>
+        <span class="k">return</span> <span class="n">all_text</span>
+
+    <span class="n">all_text</span> <span class="o">=</span> <span class="n">_recurs_merge_text_and_extras</span><span class="p">(</span><span class="n">extras</span><span class="p">,</span> <span class="n">text_from_page</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">all_text</span><span class="p">:</span>
+        <span class="n">all_extras</span> <span class="o">=</span> <span class="s2">""</span>
+        <span class="n">str_extras</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="n">extras</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">str_extras</span><span class="p">:</span>
+            <span class="n">all_extras</span> <span class="o">=</span> <span class="n">_PARAGRAPH_DELIMITER</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">str_extras</span>
+        <span class="n">all_text</span> <span class="o">=</span> <span class="n">text_from_page</span> <span class="o">+</span> <span class="n">all_extras</span>
+
+    <span class="k">return</span> <span class="n">all_text</span>
+
+
 <div class="viewcode-block" id="PyPDFParser">
 <a class="viewcode-back" href="../../../../community/document_loaders/langchain_community.document_loaders.parsers.pdf.PyPDFParser.html#langchain_community.document_loaders.parsers.pdf.PyPDFParser">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PyPDFParser</span><span class="p">(</span><span class="n">BaseBlobParser</span><span class="p">):</span>
@@ -337,9 +498,7 @@
             <span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">_extract_text_from_page</span><span class="p">(</span><span class="n">page</span><span class="p">:</span> <span class="n">pypdf</span><span class="o">.</span><span class="n">PageObject</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">            </span><span class="sd">"""</span>
-<span class="sd">            Extract text from image given the version of pypdf.</span>
-<span class="sd">            """</span>
+<span class="w">            </span><span class="sd">"""Extract text from image given the version of pypdf."""</span>
             <span class="k">if</span> <span class="n">pypdf</span><span class="o">.</span><span class="n">__version__</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"3"</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">page</span><span class="o">.</span><span class="n">extract_text</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
@@ -520,98 +679,369 @@
 <div class="viewcode-block" id="PyMuPDFParser">
 <a class="viewcode-back" href="../../../../community/document_loaders/langchain_community.document_loaders.parsers.pdf.PyMuPDFParser.html#langchain_community.document_loaders.parsers.pdf.PyMuPDFParser">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PyMuPDFParser</span><span class="p">(</span><span class="n">BaseBlobParser</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Parse `PDF` using `PyMuPDF`."""</span>
+<span class="w">    </span><span class="sd">"""Parse a blob from a PDF using `PyMuPDF` library.</span>
+
+<span class="sd">    This class provides methods to parse a blob from a PDF document, supporting various</span>
+<span class="sd">    configurations such as handling password-protected PDFs, extracting images, and</span>
+<span class="sd">    defining extraction mode.</span>
+<span class="sd">    It integrates the 'PyMuPDF' library for PDF processing and offers synchronous blob</span>
+<span class="sd">    parsing.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        Setup:</span>
+
+<span class="sd">        .. code-block:: bash</span>
+
+<span class="sd">            pip install -U langchain-community pymupdf</span>
+
+<span class="sd">        Load a blob from a PDF file:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from langchain_core.documents.base import Blob</span>
+
+<span class="sd">            blob = Blob.from_path("./example_data/layout-parser-paper.pdf")</span>
+
+<span class="sd">        Instantiate the parser:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from langchain_community.document_loaders.parsers import PyMuPDFParser</span>
+
+<span class="sd">            parser = PyMuPDFParser(</span>
+<span class="sd">                # password = None,</span>
+<span class="sd">                mode = "single",</span>
+<span class="sd">                pages_delimiter = "\n\f",</span>
+<span class="sd">                # extract_images = True,</span>
+<span class="sd">                # images_parser = TesseractBlobParser(),</span>
+<span class="sd">                # extract_tables="markdown",</span>
+<span class="sd">                # extract_tables_settings=None,</span>
+<span class="sd">                # text_kwargs=None,</span>
+<span class="sd">            )</span>
+
+<span class="sd">        Lazily parse the blob:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            docs = []</span>
+<span class="sd">            docs_lazy = parser.lazy_parse(blob)</span>
+
+<span class="sd">            for doc in docs_lazy:</span>
+<span class="sd">                docs.append(doc)</span>
+<span class="sd">            print(docs[0].page_content[:100])</span>
+<span class="sd">            print(docs[0].metadata)</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># PyMuPDF is not thread safe.</span>
+    <span class="c1"># See https://pymupdf.readthedocs.io/en/latest/recipes-multiprocessing.html</span>
+    <span class="n">_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
 
 <div class="viewcode-block" id="PyMuPDFParser.__init__">
 <a class="viewcode-back" href="../../../../community/document_loaders/langchain_community.document_loaders.parsers.pdf.PyMuPDFParser.html#langchain_community.document_loaders.parsers.pdf.PyMuPDFParser.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">text_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">text_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">extract_images</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">password</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"single"</span><span class="p">,</span> <span class="s2">"page"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"page"</span><span class="p">,</span>
+        <span class="n">pages_delimiter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_DEFAULT_PAGES_DELIMITER</span><span class="p">,</span>
+        <span class="n">images_parser</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseImageBlobParser</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">images_inner_format</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"text"</span><span class="p">,</span> <span class="s2">"markdown-img"</span><span class="p">,</span> <span class="s2">"html-img"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"text"</span><span class="p">,</span>
+        <span class="n">extract_tables</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"csv"</span><span class="p">,</span> <span class="s2">"markdown"</span><span class="p">,</span> <span class="s2">"html"</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">extract_tables_settings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Initialize the parser.</span>
+<span class="w">        </span><span class="sd">"""Initialize a parser based on PyMuPDF.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            text_kwargs: Keyword arguments to pass to ``fitz.Page.get_text()``.</span>
+<span class="sd">            password: Optional password for opening encrypted PDFs.</span>
+<span class="sd">            mode: The extraction mode, either "single" for the entire document or "page"</span>
+<span class="sd">                for page-wise extraction.</span>
+<span class="sd">            pages_delimiter: A string delimiter to separate pages in single-mode</span>
+<span class="sd">                extraction.</span>
+<span class="sd">            extract_images: Whether to extract images from the PDF.</span>
+<span class="sd">            images_parser: Optional image blob parser.</span>
+<span class="sd">            images_inner_format: The format for the parsed output.</span>
+<span class="sd">                - "text" = return the content as is</span>
+<span class="sd">                - "markdown-img" = wrap the content into an image markdown link, w/ link</span>
+<span class="sd">                pointing to (`![body)(#)`]</span>
+<span class="sd">                - "html-img" = wrap the content as the `alt` text of an tag and link to</span>
+<span class="sd">                (`&lt;img alt="{body}" src="#"/&gt;`)</span>
+<span class="sd">            extract_tables: Whether to extract tables in a specific format, such as</span>
+<span class="sd">                "csv", "markdown", or "html".</span>
+<span class="sd">            extract_tables_settings: Optional dictionary of settings for customizing</span>
+<span class="sd">                table extraction.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            This method does not directly return data. Use the `parse` or `lazy_parse`</span>
+<span class="sd">            methods to retrieve parsed documents with content and metadata.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the mode is not "single" or "page".</span>
+<span class="sd">            ValueError: If the extract_tables format is not "markdown", "html",</span>
+<span class="sd">            or "csv".</span>
 <span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"single"</span><span class="p">,</span> <span class="s2">"page"</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"mode must be single or page"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">extract_tables</span> <span class="ow">and</span> <span class="n">extract_tables</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"markdown"</span><span class="p">,</span> <span class="s2">"html"</span><span class="p">,</span> <span class="s2">"csv"</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"mode must be markdown"</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pages_delimiter</span> <span class="o">=</span> <span class="n">pages_delimiter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">password</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">text_kwargs</span> <span class="o">=</span> <span class="n">text_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">extract_images</span> <span class="o">=</span> <span class="n">extract_images</span></div>
+        <span class="k">if</span> <span class="n">extract_images</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">images_parser</span><span class="p">:</span>
+            <span class="n">images_parser</span> <span class="o">=</span> <span class="n">RapidOCRBlobParser</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extract_images</span> <span class="o">=</span> <span class="n">extract_images</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">images_inner_format</span> <span class="o">=</span> <span class="n">images_inner_format</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">images_parser</span> <span class="o">=</span> <span class="n">images_parser</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extract_tables</span> <span class="o">=</span> <span class="n">extract_tables</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extract_tables_settings</span> <span class="o">=</span> <span class="n">extract_tables_settings</span></div>
 
 
 <div class="viewcode-block" id="PyMuPDFParser.lazy_parse">
 <a class="viewcode-back" href="../../../../community/document_loaders/langchain_community.document_loaders.parsers.pdf.PyMuPDFParser.html#langchain_community.document_loaders.parsers.pdf.PyMuPDFParser.lazy_parse">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">lazy_parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">blob</span><span class="p">:</span> <span class="n">Blob</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>  <span class="c1"># type: ignore[valid-type]</span>
-<span class="w">        </span><span class="sd">"""Lazily parse the blob."""</span>
-
-        <span class="kn">import</span><span class="w"> </span><span class="nn">fitz</span>
-
-        <span class="k">with</span> <span class="n">blob</span><span class="o">.</span><span class="n">as_bytes_io</span><span class="p">()</span> <span class="k">as</span> <span class="n">file_path</span><span class="p">:</span>  <span class="c1"># type: ignore[attr-defined]</span>
-            <span class="k">if</span> <span class="n">blob</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># type: ignore[attr-defined]</span>
-                <span class="n">doc</span> <span class="o">=</span> <span class="n">fitz</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">doc</span> <span class="o">=</span> <span class="n">fitz</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">stream</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span> <span class="n">filetype</span><span class="o">=</span><span class="s2">"pdf"</span><span class="p">)</span>
-
-            <span class="k">yield from</span> <span class="p">[</span>
-                <span class="n">Document</span><span class="p">(</span>
-                    <span class="n">page_content</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_page_content</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">page</span><span class="p">,</span> <span class="n">blob</span><span class="p">),</span>
-                    <span class="n">metadata</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_extract_metadata</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">page</span><span class="p">,</span> <span class="n">blob</span><span class="p">),</span>
-                <span class="p">)</span>
-                <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">doc</span>
-            <span class="p">]</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lazy_parse</span><span class="p">(</span>
+            <span class="n">blob</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_page_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="n">fitz</span><span class="o">.</span><span class="n">Document</span><span class="p">,</span> <span class="n">page</span><span class="p">:</span> <span class="n">fitz</span><span class="o">.</span><span class="n">Page</span><span class="p">,</span> <span class="n">blob</span><span class="p">:</span> <span class="n">Blob</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        Get the text of the page using PyMuPDF and RapidOCR and issue a warning</span>
-<span class="sd">        if it is empty.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_lazy_parse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">blob</span><span class="p">:</span> <span class="n">Blob</span><span class="p">,</span>
+        <span class="c1"># text-kwargs is present for backwards compatibility.</span>
+        <span class="c1"># Users should not use it directly.</span>
+        <span class="n">text_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>  <span class="c1"># type: ignore[valid-type]</span>
+<span class="w">        </span><span class="sd">"""Lazily parse the blob.</span>
+<span class="sd">        Insert image, if possible, between two paragraphs.</span>
+<span class="sd">        In this way, a paragraph can be continued on the next page.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            blob: The blob to parse.</span>
+<span class="sd">            text_kwargs: Optional keyword arguments to pass to the `get_text` method.</span>
+<span class="sd">                If provided at run time, it will override the default text_kwargs.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ImportError: If the `pypdf` package is not found.</span>
+
+<span class="sd">        Yield:</span>
+<span class="sd">            An iterator over the parsed documents.</span>
 <span class="sd">        """</span>
-        <span class="n">content</span> <span class="o">=</span> <span class="n">page</span><span class="o">.</span><span class="n">get_text</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">text_kwargs</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_images_from_page</span><span class="p">(</span>
-            <span class="n">doc</span><span class="p">,</span> <span class="n">page</span>
-        <span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">pymupdf</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">content</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Warning: Empty content on page "</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">page</span><span class="o">.</span><span class="n">number</span><span class="si">}</span><span class="s2"> of document </span><span class="si">{</span><span class="n">blob</span><span class="o">.</span><span class="n">source</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">text_kwargs</span> <span class="o">=</span> <span class="n">text_kwargs</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">text_kwargs</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_tables_settings</span><span class="p">:</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">pymupdf.table</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+                    <span class="n">DEFAULT_JOIN_TOLERANCE</span><span class="p">,</span>
+                    <span class="n">DEFAULT_MIN_WORDS_HORIZONTAL</span><span class="p">,</span>
+                    <span class="n">DEFAULT_MIN_WORDS_VERTICAL</span><span class="p">,</span>
+                    <span class="n">DEFAULT_SNAP_TOLERANCE</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">extract_tables_settings</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="c1"># See https://pymupdf.readthedocs.io/en/latest/page.html#Page.find_tables</span>
+                    <span class="s2">"clip"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s2">"vertical_strategy"</span><span class="p">:</span> <span class="s2">"lines"</span><span class="p">,</span>
+                    <span class="s2">"horizontal_strategy"</span><span class="p">:</span> <span class="s2">"lines"</span><span class="p">,</span>
+                    <span class="s2">"vertical_lines"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s2">"horizontal_lines"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s2">"snap_tolerance"</span><span class="p">:</span> <span class="n">DEFAULT_SNAP_TOLERANCE</span><span class="p">,</span>
+                    <span class="s2">"snap_x_tolerance"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s2">"snap_y_tolerance"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s2">"join_tolerance"</span><span class="p">:</span> <span class="n">DEFAULT_JOIN_TOLERANCE</span><span class="p">,</span>
+                    <span class="s2">"join_x_tolerance"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s2">"join_y_tolerance"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s2">"edge_min_length"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+                    <span class="s2">"min_words_vertical"</span><span class="p">:</span> <span class="n">DEFAULT_MIN_WORDS_VERTICAL</span><span class="p">,</span>
+                    <span class="s2">"min_words_horizontal"</span><span class="p">:</span> <span class="n">DEFAULT_MIN_WORDS_HORIZONTAL</span><span class="p">,</span>
+                    <span class="s2">"intersection_tolerance"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+                    <span class="s2">"intersection_x_tolerance"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s2">"intersection_y_tolerance"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s2">"text_tolerance"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+                    <span class="s2">"text_x_tolerance"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+                    <span class="s2">"text_y_tolerance"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+                    <span class="s2">"strategy"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># offer abbreviation</span>
+                    <span class="s2">"add_lines"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># optional user-specified lines</span>
+                <span class="p">}</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">"pymupdf package not found, please install it "</span>
+                <span class="s2">"with `pip install pymupdf`"</span>
             <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">content</span>
+        <span class="k">with</span> <span class="n">PyMuPDFParser</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">blob</span><span class="o">.</span><span class="n">as_bytes_io</span><span class="p">()</span> <span class="k">as</span> <span class="n">file_path</span><span class="p">:</span>  <span class="c1"># type: ignore[attr-defined]</span>
+                <span class="k">if</span> <span class="n">blob</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># type: ignore[attr-defined]</span>
+                    <span class="n">doc</span> <span class="o">=</span> <span class="n">pymupdf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">doc</span> <span class="o">=</span> <span class="n">pymupdf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">stream</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span> <span class="n">filetype</span><span class="o">=</span><span class="s2">"pdf"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">doc</span><span class="o">.</span><span class="n">is_encrypted</span><span class="p">:</span>
+                    <span class="n">doc</span><span class="o">.</span><span class="n">authenticate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">)</span>
+                <span class="n">doc_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_metadata</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">blob</span><span class="p">)</span>
+                <span class="n">full_content</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">doc</span><span class="p">:</span>
+                    <span class="n">all_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_page_content</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">page</span><span class="p">,</span> <span class="n">text_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"page"</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">Document</span><span class="p">(</span>
+                            <span class="n">page_content</span><span class="o">=</span><span class="n">all_text</span><span class="p">,</span>
+                            <span class="n">metadata</span><span class="o">=</span><span class="n">_validate_metadata</span><span class="p">(</span>
+                                <span class="n">doc_metadata</span> <span class="o">|</span> <span class="p">{</span><span class="s2">"page"</span><span class="p">:</span> <span class="n">page</span><span class="o">.</span><span class="n">number</span><span class="p">}</span>
+                            <span class="p">),</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">full_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">all_text</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_metadata</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="n">fitz</span><span class="o">.</span><span class="n">Document</span><span class="p">,</span> <span class="n">page</span><span class="p">:</span> <span class="n">fitz</span><span class="o">.</span><span class="n">Page</span><span class="p">,</span> <span class="n">blob</span><span class="p">:</span> <span class="n">Blob</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Extract metadata from the document and page."""</span>
-        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
-            <span class="p">{</span>
-                <span class="s2">"source"</span><span class="p">:</span> <span class="n">blob</span><span class="o">.</span><span class="n">source</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
-                <span class="s2">"file_path"</span><span class="p">:</span> <span class="n">blob</span><span class="o">.</span><span class="n">source</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
-                <span class="s2">"page"</span><span class="p">:</span> <span class="n">page</span><span class="o">.</span><span class="n">number</span><span class="p">,</span>
-                <span class="s2">"total_pages"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">doc</span><span class="p">),</span>
-            <span class="p">},</span>
-            <span class="o">**</span><span class="p">{</span>
-                <span class="n">k</span><span class="p">:</span> <span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
-                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">metadata</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">))</span>
-            <span class="p">},</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"single"</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">Document</span><span class="p">(</span>
+                        <span class="n">page_content</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pages_delimiter</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">full_content</span><span class="p">),</span>
+                        <span class="n">metadata</span><span class="o">=</span><span class="n">_validate_metadata</span><span class="p">(</span><span class="n">doc_metadata</span><span class="p">),</span>
+                    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_page_content</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">doc</span><span class="p">:</span> <span class="n">pymupdf</span><span class="o">.</span><span class="n">Document</span><span class="p">,</span>
+        <span class="n">page</span><span class="p">:</span> <span class="n">pymupdf</span><span class="o">.</span><span class="n">Page</span><span class="p">,</span>
+        <span class="n">text_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get the text of the page using PyMuPDF and RapidOCR and issue a warning</span>
+<span class="sd">        if it is empty.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            doc: The PyMuPDF document object.</span>
+<span class="sd">            page: The PyMuPDF page object.</span>
+<span class="sd">            blob: The blob being parsed.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: The text content of the page.</span>
+<span class="sd">        """</span>
+        <span class="n">text_from_page</span> <span class="o">=</span> <span class="n">page</span><span class="o">.</span><span class="n">get_text</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">text_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="n">text_kwargs</span><span class="p">})</span>
+        <span class="n">images_from_page</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_images_from_page</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">page</span><span class="p">)</span>
+        <span class="n">tables_from_page</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_tables_from_page</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+        <span class="n">extras</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">images_from_page</span><span class="p">:</span>
+            <span class="n">extras</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">images_from_page</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tables_from_page</span><span class="p">:</span>
+            <span class="n">extras</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tables_from_page</span><span class="p">)</span>
+        <span class="n">all_text</span> <span class="o">=</span> <span class="n">_merge_text_and_extras</span><span class="p">(</span><span class="n">extras</span><span class="p">,</span> <span class="n">text_from_page</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">all_text</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="n">pymupdf</span><span class="o">.</span><span class="n">Document</span><span class="p">,</span> <span class="n">blob</span><span class="p">:</span> <span class="n">Blob</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Extract metadata from the document and page.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            doc: The PyMuPDF document object.</span>
+<span class="sd">            blob: The blob being parsed.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: The extracted metadata.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">_purge_metadata</span><span class="p">(</span>
+            <span class="nb">dict</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"producer"</span><span class="p">:</span> <span class="s2">"PyMuPDF"</span><span class="p">,</span>
+                    <span class="s2">"creator"</span><span class="p">:</span> <span class="s2">"PyMuPDF"</span><span class="p">,</span>
+                    <span class="s2">"creationdate"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+                    <span class="s2">"source"</span><span class="p">:</span> <span class="n">blob</span><span class="o">.</span><span class="n">source</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
+                    <span class="s2">"file_path"</span><span class="p">:</span> <span class="n">blob</span><span class="o">.</span><span class="n">source</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
+                    <span class="s2">"total_pages"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">doc</span><span class="p">),</span>
+                <span class="p">},</span>
+                <span class="o">**</span><span class="p">{</span>
+                    <span class="n">k</span><span class="p">:</span> <span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">metadata</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">))</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_images_from_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="n">fitz</span><span class="o">.</span><span class="n">Document</span><span class="p">,</span> <span class="n">page</span><span class="p">:</span> <span class="n">fitz</span><span class="o">.</span><span class="n">Page</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Extract images from page and get the text with RapidOCR."""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_images</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_images_from_page</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="n">pymupdf</span><span class="o">.</span><span class="n">Document</span><span class="p">,</span> <span class="n">page</span><span class="p">:</span> <span class="n">pymupdf</span><span class="o">.</span><span class="n">Page</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Extract images from a PDF page and get the text using images_to_text.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            doc: The PyMuPDF document object.</span>
+<span class="sd">            page: The PyMuPDF page object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: The extracted text from the images on the page.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">images_parser</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">""</span>
-        <span class="kn">import</span><span class="w"> </span><span class="nn">fitz</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">pymupdf</span>
 
         <span class="n">img_list</span> <span class="o">=</span> <span class="n">page</span><span class="o">.</span><span class="n">get_images</span><span class="p">()</span>
-        <span class="n">imgs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">images</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">img</span> <span class="ow">in</span> <span class="n">img_list</span><span class="p">:</span>
-            <span class="n">xref</span> <span class="o">=</span> <span class="n">img</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">pix</span> <span class="o">=</span> <span class="n">fitz</span><span class="o">.</span><span class="n">Pixmap</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span>
-            <span class="n">imgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">pix</span><span class="o">.</span><span class="n">samples</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">images_parser</span><span class="p">:</span>
+                <span class="n">xref</span> <span class="o">=</span> <span class="n">img</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">pix</span> <span class="o">=</span> <span class="n">pymupdf</span><span class="o">.</span><span class="n">Pixmap</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">xref</span><span class="p">)</span>
+                <span class="n">image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">pix</span><span class="o">.</span><span class="n">samples</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
                     <span class="n">pix</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">pix</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
                 <span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">return</span> <span class="n">extract_from_images_with_rapidocr</span><span class="p">(</span><span class="n">imgs</span><span class="p">)</span></div>
+                <span class="n">image_bytes</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+                <span class="n">numpy</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">image_bytes</span><span class="p">,</span> <span class="n">image</span><span class="p">)</span>
+                <span class="n">blob</span> <span class="o">=</span> <span class="n">Blob</span><span class="o">.</span><span class="n">from_data</span><span class="p">(</span>
+                    <span class="n">image_bytes</span><span class="o">.</span><span class="n">getvalue</span><span class="p">(),</span> <span class="n">mime_type</span><span class="o">=</span><span class="s2">"application/x-npy"</span>
+                <span class="p">)</span>
+                <span class="n">image_text</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">images_parser</span><span class="o">.</span><span class="n">lazy_parse</span><span class="p">(</span><span class="n">blob</span><span class="p">))</span><span class="o">.</span><span class="n">page_content</span>
+
+                <span class="n">images</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">_format_inner_image</span><span class="p">(</span><span class="n">blob</span><span class="p">,</span> <span class="n">image_text</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">images_inner_format</span><span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">_FORMAT_IMAGE_STR</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">image_text</span><span class="o">=</span><span class="n">_JOIN_IMAGES</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">images</span><span class="p">))</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_tables_from_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">page</span><span class="p">:</span> <span class="n">pymupdf</span><span class="o">.</span><span class="n">Page</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Extract tables from a PDF page.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            page: The PyMuPDF page object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: The extracted tables in the specified format.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_tables</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">""</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">pymupdf</span>
+
+        <span class="n">tables_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="n">pymupdf</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">find_tables</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">extract_tables_settings</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">tables_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_tables</span> <span class="o">==</span> <span class="s2">"markdown"</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">_JOIN_TABLES</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">table</span><span class="o">.</span><span class="n">to_markdown</span><span class="p">()</span> <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">tables_list</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_tables</span> <span class="o">==</span> <span class="s2">"html"</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">_JOIN_TABLES</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">table</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span><span class="o">.</span><span class="n">to_html</span><span class="p">(</span>
+                            <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                            <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                            <span class="n">bold_rows</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">tables_list</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_tables</span> <span class="o">==</span> <span class="s2">"csv"</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">_JOIN_TABLES</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">table</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
+                            <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                            <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">tables_list</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"extract_tables </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">extract_tables</span><span class="si">}</span><span class="s2"> not implemented"</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="s2">""</span></div>
 
 
 

@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jan 20, 2025" name="docbuild:last-update"/>
+<meta content="Jan 21, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -818,7 +818,9 @@
                         <span class="n">generation</span> <span class="o">=</span> <span class="n">chunk</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="n">generation</span> <span class="o">+=</span> <span class="n">chunk</span>
-                <span class="k">assert</span> <span class="n">generation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="n">generation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s2">"No generation chunks were returned"</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">run_manager</span><span class="o">.</span><span class="n">on_llm_error</span><span class="p">(</span>
                     <span class="n">e</span><span class="p">,</span>
@@ -889,7 +891,9 @@
                     <span class="n">generation</span> <span class="o">=</span> <span class="n">chunk</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">generation</span> <span class="o">+=</span> <span class="n">chunk</span>
-            <span class="k">assert</span> <span class="n">generation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">generation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"No generation chunks were returned"</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">await</span> <span class="n">run_manager</span><span class="o">.</span><span class="n">on_llm_error</span><span class="p">(</span>
                 <span class="n">e</span><span class="p">,</span>
@@ -1132,16 +1136,24 @@
             <span class="p">)</span>
         <span class="p">):</span>
             <span class="c1"># We've received a list of callbacks args to apply to each input</span>
-            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">callbacks</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">prompts</span><span class="p">)</span>
-            <span class="k">assert</span> <span class="n">tags</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">callbacks</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">prompts</span><span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"callbacks must be the same length as prompts"</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">tags</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
                 <span class="nb">isinstance</span><span class="p">(</span><span class="n">tags</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">prompts</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="k">assert</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"tags must be a list of the same length as prompts"</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
                 <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">prompts</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="k">assert</span> <span class="n">run_name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"metadata must be a list of the same length as prompts"</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">run_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
                 <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_name</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">run_name</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">prompts</span><span class="p">)</span>
-            <span class="p">)</span>
+            <span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"run_name must be a list of the same length as prompts"</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="n">callbacks</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">Callbacks</span><span class="p">],</span> <span class="n">callbacks</span><span class="p">)</span>
             <span class="n">tags_list</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]],</span> <span class="n">tags</span> <span class="ow">or</span> <span class="p">([</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">prompts</span><span class="p">)))</span>
             <span class="n">metadata_list</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
@@ -1366,16 +1378,24 @@
             <span class="ow">or</span> <span class="n">callbacks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="p">):</span>
             <span class="c1"># We've received a list of callbacks args to apply to each input</span>
-            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">callbacks</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">prompts</span><span class="p">)</span>
-            <span class="k">assert</span> <span class="n">tags</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">callbacks</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">prompts</span><span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"callbacks must be the same length as prompts"</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">tags</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
                 <span class="nb">isinstance</span><span class="p">(</span><span class="n">tags</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">prompts</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="k">assert</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"tags must be a list of the same length as prompts"</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
                 <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">prompts</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="k">assert</span> <span class="n">run_name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"metadata must be a list of the same length as prompts"</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">run_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
                 <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_name</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">run_name</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">prompts</span><span class="p">)</span>
-            <span class="p">)</span>
+            <span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"run_name must be a list of the same length as prompts"</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="n">callbacks</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">Callbacks</span><span class="p">],</span> <span class="n">callbacks</span><span class="p">)</span>
             <span class="n">tags_list</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]],</span> <span class="n">tags</span> <span class="ow">or</span> <span class="p">([</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">prompts</span><span class="p">)))</span>
             <span class="n">metadata_list</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>

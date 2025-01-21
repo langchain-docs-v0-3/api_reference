@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jan 20, 2025" name="docbuild:last-update"/>
+<meta content="Jan 21, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -225,7 +225,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">io</span><span class="w"> </span><span class="kn">import</span> <span class="n">BytesIO</span><span class="p">,</span> <span class="n">StringIO</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">io</span><span class="w"> </span><span class="kn">import</span> <span class="n">StringIO</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Any</span><span class="p">,</span>
     <span class="n">Callable</span><span class="p">,</span>
@@ -261,9 +261,81 @@
 <div class="viewcode-block" id="HTMLHeaderTextSplitter">
 <a class="viewcode-back" href="../../text_splitters/html/langchain_text_splitters.html.HTMLHeaderTextSplitter.html#langchain_text_splitters.html.HTMLHeaderTextSplitter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">HTMLHeaderTextSplitter</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Splitting HTML files based on specified headers.</span>
+<span class="w">    </span><span class="sd">"""Split HTML content into structured Documents based on specified headers.</span>
 
-<span class="sd">    Requires lxml package.</span>
+<span class="sd">    Splits HTML content by detecting specified header tags (e.g., &lt;h1&gt;, &lt;h2&gt;) and</span>
+<span class="sd">    creating hierarchical Document objects that reflect the semantic structure</span>
+<span class="sd">    of the original content. For each identified section, the splitter associates</span>
+<span class="sd">    the extracted text with metadata corresponding to the encountered headers.</span>
+
+<span class="sd">    If no specified headers are found, the entire content is returned as a single</span>
+<span class="sd">    Document. This allows for flexible handling of HTML input, ensuring that</span>
+<span class="sd">    information is organized according to its semantic headers.</span>
+
+<span class="sd">    The splitter provides the option to return each HTML element as a separate</span>
+<span class="sd">    Document or aggregate them into semantically meaningful chunks. It also</span>
+<span class="sd">    gracefully handles multiple levels of nested headers, creating a rich,</span>
+<span class="sd">    hierarchical representation of the content.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        headers_to_split_on (List[Tuple[str, str]]): A list of (header_tag,</span>
+<span class="sd">            header_name) pairs representing the headers that define splitting</span>
+<span class="sd">            boundaries. For example, [("h1", "Header 1"), ("h2", "Header 2")]</span>
+<span class="sd">            will split content by &lt;h1&gt; and &lt;h2&gt; tags, assigning their textual</span>
+<span class="sd">            content to the Document metadata.</span>
+<span class="sd">        return_each_element (bool): If True, every HTML element encountered</span>
+<span class="sd">            (including headers, paragraphs, etc.) is returned as a separate</span>
+<span class="sd">            Document. If False, content under the same header hierarchy is</span>
+<span class="sd">            aggregated into fewer Documents.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[Document]: A list of Document objects. Each Document contains</span>
+<span class="sd">        `page_content` holding the extracted text and `metadata` that maps</span>
+<span class="sd">        the header hierarchy to their corresponding titles.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from langchain_text_splitters.html_header_text_splitter import (</span>
+<span class="sd">                HTMLHeaderTextSplitter,</span>
+<span class="sd">            )</span>
+
+<span class="sd">            # Define headers for splitting on h1 and h2 tags.</span>
+<span class="sd">            headers_to_split_on = [("h1", "Main Topic"), ("h2", "Sub Topic")]</span>
+
+<span class="sd">            splitter = HTMLHeaderTextSplitter(</span>
+<span class="sd">                headers_to_split_on=headers_to_split_on,</span>
+<span class="sd">                return_each_element=False</span>
+<span class="sd">            )</span>
+
+<span class="sd">            html_content = \"\"\"</span>
+<span class="sd">            &lt;html&gt;</span>
+<span class="sd">              &lt;body&gt;</span>
+<span class="sd">                &lt;h1&gt;Introduction&lt;/h1&gt;</span>
+<span class="sd">                &lt;p&gt;Welcome to the introduction section.&lt;/p&gt;</span>
+<span class="sd">                &lt;h2&gt;Background&lt;/h2&gt;</span>
+<span class="sd">                &lt;p&gt;Some background details here.&lt;/p&gt;</span>
+<span class="sd">                &lt;h1&gt;Conclusion&lt;/h1&gt;</span>
+<span class="sd">                &lt;p&gt;Final thoughts.&lt;/p&gt;</span>
+<span class="sd">              &lt;/body&gt;</span>
+<span class="sd">            &lt;/html&gt;</span>
+<span class="sd">            \"\"\"</span>
+
+<span class="sd">            documents = splitter.split_text(html_content)</span>
+
+<span class="sd">            # 'documents' now contains Document objects reflecting the hierarchy:</span>
+<span class="sd">            # - Document with metadata={"Main Topic": "Introduction"} and</span>
+<span class="sd">            #   content="Introduction"</span>
+<span class="sd">            # - Document with metadata={"Main Topic": "Introduction"} and</span>
+<span class="sd">            #   content="Welcome to the introduction section."</span>
+<span class="sd">            # - Document with metadata={"Main Topic": "Introduction",</span>
+<span class="sd">            #   "Sub Topic": "Background"} and content="Background"</span>
+<span class="sd">            # - Document with metadata={"Main Topic": "Introduction",</span>
+<span class="sd">            #   "Sub Topic": "Background"} and content="Some background details here."</span>
+<span class="sd">            # - Document with metadata={"Main Topic": "Conclusion"} and</span>
+<span class="sd">            #   content="Conclusion"</span>
+<span class="sd">            # - Document with metadata={"Main Topic": "Conclusion"} and</span>
+<span class="sd">            #   content="Final thoughts."</span>
 <span class="sd">    """</span>
 
 <div class="viewcode-block" id="HTMLHeaderTextSplitter.__init__">
@@ -272,151 +344,219 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">headers_to_split_on</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
         <span class="n">return_each_element</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Create a new HTMLHeaderTextSplitter.</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize with headers to split on.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            headers_to_split_on: list of tuples of headers we want to track mapped to</span>
-<span class="sd">                (arbitrary) keys for metadata. Allowed header values: h1, h2, h3, h4,</span>
-<span class="sd">                h5, h6 e.g. [("h1", "Header 1"), ("h2", "Header 2)].</span>
-<span class="sd">            return_each_element: Return each element w/ associated headers.</span>
+<span class="sd">            headers_to_split_on: A list of tuples where</span>
+<span class="sd">                each tuple contains a header tag and its corresponding value.</span>
+<span class="sd">            return_each_element: Whether to return each HTML</span>
+<span class="sd">                element as a separate Document. Defaults to False.</span>
 <span class="sd">        """</span>
-        <span class="c1"># Output element-by-element or aggregated into chunks w/ common headers</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">return_each_element</span> <span class="o">=</span> <span class="n">return_each_element</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">headers_to_split_on</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">headers_to_split_on</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="HTMLHeaderTextSplitter.aggregate_elements_to_chunks">
-<a class="viewcode-back" href="../../text_splitters/html/langchain_text_splitters.html.HTMLHeaderTextSplitter.html#langchain_text_splitters.html.HTMLHeaderTextSplitter.aggregate_elements_to_chunks">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">aggregate_elements_to_chunks</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">elements</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ElementType</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Combine elements with common metadata into chunks.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            elements: HTML element content with associated identifying info and metadata</span>
-<span class="sd">        """</span>
-        <span class="n">aggregated_chunks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ElementType</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">elements</span><span class="p">:</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="n">aggregated_chunks</span>
-                <span class="ow">and</span> <span class="n">aggregated_chunks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">"metadata"</span><span class="p">]</span> <span class="o">==</span> <span class="n">element</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">]</span>
-            <span class="p">):</span>
-                <span class="c1"># If the last element in the aggregated list</span>
-                <span class="c1"># has the same metadata as the current element,</span>
-                <span class="c1"># append the current content to the last element's content</span>
-                <span class="n">aggregated_chunks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">"content"</span><span class="p">]</span> <span class="o">+=</span> <span class="s2">"  </span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="n">element</span><span class="p">[</span><span class="s2">"content"</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Otherwise, append the current element to the aggregated list</span>
-                <span class="n">aggregated_chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="p">[</span>
-            <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="n">chunk</span><span class="p">[</span><span class="s2">"content"</span><span class="p">],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">chunk</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">])</span>
-            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">aggregated_chunks</span>
-        <span class="p">]</span></div>
-
-
-<div class="viewcode-block" id="HTMLHeaderTextSplitter.split_text_from_url">
-<a class="viewcode-back" href="../../text_splitters/html/langchain_text_splitters.html.HTMLHeaderTextSplitter.html#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_url">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">split_text_from_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Split HTML from web URL.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            url: web URL</span>
-<span class="sd">            **kwargs: Arbitrary additional keyword arguments. These are usually passed</span>
-<span class="sd">                to the fetch url content request.</span>
-<span class="sd">        """</span>
-        <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_text_from_file</span><span class="p">(</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">content</span><span class="p">))</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">headers_to_split_on</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">headers_to_split_on</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">header_mapping</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">headers_to_split_on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">header_tags</span> <span class="o">=</span> <span class="p">[</span><span class="n">tag</span> <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers_to_split_on</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_each_element</span> <span class="o">=</span> <span class="n">return_each_element</span></div>
 
 
 <div class="viewcode-block" id="HTMLHeaderTextSplitter.split_text">
 <a class="viewcode-back" href="../../text_splitters/html/langchain_text_splitters.html.HTMLHeaderTextSplitter.html#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">split_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Split HTML text string.</span>
+<span class="w">        </span><span class="sd">"""Split the given text into a list of Document objects.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            text: HTML text</span>
+<span class="sd">            text: The HTML text to split.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of split Document objects.</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_text_from_file</span><span class="p">(</span><span class="n">StringIO</span><span class="p">(</span><span class="n">text</span><span class="p">))</span></div>
 
 
+<div class="viewcode-block" id="HTMLHeaderTextSplitter.split_text_from_url">
+<a class="viewcode-back" href="../../text_splitters/html/langchain_text_splitters.html.HTMLHeaderTextSplitter.html#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_url">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">split_text_from_url</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Fetch text content from a URL and split it into documents.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            url: The URL to fetch content from.</span>
+<span class="sd">            timeout: Timeout for the request. Defaults to 10.</span>
+<span class="sd">            **kwargs: Additional keyword arguments for the request.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of split Document objects.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            requests.RequestException: If the HTTP request fails.</span>
+<span class="sd">        """</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"timeout"</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_text</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_header_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Determine the heading level of a tag."""</span>
+        <span class="k">if</span> <span class="n">tag_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"h1"</span><span class="p">,</span> <span class="s2">"h2"</span><span class="p">,</span> <span class="s2">"h3"</span><span class="p">,</span> <span class="s2">"h4"</span><span class="p">,</span> <span class="s2">"h5"</span><span class="p">,</span> <span class="s2">"h6"</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">tag_name</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="c1"># Returns high level if it isn't a header</span>
+        <span class="k">return</span> <span class="mi">9999</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_dom_depth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Determine the DOM depth of an element by counting its parents."""</span>
+        <span class="n">depth</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">element</span><span class="o">.</span><span class="n">parents</span><span class="p">:</span>
+            <span class="n">depth</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">depth</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_elements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">html_content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Parse HTML content and return a list of BeautifulSoup elements.</span>
+
+<span class="sd">        This helper function takes HTML content as input,</span>
+<span class="sd">        parses it using BeautifulSoup4, and returns all HTML elements</span>
+<span class="sd">        found in the document body. If no body tag exists,</span>
+<span class="sd">        it returns all elements in the full document.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            html_content: Raw HTML content to be parsed.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[Any]: A list of BeautifulSoup elements found in the HTML document.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ImportError: If the BeautifulSoup4 package is not installed.</span>
+<span class="sd">        """</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">bs4</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeautifulSoup</span>  <span class="c1"># type: ignore[import-untyped]</span>
+        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">"Unable to import BeautifulSoup/PageElement, </span><span class="se">\</span>
+<span class="s2">                    please install with `pip install </span><span class="se">\</span>
+<span class="s2">                    bs4`."</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="n">soup</span> <span class="o">=</span> <span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">html_content</span><span class="p">,</span> <span class="s2">"html.parser"</span><span class="p">)</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">body</span> <span class="k">if</span> <span class="n">soup</span><span class="o">.</span><span class="n">body</span> <span class="k">else</span> <span class="n">soup</span>
+        <span class="k">return</span> <span class="n">body</span><span class="o">.</span><span class="n">find_all</span><span class="p">()</span>
+
 <div class="viewcode-block" id="HTMLHeaderTextSplitter.split_text_from_file">
 <a class="viewcode-back" href="../../text_splitters/html/langchain_text_splitters.html.HTMLHeaderTextSplitter.html#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_file">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">split_text_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Split HTML file.</span>
+<span class="w">        </span><span class="sd">"""Split HTML content from a file into a list of Document objects.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            file: HTML file</span>
+<span class="sd">            file: A file path or a file-like object containing HTML content.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of split Document objects.</span>
 <span class="sd">        """</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">lxml</span><span class="w"> </span><span class="kn">import</span> <span class="n">etree</span>
-        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-                <span class="s2">"Unable to import lxml, please install with `pip install lxml`."</span>
-            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-        <span class="c1"># use lxml library to parse html document and return xml ElementTree</span>
-        <span class="c1"># Explicitly encoding in utf-8 allows non-English</span>
-        <span class="c1"># html files to be processed without garbled characters</span>
-        <span class="n">parser</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">HTMLParser</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
-        <span class="n">tree</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">parser</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">html_content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">html_content</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">elements</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_elements</span><span class="p">(</span><span class="n">html_content</span><span class="p">)</span>
+        <span class="n">documents</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">active_headers</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">current_chunk</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">chunk_dom_depth</span> <span class="o">=</span> <span class="mi">0</span>
 
-        <span class="c1"># document transformation for "structure-aware" chunking is handled with xsl.</span>
-        <span class="c1"># see comments in html_chunks_with_headers.xslt for more detailed information.</span>
-        <span class="n">xslt_path</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">"xsl/html_chunks_with_headers.xslt"</span>
-        <span class="n">xslt_tree</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">xslt_path</span><span class="p">)</span>
-        <span class="n">transform</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">XSLT</span><span class="p">(</span><span class="n">xslt_tree</span><span class="p">)</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
-        <span class="n">result_dom</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
-
-        <span class="c1"># create filter and mapping for header metadata</span>
-        <span class="n">header_filter</span> <span class="o">=</span> <span class="p">[</span><span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">header</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers_to_split_on</span><span class="p">]</span>
-        <span class="n">header_mapping</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">headers_to_split_on</span><span class="p">)</span>
-
-        <span class="c1"># map xhtml namespace prefix</span>
-        <span class="n">ns_map</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"h"</span><span class="p">:</span> <span class="s2">"http://www.w3.org/1999/xhtml"</span><span class="p">}</span>
-
-        <span class="c1"># build list of elements from DOM</span>
-        <span class="n">elements</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">result_dom</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">"*//*"</span><span class="p">,</span> <span class="n">ns_map</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">"*[@class='headers']"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">element</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span>
-                <span class="s2">"*[@class='chunk']"</span>
-            <span class="p">):</span>
-                <span class="n">elements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">ElementType</span><span class="p">(</span>
-                        <span class="n">url</span><span class="o">=</span><span class="n">file</span><span class="p">,</span>
-                        <span class="n">xpath</span><span class="o">=</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                            <span class="p">[</span>
-                                <span class="n">node</span><span class="o">.</span><span class="n">text</span> <span class="ow">or</span> <span class="s2">""</span>
-                                <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">element</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">"*[@class='xpath']"</span><span class="p">,</span> <span class="n">ns_map</span><span class="p">)</span>
-                            <span class="p">]</span>
-                        <span class="p">),</span>
-                        <span class="n">content</span><span class="o">=</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                            <span class="p">[</span>
-                                <span class="n">node</span><span class="o">.</span><span class="n">text</span> <span class="ow">or</span> <span class="s2">""</span>
-                                <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">element</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">"*[@class='chunk']"</span><span class="p">,</span> <span class="n">ns_map</span><span class="p">)</span>
-                            <span class="p">]</span>
-                        <span class="p">),</span>
-                        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
-                            <span class="c1"># Add text of specified headers to metadata using header</span>
-                            <span class="c1"># mapping.</span>
-                            <span class="n">header_mapping</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">tag</span><span class="p">]:</span> <span class="n">node</span><span class="o">.</span><span class="n">text</span> <span class="ow">or</span> <span class="s2">""</span>
-                            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">(</span>
-                                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">tag</span> <span class="ow">in</span> <span class="n">header_filter</span><span class="p">,</span>
-                                <span class="n">element</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">"*[@class='headers']/*"</span><span class="p">,</span> <span class="n">ns_map</span><span class="p">),</span>
-                            <span class="p">)</span>
-                        <span class="p">},</span>
-                    <span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">finalize_chunk</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">current_chunk</span><span class="p">:</span>
+                <span class="n">final_meta</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">key</span><span class="p">:</span> <span class="n">content</span>
+                    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">dom_depth</span><span class="p">)</span> <span class="ow">in</span> <span class="n">active_headers</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">chunk_dom_depth</span> <span class="o">&gt;=</span> <span class="n">dom_depth</span>
+                <span class="p">}</span>
+                <span class="n">combined_text</span> <span class="o">=</span> <span class="s2">"  </span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">current_chunk</span> <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
                 <span class="p">)</span>
+                <span class="k">if</span> <span class="n">combined_text</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                    <span class="n">documents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="n">combined_text</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">final_meta</span><span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="n">current_chunk</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">elements</span><span class="p">:</span>
+            <span class="n">tag</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">tag</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">t</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">element</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="n">string</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">level</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_header_level</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+            <span class="n">dom_depth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dom_depth</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">tag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">header_tags</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_each_element</span><span class="p">:</span>
+                    <span class="n">finalize_chunk</span><span class="p">()</span>
+
+                <span class="c1"># Remove headers at same or deeper level</span>
+                <span class="n">headers_to_remove</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">key</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">lvl</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">active_headers</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">lvl</span> <span class="o">&gt;=</span> <span class="n">level</span>
+                <span class="p">]</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">headers_to_remove</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="n">active_headers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+                <span class="n">header_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">header_mapping</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span>
+                <span class="n">active_headers</span><span class="p">[</span><span class="n">header_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">dom_depth</span><span class="p">)</span>
+
+                <span class="c1"># Produce a document for the header itself</span>
+                <span class="n">header_meta</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">key</span><span class="p">:</span> <span class="n">content</span>
+                    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">lvl</span><span class="p">,</span> <span class="n">dd</span><span class="p">)</span> <span class="ow">in</span> <span class="n">active_headers</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">dom_depth</span> <span class="o">&gt;=</span> <span class="n">dd</span>
+                <span class="p">}</span>
+                <span class="n">documents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">header_meta</span><span class="p">))</span>
+                <span class="c1"># After encountering a header,</span>
+                <span class="c1"># no immediate content goes to current_chunk</span>
+                <span class="c1"># (if return_each_element is False, we wait for next content)</span>
+                <span class="c1"># (if return_each_element is True, we create docs per element anyway)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Non-header element logic</span>
+                <span class="c1"># Remove headers that don't apply if dom_depth &lt; their dom_depth</span>
+                <span class="n">headers_to_remove</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">key</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">dd</span><span class="p">)</span> <span class="ow">in</span> <span class="n">active_headers</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">dom_depth</span> <span class="o">&lt;</span> <span class="n">dd</span>
+                <span class="p">]</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">headers_to_remove</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="n">active_headers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_each_element</span><span class="p">:</span>
+                    <span class="c1"># Produce a doc for this element immediately</span>
+                    <span class="n">element_meta</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="n">key</span><span class="p">:</span> <span class="n">content</span>
+                        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">lvl</span><span class="p">,</span> <span class="n">dd</span><span class="p">)</span> <span class="ow">in</span> <span class="n">active_headers</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="n">dom_depth</span> <span class="o">&gt;=</span> <span class="n">dd</span>
+                    <span class="p">}</span>
+                    <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                        <span class="n">documents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">element_meta</span><span class="p">)</span>
+                        <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Accumulate content in current_chunk</span>
+                    <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                        <span class="n">current_chunk</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+                        <span class="n">chunk_dom_depth</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">chunk_dom_depth</span><span class="p">,</span> <span class="n">dom_depth</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_each_element</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregate_elements_to_chunks</span><span class="p">(</span><span class="n">elements</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span>
-                <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="n">chunk</span><span class="p">[</span><span class="s2">"content"</span><span class="p">],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">chunk</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">])</span>
-                <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">elements</span>
-            <span class="p">]</span></div>
+            <span class="c1"># finalize any remaining chunk</span>
+            <span class="n">finalize_chunk</span><span class="p">()</span>
+
+        <span class="c1"># If no headers were found at all and return_each_element=False, behavior is:</span>
+        <span class="c1"># The entire content should be in one document.</span>
+        <span class="c1"># The logic above naturally handles it:</span>
+        <span class="c1"># If no recognized headers, we never split; we ended up just accumulating text</span>
+        <span class="c1"># in current_chunk and finalizing once at the end.</span>
+
+        <span class="k">return</span> <span class="n">documents</span></div>
 </div>
 
 
@@ -528,7 +668,10 @@
 <span class="sd">                - 'tag_name': The name of the header tag (e.g., "h1", "h2").</span>
 <span class="sd">        """</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">bs4</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeautifulSoup</span><span class="p">,</span> <span class="n">PageElement</span>  <span class="c1"># type: ignore[import-untyped]</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">bs4</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+                <span class="n">BeautifulSoup</span><span class="p">,</span>  <span class="c1"># type: ignore[import-untyped]</span>
+                <span class="n">PageElement</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
                 <span class="s2">"Unable to import BeautifulSoup/PageElement, </span><span class="se">\</span>
@@ -608,10 +751,13 @@
 <div class="viewcode-block" id="HTMLSectionSplitter.split_text_from_file">
 <a class="viewcode-back" href="../../text_splitters/html/langchain_text_splitters.html.HTMLSectionSplitter.html#langchain_text_splitters.html.HTMLSectionSplitter.split_text_from_file">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">split_text_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Split HTML file.</span>
+<span class="w">        </span><span class="sd">"""Split HTML content from a file into a list of Document objects.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            file: HTML file</span>
+<span class="sd">            file: A file path or a file-like object containing HTML content.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of split Document objects.</span>
 <span class="sd">        """</span>
         <span class="n">file_content</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
         <span class="n">file_content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert_possible_tags_to_header</span><span class="p">(</span><span class="n">file_content</span><span class="p">)</span>
@@ -1123,6 +1269,9 @@
             <span class="n">content</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">placeholder</span><span class="p">,</span> <span class="n">preserved_content</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">content</span></div>
 
+
+
+<span class="c1"># %%</span>
 </pre></div>
 </article>
 </div>
