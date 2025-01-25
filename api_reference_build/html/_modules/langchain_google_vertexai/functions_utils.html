@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jan 24, 2025" name="docbuild:last-update"/>
+<meta content="Jan 25, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -470,15 +470,21 @@
     <span class="n">tool</span><span class="p">:</span> <span class="n">_FunctionDeclarationLike</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gapic</span><span class="o">.</span><span class="n">FunctionDeclaration</span><span class="p">:</span>
     <span class="s2">"Format tool into the Vertex function declaration."</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"_format_to_gapic_function_declaration"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="n">BaseTool</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">_format_base_tool_to_function_declaration</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">_format_pydantic_to_function_declaration</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="nb">callable</span><span class="p">(</span><span class="n">tool</span><span class="p">):</span>
+    <span class="k">elif</span> <span class="nb">callable</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="s2">"__annotations__"</span><span class="p">)</span>
+    <span class="p">):</span>
         <span class="k">return</span> <span class="n">_format_base_tool_to_function_declaration</span><span class="p">(</span><span class="n">callable_as_lc_tool</span><span class="p">()(</span><span class="n">tool</span><span class="p">))</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="n">vertexai</span><span class="o">.</span><span class="n">FunctionDeclaration</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">_format_vertex_to_function_declaration</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="s2">"__annotations__"</span><span class="p">)</span>
+    <span class="p">):</span>
         <span class="c1"># this could come from</span>
         <span class="c1"># 'langchain_core.utils.function_calling.convert_to_openai_tool'</span>
         <span class="n">function</span> <span class="o">=</span> <span class="n">convert_to_openai_tool</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">tool</span><span class="p">))[</span><span class="s2">"function"</span><span class="p">]</span>
