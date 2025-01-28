@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jan 27, 2025" name="docbuild:last-update"/>
+<meta content="Jan 28, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,9 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_community.document_loaders.doc_intelligence</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
 
@@ -229,6 +231,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.document_loaders.parsers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AzureAIDocumentIntelligenceParser</span><span class="p">,</span>
 <span class="p">)</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">azure.core.credentials</span><span class="w"> </span><span class="kn">import</span> <span class="n">TokenCredential</span>
 
 
 <div class="viewcode-block" id="AzureAIDocumentIntelligenceLoader">
@@ -241,7 +246,7 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">api_endpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">file_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">url_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">bytes_source</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -250,6 +255,7 @@
         <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"markdown"</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">analysis_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">azure_credential</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"TokenCredential"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Initialize the object for file processing with Azure Document Intelligence</span>
@@ -289,6 +295,9 @@
 <span class="sd">            List of optional analysis features, each feature should be passed</span>
 <span class="sd">            as a str that conforms to the enum `DocumentAnalysisFeature` in</span>
 <span class="sd">            `azure-ai-documentintelligence` package. Default value is None.</span>
+<span class="sd">        azure_credential: Optional[TokenCredential]</span>
+<span class="sd">            The credentials to use for DocumentIntelligenceClient construction, when</span>
+<span class="sd">            using credentials other than api_key (like AD).</span>
 
 <span class="sd">        Examples:</span>
 <span class="sd">        ---------</span>
@@ -305,6 +314,15 @@
         <span class="k">assert</span> <span class="p">(</span>
             <span class="n">file_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">url_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">bytes_source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="p">),</span> <span class="s2">"file_path, url_path or bytes_source must be provided"</span>
+
+        <span class="k">assert</span> <span class="p">(</span>
+            <span class="n">api_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">azure_credential</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">),</span> <span class="s2">"Either api_key or azure_credential must be provided."</span>
+
+        <span class="k">assert</span> <span class="p">(</span>
+            <span class="n">api_key</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">azure_credential</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">),</span> <span class="s2">"Only one of api_key or azure_credential should be provided."</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">file_path</span> <span class="o">=</span> <span class="n">file_path</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">url_path</span> <span class="o">=</span> <span class="n">url_path</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bytes_source</span> <span class="o">=</span> <span class="n">bytes_source</span>
@@ -316,6 +334,7 @@
             <span class="n">api_model</span><span class="o">=</span><span class="n">api_model</span><span class="p">,</span>
             <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
             <span class="n">analysis_features</span><span class="o">=</span><span class="n">analysis_features</span><span class="p">,</span>
+            <span class="n">azure_credential</span><span class="o">=</span><span class="n">azure_credential</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
