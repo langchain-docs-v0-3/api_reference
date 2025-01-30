@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jan 29, 2025" name="docbuild:last-update"/>
+<meta content="Jan 30, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -603,11 +603,28 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">config</span> <span class="o">=</span> <span class="n">ensure_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
             <span class="n">messages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_input</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span><span class="o">.</span><span class="n">to_messages</span><span class="p">()</span>
+            <span class="n">structured_output_format</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"structured_output_format"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">structured_output_format</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">structured_output_format_dict</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="s2">"structured_output_format"</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">"kwargs"</span><span class="p">:</span> <span class="n">structured_output_format</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"kwargs"</span><span class="p">,</span> <span class="p">{}),</span>
+                            <span class="s2">"schema"</span><span class="p">:</span> <span class="n">convert_to_openai_tool</span><span class="p">(</span>
+                                <span class="n">structured_output_format</span><span class="p">[</span><span class="s2">"schema"</span><span class="p">]</span>
+                            <span class="p">),</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="n">structured_output_format_dict</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">structured_output_format_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
             <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_invocation_params</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"stop"</span><span class="p">:</span> <span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">}</span>
             <span class="n">inheritable_metadata</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="o">**</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"metadata"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}),</span>
                 <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_ls_params</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+                <span class="o">**</span><span class="n">structured_output_format_dict</span><span class="p">,</span>
             <span class="p">}</span>
             <span class="n">callback_manager</span> <span class="o">=</span> <span class="n">CallbackManager</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span>
                 <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"callbacks"</span><span class="p">),</span>
@@ -682,11 +699,29 @@
 
         <span class="n">config</span> <span class="o">=</span> <span class="n">ensure_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="n">messages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_input</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span><span class="o">.</span><span class="n">to_messages</span><span class="p">()</span>
+
+        <span class="n">structured_output_format</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"structured_output_format"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">structured_output_format</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">structured_output_format_dict</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">"structured_output_format"</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">"kwargs"</span><span class="p">:</span> <span class="n">structured_output_format</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"kwargs"</span><span class="p">,</span> <span class="p">{}),</span>
+                        <span class="s2">"schema"</span><span class="p">:</span> <span class="n">convert_to_openai_tool</span><span class="p">(</span>
+                            <span class="n">structured_output_format</span><span class="p">[</span><span class="s2">"schema"</span><span class="p">]</span>
+                        <span class="p">),</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="n">structured_output_format_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">structured_output_format_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
         <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_invocation_params</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"stop"</span><span class="p">:</span> <span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">}</span>
         <span class="n">inheritable_metadata</span> <span class="o">=</span> <span class="p">{</span>
             <span class="o">**</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"metadata"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}),</span>
             <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_ls_params</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+            <span class="o">**</span><span class="n">structured_output_format_dict</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="n">callback_manager</span> <span class="o">=</span> <span class="n">AsyncCallbackManager</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span>
             <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"callbacks"</span><span class="p">),</span>
@@ -848,11 +883,28 @@
 <span class="sd">            An LLMResult, which contains a list of candidate Generations for each input</span>
 <span class="sd">                prompt and additional model provider-specific output.</span>
 <span class="sd">        """</span>
+        <span class="n">structured_output_format</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"structured_output_format"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">structured_output_format</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">structured_output_format_dict</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">"structured_output_format"</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">"kwargs"</span><span class="p">:</span> <span class="n">structured_output_format</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"kwargs"</span><span class="p">,</span> <span class="p">{}),</span>
+                        <span class="s2">"schema"</span><span class="p">:</span> <span class="n">convert_to_openai_tool</span><span class="p">(</span>
+                            <span class="n">structured_output_format</span><span class="p">[</span><span class="s2">"schema"</span><span class="p">]</span>
+                        <span class="p">),</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="n">structured_output_format_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">structured_output_format_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
         <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_invocation_params</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"stop"</span><span class="p">:</span> <span class="n">stop</span><span class="p">}</span>
         <span class="n">inheritable_metadata</span> <span class="o">=</span> <span class="p">{</span>
             <span class="o">**</span><span class="p">(</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}),</span>
             <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_ls_params</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+            <span class="o">**</span><span class="n">structured_output_format_dict</span><span class="p">,</span>
         <span class="p">}</span>
 
         <span class="n">callback_manager</span> <span class="o">=</span> <span class="n">CallbackManager</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span>
@@ -939,11 +991,28 @@
 <span class="sd">            An LLMResult, which contains a list of candidate Generations for each input</span>
 <span class="sd">                prompt and additional model provider-specific output.</span>
 <span class="sd">        """</span>
+        <span class="n">structured_output_format</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"structured_output_format"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">structured_output_format</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">structured_output_format_dict</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">"structured_output_format"</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">"kwargs"</span><span class="p">:</span> <span class="n">structured_output_format</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"kwargs"</span><span class="p">,</span> <span class="p">{}),</span>
+                        <span class="s2">"schema"</span><span class="p">:</span> <span class="n">convert_to_openai_tool</span><span class="p">(</span>
+                            <span class="n">structured_output_format</span><span class="p">[</span><span class="s2">"schema"</span><span class="p">]</span>
+                        <span class="p">),</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="n">structured_output_format_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">structured_output_format_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
         <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_invocation_params</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"stop"</span><span class="p">:</span> <span class="n">stop</span><span class="p">}</span>
         <span class="n">inheritable_metadata</span> <span class="o">=</span> <span class="p">{</span>
             <span class="o">**</span><span class="p">(</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}),</span>
             <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_ls_params</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+            <span class="o">**</span><span class="n">structured_output_format_dict</span><span class="p">,</span>
         <span class="p">}</span>
 
         <span class="n">callback_manager</span> <span class="o">=</span> <span class="n">AsyncCallbackManager</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span>
@@ -1490,7 +1559,12 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bind_tools</span> <span class="ow">is</span> <span class="n">BaseChatModel</span><span class="o">.</span><span class="n">bind_tools</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">"with_structured_output is not implemented for this model."</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-        <span class="n">llm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bind_tools</span><span class="p">([</span><span class="n">schema</span><span class="p">],</span> <span class="n">tool_choice</span><span class="o">=</span><span class="s2">"any"</span><span class="p">)</span>
+
+        <span class="n">llm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bind_tools</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">schema</span><span class="p">],</span>
+            <span class="n">tool_choice</span><span class="o">=</span><span class="s2">"any"</span><span class="p">,</span>
+            <span class="n">structured_output_format</span><span class="o">=</span><span class="p">{</span><span class="s2">"kwargs"</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">"schema"</span><span class="p">:</span> <span class="n">schema</span><span class="p">},</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_basemodel_subclass</span><span class="p">(</span><span class="n">schema</span><span class="p">):</span>
             <span class="n">output_parser</span><span class="p">:</span> <span class="n">OutputParserLike</span> <span class="o">=</span> <span class="n">PydanticToolsParser</span><span class="p">(</span>
                 <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">cast</span><span class="p">(</span><span class="n">TypeBaseModel</span><span class="p">,</span> <span class="n">schema</span><span class="p">)],</span> <span class="n">first_tool_only</span><span class="o">=</span><span class="kc">True</span>
