@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Feb 06, 2025" name="docbuild:last-update"/>
+<meta content="Feb 07, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -816,9 +816,9 @@
         <span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="QdrantVectorStore.similarity_search_by_vector">
-<a class="viewcode-back" href="../../qdrant/qdrant/langchain_qdrant.qdrant.QdrantVectorStore.html#langchain_qdrant.qdrant.QdrantVectorStore.similarity_search_by_vector">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">similarity_search_by_vector</span><span class="p">(</span>
+<div class="viewcode-block" id="QdrantVectorStore.similarity_search_with_score_by_vector">
+<a class="viewcode-back" href="../../qdrant/qdrant/langchain_qdrant.qdrant.QdrantVectorStore.html#langchain_qdrant.qdrant.QdrantVectorStore.similarity_search_with_score_by_vector">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">similarity_search_with_score_by_vector</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">embedding</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
@@ -828,11 +828,11 @@
         <span class="n">score_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">consistency</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">ReadConsistency</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Return docs most similar to embedding vector.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            List of Documents most similar to the query.</span>
+<span class="sd">            List of Documents most similar to the query and distance for each.</span>
 <span class="sd">        """</span>
         <span class="n">qdrant_filter</span> <span class="o">=</span> <span class="nb">filter</span>
 
@@ -859,14 +859,48 @@
         <span class="p">)</span><span class="o">.</span><span class="n">points</span>
 
         <span class="k">return</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_document_from_point</span><span class="p">(</span>
-                <span class="n">result</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">content_payload_key</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">metadata_payload_key</span><span class="p">,</span>
+            <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_document_from_point</span><span class="p">(</span>
+                    <span class="n">result</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">content_payload_key</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">metadata_payload_key</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">score</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span>
         <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="QdrantVectorStore.similarity_search_by_vector">
+<a class="viewcode-back" href="../../qdrant/qdrant/langchain_qdrant.qdrant.QdrantVectorStore.html#langchain_qdrant.qdrant.QdrantVectorStore.similarity_search_by_vector">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">similarity_search_by_vector</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">embedding</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">Filter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">search_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">SearchParams</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">score_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">consistency</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">ReadConsistency</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return docs most similar to embedding vector.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of Documents most similar to the query.</span>
+<span class="sd">        """</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_with_score_by_vector</span><span class="p">(</span>
+            <span class="n">embedding</span><span class="p">,</span>
+            <span class="n">k</span><span class="p">,</span>
+            <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
+            <span class="n">search_params</span><span class="o">=</span><span class="n">search_params</span><span class="p">,</span>
+            <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
+            <span class="n">score_threshold</span><span class="o">=</span><span class="n">score_threshold</span><span class="p">,</span>
+            <span class="n">consistency</span><span class="o">=</span><span class="n">consistency</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">results</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="QdrantVectorStore.max_marginal_relevance_search">
