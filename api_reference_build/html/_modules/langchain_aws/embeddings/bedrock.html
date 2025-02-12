@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Feb 11, 2025" name="docbuild:last-update"/>
+<meta content="Feb 12, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -302,6 +302,11 @@
         <span class="n">protected_namespaces</span><span class="o">=</span><span class="p">(),</span>
     <span class="p">)</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">provider</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Provider of the model."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validate that AWS credentials to and python package exists in environment."""</span>
@@ -345,20 +350,38 @@
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_embedding_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Call out to Bedrock embedding endpoint."""</span>
+<span class="w">        </span><span class="sd">"""Call out to Bedrock embedding endpoint with a single text."""</span>
         <span class="c1"># replace newlines, which can negatively affect performance.</span>
         <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">linesep</span><span class="p">,</span> <span class="s2">" "</span><span class="p">)</span>
 
-        <span class="c1"># format input body for provider</span>
-        <span class="n">provider</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">input_body</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">if</span> <span class="n">provider</span> <span class="o">==</span> <span class="s2">"cohere"</span><span class="p">:</span>
-            <span class="n">input_body</span><span class="p">[</span><span class="s2">"input_type"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"search_document"</span>
-            <span class="n">input_body</span><span class="p">[</span><span class="s2">"texts"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">text</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">provider</span> <span class="o">==</span> <span class="s2">"cohere"</span><span class="p">:</span>
+            <span class="n">response_body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invoke_model</span><span class="p">(</span>
+                <span class="n">input_body</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">"input_type"</span><span class="p">:</span> <span class="s2">"search_document"</span><span class="p">,</span>
+                    <span class="s2">"texts"</span><span class="p">:</span> <span class="p">[</span><span class="n">text</span><span class="p">],</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">response_body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"embeddings"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># includes common provider == "amazon"</span>
-            <span class="n">input_body</span><span class="p">[</span><span class="s2">"inputText"</span><span class="p">]</span> <span class="o">=</span> <span class="n">text</span>
+            <span class="n">response_body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invoke_model</span><span class="p">(</span>
+                <span class="n">input_body</span><span class="o">=</span><span class="p">{</span><span class="s2">"inputText"</span><span class="p">:</span> <span class="n">text</span><span class="p">},</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">response_body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"embedding"</span><span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cohere_multi_embedding</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Call out to Cohere Bedrock embedding endpoint with multiple inputs."""</span>
+        <span class="c1"># replace newlines, which can negatively affect performance.</span>
+        <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">linesep</span><span class="p">,</span> <span class="s2">" "</span><span class="p">)</span> <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">texts</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invoke_model</span><span class="p">(</span>
+            <span class="n">input_body</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"input_type"</span><span class="p">:</span> <span class="s2">"search_document"</span><span class="p">,</span>
+                <span class="s2">"texts"</span><span class="p">:</span> <span class="n">texts</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"embeddings"</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_invoke_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_body</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{})</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">:</span>
             <span class="n">input_body</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">input_body</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">}</span>
 
@@ -373,11 +396,7 @@
             <span class="p">)</span>
 
             <span class="n">response_body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"body"</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
-            <span class="k">if</span> <span class="n">provider</span> <span class="o">==</span> <span class="s2">"cohere"</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">response_body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"embeddings"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">response_body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"embedding"</span><span class="p">)</span>
-
+            <span class="k">return</span> <span class="n">response_body</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error raised by inference endpoint: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">raise</span> <span class="n">e</span>
@@ -399,6 +418,23 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            List of embeddings, one for each text.</span>
 <span class="sd">        """</span>
+
+        <span class="c1"># If we are able to make use of Cohere's multiple embeddings, use that</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">provider</span> <span class="o">==</span> <span class="s2">"cohere"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embed_cohere_documents</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteratively_embed_documents</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_embed_cohere_documents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cohere_multi_embedding</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_normalize_vector</span><span class="p">(</span><span class="n">embedding</span><span class="p">)</span> <span class="k">for</span> <span class="n">embedding</span> <span class="ow">in</span> <span class="n">response</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_iteratively_embed_documents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
         <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">texts</span><span class="p">:</span>
             <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_func</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
@@ -408,8 +444,7 @@
 
             <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">results</span></div>
-
+        <span class="k">return</span> <span class="n">results</span>
 
 <div class="viewcode-block" id="BedrockEmbeddings.embed_query">
 <a class="viewcode-back" href="../../../aws/embeddings/langchain_aws.embeddings.bedrock.BedrockEmbeddings.html#langchain_aws.embeddings.bedrock.BedrockEmbeddings.embed_query">[docs]</a>

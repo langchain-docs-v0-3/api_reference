@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Feb 11, 2025" name="docbuild:last-update"/>
+<meta content="Feb 12, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -225,19 +225,23 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">itemgetter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Any</span><span class="p">,</span>
     <span class="n">Dict</span><span class="p">,</span>
     <span class="n">Iterator</span><span class="p">,</span>
     <span class="n">List</span><span class="p">,</span>
+    <span class="n">Literal</span><span class="p">,</span>
     <span class="n">Mapping</span><span class="p">,</span>
     <span class="n">Optional</span><span class="p">,</span>
     <span class="n">Tuple</span><span class="p">,</span>
     <span class="n">Type</span><span class="p">,</span>
+    <span class="n">TypeVar</span><span class="p">,</span>
     <span class="n">Union</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks</span><span class="w"> </span><span class="kn">import</span> <span class="n">CallbackManagerForLLMRun</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.language_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">LanguageModelInput</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.language_models.chat_models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BaseChatModel</span><span class="p">,</span>
     <span class="n">generate_from_stream</span><span class="p">,</span>
@@ -256,15 +260,25 @@
     <span class="n">SystemMessageChunk</span><span class="p">,</span>
     <span class="n">ToolMessageChunk</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.output_parsers</span><span class="w"> </span><span class="kn">import</span> <span class="n">JsonOutputParser</span><span class="p">,</span> <span class="n">PydanticOutputParser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.outputs</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatGeneration</span><span class="p">,</span> <span class="n">ChatGenerationChunk</span><span class="p">,</span> <span class="n">ChatResult</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">from_env</span><span class="p">,</span>
-    <span class="n">get_pydantic_field_names</span><span class="p">,</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">Runnable</span><span class="p">,</span> <span class="n">RunnableMap</span><span class="p">,</span> <span class="n">RunnablePassthrough</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">from_env</span><span class="p">,</span> <span class="n">get_pydantic_field_names</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils.pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">is_basemodel_subclass</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">model_validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">TypeAdapter</span><span class="p">,</span> <span class="n">model_validator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
 
+<span class="n">_BM</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"_BM"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">BaseModel</span><span class="p">)</span>
+<span class="n">_DictOrPydanticClass</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Type</span><span class="p">[</span><span class="n">_BM</span><span class="p">],</span> <span class="n">Type</span><span class="p">]</span>
+<span class="n">_DictOrPydantic</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="n">_BM</span><span class="p">]</span>
+
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_pydantic_class</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_basemodel_subclass</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ChatPerplexity">
@@ -505,7 +519,106 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_llm_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return type of chat model."""</span>
-        <span class="k">return</span> <span class="s2">"perplexitychat"</span></div>
+        <span class="k">return</span> <span class="s2">"perplexitychat"</span>
+
+<div class="viewcode-block" id="ChatPerplexity.with_structured_output">
+<a class="viewcode-back" href="../../../community/chat_models/langchain_community.chat_models.perplexity.ChatPerplexity.html#langchain_community.chat_models.perplexity.ChatPerplexity.with_structured_output">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_structured_output</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_DictOrPydanticClass</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"json_schema"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"json_schema"</span><span class="p">,</span>
+        <span class="n">include_raw</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">strict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Runnable</span><span class="p">[</span><span class="n">LanguageModelInput</span><span class="p">,</span> <span class="n">_DictOrPydantic</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Model wrapper that returns outputs formatted to match the given schema for Preplexity.</span>
+<span class="sd">        Currently, Preplexity only supports "json_schema" method for structured output</span>
+<span class="sd">        as per their official documentation: https://docs.perplexity.ai/guides/structured-outputs</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            schema:</span>
+<span class="sd">                The output schema. Can be passed in as:</span>
+
+<span class="sd">                - a JSON Schema,</span>
+<span class="sd">                - a TypedDict class,</span>
+<span class="sd">                - or a Pydantic class</span>
+
+<span class="sd">            method: The method for steering model generation, currently only support:</span>
+
+<span class="sd">                - "json_schema": Use the JSON Schema to parse the model output</span>
+
+
+<span class="sd">            include_raw:</span>
+<span class="sd">                If False then only the parsed structured output is returned. If</span>
+<span class="sd">                an error occurs during model output parsing it will be raised. If True</span>
+<span class="sd">                then both the raw model response (a BaseMessage) and the parsed model</span>
+<span class="sd">                response will be returned. If an error occurs during output parsing it</span>
+<span class="sd">                will be caught and returned as well. The final output is always a dict</span>
+<span class="sd">                with keys "raw", "parsed", and "parsing_error".</span>
+
+<span class="sd">            kwargs: Additional keyword args aren't supported.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A Runnable that takes same inputs as a :class:`langchain_core.language_models.chat.BaseChatModel`.</span>
+
+<span class="sd">            | If ``include_raw`` is False and ``schema`` is a Pydantic class, Runnable outputs an instance of ``schema`` (i.e., a Pydantic object). Otherwise, if ``include_raw`` is False then Runnable outputs a dict.</span>
+
+<span class="sd">            | If ``include_raw`` is True, then Runnable outputs a dict with keys:</span>
+
+<span class="sd">            - "raw": BaseMessage</span>
+<span class="sd">            - "parsed": None if there was a parsing error, otherwise the type depends on the ``schema`` as described above.</span>
+<span class="sd">            - "parsing_error": Optional[BaseException]</span>
+
+<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"json_schema"</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"schema must be specified when method is not 'json_schema'. "</span>
+                    <span class="s2">"Received None."</span>
+                <span class="p">)</span>
+            <span class="n">is_pydantic_schema</span> <span class="o">=</span> <span class="n">_is_pydantic_class</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">is_pydantic_schema</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span>
+                <span class="n">schema</span><span class="p">,</span> <span class="s2">"model_json_schema"</span>
+            <span class="p">):</span>  <span class="c1"># accounting for pydantic v1 and v2</span>
+                <span class="n">response_format</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()</span>  <span class="c1"># type: ignore[union-attr]</span>
+            <span class="k">elif</span> <span class="n">is_pydantic_schema</span><span class="p">:</span>
+                <span class="n">response_format</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">schema</span><span class="p">()</span>  <span class="c1"># type: ignore[union-attr]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">response_format</span> <span class="o">=</span> <span class="n">schema</span>
+            <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"_TypedDictMeta"</span><span class="p">:</span>
+                <span class="n">adapter</span> <span class="o">=</span> <span class="n">TypeAdapter</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>  <span class="c1"># if use passes typeddict</span>
+                <span class="n">response_format</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">json_schema</span><span class="p">()</span>
+
+            <span class="n">llm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span>
+                <span class="n">response_format</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"json_schema"</span><span class="p">,</span>
+                    <span class="s2">"json_schema"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"schema"</span><span class="p">:</span> <span class="n">response_format</span><span class="p">},</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+            <span class="n">output_parser</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">PydanticOutputParser</span><span class="p">(</span><span class="n">pydantic_object</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+                <span class="k">if</span> <span class="n">is_pydantic_schema</span>
+                <span class="k">else</span> <span class="n">JsonOutputParser</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Unrecognized method argument. Expected 'json_schema' Received:</span><span class="se">\</span>
+<span class="s2">                    '</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">'"</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">include_raw</span><span class="p">:</span>
+            <span class="n">parser_assign</span> <span class="o">=</span> <span class="n">RunnablePassthrough</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span>
+                <span class="n">parsed</span><span class="o">=</span><span class="n">itemgetter</span><span class="p">(</span><span class="s2">"raw"</span><span class="p">)</span> <span class="o">|</span> <span class="n">output_parser</span><span class="p">,</span> <span class="n">parsing_error</span><span class="o">=</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="kc">None</span>
+            <span class="p">)</span>
+            <span class="n">parser_none</span> <span class="o">=</span> <span class="n">RunnablePassthrough</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">parsed</span><span class="o">=</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">parser_with_fallback</span> <span class="o">=</span> <span class="n">parser_assign</span><span class="o">.</span><span class="n">with_fallbacks</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">parser_none</span><span class="p">],</span> <span class="n">exception_key</span><span class="o">=</span><span class="s2">"parsing_error"</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">RunnableMap</span><span class="p">(</span><span class="n">raw</span><span class="o">=</span><span class="n">llm</span><span class="p">)</span> <span class="o">|</span> <span class="n">parser_with_fallback</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">llm</span> <span class="o">|</span> <span class="n">output_parser</span></div>
+</div>
 
 </pre></div>
 </article>

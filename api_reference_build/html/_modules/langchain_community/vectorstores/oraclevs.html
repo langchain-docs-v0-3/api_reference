@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Feb 11, 2025" name="docbuild:last-update"/>
+<meta content="Feb 12, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -244,6 +244,8 @@
     <span class="n">cast</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
+
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">oracledb</span><span class="w"> </span><span class="kn">import</span> <span class="n">Connection</span>
 
@@ -269,6 +271,31 @@
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_connection</span><span class="p">(</span><span class="n">client</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Connection</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># Dynamically import oracledb and the required classes</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">oracledb</span>
+    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">"Unable to import oracledb, please install with `pip install -U oracledb`."</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+
+    <span class="c1"># check if ConnectionPool exists</span>
+    <span class="n">connection_pool_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">oracledb</span><span class="p">,</span> <span class="s2">"ConnectionPool"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">oracledb</span><span class="o">.</span><span class="n">Connection</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">client</span>
+    <span class="k">elif</span> <span class="n">connection_pool_class</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">connection_pool_class</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">valid_types</span> <span class="o">=</span> <span class="s2">"oracledb.Connection"</span>
+        <span class="k">if</span> <span class="n">connection_pool_class</span><span class="p">:</span>
+            <span class="n">valid_types</span> <span class="o">+=</span> <span class="s2">" or oracledb.ConnectionPool"</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Expected client of type </span><span class="si">{</span><span class="n">valid_types</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">client</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_handle_exceptions</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
     <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
@@ -292,7 +319,7 @@
     <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">wrapper</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_table_exists</span><span class="p">(</span><span class="n">client</span><span class="p">:</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_table_exists</span><span class="p">(</span><span class="n">connection</span><span class="p">:</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">oracledb</span>
     <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -301,7 +328,7 @@
         <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">with</span> <span class="n">client</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SELECT COUNT(*) FROM </span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span>
     <span class="k">except</span> <span class="n">oracledb</span><span class="o">.</span><span class="n">DatabaseError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
@@ -328,7 +355,7 @@
 
 
 <span class="nd">@_handle_exceptions</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_index_exists</span><span class="p">(</span><span class="n">client</span><span class="p">:</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">index_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_index_exists</span><span class="p">(</span><span class="n">connection</span><span class="p">:</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">index_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="c1"># Check if the index exists</span>
     <span class="n">query</span> <span class="o">=</span> <span class="s2">"""</span>
 <span class="s2">        SELECT index_name </span>
@@ -336,7 +363,7 @@
 <span class="s2">        WHERE upper(index_name) = upper(:idx_name)</span>
 <span class="s2">        """</span>
 
-    <span class="k">with</span> <span class="n">client</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
         <span class="c1"># Execute the query</span>
         <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">idx_name</span><span class="o">=</span><span class="n">index_name</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
@@ -368,16 +395,16 @@
 
 
 <span class="nd">@_handle_exceptions</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_create_table</span><span class="p">(</span><span class="n">client</span><span class="p">:</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_create_table</span><span class="p">(</span><span class="n">connection</span><span class="p">:</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">cols_dict</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"RAW(16) DEFAULT SYS_GUID() PRIMARY KEY"</span><span class="p">,</span>
         <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"CLOB"</span><span class="p">,</span>
-        <span class="s2">"metadata"</span><span class="p">:</span> <span class="s2">"CLOB"</span><span class="p">,</span>
+        <span class="s2">"metadata"</span><span class="p">:</span> <span class="s2">"JSON"</span><span class="p">,</span>
         <span class="s2">"embedding"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"vector(</span><span class="si">{</span><span class="n">embedding_dim</span><span class="si">}</span><span class="s2">, FLOAT32)"</span><span class="p">,</span>
     <span class="p">}</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">_table_exists</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">client</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_table_exists</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="n">ddl_body</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">col_name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">col_type</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">col_name</span><span class="p">,</span> <span class="n">col_type</span> <span class="ow">in</span> <span class="n">cols_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="p">)</span>
@@ -392,36 +419,38 @@
 <a class="viewcode-back" href="../../../community/vectorstores/langchain_community.vectorstores.oraclevs.create_index.html#langchain_community.vectorstores.oraclevs.create_index">[docs]</a>
 <span class="nd">@_handle_exceptions</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_index</span><span class="p">(</span>
-    <span class="n">client</span><span class="p">:</span> <span class="n">Connection</span><span class="p">,</span>
+    <span class="n">client</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">vector_store</span><span class="p">:</span> <span class="n">OracleVS</span><span class="p">,</span>
     <span class="n">params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Create an index on the vector store.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        client: The OracleDB connection object.</span>
-<span class="sd">        vector_store: The vector store object.</span>
-<span class="sd">        params: Optional parameters for the index creation.</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If an invalid parameter is provided.</span>
-<span class="sd">    """</span>
+    <span class="n">connection</span> <span class="o">=</span> <span class="n">_get_connection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Failed to acquire a connection."</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">params</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">params</span><span class="p">[</span><span class="s2">"idx_type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"HNSW"</span><span class="p">:</span>
             <span class="n">_create_hnsw_index</span><span class="p">(</span>
-                <span class="n">client</span><span class="p">,</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">distance_strategy</span><span class="p">,</span> <span class="n">params</span>
+                <span class="n">connection</span><span class="p">,</span>
+                <span class="n">vector_store</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span>
+                <span class="n">vector_store</span><span class="o">.</span><span class="n">distance_strategy</span><span class="p">,</span>
+                <span class="n">params</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">params</span><span class="p">[</span><span class="s2">"idx_type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"IVF"</span><span class="p">:</span>
             <span class="n">_create_ivf_index</span><span class="p">(</span>
-                <span class="n">client</span><span class="p">,</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">distance_strategy</span><span class="p">,</span> <span class="n">params</span>
+                <span class="n">connection</span><span class="p">,</span>
+                <span class="n">vector_store</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span>
+                <span class="n">vector_store</span><span class="o">.</span><span class="n">distance_strategy</span><span class="p">,</span>
+                <span class="n">params</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">_create_hnsw_index</span><span class="p">(</span>
-                <span class="n">client</span><span class="p">,</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">distance_strategy</span><span class="p">,</span> <span class="n">params</span>
+                <span class="n">connection</span><span class="p">,</span>
+                <span class="n">vector_store</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span>
+                <span class="n">vector_store</span><span class="o">.</span><span class="n">distance_strategy</span><span class="p">,</span>
+                <span class="n">params</span><span class="p">,</span>
             <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">_create_hnsw_index</span><span class="p">(</span>
-            <span class="n">client</span><span class="p">,</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">distance_strategy</span><span class="p">,</span> <span class="n">params</span>
+            <span class="n">connection</span><span class="p">,</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">distance_strategy</span><span class="p">,</span> <span class="n">params</span>
         <span class="p">)</span>
     <span class="k">return</span></div>
 
@@ -429,7 +458,7 @@
 
 <span class="nd">@_handle_exceptions</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_create_hnsw_index</span><span class="p">(</span>
-    <span class="n">client</span><span class="p">:</span> <span class="n">Connection</span><span class="p">,</span>
+    <span class="n">connection</span><span class="p">:</span> <span class="n">Connection</span><span class="p">,</span>
     <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">distance_strategy</span><span class="p">:</span> <span class="n">DistanceStrategy</span><span class="p">,</span>
     <span class="n">params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -503,8 +532,8 @@
     <span class="n">ddl</span> <span class="o">=</span> <span class="n">ddl_assembly</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">config</span><span class="p">)</span>
 
     <span class="c1"># Check if the index exists</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">_index_exists</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">"idx_name"</span><span class="p">]):</span>
-        <span class="k">with</span> <span class="n">client</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_index_exists</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">"idx_name"</span><span class="p">]):</span>
+        <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">ddl</span><span class="p">)</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Index created successfully..."</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -513,7 +542,7 @@
 
 <span class="nd">@_handle_exceptions</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_create_ivf_index</span><span class="p">(</span>
-    <span class="n">client</span><span class="p">:</span> <span class="n">Connection</span><span class="p">,</span>
+    <span class="n">connection</span><span class="p">:</span> <span class="n">Connection</span><span class="p">,</span>
     <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">distance_strategy</span><span class="p">:</span> <span class="n">DistanceStrategy</span><span class="p">,</span>
     <span class="n">params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -575,8 +604,8 @@
     <span class="n">ddl</span> <span class="o">=</span> <span class="n">ddl_assembly</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">config</span><span class="p">)</span>
 
     <span class="c1"># Check if the index exists</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">_index_exists</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">"idx_name"</span><span class="p">]):</span>
-        <span class="k">with</span> <span class="n">client</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_index_exists</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">"idx_name"</span><span class="p">]):</span>
+        <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">ddl</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Index created successfully..."</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -586,7 +615,7 @@
 <div class="viewcode-block" id="drop_table_purge">
 <a class="viewcode-back" href="../../../community/vectorstores/langchain_community.vectorstores.oraclevs.drop_table_purge.html#langchain_community.vectorstores.oraclevs.drop_table_purge">[docs]</a>
 <span class="nd">@_handle_exceptions</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">drop_table_purge</span><span class="p">(</span><span class="n">client</span><span class="p">:</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">drop_table_purge</span><span class="p">(</span><span class="n">client</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Drop a table and purge it from the database.</span>
 
 <span class="sd">    Args:</span>
@@ -596,9 +625,11 @@
 <span class="sd">    Raises:</span>
 <span class="sd">        RuntimeError: If an error occurs while dropping the table.</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="n">_table_exists</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="n">cursor</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
-        <span class="k">with</span> <span class="n">cursor</span><span class="p">:</span>
+    <span class="n">connection</span> <span class="o">=</span> <span class="n">_get_connection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Failed to acquire a connection."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_table_exists</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="n">ddl</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"DROP TABLE </span><span class="si">{</span><span class="n">table_name</span><span class="si">}</span><span class="s2"> PURGE"</span>
             <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">ddl</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Table dropped successfully..."</span><span class="p">)</span>
@@ -611,7 +642,7 @@
 <div class="viewcode-block" id="drop_index_if_exists">
 <a class="viewcode-back" href="../../../community/vectorstores/langchain_community.vectorstores.oraclevs.drop_index_if_exists.html#langchain_community.vectorstores.oraclevs.drop_index_if_exists">[docs]</a>
 <span class="nd">@_handle_exceptions</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">drop_index_if_exists</span><span class="p">(</span><span class="n">client</span><span class="p">:</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">index_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">drop_index_if_exists</span><span class="p">(</span><span class="n">client</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">index_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Drop an index if it exists.</span>
 
 <span class="sd">    Args:</span>
@@ -621,9 +652,12 @@
 <span class="sd">    Raises:</span>
 <span class="sd">        RuntimeError: If an error occurs while dropping the index.</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="n">_index_exists</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">index_name</span><span class="p">):</span>
+    <span class="n">connection</span> <span class="o">=</span> <span class="n">_get_connection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Failed to acquire a connection."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_index_exists</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">index_name</span><span class="p">):</span>
         <span class="n">drop_query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"DROP INDEX </span><span class="si">{</span><span class="n">index_name</span><span class="si">}</span><span class="s2">"</span>
-        <span class="k">with</span> <span class="n">client</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">drop_query</span><span class="p">)</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Index </span><span class="si">{</span><span class="n">index_name</span><span class="si">}</span><span class="s2"> has been dropped."</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -661,7 +695,7 @@
 <a class="viewcode-back" href="../../../community/vectorstores/langchain_community.vectorstores.oraclevs.OracleVS.html#langchain_community.vectorstores.oraclevs.OracleVS.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">client</span><span class="p">:</span> <span class="n">Connection</span><span class="p">,</span>
+        <span class="n">client</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
         <span class="n">embedding_function</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
             <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
             <span class="n">Embeddings</span><span class="p">,</span>
@@ -680,8 +714,11 @@
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">insert_mode</span> <span class="o">=</span> <span class="s2">"array"</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="n">_get_connection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Failed to acquire a connection."</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">client</span><span class="o">.</span><span class="n">thin</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="s2">"thin"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">connection</span><span class="o">.</span><span class="n">thin</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">oracledb</span><span class="o">.</span><span class="n">__version__</span> <span class="o">==</span> <span class="s2">"2.1.0"</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
                     <span class="s2">"Oracle DB python thin client driver version 2.1.0 not supported"</span>
@@ -729,8 +766,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">table_name</span> <span class="o">=</span> <span class="n">table_name</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">distance_strategy</span> <span class="o">=</span> <span class="n">distance_strategy</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
-
-            <span class="n">_create_table</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">)</span>
+            <span class="n">_create_table</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">oracledb</span><span class="o">.</span><span class="n">DatabaseError</span> <span class="k">as</span> <span class="n">db_err</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Database error occurred while create table: </span><span class="si">{</span><span class="n">db_err</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -854,13 +890,16 @@
                 <span class="p">)</span>
             <span class="p">]</span>
 
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="n">_get_connection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Failed to acquire a connection."</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="n">cursor</span><span class="o">.</span><span class="n">executemany</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"INSERT INTO </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s2"> (id, embedding, metadata, "</span>
                 <span class="sa">f</span><span class="s2">"text) VALUES (:1, :2, :3, :4)"</span><span class="p">,</span>
                 <span class="n">docs</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            <span class="n">connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">processed_ids</span></div>
 
 
@@ -874,6 +913,7 @@
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Return docs most similar to query."""</span>
+        <span class="n">embedding</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_function</span><span class="p">,</span> <span class="n">Embeddings</span><span class="p">):</span>
             <span class="n">embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_function</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
         <span class="n">documents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_by_vector</span><span class="p">(</span>
@@ -907,6 +947,7 @@
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Return docs most similar to query."""</span>
+        <span class="n">embedding</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_function</span><span class="p">,</span> <span class="n">Embeddings</span><span class="p">):</span>
             <span class="n">embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_function</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
         <span class="n">docs_and_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_by_vector_with_relevance_scores</span><span class="p">(</span>
@@ -960,25 +1001,27 @@
             <span class="n">embedding_arr</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="s2">"f"</span><span class="p">,</span> <span class="n">embedding</span><span class="p">)</span>
 
         <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span>
-<span class="s2">        SELECT id,</span>
-<span class="s2">          text,</span>
-<span class="s2">          metadata,</span>
-<span class="s2">          vector_distance(embedding, :embedding,</span>
-<span class="s2">          </span><span class="si">{</span><span class="n">_get_distance_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distance_strategy</span><span class="p">)</span><span class="si">}</span><span class="s2">) as distance</span>
-<span class="s2">        FROM </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span>
-<span class="s2">        ORDER BY distance</span>
-<span class="s2">        FETCH APPROX FIRST </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> ROWS ONLY</span>
+<span class="s2">            SELECT id,</span>
+<span class="s2">              text,</span>
+<span class="s2">              metadata,</span>
+<span class="s2">              vector_distance(embedding, :embedding,</span>
+<span class="s2">              </span><span class="si">{</span><span class="n">_get_distance_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distance_strategy</span><span class="p">)</span><span class="si">}</span><span class="s2">) as distance</span>
+<span class="s2">            FROM </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span>
+<span class="s2">            ORDER BY distance</span>
+<span class="s2">            FETCH APPROX FIRST </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> ROWS ONLY</span>
 <span class="s2">        """</span>
+
         <span class="c1"># Execute the query</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="n">_get_connection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Failed to acquire a connection."</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">embedding</span><span class="o">=</span><span class="n">embedding_arr</span><span class="p">)</span>
             <span class="n">results</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
 
             <span class="c1"># Filter results if filter is provided</span>
             <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-                <span class="n">metadata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_get_clob_value</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">"</span><span class="si">{}</span><span class="s2">"</span>
-                <span class="p">)</span>
+                <span class="n">metadata</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
 
                 <span class="c1"># Apply filtering based on the 'filter' dictionary</span>
                 <span class="k">if</span> <span class="nb">filter</span><span class="p">:</span>
@@ -1017,7 +1060,7 @@
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">]]]:</span>
         <span class="n">embedding_arr</span><span class="p">:</span> <span class="n">Any</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">insert_mode</span> <span class="o">==</span> <span class="s2">"clob"</span><span class="p">:</span>
             <span class="n">embedding_arr</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">embedding</span><span class="p">)</span>
@@ -1027,27 +1070,29 @@
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span>
-<span class="s2">        SELECT id,</span>
-<span class="s2">          text,</span>
-<span class="s2">          metadata,</span>
-<span class="s2">          vector_distance(embedding, :embedding, </span><span class="si">{</span>
+<span class="s2">            SELECT id,</span>
+<span class="s2">              text,</span>
+<span class="s2">              metadata,</span>
+<span class="s2">              vector_distance(embedding, :embedding, </span><span class="si">{</span>
 <span class="w">            </span><span class="n">_get_distance_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distance_strategy</span><span class="p">)</span>
 <span class="w">        </span><span class="si">}</span><span class="s2">) as distance,</span>
-<span class="s2">          embedding</span>
-<span class="s2">        FROM </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span>
-<span class="s2">        ORDER BY distance</span>
-<span class="s2">        FETCH APPROX FIRST </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> ROWS ONLY</span>
+<span class="s2">              embedding</span>
+<span class="s2">            FROM </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span>
+<span class="s2">            ORDER BY distance</span>
+<span class="s2">            FETCH APPROX FIRST </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> ROWS ONLY</span>
 <span class="s2">        """</span>
 
         <span class="c1"># Execute the query</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="n">_get_connection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Failed to acquire a connection."</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">embedding</span><span class="o">=</span><span class="n">embedding_arr</span><span class="p">)</span>
             <span class="n">results</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
 
             <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
                 <span class="n">page_content_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_clob_value</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-                <span class="n">metadata_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_clob_value</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-                <span class="n">metadata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">metadata_str</span><span class="p">)</span>
+                <span class="n">metadata</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
 
                 <span class="c1"># Apply filter if provided and matches; otherwise, add all</span>
                 <span class="c1"># documents</span>
@@ -1252,9 +1297,12 @@
             <span class="sa">f</span><span class="s2">"id</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">hashed_id</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">hashed_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hashed_ids</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="p">}</span>
 
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="n">_get_connection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">connection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Failed to acquire a connection."</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">ddl</span><span class="p">,</span> <span class="n">bind_vars</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span></div>
+            <span class="n">connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="OracleVS.from_texts">
@@ -1268,10 +1316,10 @@
         <span class="n">metadatas</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OracleVS</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Return VectorStore initialized from texts and embeddings."""</span>
-        <span class="n">client</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"client"</span><span class="p">)</span>
+        <span class="n">client</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"client"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"client parameter is required..."</span><span class="p">)</span>
+
         <span class="n">params</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"params"</span><span class="p">,</span> <span class="p">{})</span>
 
         <span class="n">table_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"table_name"</span><span class="p">,</span> <span class="s2">"langchain"</span><span class="p">))</span>
