@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Feb 18, 2025" name="docbuild:last-update"/>
+<meta content="Feb 19, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -242,6 +242,7 @@
 <span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic.v1</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span> <span class="k">as</span> <span class="n">BaseModelV1</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span><span class="p">,</span> <span class="n">is_typeddict</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core._api</span><span class="w"> </span><span class="kn">import</span> <span class="n">beta</span><span class="p">,</span> <span class="n">deprecated</span>
@@ -303,6 +304,40 @@
     <span class="k">return</span> <span class="n">new_kv</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_json_schema_to_openai_function</span><span class="p">(</span>
+    <span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">description</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">rm_titles</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FunctionDescription</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Converts a Pydantic model to a function description for the OpenAI API.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        schema: The JSON schema to convert.</span>
+<span class="sd">        name: The name of the function. If not provided, the title of the schema will be</span>
+<span class="sd">            used.</span>
+<span class="sd">        description: The description of the function. If not provided, the description</span>
+<span class="sd">            of the schema will be used.</span>
+<span class="sd">        rm_titles: Whether to remove titles from the schema. Defaults to True.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The function description.</span>
+<span class="sd">    """</span>
+    <span class="n">schema</span> <span class="o">=</span> <span class="n">dereference_refs</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">"definitions"</span> <span class="ow">in</span> <span class="n">schema</span><span class="p">:</span>  <span class="c1"># pydantic 1</span>
+        <span class="n">schema</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"definitions"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">"$defs"</span> <span class="ow">in</span> <span class="n">schema</span><span class="p">:</span>  <span class="c1"># pydantic 2</span>
+        <span class="n">schema</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"$defs"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="n">default_description</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"description"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">title</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="n">description</span> <span class="ow">or</span> <span class="n">default_description</span><span class="p">,</span>
+        <span class="s2">"parameters"</span><span class="p">:</span> <span class="n">_rm_titles</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span> <span class="k">if</span> <span class="n">rm_titles</span> <span class="k">else</span> <span class="n">schema</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_convert_pydantic_to_openai_function</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -330,18 +365,9 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Model must be a Pydantic model."</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-    <span class="n">schema</span> <span class="o">=</span> <span class="n">dereference_refs</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
-    <span class="k">if</span> <span class="s2">"definitions"</span> <span class="ow">in</span> <span class="n">schema</span><span class="p">:</span>  <span class="c1"># pydantic 1</span>
-        <span class="n">schema</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"definitions"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="s2">"$defs"</span> <span class="ow">in</span> <span class="n">schema</span><span class="p">:</span>  <span class="c1"># pydantic 2</span>
-        <span class="n">schema</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"$defs"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="n">title</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
-    <span class="n">default_description</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"description"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">title</span><span class="p">,</span>
-        <span class="s2">"description"</span><span class="p">:</span> <span class="n">description</span> <span class="ow">or</span> <span class="n">default_description</span><span class="p">,</span>
-        <span class="s2">"parameters"</span><span class="p">:</span> <span class="n">_rm_titles</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span> <span class="k">if</span> <span class="n">rm_titles</span> <span class="k">else</span> <span class="n">schema</span><span class="p">,</span>
-    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">_convert_json_schema_to_openai_function</span><span class="p">(</span>
+        <span class="n">schema</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span> <span class="n">rm_titles</span><span class="o">=</span><span class="n">rm_titles</span>
+    <span class="p">)</span>
 
 
 <span class="n">convert_pydantic_to_openai_function</span> <span class="o">=</span> <span class="n">deprecated</span><span class="p">(</span>
@@ -520,9 +546,20 @@
 
     <span class="n">is_simple_oai_tool</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="n">simple</span><span class="o">.</span><span class="n">Tool</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">tool</span><span class="o">.</span><span class="n">args_schema</span>
     <span class="k">if</span> <span class="n">tool</span><span class="o">.</span><span class="n">tool_call_schema</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_simple_oai_tool</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_convert_pydantic_to_openai_function</span><span class="p">(</span>
-            <span class="n">tool</span><span class="o">.</span><span class="n">tool_call_schema</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">tool</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">tool</span><span class="o">.</span><span class="n">description</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="o">.</span><span class="n">tool_call_schema</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_convert_json_schema_to_openai_function</span><span class="p">(</span>
+                <span class="n">tool</span><span class="o">.</span><span class="n">tool_call_schema</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">tool</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">tool</span><span class="o">.</span><span class="n">description</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">tool</span><span class="o">.</span><span class="n">tool_call_schema</span><span class="p">,</span> <span class="p">(</span><span class="n">BaseModel</span><span class="p">,</span> <span class="n">BaseModelV1</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">_convert_pydantic_to_openai_function</span><span class="p">(</span>
+                <span class="n">tool</span><span class="o">.</span><span class="n">tool_call_schema</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">tool</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">tool</span><span class="o">.</span><span class="n">description</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">error_msg</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Unsupported tool call schema: </span><span class="si">{</span><span class="n">tool</span><span class="o">.</span><span class="n">tool_call_schema</span><span class="si">}</span><span class="s2">. "</span>
+                <span class="s2">"Tool call schema must be a JSON schema dict or a Pydantic model."</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error_msg</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">"name"</span><span class="p">:</span> <span class="n">tool</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>

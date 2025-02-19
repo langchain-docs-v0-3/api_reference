@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Feb 18, 2025" name="docbuild:last-update"/>
+<meta content="Feb 19, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -548,6 +548,9 @@
 
 
 
+<span class="n">ArgsSchema</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">TypeBaseModel</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+
+
 <div class="viewcode-block" id="BaseTool">
 <a class="viewcode-back" href="../../../core/tools/langchain_core.tools.base.BaseTool.html#langchain_community.agent_toolkits.nla.tool.BaseTool">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseTool</span><span class="p">(</span><span class="n">RunnableSerializable</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">ToolCall</span><span class="p">],</span> <span class="n">Any</span><span class="p">]):</span>
@@ -587,7 +590,7 @@
 <span class="sd">    You can provide few-shot examples as a part of the description.</span>
 <span class="sd">    """</span>
 
-    <span class="n">args_schema</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">TypeBaseModel</span><span class="p">],</span> <span class="n">SkipValidation</span><span class="p">()]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">args_schema</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">ArgsSchema</span><span class="p">],</span> <span class="n">SkipValidation</span><span class="p">()]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"The tool schema."</span>
     <span class="p">)</span>
 <span class="w">    </span><span class="sd">"""Pydantic model class to validate and parse the tool's input arguments.</span>
@@ -597,6 +600,8 @@
 <span class="sd">    - A subclass of pydantic.BaseModel.</span>
 <span class="sd">    or</span>
 <span class="sd">    - A subclass of pydantic.v1.BaseModel if accessing v1 namespace in pydantic 2</span>
+<span class="sd">    or</span>
+<span class="sd">    - a JSON schema dict</span>
 <span class="sd">    """</span>
     <span class="n">return_direct</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="w">    </span><span class="sd">"""Whether to return the tool's output directly.</span>
@@ -656,10 +661,11 @@
             <span class="s2">"args_schema"</span> <span class="ow">in</span> <span class="n">kwargs</span>
             <span class="ow">and</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"args_schema"</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_basemodel_subclass</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">"args_schema"</span><span class="p">])</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">"args_schema"</span><span class="p">],</span> <span class="nb">dict</span><span class="p">)</span>
         <span class="p">):</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"args_schema must be a subclass of pydantic BaseModel. "</span>
-                <span class="sa">f</span><span class="s2">"Got: </span><span class="si">{</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'args_schema'</span><span class="p">]</span><span class="si">}</span><span class="s2">."</span>
+                <span class="s2">"args_schema must be a subclass of pydantic BaseModel or "</span>
+                <span class="sa">f</span><span class="s2">"a JSON schema dict. Got: </span><span class="si">{</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'args_schema'</span><span class="p">]</span><span class="si">}</span><span class="s2">."</span>
             <span class="p">)</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -676,10 +682,18 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_input_schema</span><span class="p">()</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()[</span><span class="s2">"properties"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">json_schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">input_schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_input_schema</span><span class="p">()</span>
+            <span class="n">json_schema</span> <span class="o">=</span> <span class="n">input_schema</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">json_schema</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">tool_call_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tool_call_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArgsSchema</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span>
+
         <span class="n">full_schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_input_schema</span><span class="p">()</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">type_</span> <span class="ow">in</span> <span class="n">get_all_basemodel_annotations</span><span class="p">(</span><span class="n">full_schema</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -703,6 +717,8 @@
 <span class="sd">            The input schema for the tool.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_input_schema</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">create_schema_from_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run</span><span class="p">)</span>
@@ -744,6 +760,12 @@
         <span class="n">input_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool_input</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">input_args</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_args</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="s2">"String tool inputs are not allowed when "</span>
+                        <span class="s2">"using tools with JSON schema args_schema."</span>
+                    <span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
                 <span class="n">key_</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">get_fields</span><span class="p">(</span><span class="n">input_args</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
                 <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">input_args</span><span class="p">,</span> <span class="s2">"model_validate"</span><span class="p">):</span>
                     <span class="n">input_args</span><span class="o">.</span><span class="n">model_validate</span><span class="p">({</span><span class="n">key_</span><span class="p">:</span> <span class="n">tool_input</span><span class="p">})</span>
@@ -752,7 +774,9 @@
             <span class="k">return</span> <span class="n">tool_input</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">input_args</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">input_args</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_args</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">tool_input</span>
+                <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">input_args</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">):</span>
                     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">get_all_basemodel_annotations</span><span class="p">(</span><span class="n">input_args</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                         <span class="k">if</span> <span class="p">(</span>
                             <span class="n">_is_injected_arg_type</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">injected_type</span><span class="o">=</span><span class="n">InjectedToolCallId</span><span class="p">)</span>
@@ -844,7 +868,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_to_args_and_kwargs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">tool_input</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">],</span> <span class="n">tool_call_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">get_fields</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">is_basemodel_subclass</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">get_fields</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span><span class="p">)</span>
+        <span class="p">):</span>
             <span class="c1"># StructuredTool with no args</span>
             <span class="k">return</span> <span class="p">(),</span> <span class="p">{}</span>
         <span class="n">tool_input</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_input</span><span class="p">(</span><span class="n">tool_input</span><span class="p">,</span> <span class="n">tool_call_id</span><span class="p">)</span>
