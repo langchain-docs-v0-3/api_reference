@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Feb 19, 2025" name="docbuild:last-update"/>
+<meta content="Feb 20, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -347,6 +347,9 @@
 <span class="sd">    :type include_archived_content: bool, optional</span>
 <span class="sd">    :param include_attachments: defaults to False</span>
 <span class="sd">    :type include_attachments: bool, optional</span>
+<span class="sd">    :param attachment_filter_func: A function that takes the attachment information</span>
+<span class="sd">                                   from Confluence and decides whether or not the</span>
+<span class="sd">                                   attachment is processed.</span>
 <span class="sd">    :param include_comments: defaults to False</span>
 <span class="sd">    :type include_comments: bool, optional</span>
 <span class="sd">    :param content_format: Specify content format, defaults to</span>
@@ -405,6 +408,7 @@
         <span class="n">ocr_languages</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">keep_markdown_format</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">keep_newlines</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">attachment_filter_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">space_key</span> <span class="o">=</span> <span class="n">space_key</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">page_ids</span> <span class="o">=</span> <span class="n">page_ids</span>
@@ -421,6 +425,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">ocr_languages</span> <span class="o">=</span> <span class="n">ocr_languages</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keep_markdown_format</span> <span class="o">=</span> <span class="n">keep_markdown_format</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keep_newlines</span> <span class="o">=</span> <span class="n">keep_newlines</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attachment_filter_func</span> <span class="o">=</span> <span class="n">attachment_filter_func</span>
 
         <span class="n">confluence_kwargs</span> <span class="o">=</span> <span class="n">confluence_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="n">errors</span> <span class="o">=</span> <span class="n">ConfluenceLoader</span><span class="o">.</span><span class="n">validate_init_args</span><span class="p">(</span>
@@ -913,6 +918,11 @@
         <span class="n">attachments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">confluence</span><span class="o">.</span><span class="n">get_attachments_from_content</span><span class="p">(</span><span class="n">page_id</span><span class="p">)[</span><span class="s2">"results"</span><span class="p">]</span>
         <span class="n">texts</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">attachment</span> <span class="ow">in</span> <span class="n">attachments</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attachment_filter_func</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">attachment_filter_func</span><span class="p">(</span>
+                <span class="n">attachment</span>
+            <span class="p">):</span>
+                <span class="k">continue</span>
+
             <span class="n">media_type</span> <span class="o">=</span> <span class="n">attachment</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">][</span><span class="s2">"mediaType"</span><span class="p">]</span>
             <span class="n">absolute_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span> <span class="o">+</span> <span class="n">attachment</span><span class="p">[</span><span class="s2">"_links"</span><span class="p">][</span><span class="s2">"download"</span><span class="p">]</span>
             <span class="n">title</span> <span class="o">=</span> <span class="n">attachment</span><span class="p">[</span><span class="s2">"title"</span><span class="p">]</span>
