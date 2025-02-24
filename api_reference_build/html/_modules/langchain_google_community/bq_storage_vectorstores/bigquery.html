@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Feb 23, 2025" name="docbuild:last-update"/>
+<meta content="Feb 24, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -223,7 +223,7 @@
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">threading</span><span class="w"> </span><span class="kn">import</span> <span class="n">Lock</span><span class="p">,</span> <span class="n">Thread</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">google.api_core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
@@ -306,11 +306,14 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            ids: List of ids of documents to retrieve from the vectorstore.</span>
-<span class="sd">            filter: Filter on metadata properties, e.g.</span>
-<span class="sd">                            {</span>
-<span class="sd">                                "str_property": "foo",</span>
-<span class="sd">                                "int_property": 123</span>
-<span class="sd">                            }</span>
+<span class="sd">            filter: (Optional) A dictionary or a string specifying filter criteria.</span>
+<span class="sd">                - If a dictionary is provided, it should map column names to their</span>
+<span class="sd">                corresponding values. The method will generate SQL expressions based</span>
+<span class="sd">                on the data types defined in `self.table_schema`. The value is enclosed</span>
+<span class="sd">                in single quotes unless the column is of type "INTEGER" or "FLOAT", in</span>
+<span class="sd">                which case the value is used directly. E.g., `{"str_property": "foo",</span>
+<span class="sd">                "int_property": 123}`.</span>
+<span class="sd">                - If a string is provided, it is assumed to be a valid SQL WHERE clause.</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            List of ids from adding the texts into the vectorstore.</span>
 <span class="sd">        """</span>
@@ -431,18 +434,11 @@
 <span class="sd">                query embedding.</span>
 <span class="sd">            filter: (Optional) A dictionary or a string specifying filter criteria.</span>
 <span class="sd">                - If a dictionary is provided, it should map column names to their</span>
-<span class="sd">                corresponding</span>
-<span class="sd">                values. The method will generate SQL expressions based on the data</span>
-<span class="sd">                types defined</span>
-<span class="sd">                in `self.table_schema`:</span>
-<span class="sd">                    - For columns of type "INTEGER" or "FLOAT", the value is used</span>
-<span class="sd">                    directly.</span>
-<span class="sd">                    - For other data types, the value is enclosed in single quotes.</span>
-<span class="sd">                Example:</span>
-<span class="sd">                        {</span>
-<span class="sd">                            "str_property": "foo",</span>
-<span class="sd">                            "int_property": 123</span>
-<span class="sd">                        }</span>
+<span class="sd">                corresponding values. The method will generate SQL expressions based</span>
+<span class="sd">                on the data types defined in `self.table_schema`. The value is enclosed</span>
+<span class="sd">                in single quotes unless the column is of type "INTEGER" or "FLOAT", in</span>
+<span class="sd">                which case the value is used directly. E.g., `{"str_property": "foo",</span>
+<span class="sd">                "int_property": 123}`.</span>
 <span class="sd">                - If a string is provided, it is assumed to be a valid SQL WHERE clause.</span>
 <span class="sd">            k: The number of top results to return for each query.</span>
 <span class="sd">            batch_size: The size of batches to process embeddings.</span>
@@ -485,18 +481,12 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            filter: (Optional) A dictionary or a string specifying filter criteria.</span>
-<span class="sd">                - If a dictionary is provided, it should map column names to</span>
-<span class="sd">                their corresponding</span>
-<span class="sd">                values. The method will generate SQL expressions based on the</span>
-<span class="sd">                data types defined in `self.table_schema`:</span>
-<span class="sd">                    - For columns of type "INTEGER" or "FLOAT", the value is</span>
-<span class="sd">                    used directly.</span>
-<span class="sd">                    - For other data types, the value is enclosed in single quotes.</span>
-<span class="sd">                Example:</span>
-<span class="sd">                    {</span>
-<span class="sd">                        "str_property": "foo",</span>
-<span class="sd">                        "int_property": 123</span>
-<span class="sd">                    }</span>
+<span class="sd">                - If a dictionary is provided, it should map column names to their</span>
+<span class="sd">                corresponding values. The method will generate SQL expressions based</span>
+<span class="sd">                on the data types defined in `self.table_schema`. The value is enclosed</span>
+<span class="sd">                in single quotes unless the column is of type "INTEGER" or "FLOAT", in</span>
+<span class="sd">                which case the value is used directly. E.g., `{"str_property": "foo",</span>
+<span class="sd">                "int_property": 123}`.</span>
 <span class="sd">                - If a string is provided, it is assumed to be a valid SQL WHERE clause.</span>
 
 <span class="sd">        Returns:</span>
@@ -694,19 +684,25 @@
         <span class="n">expire_hours_temp_table</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">12</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]:</span>
 <span class="w">        </span><span class="sd">"""Multi-purpose batch search function. Accepts either embeddings or queries</span>
-<span class="sd">            but not both. Optionally returns similarity scores and/or matched embeddings</span>
+<span class="sd">        but not both. Optionally returns similarity scores and/or matched embeddings</span>
+
 <span class="sd">        Args:</span>
-<span class="sd">        embeddings: A list of embeddings to search with. If provided, each</span>
-<span class="sd">            embedding represents a query vector.</span>
-<span class="sd">        queries: A list of text queries to search with.  If provided, each</span>
-<span class="sd">            query represents a query text.</span>
-<span class="sd">        filter: A dictionary of filters to apply to the search. The keys</span>
-<span class="sd">            of the dictionary should be field names, and the values should be the</span>
-<span class="sd">                values to filter on. (e.g., {"category": "news"})</span>
-<span class="sd">        k: The number of top results to return per query. Defaults to 5.</span>
-<span class="sd">        with_scores: If True, returns the relevance scores of the results along with</span>
-<span class="sd">            the documents</span>
-<span class="sd">        with_embeddings: If True, returns the embeddings of the results along with</span>
+<span class="sd">            embeddings: A list of embeddings to search with. If provided, each</span>
+<span class="sd">                embedding represents a query vector.</span>
+<span class="sd">            queries: A list of text queries to search with.  If provided, each</span>
+<span class="sd">                query represents a query text.</span>
+<span class="sd">            filter: (Optional) A dictionary or a string specifying filter criteria.</span>
+<span class="sd">                - If a dictionary is provided, it should map column names to their</span>
+<span class="sd">                corresponding values. The method will generate SQL expressions based</span>
+<span class="sd">                on the data types defined in `self.table_schema`. The value is enclosed</span>
+<span class="sd">                in single quotes unless the column is of type "INTEGER" or "FLOAT", in</span>
+<span class="sd">                which case the value is used directly. E.g., `{"str_property": "foo",</span>
+<span class="sd">                "int_property": 123}`.</span>
+<span class="sd">                - If a string is provided, it is assumed to be a valid SQL WHERE clause.</span>
+<span class="sd">            k: The number of top results to return per query. Defaults to 5.</span>
+<span class="sd">            with_scores: If True, returns the relevance scores of the results along with</span>
+<span class="sd">                the documents</span>
+<span class="sd">            with_embeddings: If True, returns the embeddings of the results along with</span>
 <span class="sd">            the documents</span>
 <span class="sd">        """</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">google.cloud</span><span class="w"> </span><span class="kn">import</span> <span class="n">bigquery</span>  <span class="c1"># type: ignore[attr-defined]</span>
@@ -758,6 +754,180 @@
         <span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="BigQueryVectorStore.similarity_search_by_vectors">
+<a class="viewcode-back" href="../../../google_community/bq_storage_vectorstores/langchain_google_community.bq_storage_vectorstores.bigquery.BigQueryVectorStore.html#langchain_google_community.bq_storage_vectorstores.bigquery.BigQueryVectorStore.similarity_search_by_vectors">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">similarity_search_by_vectors</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">embeddings</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="n">with_scores</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">with_embeddings</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Core similarity search function. Handles a list of embedding vectors,</span>
+<span class="sd">        optionally returning scores and embeddings.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            embeddings: A list of embedding vectors, where each vector is a list of</span>
+<span class="sd">                floats.</span>
+<span class="sd">            filter: (Optional) A dictionary or a string specifying filter criteria.</span>
+<span class="sd">                - If a dictionary is provided, it should map column names to their</span>
+<span class="sd">                corresponding values. The method will generate SQL expressions based</span>
+<span class="sd">                on the data types defined in `self.table_schema`. The value is enclosed</span>
+<span class="sd">                in single quotes unless the column is of type "INTEGER" or "FLOAT", in</span>
+<span class="sd">                which case the value is used directly. E.g., `{"str_property": "foo",</span>
+<span class="sd">                "int_property": 123}`.</span>
+<span class="sd">                - If a string is provided, it is assumed to be a valid SQL WHERE clause.</span>
+<span class="sd">            k: (Optional) The number of top-ranking similar documents to return per</span>
+<span class="sd">                embedding. Defaults to 5.</span>
+<span class="sd">            with_scores: (Optional) If True, include similarity scores in the result</span>
+<span class="sd">                for each matched document. Defaults to False.</span>
+<span class="sd">            with_embeddings: (Optional) If True, include the matched document's</span>
+<span class="sd">                embedding vector in the result. Defaults to False.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of `k` documents for each embedding in `embeddings`</span>
+<span class="sd">        """</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_similarity_search_by_vectors_with_scores_and_embeddings</span><span class="p">(</span>
+            <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Process results based on options</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">query_results</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">with_scores</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">with_embeddings</span><span class="p">:</span>
+                <span class="c1"># return only docs</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">query_results</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">with_embeddings</span><span class="p">:</span>
+                <span class="c1"># return only docs and score</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">[[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">query_results</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">with_scores</span><span class="p">:</span>
+                <span class="c1"># return only docs and embeddings</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">[[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">query_results</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">results</span>  <span class="c1"># type: ignore[return-value]</span></div>
+
+
+<div class="viewcode-block" id="BigQueryVectorStore.similarity_search_by_vector">
+<a class="viewcode-back" href="../../../google_community/bq_storage_vectorstores/langchain_google_community.bq_storage_vectorstores.bigquery.BigQueryVectorStore.html#langchain_google_community.bq_storage_vectorstores.bigquery.BigQueryVectorStore.similarity_search_by_vector">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">similarity_search_by_vector</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">embedding</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return docs most similar to embedding vector.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            embedding: Embedding to look up documents similar to.</span>
+<span class="sd">            filter: (Optional) A dictionary or a string specifying filter criteria.</span>
+<span class="sd">                - If a dictionary is provided, it should map column names to their</span>
+<span class="sd">                corresponding values. The method will generate SQL expressions based</span>
+<span class="sd">                on the data types defined in `self.table_schema`. The value is enclosed</span>
+<span class="sd">                in single quotes unless the column is of type "INTEGER" or "FLOAT", in</span>
+<span class="sd">                which case the value is used directly. E.g., `{"str_property": "foo",</span>
+<span class="sd">                "int_property": 123}`.</span>
+<span class="sd">                - If a string is provided, it is assumed to be a valid SQL WHERE clause.</span>
+<span class="sd">            k: (Optional) The number of top-ranking similar documents to return per</span>
+<span class="sd">                embedding. Defaults to 5.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Return docs most similar to embedding vector.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_by_vectors</span><span class="p">(</span><span class="n">embeddings</span><span class="o">=</span><span class="p">[</span><span class="n">embedding</span><span class="p">],</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)[</span>
+            <span class="mi">0</span>
+        <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="BigQueryVectorStore.similarity_search_by_vector_with_score">
+<a class="viewcode-back" href="../../../google_community/bq_storage_vectorstores/langchain_google_community.bq_storage_vectorstores.bigquery.BigQueryVectorStore.html#langchain_google_community.bq_storage_vectorstores.bigquery.BigQueryVectorStore.similarity_search_by_vector_with_score">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">similarity_search_by_vector_with_score</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">embedding</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Return docs most similar to embedding vector with scores.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            embedding: Embedding to look up documents similar to.</span>
+<span class="sd">            filter: (Optional) A dictionary or a string specifying filter criteria.</span>
+<span class="sd">                - If a dictionary is provided, it should map column names to their</span>
+<span class="sd">                corresponding values. The method will generate SQL expressions based</span>
+<span class="sd">                on the data types defined in `self.table_schema`. The value is enclosed</span>
+<span class="sd">                in single quotes unless the column is of type "INTEGER" or "FLOAT", in</span>
+<span class="sd">                which case the value is used directly. E.g., `{"str_property": "foo",</span>
+<span class="sd">                "int_property": 123}`.</span>
+<span class="sd">                - If a string is provided, it is assumed to be a valid SQL WHERE clause.</span>
+<span class="sd">            k: (Optional) The number of top-ranking similar documents to return per</span>
+<span class="sd">                embedding. Defaults to 5.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Return docs most similar to embedding vector.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_by_vectors</span><span class="p">(</span>
+            <span class="n">embeddings</span><span class="o">=</span><span class="p">[</span><span class="n">embedding</span><span class="p">],</span> <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">with_scores</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="BigQueryVectorStore.similarity_search">
+<a class="viewcode-back" href="../../../google_community/bq_storage_vectorstores/langchain_google_community.bq_storage_vectorstores.bigquery.BigQueryVectorStore.html#langchain_google_community.bq_storage_vectorstores.bigquery.BigQueryVectorStore.similarity_search">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">similarity_search</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Search for top `k` docs most similar to input query.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            query: search query to search documents with.</span>
+<span class="sd">            filter: (Optional) A dictionary or a string specifying filter criteria.</span>
+<span class="sd">                - If a dictionary is provided, it should map column names to their</span>
+<span class="sd">                corresponding values. The method will generate SQL expressions based</span>
+<span class="sd">                on the data types defined in `self.table_schema`. The value is enclosed</span>
+<span class="sd">                in single quotes unless the column is of type "INTEGER" or "FLOAT", in</span>
+<span class="sd">                which case the value is used directly. E.g., `{"str_property": "foo",</span>
+<span class="sd">                "int_property": 123}`.</span>
+<span class="sd">                - If a string is provided, it is assumed to be a valid SQL WHERE clause.</span>
+<span class="sd">            k: (Optional) The number of top-ranking similar documents to return per</span>
+<span class="sd">                embedding. Defaults to 5.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Return docs most similar to input query.</span>
+<span class="sd">        """</span>
+        <span class="n">embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_by_vectors</span><span class="p">(</span><span class="n">embeddings</span><span class="o">=</span><span class="p">[</span><span class="n">embedding</span><span class="p">],</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)[</span>
+            <span class="mi">0</span>
+        <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="BigQueryVectorStore.similarity_search_with_score">
+<a class="viewcode-back" href="../../../google_community/bq_storage_vectorstores/langchain_google_community.bq_storage_vectorstores.bigquery.BigQueryVectorStore.html#langchain_google_community.bq_storage_vectorstores.bigquery.BigQueryVectorStore.similarity_search_with_score">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">similarity_search_with_score</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Search for top `k` docs most similar to input query, returns both docs and</span>
+<span class="sd">        scores.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            query: search query to search documents with.</span>
+<span class="sd">            filter: (Optional) A dictionary or a string specifying filter criteria.</span>
+<span class="sd">                - If a dictionary is provided, it should map column names to their</span>
+<span class="sd">                corresponding values. The method will generate SQL expressions based</span>
+<span class="sd">                on the data types defined in `self.table_schema`. The value is enclosed</span>
+<span class="sd">                in single quotes unless the column is of type "INTEGER" or "FLOAT", in</span>
+<span class="sd">                which case the value is used directly. E.g., `{"str_property": "foo",</span>
+<span class="sd">                "int_property": 123}`.</span>
+<span class="sd">                - If a string is provided, it is assumed to be a valid SQL WHERE clause.</span>
+<span class="sd">            k: (Optional) The number of top-ranking similar documents to return per</span>
+<span class="sd">                embedding. Defaults to 5.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Return docs most similar to input query along with scores.</span>
+<span class="sd">        """</span>
+        <span class="n">embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_by_vector_with_score</span><span class="p">(</span>
+            <span class="n">embedding</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span>
+        <span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="BigQueryVectorStore.from_texts">
 <a class="viewcode-back" href="../../../google_community/bq_storage_vectorstores/langchain_google_community.bq_storage_vectorstores.bigquery.BigQueryVectorStore.html#langchain_google_community.bq_storage_vectorstores.bigquery.BigQueryVectorStore.from_texts">[docs]</a>
     <span class="nd">@classmethod</span>
@@ -787,12 +957,11 @@
 <div class="viewcode-block" id="BigQueryVectorStore.to_vertex_fs_vector_store">
 <a class="viewcode-back" href="../../../google_community/bq_storage_vectorstores/langchain_google_community.bq_storage_vectorstores.bigquery.BigQueryVectorStore.html#langchain_google_community.bq_storage_vectorstores.bigquery.BigQueryVectorStore.to_vertex_fs_vector_store">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_vertex_fs_vector_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        Creates and returns a VertexFSVectorStore instance based on configuration.</span>
+<span class="w">        </span><span class="sd">"""Creates and returns a VertexFSVectorStore instance based on configuration.</span>
 
 <span class="sd">        This method merges the base BigQuery vector store configuration with provided</span>
-<span class="sd">            keyword arguments,</span>
-<span class="sd">        then uses the combined parameters to instantiate a VertexFSVectorStore.</span>
+<span class="sd">        keyword arguments, then uses the combined parameters to instantiate a </span>
+<span class="sd">        VertexFSVectorStore.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            **kwargs: Additional keyword arguments to override or extend the base</span>
