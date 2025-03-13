@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Mar 12, 2025" name="docbuild:last-update"/>
+<meta content="Mar 13, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -770,9 +770,19 @@
 
 <span class="sd">        'description' and 'parameters' keys are now optional. Only 'name' is</span>
 <span class="sd">        required and guaranteed to be part of the output.</span>
+
+<span class="sd">    .. versionchanged:: 0.3.44</span>
+
+<span class="sd">        Return OpenAI Responses API-style tools unchanged. This includes</span>
+<span class="sd">        any dict with "type" in "file_search", "function", "computer_use_preview",</span>
+<span class="sd">        "web_search_preview".</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">tool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"function"</span> <span class="ow">and</span> <span class="s2">"function"</span> <span class="ow">in</span> <span class="n">tool</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">tool</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">tool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"function"</span><span class="p">,</span> <span class="s2">"file_search"</span><span class="p">,</span> <span class="s2">"computer_use_preview"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">tool</span>
+        <span class="c1"># As of 03.12.25 can be "web_search_preview" or "web_search_preview_2025_03_11"</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">tool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"web_search_preview"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">tool</span>
     <span class="n">oai_function</span> <span class="o">=</span> <span class="n">convert_to_openai_function</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"function"</span><span class="p">,</span> <span class="s2">"function"</span><span class="p">:</span> <span class="n">oai_function</span><span class="p">}</span></div>
 
