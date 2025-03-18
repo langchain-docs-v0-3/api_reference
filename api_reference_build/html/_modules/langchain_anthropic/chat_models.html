@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Mar 14, 2025" name="docbuild:last-update"/>
+<meta content="Mar 18, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -316,6 +316,22 @@
     <span class="n">input_schema</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
     <span class="n">cache_control</span><span class="p">:</span> <span class="n">NotRequired</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_builtin_tool</span><span class="p">(</span><span class="n">tool</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">tool_type</span> <span class="o">=</span> <span class="n">tool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">tool_type</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool_type</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">_builtin_tool_prefixes</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">"text_editor_"</span><span class="p">,</span>
+        <span class="s2">"computer_"</span><span class="p">,</span>
+        <span class="s2">"bash_"</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">tool_type</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="n">_builtin_tool_prefixes</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_image</span><span class="p">(</span><span class="n">image_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
@@ -896,6 +912,109 @@
 <span class="sd">        These can be disabled by setting ``stream_usage=False`` in the stream method,</span>
 <span class="sd">        or by setting ``stream_usage=False`` when initializing ChatAnthropic.</span>
 
+<span class="sd">    Prompt caching:</span>
+<span class="sd">        See LangChain `docs &lt;https://python.langchain.com/docs/integrations/chat/anthropic/&gt;`_</span>
+<span class="sd">        for more detail.</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from langchain_anthropic import ChatAnthropic</span>
+
+<span class="sd">            llm = ChatAnthropic(model="claude-3-7-sonnet-20250219")</span>
+
+<span class="sd">            messages = [</span>
+<span class="sd">                {</span>
+<span class="sd">                    "role": "system",</span>
+<span class="sd">                    "content": [</span>
+<span class="sd">                        {</span>
+<span class="sd">                            "type": "text",</span>
+<span class="sd">                            "text": "Below is some long context:",</span>
+<span class="sd">                        },</span>
+<span class="sd">                        {</span>
+<span class="sd">                            "type": "text",</span>
+<span class="sd">                            "text": f"{long_text}",</span>
+<span class="sd">                            "cache_control": {"type": "ephemeral"},</span>
+<span class="sd">                        },</span>
+<span class="sd">                    ],</span>
+<span class="sd">                },</span>
+<span class="sd">                {</span>
+<span class="sd">                    "role": "user",</span>
+<span class="sd">                    "content": "What's that about?",</span>
+<span class="sd">                },</span>
+<span class="sd">            ]</span>
+
+<span class="sd">            response = llm.invoke(messages)</span>
+<span class="sd">            response.usage_metadata["input_token_details"]</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            {'cache_read': 0, 'cache_creation': 1458}</span>
+
+<span class="sd">    Token-efficient tool use (beta):</span>
+<span class="sd">        See LangChain `docs &lt;https://python.langchain.com/docs/integrations/chat/anthropic/&gt;`_</span>
+<span class="sd">        for more detail.</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from langchain_anthropic import ChatAnthropic</span>
+<span class="sd">            from langchain_core.tools import tool</span>
+
+<span class="sd">            llm = ChatAnthropic(</span>
+<span class="sd">                model="claude-3-7-sonnet-20250219",</span>
+<span class="sd">                temperature=0,</span>
+<span class="sd">                model_kwargs={</span>
+<span class="sd">                    "extra_headers": {</span>
+<span class="sd">                        "anthropic-beta": "token-efficient-tools-2025-02-19"</span>
+<span class="sd">                    }</span>
+<span class="sd">                }</span>
+<span class="sd">            )</span>
+
+<span class="sd">            @tool</span>
+<span class="sd">            def get_weather(location: str) -&gt; str:</span>
+<span class="sd">                \"\"\"Get the weather at a location.\"\"\"</span>
+<span class="sd">                return "It's sunny."</span>
+
+<span class="sd">            llm_with_tools = llm.bind_tools([get_weather])</span>
+<span class="sd">            response = llm_with_tools.invoke(</span>
+<span class="sd">                "What's the weather in San Francisco?"</span>
+<span class="sd">            )</span>
+<span class="sd">            print(response.tool_calls)</span>
+<span class="sd">            print(f'Total tokens: {response.usage_metadata["total_tokens"]}')</span>
+
+<span class="sd">        .. code-block:: none</span>
+
+<span class="sd">            [{'name': 'get_weather', 'args': {'location': 'San Francisco'}, 'id': 'toolu_01HLjQMSb1nWmgevQUtEyz17', 'type': 'tool_call'}]</span>
+
+<span class="sd">            Total tokens: 408</span>
+
+<span class="sd">    Built-in tools:</span>
+<span class="sd">        See LangChain `docs &lt;https://python.langchain.com/docs/integrations/chat/anthropic/&gt;`_</span>
+<span class="sd">        for more detail.</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from langchain_anthropic import ChatAnthropic</span>
+
+<span class="sd">            llm = ChatAnthropic(model="claude-3-7-sonnet-20250219")</span>
+
+<span class="sd">            tool = {"type": "text_editor_20250124", "name": "str_replace_editor"}</span>
+<span class="sd">            llm_with_tools = llm.bind_tools([tool])</span>
+
+<span class="sd">            response = llm_with_tools.invoke(</span>
+<span class="sd">                "There's a syntax error in my primes.py file. Can you help me fix it?"</span>
+<span class="sd">            )</span>
+<span class="sd">            print(response.text())</span>
+<span class="sd">            response.tool_calls</span>
+
+<span class="sd">        .. code-block:: none</span>
+
+<span class="sd">            I'd be happy to help you fix the syntax error in your primes.py file. First, let's look at the current content of the file to identify the error.</span>
+
+<span class="sd">            [{'name': 'str_replace_editor',</span>
+<span class="sd">            'args': {'command': 'view', 'path': '/repo/primes.py'},</span>
+<span class="sd">            'id': 'toolu_01VdNgt1YV7kGfj9LFLm6HyQ',</span>
+<span class="sd">            'type': 'tool_call'}]</span>
+
 <span class="sd">    Response metadata</span>
 <span class="sd">        .. code-block:: python</span>
 
@@ -1385,7 +1504,6 @@
 <span class="sd">                llm = ChatAnthropic(</span>
 <span class="sd">                    model="claude-3-5-sonnet-20240620",</span>
 <span class="sd">                    temperature=0,</span>
-<span class="sd">                    extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"}</span>
 <span class="sd">                )</span>
 <span class="sd">                llm_with_tools = llm.bind_tools([GetWeather, cached_price_tool])</span>
 <span class="sd">                llm_with_tools.invoke("what is the weather like in San Francisco",)</span>
@@ -1403,7 +1521,10 @@
 <span class="sd">                AIMessage(content=[{'text': 'To get the current weather in San Francisco, I can use the GetWeather function. Let me check that for you.', 'type': 'text'}, {'id': 'toolu_01HtVtY1qhMFdPprx42qU2eA', 'input': {'location': 'San Francisco, CA'}, 'name': 'GetWeather', 'type': 'tool_use'}], response_metadata={'id': 'msg_016RfWHrRvW6DAGCdwB6Ac64', 'model': 'claude-3-5-sonnet-20240620', 'stop_reason': 'tool_use', 'stop_sequence': None, 'usage': {'input_tokens': 171, 'output_tokens': 82, 'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 1470}}, id='run-88b1f825-dcb7-4277-ac27-53df55d22001-0', tool_calls=[{'name': 'GetWeather', 'args': {'location': 'San Francisco, CA'}, 'id': 'toolu_01HtVtY1qhMFdPprx42qU2eA', 'type': 'tool_call'}], usage_metadata={'input_tokens': 171, 'output_tokens': 82, 'total_tokens': 253})</span>
 
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
-        <span class="n">formatted_tools</span> <span class="o">=</span> <span class="p">[</span><span class="n">convert_to_anthropic_tool</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span> <span class="k">for</span> <span class="n">tool</span> <span class="ow">in</span> <span class="n">tools</span><span class="p">]</span>
+        <span class="n">formatted_tools</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">tool</span> <span class="k">if</span> <span class="n">_is_builtin_tool</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span> <span class="k">else</span> <span class="n">convert_to_anthropic_tool</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">tool</span> <span class="ow">in</span> <span class="n">tools</span>
+        <span class="p">]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">tool_choice</span><span class="p">:</span>
             <span class="k">pass</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool_choice</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>

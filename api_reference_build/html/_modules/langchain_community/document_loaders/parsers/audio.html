@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Mar 14, 2025" name="docbuild:last-update"/>
+<meta content="Mar 18, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -519,12 +519,8 @@
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
                 <span class="s2">"openai package not found, please install it with `pip install openai`"</span>
             <span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">pydub</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioSegment</span>
-        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-                <span class="s2">"pydub package not found, please install it with `pip install pydub`"</span>
-            <span class="p">)</span>
+
+        <span class="n">audio</span> <span class="o">=</span> <span class="n">_get_audio_from_blob</span><span class="p">(</span><span class="n">blob</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">is_openai_v1</span><span class="p">():</span>
             <span class="c1"># api_key optional, defaults to `os.environ['OPENAI_API_KEY']`</span>
@@ -536,9 +532,6 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">:</span>
                 <span class="n">openai</span><span class="o">.</span><span class="n">api_base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span>
 
-        <span class="c1"># Audio file from disk</span>
-
-        <span class="n">audio</span> <span class="o">=</span> <span class="n">AudioSegment</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">blob</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
         <span class="c1"># Define the duration of each chunk in minutes</span>
         <span class="c1"># Need to meet 25MB size limit for Whisper API</span>
         <span class="n">chunk_duration</span> <span class="o">=</span> <span class="mi">20</span>
@@ -699,13 +692,6 @@
 <span class="w">        </span><span class="sd">"""Lazily parse the blob."""</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">pydub</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioSegment</span>
-        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-                <span class="s2">"pydub package not found, please install it with `pip install pydub`"</span>
-            <span class="p">)</span>
-
-        <span class="k">try</span><span class="p">:</span>
             <span class="kn">import</span><span class="w"> </span><span class="nn">librosa</span>
         <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
@@ -713,8 +699,7 @@
                 <span class="s2">"`pip install librosa`"</span>
             <span class="p">)</span>
 
-        <span class="c1"># Audio file from disk</span>
-        <span class="n">audio</span> <span class="o">=</span> <span class="n">AudioSegment</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">blob</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">audio</span> <span class="o">=</span> <span class="n">_get_audio_from_blob</span><span class="p">(</span><span class="n">blob</span><span class="p">)</span>
 
         <span class="n">file_obj</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">audio</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">"mp3"</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
 
@@ -785,12 +770,8 @@
                 <span class="s2">"yandex-speechkit package not found, please install it with "</span>
                 <span class="s2">"`pip install yandex-speechkit`"</span>
             <span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">pydub</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioSegment</span>
-        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-                <span class="s2">"pydub package not found, please install it with `pip install pydub`"</span>
-            <span class="p">)</span>
+
+        <span class="n">audio</span> <span class="o">=</span> <span class="n">_get_audio_from_blob</span><span class="p">(</span><span class="n">blob</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="p">:</span>
             <span class="n">configure_credentials</span><span class="p">(</span>
@@ -800,8 +781,6 @@
             <span class="n">configure_credentials</span><span class="p">(</span>
                 <span class="n">yandex_credentials</span><span class="o">=</span><span class="n">creds</span><span class="o">.</span><span class="n">YandexCredentials</span><span class="p">(</span><span class="n">iam_token</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">iam_token</span><span class="p">)</span>
             <span class="p">)</span>
-
-        <span class="n">audio</span> <span class="o">=</span> <span class="n">AudioSegment</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">blob</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
 
         <span class="n">model</span> <span class="o">=</span> <span class="n">model_repository</span><span class="o">.</span><span class="n">recognition_model</span><span class="p">()</span>
 
@@ -911,13 +890,6 @@
 <span class="w">        </span><span class="sd">"""Lazily parse the blob."""</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">pydub</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioSegment</span>
-        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-                <span class="s2">"pydub package not found, please install it with `pip install pydub`"</span>
-            <span class="p">)</span>
-
-        <span class="k">try</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">faster_whisper</span><span class="w"> </span><span class="kn">import</span> <span class="n">WhisperModel</span>
         <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
@@ -925,22 +897,12 @@
                 <span class="s2">"`pip install faster-whisper`"</span>
             <span class="p">)</span>
 
-        <span class="c1"># get the audio</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">blob</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
-            <span class="c1"># blob contains the audio</span>
-            <span class="n">audio</span> <span class="o">=</span> <span class="n">AudioSegment</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">blob</span><span class="o">.</span><span class="n">data</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="n">blob</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">blob</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
-            <span class="c1"># Audio file from disk</span>
-            <span class="n">audio</span> <span class="o">=</span> <span class="n">AudioSegment</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">blob</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Unable to get audio from blob"</span><span class="p">)</span>
+        <span class="n">audio</span> <span class="o">=</span> <span class="n">_get_audio_from_blob</span><span class="p">(</span><span class="n">blob</span><span class="p">)</span>
 
         <span class="n">file_obj</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">audio</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">"mp3"</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
 
         <span class="c1"># Transcribe</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="n">WhisperModel</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model_size</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">compute_type</span><span class="o">=</span><span class="s2">"float16"</span>
-        <span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">WhisperModel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_size</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
 
         <span class="n">segments</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">transcribe</span><span class="p">(</span><span class="n">file_obj</span><span class="p">,</span> <span class="n">beam_size</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 
@@ -957,6 +919,36 @@
             <span class="p">)</span></div>
 </div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_audio_from_blob</span><span class="p">(</span><span class="n">blob</span><span class="p">:</span> <span class="n">Blob</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Get audio data from blob.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        blob: Blob object containing the audio data.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        AudioSegment: Audio data from the blob.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ImportError: If the required package `pydub` is not installed.</span>
+<span class="sd">        ValueError: If the audio data is not found in the blob</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">pydub</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioSegment</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">"pydub package not found, please install it with `pip install pydub`"</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">blob</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+        <span class="n">audio</span> <span class="o">=</span> <span class="n">AudioSegment</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">blob</span><span class="o">.</span><span class="n">data</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">blob</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">blob</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+        <span class="n">audio</span> <span class="o">=</span> <span class="n">AudioSegment</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">blob</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Unable to get audio from blob"</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">audio</span>
 </pre></div>
 </article>
 </div>

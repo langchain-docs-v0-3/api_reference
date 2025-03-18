@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Mar 14, 2025" name="docbuild:last-update"/>
+<meta content="Mar 18, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -458,7 +458,7 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">api_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"crawl"</span><span class="p">,</span> <span class="s2">"scrape"</span><span class="p">,</span> <span class="s2">"map"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"crawl"</span><span class="p">,</span>
+        <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"crawl"</span><span class="p">,</span> <span class="s2">"scrape"</span><span class="p">,</span> <span class="s2">"map"</span><span class="p">,</span> <span class="s2">"extract"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"crawl"</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Initialize with API key and url.</span>
@@ -473,6 +473,7 @@
 <span class="sd">                 Options include "scrape" (single url),</span>
 <span class="sd">                 "crawl" (all accessible sub pages),</span>
 <span class="sd">                 "map" (returns list of links that are semantically related).</span>
+<span class="sd">                 "extract" (extracts structured data from a page).</span>
 <span class="sd">            params: The parameters to pass to the Firecrawl API.</span>
 <span class="sd">                Examples include crawlerOptions.</span>
 <span class="sd">                For more details, visit: https://github.com/mendableai/firecrawl-py</span>
@@ -484,9 +485,10 @@
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
                 <span class="s2">"`firecrawl` package not found, please run `pip install firecrawl-py`"</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"crawl"</span><span class="p">,</span> <span class="s2">"scrape"</span><span class="p">,</span> <span class="s2">"search"</span><span class="p">,</span> <span class="s2">"map"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"crawl"</span><span class="p">,</span> <span class="s2">"scrape"</span><span class="p">,</span> <span class="s2">"search"</span><span class="p">,</span> <span class="s2">"map"</span><span class="p">,</span> <span class="s2">"extract"</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Invalid mode '</span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">'. Allowed: 'crawl', 'scrape', 'search', 'map'."</span>
+                <span class="sa">f</span><span class="s2">"""Invalid mode '</span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">'.</span>
+<span class="s2">                Allowed: 'crawl', 'scrape', 'search', 'map', 'extract'."""</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">url</span><span class="p">:</span>
@@ -519,16 +521,23 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"URL is required for map mode"</span><span class="p">)</span>
             <span class="n">firecrawl_docs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firecrawl</span><span class="o">.</span><span class="n">map_url</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"extract"</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"URL is required for extract mode"</span><span class="p">)</span>
+            <span class="n">firecrawl_docs</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">firecrawl</span><span class="o">.</span><span class="n">extract</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">],</span> <span class="n">params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">))</span>
+            <span class="p">]</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"search"</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"Search mode is not supported in this version, please downgrade."</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Invalid mode '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="si">}</span><span class="s2">'. Allowed: 'crawl', 'scrape', 'map'."</span>
+                <span class="sa">f</span><span class="s2">"""Invalid mode '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="si">}</span><span class="s2">'.</span>
+<span class="s2">                Allowed: 'crawl', 'scrape', 'map', 'extract'."""</span>
             <span class="p">)</span>
         <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">firecrawl_docs</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"map"</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"map"</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"extract"</span><span class="p">:</span>
                 <span class="n">page_content</span> <span class="o">=</span> <span class="n">doc</span>
                 <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">else</span><span class="p">:</span>

@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Mar 14, 2025" name="docbuild:last-update"/>
+<meta content="Mar 18, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -974,17 +974,29 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">ChatGenerationChunk</span><span class="p">]:</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_request_payload</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">context_manager</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_response_headers</span><span class="p">:</span>
+            <span class="n">raw_context_manager</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_client</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="o">**</span><span class="n">payload</span>
+            <span class="p">)</span>
+            <span class="n">context_manager</span> <span class="o">=</span> <span class="n">raw_context_manager</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"headers"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw_context_manager</span><span class="o">.</span><span class="n">headers</span><span class="p">)}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">context_manager</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">original_schema_obj</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"response_format"</span><span class="p">)</span>
 
         <span class="k">with</span> <span class="n">context_manager</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>
+            <span class="n">is_first_chunk</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+                <span class="n">metadata</span> <span class="o">=</span> <span class="n">headers</span> <span class="k">if</span> <span class="n">is_first_chunk</span> <span class="k">else</span> <span class="p">{}</span>
                 <span class="k">if</span> <span class="n">generation_chunk</span> <span class="o">:=</span> <span class="n">_convert_responses_chunk_to_generation_chunk</span><span class="p">(</span>
-                    <span class="n">chunk</span>
+                    <span class="n">chunk</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">original_schema_obj</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span>
                 <span class="p">):</span>
                     <span class="k">if</span> <span class="n">run_manager</span><span class="p">:</span>
                         <span class="n">run_manager</span><span class="o">.</span><span class="n">on_llm_new_token</span><span class="p">(</span>
                             <span class="n">generation_chunk</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">chunk</span><span class="o">=</span><span class="n">generation_chunk</span>
                         <span class="p">)</span>
+                    <span class="n">is_first_chunk</span> <span class="o">=</span> <span class="kc">False</span>
                     <span class="k">yield</span> <span class="n">generation_chunk</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_astream_responses</span><span class="p">(</span>
@@ -996,17 +1008,31 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">ChatGenerationChunk</span><span class="p">]:</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_request_payload</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">context_manager</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_async_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_response_headers</span><span class="p">:</span>
+            <span class="n">raw_context_manager</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_async_client</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                    <span class="o">**</span><span class="n">payload</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">context_manager</span> <span class="o">=</span> <span class="n">raw_context_manager</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"headers"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw_context_manager</span><span class="o">.</span><span class="n">headers</span><span class="p">)}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">context_manager</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_async_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">original_schema_obj</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"response_format"</span><span class="p">)</span>
 
         <span class="k">async</span> <span class="k">with</span> <span class="n">context_manager</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>
+            <span class="n">is_first_chunk</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">async</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+                <span class="n">metadata</span> <span class="o">=</span> <span class="n">headers</span> <span class="k">if</span> <span class="n">is_first_chunk</span> <span class="k">else</span> <span class="p">{}</span>
                 <span class="k">if</span> <span class="n">generation_chunk</span> <span class="o">:=</span> <span class="n">_convert_responses_chunk_to_generation_chunk</span><span class="p">(</span>
-                    <span class="n">chunk</span>
+                    <span class="n">chunk</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">original_schema_obj</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span>
                 <span class="p">):</span>
                     <span class="k">if</span> <span class="n">run_manager</span><span class="p">:</span>
                         <span class="k">await</span> <span class="n">run_manager</span><span class="o">.</span><span class="n">on_llm_new_token</span><span class="p">(</span>
                             <span class="n">generation_chunk</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">chunk</span><span class="o">=</span><span class="n">generation_chunk</span>
                         <span class="p">)</span>
+                    <span class="n">is_first_chunk</span> <span class="o">=</span> <span class="kc">False</span>
                     <span class="k">yield</span> <span class="n">generation_chunk</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stream</span><span class="p">(</span>
@@ -1099,13 +1125,26 @@
                 <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_client</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
             <span class="k">except</span> <span class="n">openai</span><span class="o">.</span><span class="n">BadRequestError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">_handle_openai_bad_request</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_responses_api</span><span class="p">(</span><span class="n">payload</span><span class="p">):</span>
+            <span class="n">original_schema_obj</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"response_format"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">original_schema_obj</span> <span class="ow">and</span> <span class="n">_is_pydantic_class</span><span class="p">(</span><span class="n">original_schema_obj</span><span class="p">):</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_response_headers</span><span class="p">:</span>
+                    <span class="n">raw_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_client</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                        <span class="o">**</span><span class="n">payload</span>
+                    <span class="p">)</span>
+                    <span class="n">response</span> <span class="o">=</span> <span class="n">raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+                    <span class="n">generation_info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"headers"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw_response</span><span class="o">.</span><span class="n">headers</span><span class="p">)}</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">_construct_lc_result_from_responses_api</span><span class="p">(</span>
+                <span class="n">response</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">original_schema_obj</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">generation_info</span>
+            <span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_response_headers</span><span class="p">:</span>
             <span class="n">raw_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
             <span class="n">response</span> <span class="o">=</span> <span class="n">raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
             <span class="n">generation_info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"headers"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw_response</span><span class="o">.</span><span class="n">headers</span><span class="p">)}</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_responses_api</span><span class="p">(</span><span class="n">payload</span><span class="p">):</span>
-            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">_construct_lc_result_from_responses_api</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_chat_result</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">generation_info</span><span class="p">)</span>
@@ -1281,13 +1320,28 @@
                 <span class="p">)</span>
             <span class="k">except</span> <span class="n">openai</span><span class="o">.</span><span class="n">BadRequestError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">_handle_openai_bad_request</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_responses_api</span><span class="p">(</span><span class="n">payload</span><span class="p">):</span>
+            <span class="n">original_schema_obj</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"response_format"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">original_schema_obj</span> <span class="ow">and</span> <span class="n">_is_pydantic_class</span><span class="p">(</span><span class="n">original_schema_obj</span><span class="p">):</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_async_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_response_headers</span><span class="p">:</span>
+                    <span class="n">raw_response</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_async_client</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                            <span class="o">**</span><span class="n">payload</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="n">response</span> <span class="o">=</span> <span class="n">raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+                    <span class="n">generation_info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"headers"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw_response</span><span class="o">.</span><span class="n">headers</span><span class="p">)}</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_async_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">_construct_lc_result_from_responses_api</span><span class="p">(</span>
+                <span class="n">response</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">original_schema_obj</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">generation_info</span>
+            <span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_response_headers</span><span class="p">:</span>
             <span class="n">raw_response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
             <span class="n">response</span> <span class="o">=</span> <span class="n">raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
             <span class="n">generation_info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"headers"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw_response</span><span class="o">.</span><span class="n">headers</span><span class="p">)}</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_responses_api</span><span class="p">(</span><span class="n">payload</span><span class="p">):</span>
-            <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_async_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">_construct_lc_result_from_responses_api</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
         <span class="k">return</span> <span class="k">await</span> <span class="n">run_in_executor</span><span class="p">(</span>
@@ -3068,6 +3122,13 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_construct_responses_api_payload</span><span class="p">(</span>
     <span class="n">messages</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">],</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">dict</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="c1"># Rename legacy parameters</span>
+    <span class="k">for</span> <span class="n">legacy_token_param</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"max_tokens"</span><span class="p">,</span> <span class="s2">"max_completion_tokens"</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">legacy_token_param</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">:</span>
+            <span class="n">payload</span><span class="p">[</span><span class="s2">"max_output_tokens"</span><span class="p">]</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">legacy_token_param</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">"reasoning_effort"</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">:</span>
+        <span class="n">payload</span><span class="p">[</span><span class="s2">"reasoning"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"effort"</span><span class="p">:</span> <span class="n">payload</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"reasoning_effort"</span><span class="p">)}</span>
+
     <span class="n">payload</span><span class="p">[</span><span class="s2">"input"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_construct_responses_api_input</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">tools</span> <span class="o">:=</span> <span class="n">payload</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"tools"</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
         <span class="n">new_tools</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]</span>
@@ -3082,23 +3143,51 @@
     <span class="k">if</span> <span class="n">tool_choice</span> <span class="o">:=</span> <span class="n">payload</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"tool_choice"</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
         <span class="c1"># chat api: {"type": "function", "function": {"name": "..."}}</span>
         <span class="c1"># responses api: {"type": "function", "name": "..."}</span>
-        <span class="k">if</span> <span class="n">tool_choice</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"function"</span> <span class="ow">and</span> <span class="s2">"function"</span> <span class="ow">in</span> <span class="n">tool_choice</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool_choice</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">tool_choice</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"function"</span>
+            <span class="ow">and</span> <span class="s2">"function"</span> <span class="ow">in</span> <span class="n">tool_choice</span>
+        <span class="p">):</span>
             <span class="n">payload</span><span class="p">[</span><span class="s2">"tool_choice"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"function"</span><span class="p">,</span> <span class="o">**</span><span class="n">tool_choice</span><span class="p">[</span><span class="s2">"function"</span><span class="p">]}</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">payload</span><span class="p">[</span><span class="s2">"tool_choice"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tool_choice</span>
-    <span class="k">if</span> <span class="n">response_format</span> <span class="o">:=</span> <span class="n">payload</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"response_format"</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+
+    <span class="c1"># Structured output</span>
+    <span class="k">if</span> <span class="n">schema</span> <span class="o">:=</span> <span class="n">payload</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"response_format"</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"text"</span><span class="p">):</span>
             <span class="n">text</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[</span><span class="s2">"text"</span><span class="p">]</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"Can specify at most one of 'response_format' or 'text', received both:"</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">response_format</span><span class="si">=}</span><span class="se">\n</span><span class="si">{</span><span class="n">text</span><span class="si">=}</span><span class="s2">"</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">schema</span><span class="si">=}</span><span class="se">\n</span><span class="si">{</span><span class="n">text</span><span class="si">=}</span><span class="s2">"</span>
             <span class="p">)</span>
-        <span class="c1"># chat api: {"type": "json_schema, "json_schema": {"schema": {...}, "name": "...", "description": "...", "strict": ...}}  # noqa: E501</span>
-        <span class="c1"># responses api: {"type": "json_schema, "schema": {...}, "name": "...", "description": "...", "strict": ...}  # noqa: E501</span>
-        <span class="k">if</span> <span class="n">response_format</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"json_schema"</span><span class="p">:</span>
-            <span class="n">payload</span><span class="p">[</span><span class="s2">"text"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"json_schema"</span><span class="p">,</span> <span class="o">**</span><span class="n">response_format</span><span class="p">[</span><span class="s2">"json_schema"</span><span class="p">]}</span>
+
+        <span class="c1"># For pydantic + non-streaming case, we use responses.parse.</span>
+        <span class="c1"># Otherwise, we use responses.create.</span>
+        <span class="n">strict</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"strict"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"stream"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_is_pydantic_class</span><span class="p">(</span><span class="n">schema</span><span class="p">):</span>
+            <span class="n">payload</span><span class="p">[</span><span class="s2">"text_format"</span><span class="p">]</span> <span class="o">=</span> <span class="n">schema</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">payload</span><span class="p">[</span><span class="s2">"text"</span><span class="p">]</span> <span class="o">=</span> <span class="n">response_format</span>
+            <span class="k">if</span> <span class="n">_is_pydantic_class</span><span class="p">(</span><span class="n">schema</span><span class="p">):</span>
+                <span class="n">schema_dict</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()</span>
+                <span class="n">strict</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">schema_dict</span> <span class="o">=</span> <span class="n">schema</span>
+            <span class="k">if</span> <span class="n">schema_dict</span> <span class="o">==</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"json_object"</span><span class="p">}:</span>  <span class="c1"># JSON mode</span>
+                <span class="n">payload</span><span class="p">[</span><span class="s2">"text"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"format"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"json_object"</span><span class="p">}}</span>
+            <span class="k">elif</span> <span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">response_format</span> <span class="o">:=</span> <span class="n">_convert_to_openai_response_format</span><span class="p">(</span>
+                        <span class="n">schema_dict</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="ow">and</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">response_format</span><span class="p">,</span> <span class="nb">dict</span><span class="p">))</span>
+                <span class="ow">and</span> <span class="p">(</span><span class="n">response_format</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"json_schema"</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="n">payload</span><span class="p">[</span><span class="s2">"text"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">"format"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"json_schema"</span><span class="p">,</span> <span class="o">**</span><span class="n">response_format</span><span class="p">[</span><span class="s2">"json_schema"</span><span class="p">]}</span>
+                <span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">pass</span>
     <span class="k">return</span> <span class="n">payload</span>
 
 
@@ -3106,6 +3195,9 @@
     <span class="n">input_</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">lc_msg</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="n">_convert_message_to_dict</span><span class="p">(</span><span class="n">lc_msg</span><span class="p">)</span>
+        <span class="c1"># "name" parameter unsupported</span>
+        <span class="k">if</span> <span class="s2">"name"</span> <span class="ow">in</span> <span class="n">msg</span><span class="p">:</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">msg</span><span class="p">[</span><span class="s2">"role"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"tool"</span><span class="p">:</span>
             <span class="n">tool_output</span> <span class="o">=</span> <span class="n">msg</span><span class="p">[</span><span class="s2">"content"</span><span class="p">]</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool_output</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -3121,17 +3213,20 @@
             <span class="k">if</span> <span class="n">tool_calls</span> <span class="o">:=</span> <span class="n">msg</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"tool_calls"</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
                 <span class="c1"># TODO: should you be able to preserve the function call object id on</span>
                 <span class="c1">#  the langchain tool calls themselves?</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">lc_msg</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_FUNCTION_CALL_IDS_MAP_KEY</span><span class="p">):</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
-                <span class="n">function_call_ids</span> <span class="o">=</span> <span class="n">lc_msg</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="p">[</span><span class="n">_FUNCTION_CALL_IDS_MAP_KEY</span><span class="p">]</span>
+                <span class="n">function_call_ids</span> <span class="o">=</span> <span class="n">lc_msg</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="n">_FUNCTION_CALL_IDS_MAP_KEY</span>
+                <span class="p">)</span>
                 <span class="k">for</span> <span class="n">tool_call</span> <span class="ow">in</span> <span class="n">tool_calls</span><span class="p">:</span>
                     <span class="n">function_call</span> <span class="o">=</span> <span class="p">{</span>
                         <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"function_call"</span><span class="p">,</span>
                         <span class="s2">"name"</span><span class="p">:</span> <span class="n">tool_call</span><span class="p">[</span><span class="s2">"function"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">],</span>
                         <span class="s2">"arguments"</span><span class="p">:</span> <span class="n">tool_call</span><span class="p">[</span><span class="s2">"function"</span><span class="p">][</span><span class="s2">"arguments"</span><span class="p">],</span>
                         <span class="s2">"call_id"</span><span class="p">:</span> <span class="n">tool_call</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
-                        <span class="s2">"id"</span><span class="p">:</span> <span class="n">function_call_ids</span><span class="p">[</span><span class="n">tool_call</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]],</span>
                     <span class="p">}</span>
+                    <span class="k">if</span> <span class="n">function_call_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
+                        <span class="n">_id</span> <span class="o">:=</span> <span class="n">function_call_ids</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tool_call</span><span class="p">[</span><span class="s2">"id"</span><span class="p">])</span>
+                    <span class="p">):</span>
+                        <span class="n">function_call</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_id</span>
                     <span class="n">function_calls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">function_call</span><span class="p">)</span>
 
             <span class="n">msg</span><span class="p">[</span><span class="s2">"content"</span><span class="p">]</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"content"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
@@ -3198,7 +3293,11 @@
     <span class="k">return</span> <span class="n">input_</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_construct_lc_result_from_responses_api</span><span class="p">(</span><span class="n">response</span><span class="p">:</span> <span class="n">Response</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChatResult</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_construct_lc_result_from_responses_api</span><span class="p">(</span>
+    <span class="n">response</span><span class="p">:</span> <span class="n">Response</span><span class="p">,</span>
+    <span class="n">schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">_BM</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChatResult</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Construct ChatResponse from OpenAI Response API response."""</span>
     <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">error</span><span class="p">)</span>
@@ -3218,6 +3317,8 @@
             <span class="s2">"model"</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">}</span>
+    <span class="k">if</span> <span class="n">metadata</span><span class="p">:</span>
+        <span class="n">response_metadata</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
     <span class="c1"># for compatibility with chat completion calls.</span>
     <span class="n">response_metadata</span><span class="p">[</span><span class="s2">"model_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">response_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">usage</span><span class="p">:</span>
@@ -3243,6 +3344,8 @@
                         <span class="p">],</span>
                     <span class="p">}</span>
                     <span class="n">content_blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="s2">"parsed"</span><span class="p">):</span>
+                        <span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"parsed"</span><span class="p">]</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">parsed</span>
                 <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"refusal"</span><span class="p">:</span>
                     <span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"refusal"</span><span class="p">]</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">refusal</span>
             <span class="n">msg_id</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">id</span>
@@ -3283,6 +3386,39 @@
                 <span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"tool_outputs"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tool_output</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"tool_outputs"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">tool_output</span><span class="p">]</span>
+    <span class="c1"># Workaround for parsing structured output in the streaming case.</span>
+    <span class="c1">#    from openai import OpenAI</span>
+    <span class="c1">#    from pydantic import BaseModel</span>
+
+    <span class="c1">#    class Foo(BaseModel):</span>
+    <span class="c1">#        response: str</span>
+
+    <span class="c1">#    client = OpenAI()</span>
+
+    <span class="c1">#    client.responses.parse(</span>
+    <span class="c1">#        model="gpt-4o-mini",</span>
+    <span class="c1">#        input=[{"content": "how are ya", "role": "user"}],</span>
+    <span class="c1">#        text_format=Foo,</span>
+    <span class="c1">#        stream=True,  # &lt;-- errors</span>
+    <span class="c1">#    )</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">schema</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="s2">"parsed"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">additional_kwargs</span>
+        <span class="ow">and</span> <span class="n">response</span><span class="o">.</span><span class="n">output_text</span>  <span class="c1"># tool calls can generate empty output text</span>
+        <span class="ow">and</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span>
+        <span class="ow">and</span> <span class="p">(</span><span class="n">text_config</span> <span class="o">:=</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span>
+        <span class="ow">and</span> <span class="p">(</span><span class="n">format_</span> <span class="o">:=</span> <span class="n">text_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="ow">and</span> <span class="p">(</span><span class="n">format_</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"json_schema"</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parsed_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">output_text</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">schema</span> <span class="ow">and</span> <span class="n">_is_pydantic_class</span><span class="p">(</span><span class="n">schema</span><span class="p">):</span>
+                <span class="n">parsed</span> <span class="o">=</span> <span class="n">schema</span><span class="p">(</span><span class="o">**</span><span class="n">parsed_dict</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">parsed</span> <span class="o">=</span> <span class="n">parsed_dict</span>
+            <span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"parsed"</span><span class="p">]</span> <span class="o">=</span> <span class="n">parsed</span>
+        <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">:</span>
+            <span class="k">pass</span>
     <span class="n">message</span> <span class="o">=</span> <span class="n">AIMessage</span><span class="p">(</span>
         <span class="n">content</span><span class="o">=</span><span class="n">content_blocks</span><span class="p">,</span>
         <span class="nb">id</span><span class="o">=</span><span class="n">msg_id</span><span class="p">,</span>
@@ -3296,12 +3432,15 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_convert_responses_chunk_to_generation_chunk</span><span class="p">(</span>
-    <span class="n">chunk</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">chunk</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">_BM</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ChatGenerationChunk</span><span class="p">]:</span>
     <span class="n">content</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">tool_call_chunks</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">additional_kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">response_metadata</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">metadata</span><span class="p">:</span>
+        <span class="n">response_metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">response_metadata</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">usage_metadata</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="nb">id</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">chunk</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"response.output_text.delta"</span><span class="p">:</span>
@@ -3323,11 +3462,13 @@
         <span class="n">msg</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
             <span class="n">AIMessage</span><span class="p">,</span>
             <span class="p">(</span>
-                <span class="n">_construct_lc_result_from_responses_api</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">response</span><span class="p">)</span>
+                <span class="n">_construct_lc_result_from_responses_api</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">response</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>
                 <span class="o">.</span><span class="n">generations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="o">.</span><span class="n">message</span>
             <span class="p">),</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="n">parsed</span> <span class="o">:=</span> <span class="n">msg</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"parsed"</span><span class="p">):</span>
+            <span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"parsed"</span><span class="p">]</span> <span class="o">=</span> <span class="n">parsed</span>
         <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">usage_metadata</span>
         <span class="n">response_metadata</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">msg</span><span class="o">.</span><span class="n">response_metadata</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"id"</span>

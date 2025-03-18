@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Mar 14, 2025" name="docbuild:last-update"/>
+<meta content="Mar 18, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -287,7 +287,7 @@
 </a>
 </li>
 <li class="breadcrumb-item"><a class="nav-link" href="../../reference.html">LangChain Python API Reference</a></li>
-<li class="breadcrumb-item"><a class="nav-link" href="../index.html">langchain-anthropic: 0.3.9</a></li>
+<li class="breadcrumb-item"><a class="nav-link" href="../index.html">langchain-anthropic: 0.3.10</a></li>
 <li class="breadcrumb-item"><a class="nav-link" href="../chat_models.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">chat_models</span></code></a></li>
 <li aria-current="page" class="breadcrumb-item active"><span class="ellipsis">ChatAnthropic</span></li>
 </ul>
@@ -631,6 +631,100 @@ default:</p>
 </div>
 <p>These can be disabled by setting <code class="docutils literal notranslate"><span class="pre">stream_usage=False</span></code> in the stream method,
 or by setting <code class="docutils literal notranslate"><span class="pre">stream_usage=False</span></code> when initializing ChatAnthropic.</p>
+</dd>
+<dt>Prompt caching:</dt><dd><p>See LangChain <a class="reference external" href="https://python.langchain.com/docs/integrations/chat/anthropic/">docs</a>
+for more detail.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_anthropic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatAnthropic</span>
+
+<span class="n">llm</span> <span class="o">=</span> <span class="n">ChatAnthropic</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"claude-3-7-sonnet-20250219"</span><span class="p">)</span>
+
+<span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">"role"</span><span class="p">:</span> <span class="s2">"system"</span><span class="p">,</span>
+        <span class="s2">"content"</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span>
+                <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"Below is some long context:"</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+                <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span>
+                <span class="s2">"text"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">long_text</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="s2">"cache_control"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"ephemeral"</span><span class="p">},</span>
+            <span class="p">},</span>
+        <span class="p">],</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span>
+        <span class="s2">"content"</span><span class="p">:</span> <span class="s2">"What's that about?"</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+
+<span class="n">response</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
+<span class="n">response</span><span class="o">.</span><span class="n">usage_metadata</span><span class="p">[</span><span class="s2">"input_token_details"</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">'cache_read'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'cache_creation'</span><span class="p">:</span> <span class="mi">1458</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+<dt>Token-efficient tool use (beta):</dt><dd><p>See LangChain <a class="reference external" href="https://python.langchain.com/docs/integrations/chat/anthropic/">docs</a>
+for more detail.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_anthropic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatAnthropic</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">tool</span>
+
+<span class="n">llm</span> <span class="o">=</span> <span class="n">ChatAnthropic</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">"claude-3-7-sonnet-20250219"</span><span class="p">,</span>
+    <span class="n">temperature</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">model_kwargs</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">"extra_headers"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"anthropic-beta"</span><span class="p">:</span> <span class="s2">"token-efficient-tools-2025-02-19"</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="nd">@tool</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_weather</span><span class="p">(</span><span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Get the weather at a location."""</span>
+    <span class="k">return</span> <span class="s2">"It's sunny."</span>
+
+<span class="n">llm_with_tools</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">bind_tools</span><span class="p">([</span><span class="n">get_weather</span><span class="p">])</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">llm_with_tools</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
+    <span class="s2">"What's the weather in San Francisco?"</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">tool_calls</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Total tokens: </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">usage_metadata</span><span class="p">[</span><span class="s2">"total_tokens"</span><span class="p">]</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[{'name': 'get_weather', 'args': {'location': 'San Francisco'}, 'id': 'toolu_01HLjQMSb1nWmgevQUtEyz17', 'type': 'tool_call'}]
+
+Total tokens: 408
+</pre></div>
+</div>
+</dd>
+<dt>Built-in tools:</dt><dd><p>See LangChain <a class="reference external" href="https://python.langchain.com/docs/integrations/chat/anthropic/">docs</a>
+for more detail.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_anthropic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatAnthropic</span>
+
+<span class="n">llm</span> <span class="o">=</span> <span class="n">ChatAnthropic</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"claude-3-7-sonnet-20250219"</span><span class="p">)</span>
+
+<span class="n">tool</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text_editor_20250124"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"str_replace_editor"</span><span class="p">}</span>
+<span class="n">llm_with_tools</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">bind_tools</span><span class="p">([</span><span class="n">tool</span><span class="p">])</span>
+
+<span class="n">response</span> <span class="o">=</span> <span class="n">llm_with_tools</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
+    <span class="s2">"There's a syntax error in my primes.py file. Can you help me fix it?"</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+<span class="n">response</span><span class="o">.</span><span class="n">tool_calls</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>I'd be happy to help you fix the syntax error in your primes.py file. First, let's look at the current content of the file to identify the error.
+
+[{'name': 'str_replace_editor',
+'args': {'command': 'view', 'path': '/repo/primes.py'},
+'id': 'toolu_01VdNgt1YV7kGfj9LFLm6HyQ',
+'type': 'tool_call'}]
+</pre></div>
+</div>
 </dd>
 <dt>Response metadata</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ai_msg</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
 <span class="n">ai_msg</span><span class="o">.</span><span class="n">response_metadata</span>
@@ -1417,7 +1511,6 @@ Defaults to <code class="docutils literal notranslate"><span class="pre">None</s
 <span class="n">llm</span> <span class="o">=</span> <span class="n">ChatAnthropic</span><span class="p">(</span>
     <span class="n">model</span><span class="o">=</span><span class="s2">"claude-3-5-sonnet-20240620"</span><span class="p">,</span>
     <span class="n">temperature</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-    <span class="n">extra_headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"anthropic-beta"</span><span class="p">:</span> <span class="s2">"prompt-caching-2024-07-31"</span><span class="p">}</span>
 <span class="p">)</span>
 <span class="n">llm_with_tools</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">bind_tools</span><span class="p">([</span><span class="n">GetWeather</span><span class="p">,</span> <span class="n">cached_price_tool</span><span class="p">])</span>
 <span class="n">llm_with_tools</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"what is the weather like in San Francisco"</span><span class="p">,)</span>

@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Mar 14, 2025" name="docbuild:last-update"/>
+<meta content="Mar 18, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -233,6 +233,7 @@
 <span class="c1"># Pre-compile regular expressions for video ID extraction</span>
 <span class="n">BV_PATTERN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"BV\w+"</span><span class="p">)</span>
 <span class="n">AV_PATTERN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"av[0-9]+"</span><span class="p">)</span>
+<span class="n">PAGE_INDEX_PATTERN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"p=(\d+)"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="BiliBiliLoader">
@@ -323,8 +324,17 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">credential</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">""</span><span class="p">,</span> <span class="n">video_info</span>
 
+        <span class="n">cid</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">page_match</span> <span class="o">=</span> <span class="n">PAGE_INDEX_PATTERN</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">page_match</span><span class="p">:</span>
+            <span class="n">cid</span> <span class="o">=</span> <span class="n">video_info</span><span class="p">[</span><span class="s2">"pages"</span><span class="p">][</span><span class="nb">int</span><span class="p">(</span><span class="n">page_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span>
+                <span class="s2">"cid"</span>
+            <span class="p">]</span>  <span class="c1"># Bilibili page index starts from 1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cid</span> <span class="o">=</span> <span class="n">video_info</span><span class="p">[</span><span class="s2">"cid"</span><span class="p">]</span>
+
         <span class="c1"># Fetching and processing subtitles</span>
-        <span class="n">sub</span> <span class="o">=</span> <span class="n">sync</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">get_subtitle</span><span class="p">(</span><span class="n">video_info</span><span class="p">[</span><span class="s2">"cid"</span><span class="p">]))</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">sync</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">get_subtitle</span><span class="p">(</span><span class="n">cid</span><span class="p">))</span>
         <span class="n">sub_list</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"subtitles"</span><span class="p">,</span> <span class="p">[])</span>
         <span class="k">if</span> <span class="n">sub_list</span><span class="p">:</span>
             <span class="n">sub_url</span> <span class="o">=</span> <span class="n">sub_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"subtitle_url"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
