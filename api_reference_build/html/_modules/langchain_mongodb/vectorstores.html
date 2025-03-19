@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Mar 18, 2025" name="docbuild:last-update"/>
+<meta content="Mar 19, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -232,17 +232,19 @@
     <span class="n">Iterable</span><span class="p">,</span>
     <span class="n">List</span><span class="p">,</span>
     <span class="n">Optional</span><span class="p">,</span>
+    <span class="n">Sequence</span><span class="p">,</span>
     <span class="n">Tuple</span><span class="p">,</span>
     <span class="n">TypeVar</span><span class="p">,</span>
     <span class="n">Union</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bson</span><span class="w"> </span><span class="kn">import</span> <span class="n">ObjectId</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">Embeddings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_in_executor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.vectorstores</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorStore</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pymongo</span><span class="w"> </span><span class="kn">import</span> <span class="n">MongoClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymongo</span><span class="w"> </span><span class="kn">import</span> <span class="n">MongoClient</span><span class="p">,</span> <span class="n">ReplaceOne</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pymongo.collection</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pymongo.driver_info</span><span class="w"> </span><span class="kn">import</span> <span class="n">DriverInfo</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pymongo.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CollectionInvalid</span>
@@ -618,6 +620,42 @@
         <span class="k">return</span> <span class="n">result_ids</span></div>
 
 
+<div class="viewcode-block" id="MongoDBAtlasVectorSearch.get_by_ids">
+<a class="viewcode-back" href="../../mongodb/vectorstores/langchain_mongodb.vectorstores.MongoDBAtlasVectorSearch.html#langchain_mongodb.cache.MongoDBAtlasVectorSearch.get_by_ids">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_by_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get documents by their IDs.</span>
+
+<span class="sd">        The returned documents are expected to have the ID field set to the ID of the</span>
+<span class="sd">        document in the vector store.</span>
+
+<span class="sd">        Fewer documents may be returned than requested if some IDs are not found or</span>
+<span class="sd">        if there are duplicated IDs.</span>
+
+<span class="sd">        Users should not assume that the order of the returned documents matches</span>
+<span class="sd">        the order of the input IDs. Instead, users should rely on the ID field of the</span>
+<span class="sd">        returned documents.</span>
+
+<span class="sd">        This method should **NOT** raise exceptions if no documents are found for</span>
+<span class="sd">        some IDs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ids: List of ids to retrieve.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of Documents.</span>
+
+<span class="sd">        .. versionadded:: 0.6.0</span>
+<span class="sd">        """</span>
+        <span class="n">docs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">oids</span> <span class="o">=</span> <span class="p">[</span><span class="n">str_to_oid</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">aggregate</span><span class="p">([{</span><span class="s2">"$match"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"_id"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"$in"</span><span class="p">:</span> <span class="n">oids</span><span class="p">}}}]):</span>
+            <span class="n">_id</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"_id"</span><span class="p">)</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"text"</span><span class="p">)</span>
+            <span class="k">del</span> <span class="n">doc</span><span class="p">[</span><span class="s2">"embedding"</span><span class="p">]</span>
+            <span class="n">docs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">_id</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">doc</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">docs</span></div>
+
+
 <div class="viewcode-block" id="MongoDBAtlasVectorSearch.bulk_embed_and_insert_texts">
 <a class="viewcode-back" href="../../mongodb/vectorstores/langchain_mongodb.vectorstores.MongoDBAtlasVectorSearch.html#langchain_mongodb.cache.MongoDBAtlasVectorSearch.bulk_embed_and_insert_texts">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">bulk_embed_and_insert_texts</span><span class="p">(</span>
@@ -634,24 +672,21 @@
             <span class="k">return</span> <span class="p">[]</span>
         <span class="c1"># Compute embedding vectors</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding</span><span class="o">.</span><span class="n">embed_documents</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">texts</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">ids</span><span class="p">:</span>
-            <span class="n">to_insert</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="p">{</span>
-                    <span class="s2">"_id"</span><span class="p">:</span> <span class="n">str_to_oid</span><span class="p">(</span><span class="n">i</span><span class="p">),</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_text_key</span><span class="p">:</span> <span class="n">t</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_key</span><span class="p">:</span> <span class="n">embedding</span><span class="p">,</span>
-                    <span class="o">**</span><span class="n">m</span><span class="p">,</span>
-                <span class="p">}</span>
-                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">embedding</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="n">texts</span><span class="p">,</span> <span class="n">metadatas</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">)</span>
-            <span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">to_insert</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_text_key</span><span class="p">:</span> <span class="n">t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_key</span><span class="p">:</span> <span class="n">embedding</span><span class="p">,</span> <span class="o">**</span><span class="n">m</span><span class="p">}</span>
-                <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">embedding</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">texts</span><span class="p">,</span> <span class="n">metadatas</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">)</span>
-            <span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ids</span><span class="p">:</span>
+            <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">ObjectId</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">texts</span><span class="p">))]</span>
+        <span class="n">docs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">"_id"</span><span class="p">:</span> <span class="n">str_to_oid</span><span class="p">(</span><span class="n">i</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_text_key</span><span class="p">:</span> <span class="n">t</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_key</span><span class="p">:</span> <span class="n">embedding</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">m</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">embedding</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="n">texts</span><span class="p">,</span> <span class="n">metadatas</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">operations</span> <span class="o">=</span> <span class="p">[</span><span class="n">ReplaceOne</span><span class="p">({</span><span class="s2">"_id"</span><span class="p">:</span> <span class="n">doc</span><span class="p">[</span><span class="s2">"_id"</span><span class="p">]},</span> <span class="n">doc</span><span class="p">,</span> <span class="n">upsert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">]</span>
         <span class="c1"># insert the documents in MongoDB Atlas</span>
-        <span class="n">insert_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">insert_many</span><span class="p">(</span><span class="n">to_insert</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">oid_to_str</span><span class="p">(</span><span class="n">_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">_id</span> <span class="ow">in</span> <span class="n">insert_result</span><span class="o">.</span><span class="n">inserted_ids</span><span class="p">]</span></div>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">bulk_write</span><span class="p">(</span><span class="n">operations</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">oid_to_str</span><span class="p">(</span><span class="n">_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">_id</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">upserted_ids</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span></div>
 
 
 <div class="viewcode-block" id="MongoDBAtlasVectorSearch.add_documents">
@@ -678,22 +713,19 @@
         <span class="n">n_docs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">ids</span><span class="p">:</span>
             <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="o">==</span> <span class="n">n_docs</span><span class="p">,</span> <span class="s2">"Number of ids must equal number of documents."</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">id</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">ObjectId</span><span class="p">())</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
         <span class="n">result_ids</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">end</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">n_docs</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
             <span class="n">texts</span><span class="p">,</span> <span class="n">metadatas</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span>
                 <span class="o">*</span><span class="p">[(</span><span class="n">doc</span><span class="o">.</span><span class="n">page_content</span><span class="p">,</span> <span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]]</span>
             <span class="p">)</span>
-            <span class="k">if</span> <span class="n">ids</span><span class="p">:</span>
-                <span class="n">result_ids</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">bulk_embed_and_insert_texts</span><span class="p">(</span>
-                        <span class="n">texts</span><span class="o">=</span><span class="n">texts</span><span class="p">,</span> <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
-                    <span class="p">)</span>
+            <span class="n">result_ids</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bulk_embed_and_insert_texts</span><span class="p">(</span>
+                    <span class="n">texts</span><span class="o">=</span><span class="n">texts</span><span class="p">,</span> <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
                 <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">result_ids</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">bulk_embed_and_insert_texts</span><span class="p">(</span><span class="n">texts</span><span class="o">=</span><span class="n">texts</span><span class="p">,</span> <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">)</span>
-                <span class="p">)</span>
+            <span class="p">)</span>
             <span class="n">start</span> <span class="o">=</span> <span class="n">end</span>
         <span class="k">return</span> <span class="n">result_ids</span></div>
 
@@ -1049,7 +1081,9 @@
             <span class="n">text</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_text_key</span><span class="p">)</span>
             <span class="n">score</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"score"</span><span class="p">)</span>
             <span class="n">make_serializable</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
-            <span class="n">docs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">res</span><span class="p">),</span> <span class="n">score</span><span class="p">))</span>
+            <span class="n">docs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">res</span><span class="p">[</span><span class="s2">"_id"</span><span class="p">]),</span> <span class="n">score</span><span class="p">)</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="n">docs</span>
 
 <div class="viewcode-block" id="MongoDBAtlasVectorSearch.create_vector_search_index">
