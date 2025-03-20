@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Mar 19, 2025" name="docbuild:last-update"/>
+<meta content="Mar 20, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -234,6 +234,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -1670,6 +1671,86 @@
         <span class="p">}</span>
         <span class="k">for</span> <span class="n">tool_call</span> <span class="ow">in</span> <span class="n">tool_calls</span>
     <span class="p">]</span>
+
+
+<div class="viewcode-block" id="count_tokens_approximately">
+<a class="viewcode-back" href="../../../core/messages/langchain_core.messages.utils.count_tokens_approximately.html#langchain_core.messages.utils.count_tokens_approximately">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">count_tokens_approximately</span><span class="p">(</span>
+    <span class="n">messages</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">MessageLikeRepresentation</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">chars_per_token</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.0</span><span class="p">,</span>
+    <span class="n">extra_tokens_per_message</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">,</span>
+    <span class="n">count_name</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Approximate the total number of tokens in messages.</span>
+
+<span class="sd">    The token count includes stringified message content, role, and (optionally) name.</span>
+<span class="sd">    - For AI messages, the token count also includes stringified tool calls.</span>
+<span class="sd">    - For tool messages, the token count also includes the tool call ID.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        messages: List of messages to count tokens for.</span>
+<span class="sd">        chars_per_token: Number of characters per token to use for the approximation.</span>
+<span class="sd">            Default is 4 (one token corresponds to ~4 chars for common English text).</span>
+<span class="sd">            You can also specify float values for more fine-grained control.</span>
+<span class="sd">            See more here: https://platform.openai.com/tokenizer</span>
+<span class="sd">        extra_tokens_per_message: Number of extra tokens to add per message.</span>
+<span class="sd">            Default is 3 (special tokens, including beginning/end of message).</span>
+<span class="sd">            You can also specify float values for more fine-grained control.</span>
+<span class="sd">            See more here:</span>
+<span class="sd">            https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb</span>
+<span class="sd">        count_name: Whether to include message names in the count.</span>
+<span class="sd">            Enabled by default.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Approximate number of tokens in the messages.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        This is a simple approximation that may not match the exact token count</span>
+<span class="sd">        used by specific models. For accurate counts, use model-specific tokenizers.</span>
+
+<span class="sd">    .. versionadded:: 0.3.46</span>
+<span class="sd">    """</span>
+    <span class="n">token_count</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">convert_to_messages</span><span class="p">(</span><span class="n">messages</span><span class="p">):</span>
+        <span class="n">message_chars</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">message_chars</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+
+        <span class="c1"># TODO: add support for approximate counting for image blocks</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+            <span class="n">message_chars</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">AIMessage</span><span class="p">)</span>
+            <span class="c1"># exclude Anthropic format as tool calls are already included in the content</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">message</span><span class="o">.</span><span class="n">tool_calls</span>
+        <span class="p">):</span>
+            <span class="n">tool_calls_content</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">tool_calls</span><span class="p">)</span>
+            <span class="n">message_chars</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tool_calls_content</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">ToolMessage</span><span class="p">):</span>
+            <span class="n">message_chars</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">tool_call_id</span><span class="p">)</span>
+
+        <span class="n">role</span> <span class="o">=</span> <span class="n">_get_message_openai_role</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="n">message_chars</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">role</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">message</span><span class="o">.</span><span class="n">name</span> <span class="ow">and</span> <span class="n">count_name</span><span class="p">:</span>
+            <span class="n">message_chars</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="c1"># NOTE: we're rounding up per message to ensure that</span>
+        <span class="c1"># individual message token counts add up to the total count</span>
+        <span class="c1"># for a list of messages</span>
+        <span class="n">token_count</span> <span class="o">+=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">message_chars</span> <span class="o">/</span> <span class="n">chars_per_token</span><span class="p">)</span>
+
+        <span class="c1"># add extra tokens per message</span>
+        <span class="n">token_count</span> <span class="o">+=</span> <span class="n">extra_tokens_per_message</span>
+
+    <span class="c1"># round up once more time in case extra_tokens_per_message is a float</span>
+    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">token_count</span><span class="p">)</span></div>
+
 </pre></div>
 </article>
 </div>

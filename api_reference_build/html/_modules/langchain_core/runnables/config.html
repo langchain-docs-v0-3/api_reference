@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Mar 19, 2025" name="docbuild:last-update"/>
+<meta content="Mar 20, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -228,7 +228,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Awaitable</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">Executor</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">ThreadPoolExecutor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">contextvars</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContextVar</span><span class="p">,</span> <span class="n">copy_context</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextvars</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span><span class="p">,</span> <span class="n">ContextVar</span><span class="p">,</span> <span class="n">Token</span><span class="p">,</span> <span class="n">copy_context</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">cast</span>
 
@@ -343,7 +343,10 @@
 <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_set_config_context</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">RunnableConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="c1"># This is imported and used in langgraph, so don't break.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_set_config_context</span><span class="p">(</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">RunnableConfig</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Token</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
 <span class="w">    </span><span class="sd">"""Set the child Runnable config + tracing context.</span>
 
 <span class="sd">    Args:</span>
@@ -351,7 +354,8 @@
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers.langchain</span><span class="w"> </span><span class="kn">import</span> <span class="n">LangChainTracer</span>
 
-    <span class="n">var_child_runnable_config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="n">config_token</span> <span class="o">=</span> <span class="n">var_child_runnable_config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="n">current_context</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="p">(</span>
         <span class="p">(</span><span class="n">callbacks</span> <span class="o">:=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"callbacks"</span><span class="p">))</span>
         <span class="ow">and</span> <span class="p">(</span>
@@ -369,9 +373,42 @@
         <span class="p">)</span>
         <span class="ow">and</span> <span class="p">(</span><span class="n">run</span> <span class="o">:=</span> <span class="n">tracer</span><span class="o">.</span><span class="n">run_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">parent_run_id</span><span class="p">)))</span>
     <span class="p">):</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langsmith.run_helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">_set_tracing_context</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langsmith.run_helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">_set_tracing_context</span><span class="p">,</span> <span class="n">get_tracing_context</span>
 
+        <span class="n">current_context</span> <span class="o">=</span> <span class="n">get_tracing_context</span><span class="p">()</span>
         <span class="n">_set_tracing_context</span><span class="p">({</span><span class="s2">"parent"</span><span class="p">:</span> <span class="n">run</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">config_token</span><span class="p">,</span> <span class="n">current_context</span>
+
+
+<div class="viewcode-block" id="set_config_context">
+<a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.config.set_config_context.html#langchain_core.runnables.config.set_config_context">[docs]</a>
+<span class="nd">@contextmanager</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_config_context</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">RunnableConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Context</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Set the child Runnable config + tracing context.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config (RunnableConfig): The config to set.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">langsmith.run_helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">_set_tracing_context</span>
+
+    <span class="n">ctx</span> <span class="o">=</span> <span class="n">copy_context</span><span class="p">()</span>
+    <span class="n">config_token</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_set_config_context</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">ctx</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">var_child_runnable_config</span><span class="o">.</span><span class="n">reset</span><span class="p">,</span> <span class="n">config_token</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="n">_set_tracing_context</span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="s2">"parent"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">"project_name"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">"tags"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">"metadata"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">"enabled"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">"client"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="ensure_config">

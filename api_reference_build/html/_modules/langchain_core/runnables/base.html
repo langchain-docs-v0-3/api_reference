@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Mar 19, 2025" name="docbuild:last-update"/>
+<meta content="Mar 20, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -239,7 +239,6 @@
     <span class="n">Sequence</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">FIRST_COMPLETED</span><span class="p">,</span> <span class="n">wait</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">contextvars</span><span class="w"> </span><span class="kn">import</span> <span class="n">copy_context</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">tee</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">itemgetter</span>
@@ -269,7 +268,6 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.config</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">RunnableConfig</span><span class="p">,</span>
-    <span class="n">_set_config_context</span><span class="p">,</span>
     <span class="n">acall_func_with_variable_args</span><span class="p">,</span>
     <span class="n">call_func_with_variable_args</span><span class="p">,</span>
     <span class="n">ensure_config</span><span class="p">,</span>
@@ -280,6 +278,7 @@
     <span class="n">merge_configs</span><span class="p">,</span>
     <span class="n">patch_config</span><span class="p">,</span>
     <span class="n">run_in_executor</span><span class="p">,</span>
+    <span class="n">set_config_context</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Graph</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -2240,19 +2239,18 @@
         <span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">child_config</span> <span class="o">=</span> <span class="n">patch_config</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">run_manager</span><span class="o">.</span><span class="n">get_child</span><span class="p">())</span>
-            <span class="n">context</span> <span class="o">=</span> <span class="n">copy_context</span><span class="p">()</span>
-            <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_set_config_context</span><span class="p">,</span> <span class="n">child_config</span><span class="p">)</span>
-            <span class="n">output</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
-                <span class="n">Output</span><span class="p">,</span>
-                <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-                    <span class="n">call_func_with_variable_args</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
-                    <span class="n">func</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
-                    <span class="nb">input</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
-                    <span class="n">config</span><span class="p">,</span>
-                    <span class="n">run_manager</span><span class="p">,</span>
-                    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-                <span class="p">),</span>
-            <span class="p">)</span>
+            <span class="k">with</span> <span class="n">set_config_context</span><span class="p">(</span><span class="n">child_config</span><span class="p">)</span> <span class="k">as</span> <span class="n">context</span><span class="p">:</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+                    <span class="n">Output</span><span class="p">,</span>
+                    <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                        <span class="n">call_func_with_variable_args</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
+                        <span class="n">func</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
+                        <span class="nb">input</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
+                        <span class="n">config</span><span class="p">,</span>
+                        <span class="n">run_manager</span><span class="p">,</span>
+                        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
         <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">run_manager</span><span class="o">.</span><span class="n">on_chain_error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
             <span class="k">raise</span>
@@ -2290,15 +2288,14 @@
         <span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">child_config</span> <span class="o">=</span> <span class="n">patch_config</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">run_manager</span><span class="o">.</span><span class="n">get_child</span><span class="p">())</span>
-            <span class="n">context</span> <span class="o">=</span> <span class="n">copy_context</span><span class="p">()</span>
-            <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_set_config_context</span><span class="p">,</span> <span class="n">child_config</span><span class="p">)</span>
-            <span class="n">coro</span> <span class="o">=</span> <span class="n">acall_func_with_variable_args</span><span class="p">(</span>
-                <span class="n">func</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">run_manager</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
-            <span class="p">)</span>
-            <span class="k">if</span> <span class="n">asyncio_accepts_context</span><span class="p">():</span>
-                <span class="n">output</span><span class="p">:</span> <span class="n">Output</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">coro</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">output</span> <span class="o">=</span> <span class="k">await</span> <span class="n">coro</span>
+            <span class="k">with</span> <span class="n">set_config_context</span><span class="p">(</span><span class="n">child_config</span><span class="p">)</span> <span class="k">as</span> <span class="n">context</span><span class="p">:</span>
+                <span class="n">coro</span> <span class="o">=</span> <span class="n">acall_func_with_variable_args</span><span class="p">(</span>
+                    <span class="n">func</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">run_manager</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">asyncio_accepts_context</span><span class="p">():</span>
+                    <span class="n">output</span><span class="p">:</span> <span class="n">Output</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">coro</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">output</span> <span class="o">=</span> <span class="k">await</span> <span class="n">coro</span>
         <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">await</span> <span class="n">run_manager</span><span class="o">.</span><span class="n">on_chain_error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
             <span class="k">raise</span>
@@ -2502,49 +2499,50 @@
                 <span class="n">kwargs</span><span class="p">[</span><span class="s2">"config"</span><span class="p">]</span> <span class="o">=</span> <span class="n">child_config</span>
             <span class="k">if</span> <span class="n">accepts_run_manager</span><span class="p">(</span><span class="n">transformer</span><span class="p">):</span>
                 <span class="n">kwargs</span><span class="p">[</span><span class="s2">"run_manager"</span><span class="p">]</span> <span class="o">=</span> <span class="n">run_manager</span>
-            <span class="n">context</span> <span class="o">=</span> <span class="n">copy_context</span><span class="p">()</span>
-            <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_set_config_context</span><span class="p">,</span> <span class="n">child_config</span><span class="p">)</span>
-            <span class="n">iterator</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">transformer</span><span class="p">,</span> <span class="n">input_for_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
-            <span class="k">if</span> <span class="n">stream_handler</span> <span class="o">:=</span> <span class="nb">next</span><span class="p">(</span>
-                <span class="p">(</span>
-                    <span class="n">cast</span><span class="p">(</span><span class="n">_StreamingCallbackHandler</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">run_manager</span><span class="o">.</span><span class="n">handlers</span>
-                    <span class="c1"># instance check OK here, it's a mixin</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">_StreamingCallbackHandler</span><span class="p">)</span>  <span class="c1"># type: ignore[misc]</span>
-                <span class="p">),</span>
-                <span class="kc">None</span><span class="p">,</span>
-            <span class="p">):</span>
-                <span class="c1"># populates streamed_output in astream_log() output if needed</span>
-                <span class="n">iterator</span> <span class="o">=</span> <span class="n">stream_handler</span><span class="o">.</span><span class="n">tap_output_iter</span><span class="p">(</span><span class="n">run_manager</span><span class="o">.</span><span class="n">run_id</span><span class="p">,</span> <span class="n">iterator</span><span class="p">)</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-                    <span class="n">chunk</span><span class="p">:</span> <span class="n">Output</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="nb">next</span><span class="p">,</span> <span class="n">iterator</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
-                    <span class="k">yield</span> <span class="n">chunk</span>
-                    <span class="k">if</span> <span class="n">final_output_supported</span><span class="p">:</span>
-                        <span class="k">if</span> <span class="n">final_output</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">set_config_context</span><span class="p">(</span><span class="n">child_config</span><span class="p">)</span> <span class="k">as</span> <span class="n">context</span><span class="p">:</span>
+                <span class="n">iterator</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">transformer</span><span class="p">,</span> <span class="n">input_for_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+                <span class="k">if</span> <span class="n">stream_handler</span> <span class="o">:=</span> <span class="nb">next</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="n">cast</span><span class="p">(</span><span class="n">_StreamingCallbackHandler</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">run_manager</span><span class="o">.</span><span class="n">handlers</span>
+                        <span class="c1"># instance check OK here, it's a mixin</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">_StreamingCallbackHandler</span><span class="p">)</span>  <span class="c1"># type: ignore[misc]</span>
+                    <span class="p">),</span>
+                    <span class="kc">None</span><span class="p">,</span>
+                <span class="p">):</span>
+                    <span class="c1"># populates streamed_output in astream_log() output if needed</span>
+                    <span class="n">iterator</span> <span class="o">=</span> <span class="n">stream_handler</span><span class="o">.</span><span class="n">tap_output_iter</span><span class="p">(</span>
+                        <span class="n">run_manager</span><span class="o">.</span><span class="n">run_id</span><span class="p">,</span> <span class="n">iterator</span>
+                    <span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                        <span class="n">chunk</span><span class="p">:</span> <span class="n">Output</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="nb">next</span><span class="p">,</span> <span class="n">iterator</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+                        <span class="k">yield</span> <span class="n">chunk</span>
+                        <span class="k">if</span> <span class="n">final_output_supported</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">final_output</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                                <span class="n">final_output</span> <span class="o">=</span> <span class="n">chunk</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="k">try</span><span class="p">:</span>
+                                    <span class="n">final_output</span> <span class="o">=</span> <span class="n">final_output</span> <span class="o">+</span> <span class="n">chunk</span>  <span class="c1"># type: ignore</span>
+                                <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                                    <span class="n">final_output</span> <span class="o">=</span> <span class="n">chunk</span>
+                                    <span class="n">final_output_supported</span> <span class="o">=</span> <span class="kc">False</span>
+                        <span class="k">else</span><span class="p">:</span>
                             <span class="n">final_output</span> <span class="o">=</span> <span class="n">chunk</span>
+                <span class="k">except</span> <span class="p">(</span><span class="ne">StopIteration</span><span class="p">,</span> <span class="ne">GeneratorExit</span><span class="p">):</span>
+                    <span class="k">pass</span>
+                <span class="k">for</span> <span class="n">ichunk</span> <span class="ow">in</span> <span class="n">input_for_tracing</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">final_input_supported</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">final_input</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="n">final_input</span> <span class="o">=</span> <span class="n">ichunk</span>
                         <span class="k">else</span><span class="p">:</span>
                             <span class="k">try</span><span class="p">:</span>
-                                <span class="n">final_output</span> <span class="o">=</span> <span class="n">final_output</span> <span class="o">+</span> <span class="n">chunk</span>  <span class="c1"># type: ignore</span>
+                                <span class="n">final_input</span> <span class="o">=</span> <span class="n">final_input</span> <span class="o">+</span> <span class="n">ichunk</span>  <span class="c1"># type: ignore</span>
                             <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-                                <span class="n">final_output</span> <span class="o">=</span> <span class="n">chunk</span>
-                                <span class="n">final_output_supported</span> <span class="o">=</span> <span class="kc">False</span>
+                                <span class="n">final_input</span> <span class="o">=</span> <span class="n">ichunk</span>
+                                <span class="n">final_input_supported</span> <span class="o">=</span> <span class="kc">False</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="n">final_output</span> <span class="o">=</span> <span class="n">chunk</span>
-            <span class="k">except</span> <span class="p">(</span><span class="ne">StopIteration</span><span class="p">,</span> <span class="ne">GeneratorExit</span><span class="p">):</span>
-                <span class="k">pass</span>
-            <span class="k">for</span> <span class="n">ichunk</span> <span class="ow">in</span> <span class="n">input_for_tracing</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">final_input_supported</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">final_input</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="n">final_input</span> <span class="o">=</span> <span class="n">ichunk</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="k">try</span><span class="p">:</span>
-                            <span class="n">final_input</span> <span class="o">=</span> <span class="n">final_input</span> <span class="o">+</span> <span class="n">ichunk</span>  <span class="c1"># type: ignore</span>
-                        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-                            <span class="n">final_input</span> <span class="o">=</span> <span class="n">ichunk</span>
-                            <span class="n">final_input_supported</span> <span class="o">=</span> <span class="kc">False</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">final_input</span> <span class="o">=</span> <span class="n">ichunk</span>
         <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">run_manager</span><span class="o">.</span><span class="n">on_chain_error</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">final_input</span><span class="p">)</span>
             <span class="k">raise</span>
@@ -2603,60 +2601,59 @@
                 <span class="n">kwargs</span><span class="p">[</span><span class="s2">"config"</span><span class="p">]</span> <span class="o">=</span> <span class="n">child_config</span>
             <span class="k">if</span> <span class="n">accepts_run_manager</span><span class="p">(</span><span class="n">transformer</span><span class="p">):</span>
                 <span class="n">kwargs</span><span class="p">[</span><span class="s2">"run_manager"</span><span class="p">]</span> <span class="o">=</span> <span class="n">run_manager</span>
-            <span class="n">context</span> <span class="o">=</span> <span class="n">copy_context</span><span class="p">()</span>
-            <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_set_config_context</span><span class="p">,</span> <span class="n">child_config</span><span class="p">)</span>
-            <span class="n">iterator_</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">transformer</span><span class="p">,</span> <span class="n">input_for_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+            <span class="k">with</span> <span class="n">set_config_context</span><span class="p">(</span><span class="n">child_config</span><span class="p">)</span> <span class="k">as</span> <span class="n">context</span><span class="p">:</span>
+                <span class="n">iterator_</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">transformer</span><span class="p">,</span> <span class="n">input_for_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
 
-            <span class="k">if</span> <span class="n">stream_handler</span> <span class="o">:=</span> <span class="nb">next</span><span class="p">(</span>
-                <span class="p">(</span>
-                    <span class="n">cast</span><span class="p">(</span><span class="n">_StreamingCallbackHandler</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">run_manager</span><span class="o">.</span><span class="n">handlers</span>
-                    <span class="c1"># instance check OK here, it's a mixin</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">_StreamingCallbackHandler</span><span class="p">)</span>  <span class="c1"># type: ignore[misc]</span>
-                <span class="p">),</span>
-                <span class="kc">None</span><span class="p">,</span>
-            <span class="p">):</span>
-                <span class="c1"># populates streamed_output in astream_log() output if needed</span>
-                <span class="n">iterator</span> <span class="o">=</span> <span class="n">stream_handler</span><span class="o">.</span><span class="n">tap_output_aiter</span><span class="p">(</span>
-                    <span class="n">run_manager</span><span class="o">.</span><span class="n">run_id</span><span class="p">,</span> <span class="n">iterator_</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">iterator</span> <span class="o">=</span> <span class="n">iterator_</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">asyncio_accepts_context</span><span class="p">():</span>
-                        <span class="n">chunk</span><span class="p">:</span> <span class="n">Output</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span>  <span class="c1"># type: ignore[call-arg]</span>
-                            <span class="n">py_anext</span><span class="p">(</span><span class="n">iterator</span><span class="p">),</span>  <span class="c1"># type: ignore[arg-type]</span>
-                            <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span>
-                        <span class="p">)</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">chunk</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Output</span><span class="p">,</span> <span class="k">await</span> <span class="n">py_anext</span><span class="p">(</span><span class="n">iterator</span><span class="p">))</span>
-                    <span class="k">yield</span> <span class="n">chunk</span>
-                    <span class="k">if</span> <span class="n">final_output_supported</span><span class="p">:</span>
-                        <span class="k">if</span> <span class="n">final_output</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">stream_handler</span> <span class="o">:=</span> <span class="nb">next</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="n">cast</span><span class="p">(</span><span class="n">_StreamingCallbackHandler</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">run_manager</span><span class="o">.</span><span class="n">handlers</span>
+                        <span class="c1"># instance check OK here, it's a mixin</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">_StreamingCallbackHandler</span><span class="p">)</span>  <span class="c1"># type: ignore[misc]</span>
+                    <span class="p">),</span>
+                    <span class="kc">None</span><span class="p">,</span>
+                <span class="p">):</span>
+                    <span class="c1"># populates streamed_output in astream_log() output if needed</span>
+                    <span class="n">iterator</span> <span class="o">=</span> <span class="n">stream_handler</span><span class="o">.</span><span class="n">tap_output_aiter</span><span class="p">(</span>
+                        <span class="n">run_manager</span><span class="o">.</span><span class="n">run_id</span><span class="p">,</span> <span class="n">iterator_</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">iterator</span> <span class="o">=</span> <span class="n">iterator_</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">asyncio_accepts_context</span><span class="p">():</span>
+                            <span class="n">chunk</span><span class="p">:</span> <span class="n">Output</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span>  <span class="c1"># type: ignore[call-arg]</span>
+                                <span class="n">py_anext</span><span class="p">(</span><span class="n">iterator</span><span class="p">),</span>  <span class="c1"># type: ignore[arg-type]</span>
+                                <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span>
+                            <span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">chunk</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Output</span><span class="p">,</span> <span class="k">await</span> <span class="n">py_anext</span><span class="p">(</span><span class="n">iterator</span><span class="p">))</span>
+                        <span class="k">yield</span> <span class="n">chunk</span>
+                        <span class="k">if</span> <span class="n">final_output_supported</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">final_output</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                                <span class="n">final_output</span> <span class="o">=</span> <span class="n">chunk</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="k">try</span><span class="p">:</span>
+                                    <span class="n">final_output</span> <span class="o">=</span> <span class="n">final_output</span> <span class="o">+</span> <span class="n">chunk</span>  <span class="c1"># type: ignore</span>
+                                <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                                    <span class="n">final_output</span> <span class="o">=</span> <span class="n">chunk</span>
+                                    <span class="n">final_output_supported</span> <span class="o">=</span> <span class="kc">False</span>
+                        <span class="k">else</span><span class="p">:</span>
                             <span class="n">final_output</span> <span class="o">=</span> <span class="n">chunk</span>
+                <span class="k">except</span> <span class="ne">StopAsyncIteration</span><span class="p">:</span>
+                    <span class="k">pass</span>
+                <span class="k">async</span> <span class="k">for</span> <span class="n">ichunk</span> <span class="ow">in</span> <span class="n">input_for_tracing</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">final_input_supported</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">final_input</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="n">final_input</span> <span class="o">=</span> <span class="n">ichunk</span>
                         <span class="k">else</span><span class="p">:</span>
                             <span class="k">try</span><span class="p">:</span>
-                                <span class="n">final_output</span> <span class="o">=</span> <span class="n">final_output</span> <span class="o">+</span> <span class="n">chunk</span>  <span class="c1"># type: ignore</span>
+                                <span class="n">final_input</span> <span class="o">=</span> <span class="n">final_input</span> <span class="o">+</span> <span class="n">ichunk</span>  <span class="c1"># type: ignore[operator]</span>
                             <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-                                <span class="n">final_output</span> <span class="o">=</span> <span class="n">chunk</span>
-                                <span class="n">final_output_supported</span> <span class="o">=</span> <span class="kc">False</span>
+                                <span class="n">final_input</span> <span class="o">=</span> <span class="n">ichunk</span>
+                                <span class="n">final_input_supported</span> <span class="o">=</span> <span class="kc">False</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="n">final_output</span> <span class="o">=</span> <span class="n">chunk</span>
-            <span class="k">except</span> <span class="ne">StopAsyncIteration</span><span class="p">:</span>
-                <span class="k">pass</span>
-            <span class="k">async</span> <span class="k">for</span> <span class="n">ichunk</span> <span class="ow">in</span> <span class="n">input_for_tracing</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">final_input_supported</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">final_input</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="n">final_input</span> <span class="o">=</span> <span class="n">ichunk</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="k">try</span><span class="p">:</span>
-                            <span class="n">final_input</span> <span class="o">=</span> <span class="n">final_input</span> <span class="o">+</span> <span class="n">ichunk</span>  <span class="c1"># type: ignore[operator]</span>
-                        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-                            <span class="n">final_input</span> <span class="o">=</span> <span class="n">ichunk</span>
-                            <span class="n">final_input_supported</span> <span class="o">=</span> <span class="kc">False</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">final_input</span> <span class="o">=</span> <span class="n">ichunk</span>
         <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">await</span> <span class="n">run_manager</span><span class="o">.</span><span class="n">on_chain_error</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">final_input</span><span class="p">)</span>
             <span class="k">raise</span>
@@ -3358,12 +3355,11 @@
                 <span class="n">config</span> <span class="o">=</span> <span class="n">patch_config</span><span class="p">(</span>
                     <span class="n">config</span><span class="p">,</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">run_manager</span><span class="o">.</span><span class="n">get_child</span><span class="p">(</span><span class="sa">f</span><span class="s2">"seq:step:</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
                 <span class="p">)</span>
-                <span class="n">context</span> <span class="o">=</span> <span class="n">copy_context</span><span class="p">()</span>
-                <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_set_config_context</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="nb">input</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">step</span><span class="o">.</span><span class="n">invoke</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="nb">input</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">step</span><span class="o">.</span><span class="n">invoke</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+                <span class="k">with</span> <span class="n">set_config_context</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="k">as</span> <span class="n">context</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="nb">input</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">step</span><span class="o">.</span><span class="n">invoke</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="nb">input</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">step</span><span class="o">.</span><span class="n">invoke</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
         <span class="c1"># finish the root run</span>
         <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">run_manager</span><span class="o">.</span><span class="n">on_chain_error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
@@ -3401,17 +3397,16 @@
                 <span class="n">config</span> <span class="o">=</span> <span class="n">patch_config</span><span class="p">(</span>
                     <span class="n">config</span><span class="p">,</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">run_manager</span><span class="o">.</span><span class="n">get_child</span><span class="p">(</span><span class="sa">f</span><span class="s2">"seq:step:</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
                 <span class="p">)</span>
-                <span class="n">context</span> <span class="o">=</span> <span class="n">copy_context</span><span class="p">()</span>
-                <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_set_config_context</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">part</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">step</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">part</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">step</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">asyncio_accepts_context</span><span class="p">():</span>
-                    <span class="nb">input</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">part</span><span class="p">(),</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="nb">input</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">part</span><span class="p">())</span>
-        <span class="c1"># finish the root run</span>
+                <span class="k">with</span> <span class="n">set_config_context</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="k">as</span> <span class="n">context</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">part</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">step</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">part</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">step</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">asyncio_accepts_context</span><span class="p">():</span>
+                        <span class="nb">input</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">part</span><span class="p">(),</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="nb">input</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">part</span><span class="p">())</span>
+            <span class="c1"># finish the root run</span>
         <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">await</span> <span class="n">run_manager</span><span class="o">.</span><span class="n">on_chain_error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
             <span class="k">raise</span>
@@ -4071,13 +4066,12 @@
                 <span class="c1"># mark each step as a child run</span>
                 <span class="n">callbacks</span><span class="o">=</span><span class="n">run_manager</span><span class="o">.</span><span class="n">get_child</span><span class="p">(</span><span class="sa">f</span><span class="s2">"map:key:</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">),</span>
             <span class="p">)</span>
-            <span class="n">context</span> <span class="o">=</span> <span class="n">copy_context</span><span class="p">()</span>
-            <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_set_config_context</span><span class="p">,</span> <span class="n">child_config</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-                <span class="n">step</span><span class="o">.</span><span class="n">invoke</span><span class="p">,</span>
-                <span class="nb">input</span><span class="p">,</span>
-                <span class="n">child_config</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="k">with</span> <span class="n">set_config_context</span><span class="p">(</span><span class="n">child_config</span><span class="p">)</span> <span class="k">as</span> <span class="n">context</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                    <span class="n">step</span><span class="o">.</span><span class="n">invoke</span><span class="p">,</span>
+                    <span class="nb">input</span><span class="p">,</span>
+                    <span class="n">child_config</span><span class="p">,</span>
+                <span class="p">)</span>
 
         <span class="c1"># gather results from all steps</span>
         <span class="k">try</span><span class="p">:</span>
@@ -4125,14 +4119,13 @@
                 <span class="n">config</span><span class="p">,</span>
                 <span class="n">callbacks</span><span class="o">=</span><span class="n">run_manager</span><span class="o">.</span><span class="n">get_child</span><span class="p">(</span><span class="sa">f</span><span class="s2">"map:key:</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">),</span>
             <span class="p">)</span>
-            <span class="n">context</span> <span class="o">=</span> <span class="n">copy_context</span><span class="p">()</span>
-            <span class="n">context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_set_config_context</span><span class="p">,</span> <span class="n">child_config</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">asyncio_accepts_context</span><span class="p">():</span>
-                <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
-                    <span class="n">step</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">child_config</span><span class="p">),</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">step</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">child_config</span><span class="p">))</span>
+            <span class="k">with</span> <span class="n">set_config_context</span><span class="p">(</span><span class="n">child_config</span><span class="p">)</span> <span class="k">as</span> <span class="n">context</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">asyncio_accepts_context</span><span class="p">():</span>
+                    <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
+                        <span class="n">step</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">child_config</span><span class="p">),</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">step</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">child_config</span><span class="p">))</span>
 
         <span class="c1"># gather results from all steps</span>
         <span class="k">try</span><span class="p">:</span>
