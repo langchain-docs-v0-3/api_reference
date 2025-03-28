@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Mar 27, 2025" name="docbuild:last-update"/>
+<meta content="Mar 28, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -224,6 +224,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">sqlalchemy</span>
@@ -266,6 +267,19 @@
         <span class="k">return</span> <span class="n">content</span>
 
     <span class="k">return</span> <span class="n">content</span><span class="p">[:</span> <span class="n">length</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">suffix</span><span class="p">)]</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">suffix</span></div>
+
+
+
+<div class="viewcode-block" id="sanitize_schema">
+<a class="viewcode-back" href="../../../community/utilities/langchain_community.utilities.sql_database.sanitize_schema.html#langchain_community.utilities.sql_database.sanitize_schema">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sanitize_schema</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Sanitize a schema name to only contain letters, digits, and underscores."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^[a-zA-Z0-9_]+$"</span><span class="p">,</span> <span class="n">schema</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Schema name '</span><span class="si">{</span><span class="n">schema</span><span class="si">}</span><span class="s2">' contains invalid characters. "</span>
+            <span class="s2">"Schema names must contain only letters, digits, and underscores."</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">schema</span></div>
 
 
 
@@ -711,6 +725,11 @@
                     <span class="n">connection</span><span class="o">.</span><span class="n">exec_driver_sql</span><span class="p">(</span>
                         <span class="s2">"SET search_path TO </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
                         <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">,),</span>
+                        <span class="n">execution_options</span><span class="o">=</span><span class="n">execution_options</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">dialect</span> <span class="o">==</span> <span class="s2">"hana"</span><span class="p">:</span>
+                    <span class="n">connection</span><span class="o">.</span><span class="n">exec_driver_sql</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"SET SCHEMA </span><span class="si">{</span><span class="n">sanitize_schema</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                         <span class="n">execution_options</span><span class="o">=</span><span class="n">execution_options</span><span class="p">,</span>
                     <span class="p">)</span>
 

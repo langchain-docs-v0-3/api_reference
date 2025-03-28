@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Mar 27, 2025" name="docbuild:last-update"/>
+<meta content="Mar 28, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -243,11 +243,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">..warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">PydanticDeprecatedSince20</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">_config</span><span class="p">,</span> <span class="n">_decorators</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">collect_dataclass_fields</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">._generate_schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenerateSchema</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._generate_schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenerateSchema</span><span class="p">,</span> <span class="n">InvalidSchemaError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_standard_typevars_map</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._mock_val_ser</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_dataclass_mocks</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._namespace_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">NsResolver</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">._schema_generation_shared</span><span class="w"> </span><span class="kn">import</span> <span class="n">CallbackGetCoreSchemaHandler</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._signature</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_pydantic_signature</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">LazyClassAttribute</span>
 
@@ -350,7 +349,7 @@
     <span class="n">set_dataclass_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">ns_resolver</span><span class="p">,</span> <span class="n">config_wrapper</span><span class="o">=</span><span class="n">config_wrapper</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">_force_build</span> <span class="ow">and</span> <span class="n">config_wrapper</span><span class="o">.</span><span class="n">defer_build</span><span class="p">:</span>
-        <span class="n">set_dataclass_mocks</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="n">set_dataclass_mocks</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s1">'__post_init_post_parse__'</span><span class="p">):</span>
@@ -376,36 +375,26 @@
             <span class="c1"># as it is the one synthesized by the stdlib `dataclass` module:</span>
             <span class="n">init</span><span class="o">=</span><span class="n">original_init</span><span class="p">,</span>
             <span class="n">fields</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">__pydantic_fields__</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
-            <span class="n">populate_by_name</span><span class="o">=</span><span class="n">config_wrapper</span><span class="o">.</span><span class="n">populate_by_name</span><span class="p">,</span>
+            <span class="n">validate_by_name</span><span class="o">=</span><span class="n">config_wrapper</span><span class="o">.</span><span class="n">validate_by_name</span><span class="p">,</span>
             <span class="n">extra</span><span class="o">=</span><span class="n">config_wrapper</span><span class="o">.</span><span class="n">extra</span><span class="p">,</span>
             <span class="n">is_dataclass</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">get_core_schema</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s1">'__get_pydantic_core_schema__'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">get_core_schema</span><span class="p">:</span>
-            <span class="n">schema</span> <span class="o">=</span> <span class="n">get_core_schema</span><span class="p">(</span>
-                <span class="bp">cls</span><span class="p">,</span>
-                <span class="n">CallbackGetCoreSchemaHandler</span><span class="p">(</span>
-                    <span class="n">partial</span><span class="p">(</span><span class="n">gen_schema</span><span class="o">.</span><span class="n">generate_schema</span><span class="p">,</span> <span class="n">from_dunder_get_core_schema</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-                    <span class="n">gen_schema</span><span class="p">,</span>
-                    <span class="n">ref_mode</span><span class="o">=</span><span class="s1">'unpack'</span><span class="p">,</span>
-                <span class="p">),</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">schema</span> <span class="o">=</span> <span class="n">gen_schema</span><span class="o">.</span><span class="n">generate_schema</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">from_dunder_get_core_schema</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">schema</span> <span class="o">=</span> <span class="n">gen_schema</span><span class="o">.</span><span class="n">generate_schema</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">PydanticUndefinedAnnotation</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">raise_errors</span><span class="p">:</span>
             <span class="k">raise</span>
-        <span class="n">set_dataclass_mocks</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'`</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">`'</span><span class="p">)</span>
+        <span class="n">set_dataclass_mocks</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'`</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">`'</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="n">core_config</span> <span class="o">=</span> <span class="n">config_wrapper</span><span class="o">.</span><span class="n">core_config</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">schema</span> <span class="o">=</span> <span class="n">gen_schema</span><span class="o">.</span><span class="n">clean_schema</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
-    <span class="k">except</span> <span class="n">gen_schema</span><span class="o">.</span><span class="n">CollectedInvalid</span><span class="p">:</span>
-        <span class="n">set_dataclass_mocks</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="s1">'all referenced types'</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">InvalidSchemaError</span><span class="p">:</span>
+        <span class="n">set_dataclass_mocks</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="c1"># We are about to set all the remaining required properties expected for this cast;</span>

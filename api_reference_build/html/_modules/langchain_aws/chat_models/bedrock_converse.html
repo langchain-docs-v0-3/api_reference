@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Mar 27, 2025" name="docbuild:last-update"/>
+<meta content="Mar 28, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -816,7 +816,7 @@
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"input message to bedrock: </span><span class="si">{</span><span class="n">bedrock_messages</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"System message to bedrock: </span><span class="si">{</span><span class="n">system</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_converse_params</span><span class="p">(</span>
-            <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">_snake_to_camel_keys</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">excluded_keys</span><span class="o">=</span><span class="p">{</span><span class="s2">"inputSchema"</span><span class="p">,</span> <span class="s2">"function"</span><span class="p">})</span>
+            <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">_snake_to_camel_keys</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">excluded_keys</span><span class="o">=</span><span class="p">{</span><span class="s2">"inputSchema"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">})</span>
         <span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Input params: </span><span class="si">{</span><span class="n">params</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Using Bedrock Converse API to generate response"</span><span class="p">)</span>
@@ -825,6 +825,7 @@
         <span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Response from Bedrock: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">response_message</span> <span class="o">=</span> <span class="n">_parse_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="n">response_message</span><span class="o">.</span><span class="n">response_metadata</span><span class="p">[</span><span class="s2">"model_name"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_id</span>
         <span class="k">return</span> <span class="n">ChatResult</span><span class="p">(</span><span class="n">generations</span><span class="o">=</span><span class="p">[</span><span class="n">ChatGeneration</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">response_message</span><span class="p">)])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stream</span><span class="p">(</span>
@@ -836,13 +837,21 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">ChatGenerationChunk</span><span class="p">]:</span>
         <span class="n">bedrock_messages</span><span class="p">,</span> <span class="n">system</span> <span class="o">=</span> <span class="n">_messages_to_bedrock</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
         <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_converse_params</span><span class="p">(</span>
-            <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">_snake_to_camel_keys</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">excluded_keys</span><span class="o">=</span><span class="p">{</span><span class="s2">"inputSchema"</span><span class="p">,</span> <span class="s2">"function"</span><span class="p">})</span>
+            <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">_snake_to_camel_keys</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">excluded_keys</span><span class="o">=</span><span class="p">{</span><span class="s2">"inputSchema"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">})</span>
         <span class="p">)</span>
         <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">converse_stream</span><span class="p">(</span>
             <span class="n">messages</span><span class="o">=</span><span class="n">bedrock_messages</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="n">system</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span>
         <span class="p">)</span>
+        <span class="n">added_model_name</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">]:</span>
             <span class="k">if</span> <span class="n">message_chunk</span> <span class="o">:=</span> <span class="n">_parse_stream_event</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="nb">hasattr</span><span class="p">(</span><span class="n">message_chunk</span><span class="p">,</span> <span class="s2">"usage_metadata"</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="n">message_chunk</span><span class="o">.</span><span class="n">usage_metadata</span>
+                    <span class="ow">and</span> <span class="ow">not</span> <span class="n">added_model_name</span>
+                <span class="p">):</span>
+                    <span class="n">message_chunk</span><span class="o">.</span><span class="n">response_metadata</span><span class="p">[</span><span class="s2">"model_name"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_id</span>
+                    <span class="n">added_model_name</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="n">generation_chunk</span> <span class="o">=</span> <span class="n">ChatGenerationChunk</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">message_chunk</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">run_manager</span><span class="p">:</span>
                     <span class="n">run_manager</span><span class="o">.</span><span class="n">on_llm_new_token</span><span class="p">(</span>
