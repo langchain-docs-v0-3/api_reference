@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 01, 2025" name="docbuild:last-update"/>
+<meta content="Apr 02, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,9 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_core.utils.iter</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">deque</span>
+<span></span><span class="sd">"""Utilities for working with iterators."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">deque</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbstractContextManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">islice</span>
@@ -244,9 +246,10 @@
 <span class="w">    </span><span class="sd">"""Dummy lock that provides the proper interface but no protection."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">pass</span>
+<span class="w">        </span><span class="sd">"""Do nothing."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Exception not handled."""</span>
         <span class="k">return</span> <span class="kc">False</span></div>
 
 
@@ -358,7 +361,7 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">lock</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AbstractContextManager</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Create a new ``tee``.</span>
+<span class="w">        </span><span class="sd">"""Create a ``tee``.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            iterable: The iterable to split.</span>
@@ -380,6 +383,7 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the number of child iterators."""</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">)</span>
 
     <span class="nd">@overload</span>
@@ -391,21 +395,26 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">slice</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Iterator</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Iterator</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="o">...</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Return the child iterator(s) at the given index or slice."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Iterator</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Return an iterator over the child iterators."""</span>
         <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Tee[T]"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return Tee instance."""</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Close all child iterators."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="k">return</span> <span class="kc">False</span>
 
 <div class="viewcode-block" id="Tee.close">
 <a class="viewcode-back" href="../../../core/utils/langchain_core.utils.iter.Tee.html#langchain_core.utils.iter.Tee.close">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Close all child iterators."""</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">:</span>
             <span class="n">child</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 </div>

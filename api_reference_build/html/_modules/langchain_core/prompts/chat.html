@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 01, 2025" name="docbuild:last-update"/>
+<meta content="Apr 02, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -244,6 +244,7 @@
     <span class="n">SkipValidation</span><span class="p">,</span>
     <span class="n">model_validator</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core._api</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecated</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.load</span><span class="w"> </span><span class="kn">import</span> <span class="n">Serializable</span>
@@ -281,13 +282,17 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return whether or not the class is serializable.</span>
+
 <span class="sd">        Returns: True.</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
+<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object.</span>
+
+<span class="sd">        Default namespace is ["langchain", "prompts", "chat"].</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"prompts"</span><span class="p">,</span> <span class="s2">"chat"</span><span class="p">]</span>
 
 <div class="viewcode-block" id="BaseMessagePromptTemplate.format_messages">
@@ -308,7 +313,6 @@
 <a class="viewcode-back" href="../../../core/prompts/langchain_core.prompts.chat.BaseMessagePromptTemplate.html#langchain.agents.schema.BaseMessagePromptTemplate.aformat_messages">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">aformat_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Async format messages from kwargs.</span>
-<span class="sd">        Should return a list of BaseMessages.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            **kwargs: Keyword arguments to use for formatting.</span>
@@ -450,14 +454,18 @@
 <span class="w">    </span><span class="sd">"""Maximum number of messages to include. If None, then will include all.</span>
 <span class="sd">    Defaults to None."""</span>
 
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"prompts"</span><span class="p">,</span> <span class="s2">"chat"</span><span class="p">]</span>
-
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">variable_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">optional</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create a messages placeholder.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            variable_name: Name of variable to use as messages.</span>
+<span class="sd">            optional: If True format_messages can be called with no arguments and will</span>
+<span class="sd">                return an empty list. If False then a named argument with name</span>
+<span class="sd">                `variable_name` must be passed in, even if the value is an empty list.</span>
+<span class="sd">                Defaults to False.]</span>
+<span class="sd">        """</span>
         <span class="c1"># mypy can't detect the init which is defined in the parent class</span>
         <span class="c1"># b/c these are BaseModel classes.</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
@@ -541,11 +549,6 @@
 <span class="w">    </span><span class="sd">"""String prompt template."""</span>
     <span class="n">additional_kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">"""Additional keyword arguments to pass to the prompt template."""</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"prompts"</span><span class="p">,</span> <span class="s2">"chat"</span><span class="p">]</span>
 
 <div class="viewcode-block" id="BaseStringMessagePromptTemplate.from_template">
 <a class="viewcode-back" href="../../../core/prompts/langchain_core.prompts.chat.BaseStringMessagePromptTemplate.html#langchain.agents.schema.BaseStringMessagePromptTemplate.from_template">[docs]</a>
@@ -696,11 +699,6 @@
     <span class="n">role</span><span class="p">:</span> <span class="nb">str</span>
 <span class="w">    </span><span class="sd">"""Role of the message."""</span>
 
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"prompts"</span><span class="p">,</span> <span class="s2">"chat"</span><span class="p">]</span>
-
 <div class="viewcode-block" id="ChatMessagePromptTemplate.format">
 <a class="viewcode-back" href="../../../core/prompts/langchain_core.prompts.chat.ChatMessagePromptTemplate.html#langchain.agents.schema.ChatMessagePromptTemplate.format">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseMessage</span><span class="p">:</span>
@@ -761,11 +759,6 @@
 <span class="w">    </span><span class="sd">"""Additional keyword arguments to pass to the prompt template."""</span>
 
     <span class="n">_msg_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"prompts"</span><span class="p">,</span> <span class="s2">"chat"</span><span class="p">]</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_template</span><span class="p">(</span>
@@ -1001,12 +994,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">AIMessagePromptTemplate</span><span class="p">(</span><span class="n">_StringImageMessagePromptTemplate</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""AI message prompt template. This is a message sent from the AI."""</span>
 
-    <span class="n">_msg_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]</span> <span class="o">=</span> <span class="n">AIMessage</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"prompts"</span><span class="p">,</span> <span class="s2">"chat"</span><span class="p">]</span></div>
+    <span class="n">_msg_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]</span> <span class="o">=</span> <span class="n">AIMessage</span></div>
 
 
 
@@ -1014,15 +1002,11 @@
 <a class="viewcode-back" href="../../../core/prompts/langchain_core.prompts.chat.SystemMessagePromptTemplate.html#langchain.agents.schema.SystemMessagePromptTemplate">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SystemMessagePromptTemplate</span><span class="p">(</span><span class="n">_StringImageMessagePromptTemplate</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""System message prompt template.</span>
+
 <span class="sd">    This is a message that is not sent to the user.</span>
 <span class="sd">    """</span>
 
-    <span class="n">_msg_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]</span> <span class="o">=</span> <span class="n">SystemMessage</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"prompts"</span><span class="p">,</span> <span class="s2">"chat"</span><span class="p">]</span></div>
+    <span class="n">_msg_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]</span> <span class="o">=</span> <span class="n">SystemMessage</span></div>
 
 
 
@@ -1032,11 +1016,8 @@
 <span class="w">    </span><span class="sd">"""Base class for chat prompt templates."""</span>
 
     <span class="nd">@property</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">lc_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Return a list of attribute names that should be included in the</span>
-<span class="sd">        serialized kwargs. These attributes must be accepted by the</span>
-<span class="sd">        constructor.</span>
-<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">{</span><span class="s2">"input_variables"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_variables</span><span class="p">}</span>
 
 <div class="viewcode-block" id="BaseChatPromptTemplate.format">
@@ -1285,8 +1266,9 @@
 <span class="sd">            input_variables: A list of the names of the variables whose values are</span>
 <span class="sd">                required as inputs to the prompt.</span>
 <span class="sd">            optional_variables: A list of the names of the variables for placeholder</span>
-<span class="sd">            or MessagePlaceholder that are optional. These variables are auto inferred</span>
-<span class="sd">            from the prompt and user need not provide them.</span>
+<span class="sd">                or MessagePlaceholder that are optional.</span>
+<span class="sd">                These variables are auto inferred from the prompt and user need not</span>
+<span class="sd">                provide them.</span>
 <span class="sd">            partial_variables: A dictionary of the partial variables the prompt</span>
 <span class="sd">                template carries. Partial variables populate the template so that you</span>
 <span class="sd">                don't need to pass them in every time you call the prompt.</span>

@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 01, 2025" name="docbuild:last-update"/>
+<meta content="Apr 02, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,9 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_core.outputs.chat_generation</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">"""Chat generation output classes."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Union</span>
 
@@ -293,20 +295,16 @@
         <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Error while initializing ChatGeneration"</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"output"</span><span class="p">]</span></div>
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 
 
 <div class="viewcode-block" id="ChatGenerationChunk">
 <a class="viewcode-back" href="../../../core/outputs/langchain_core.outputs.chat_generation.ChatGenerationChunk.html#langchain_core.outputs.chat_generation.ChatGenerationChunk">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ChatGenerationChunk</span><span class="p">(</span><span class="n">ChatGeneration</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""ChatGeneration chunk, which can be concatenated with other</span>
-<span class="sd">    ChatGeneration chunks.</span>
+<span class="w">    </span><span class="sd">"""ChatGeneration chunk.</span>
+
+<span class="sd">    ChatGeneration chunks can be concatenated with other ChatGeneration chunks.</span>
 <span class="sd">    """</span>
 
     <span class="n">message</span><span class="p">:</span> <span class="n">BaseMessageChunk</span>
@@ -315,14 +313,15 @@
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"ChatGenerationChunk"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"ChatGenerationChunk"</span>  <span class="c1"># type: ignore[assignment]</span>
 <span class="w">    </span><span class="sd">"""Type is used exclusively for serialization purposes."""</span>
 
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"output"</span><span class="p">]</span>
-
     <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ChatGenerationChunk</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChatGenerationChunk</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChatGenerationChunk</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Concatenate two ChatGenerationChunks.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            other: The other ChatGenerationChunk or list of ChatGenerationChunks to</span>
+<span class="sd">                concatenate.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">ChatGenerationChunk</span><span class="p">):</span>
             <span class="n">generation_info</span> <span class="o">=</span> <span class="n">merge_dicts</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">generation_info</span> <span class="ow">or</span> <span class="p">{},</span>

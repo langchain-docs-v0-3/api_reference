@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 01, 2025" name="docbuild:last-update"/>
+<meta content="Apr 02, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,9 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_core.runnables.base</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">"""Base classes and utilities for Runnables."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">collections</span>
@@ -805,11 +807,11 @@
 <span class="w">        </span><span class="sd">"""Return a list of prompts used by this Runnable."""</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompts.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasePromptTemplate</span>
 
-        <span class="n">prompts</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_graph</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">BasePromptTemplate</span><span class="p">):</span>
-                <span class="n">prompts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">prompts</span></div>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">data</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_graph</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">BasePromptTemplate</span><span class="p">)</span>
+        <span class="p">]</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__or__</span><span class="p">(</span>
@@ -945,6 +947,7 @@
         <span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunnableSerializable</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Assigns new fields to the dict output of this Runnable.</span>
+
 <span class="sd">        Returns a new Runnable.</span>
 
 <span class="sd">        .. code-block:: python</span>
@@ -987,7 +990,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Output</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Transform a single input into an output. Override to implement.</span>
+<span class="w">        </span><span class="sd">"""Transform a single input into an output.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input: The input to the Runnable.</span>
@@ -1086,8 +1089,9 @@
         <span class="n">return_exceptions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">Output</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">]]]:</span>
-<span class="w">        </span><span class="sd">"""Run invoke in parallel on a list of inputs,</span>
-<span class="sd">        yielding results as they complete.</span>
+<span class="w">        </span><span class="sd">"""Run invoke in parallel on a list of inputs.</span>
+
+<span class="sd">        Yields results as they complete.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">inputs</span><span class="p">:</span>
             <span class="k">return</span>
@@ -1208,8 +1212,9 @@
         <span class="n">return_exceptions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">Output</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">]]]:</span>
-<span class="w">        </span><span class="sd">"""Run ainvoke in parallel on a list of inputs,</span>
-<span class="sd">        yielding results as they complete.</span>
+<span class="w">        </span><span class="sd">"""Run ainvoke in parallel on a list of inputs.</span>
+
+<span class="sd">        Yields results as they complete.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            inputs: A list of inputs to the Runnable.</span>
@@ -1267,6 +1272,7 @@
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Default implementation of stream, which calls invoke.</span>
+
 <span class="sd">        Subclasses should override this method if they support streaming output.</span>
 
 <span class="sd">        Args:</span>
@@ -1289,6 +1295,7 @@
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Default implementation of astream, which calls ainvoke.</span>
+
 <span class="sd">        Subclasses should override this method if they support streaming output.</span>
 
 <span class="sd">        Args:</span>
@@ -1354,6 +1361,7 @@
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">AsyncIterator</span><span class="p">[</span><span class="n">RunLogPatch</span><span class="p">],</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">RunLog</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Stream all output from a Runnable, as reported to the callback system.</span>
+
 <span class="sd">        This includes all inner runs of LLMs, Retrievers, Tools, etc.</span>
 
 <span class="sd">        Output is streamed as Log objects, which include a list of</span>
@@ -1732,6 +1740,7 @@
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Default implementation of atransform, which buffers input and calls astream.</span>
+
 <span class="sd">        Subclasses should override this method if they can start producing output while</span>
 <span class="sd">        input is still being generated.</span>
 
@@ -2116,8 +2125,9 @@
 <div class="viewcode-block" id="Runnable.map">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.Runnable.html#langchain_azure_dynamic_sessions.tools.sessions.Runnable.map">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">map</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Runnable</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Output</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">"""Return a new Runnable that maps a list of inputs to a list of outputs,</span>
-<span class="sd">        by calling invoke() with each input.</span>
+<span class="w">        </span><span class="sd">"""Return a new Runnable that maps a list of inputs to a list of outputs.</span>
+
+<span class="sd">        Calls invoke() with each input.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A new Runnable that maps a list of inputs to a list of outputs.</span>
@@ -2225,8 +2235,9 @@
         <span class="n">serialized</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Output</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Helper method to transform an Input value to an Output value,</span>
-<span class="sd">        with callbacks. Use this method to implement invoke() in subclasses.</span>
+<span class="w">        </span><span class="sd">"""Helper method to transform an Input value to an Output value, with callbacks.</span>
+
+<span class="sd">        Use this method to implement invoke() in subclasses.</span>
 <span class="sd">        """</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">ensure_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="n">callback_manager</span> <span class="o">=</span> <span class="n">get_callback_manager_for_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
@@ -2274,8 +2285,9 @@
         <span class="n">serialized</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Output</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Helper method to transform an Input value to an Output value,</span>
-<span class="sd">        with callbacks. Use this method to implement ainvoke() in subclasses.</span>
+<span class="w">        </span><span class="sd">"""Helper method to transform an Input value to an Output value, with callbacks.</span>
+
+<span class="sd">        Use this method to implement ainvoke() in subclasses.</span>
 <span class="sd">        """</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">ensure_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="n">callback_manager</span> <span class="o">=</span> <span class="n">get_async_callback_manager_for_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
@@ -2323,7 +2335,9 @@
         <span class="n">run_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Helper method to transform an Input value to an Output value,</span>
+<span class="w">        </span><span class="sd">"""Transform a list of inputs to a list of outputs, with callbacks.</span>
+
+<span class="sd">        Helper method to transform an Input value to an Output value,</span>
 <span class="sd">        with callbacks. Use this method to implement invoke() in subclasses.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">input</span><span class="p">:</span>
@@ -2396,8 +2410,11 @@
         <span class="n">run_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Helper method to transform an Input value to an Output value,</span>
-<span class="sd">        with callbacks. Use this method to implement invoke() in subclasses.</span>
+<span class="w">        </span><span class="sd">"""Transform a list of inputs to a list of outputs, with callbacks.</span>
+
+<span class="sd">        Helper method to transform an Input value to an Output value,</span>
+<span class="sd">        with callbacks.</span>
+<span class="sd">        Use this method to implement invoke() in subclasses.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">input</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
@@ -2469,7 +2486,9 @@
         <span class="n">run_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Helper method to transform an Iterator of Input values into an Iterator of</span>
+<span class="w">        </span><span class="sd">"""Transform a stream with config.</span>
+
+<span class="sd">        Helper method to transform an Iterator of Input values into an Iterator of</span>
 <span class="sd">        Output values, with callbacks.</span>
 <span class="sd">        Use this to implement `stream()` or `transform()` in Runnable subclasses.</span>
 <span class="sd">        """</span>
@@ -2571,7 +2590,9 @@
         <span class="n">run_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Helper method to transform an Async Iterator of Input values into an Async</span>
+<span class="w">        </span><span class="sd">"""Transform a stream with config.</span>
+
+<span class="sd">        Helper method to transform an Async Iterator of Input values into an Async</span>
 <span class="sd">        Iterator of Output values, with callbacks.</span>
 <span class="sd">        Use this to implement `astream()` or `atransform()` in Runnable subclasses.</span>
 <span class="sd">        """</span>
@@ -2791,6 +2812,7 @@
         <span class="n">protected_namespaces</span><span class="o">=</span><span class="p">(),</span>
     <span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">SerializedConstructor</span><span class="p">,</span> <span class="n">SerializedNotImplemented</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Serialize the Runnable to JSON.</span>
 
@@ -3122,8 +3144,8 @@
         <span class="p">)</span>
 
     <span class="nd">@classmethod</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
@@ -3136,6 +3158,7 @@
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">first</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">middle</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="p">]</span>
 
     <span class="nd">@classmethod</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Check if the object is serializable.</span>
 
@@ -3161,6 +3184,7 @@
 <span class="w">        </span><span class="sd">"""The type of the output of the Runnable."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">OutputType</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_input_schema</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
@@ -3174,6 +3198,7 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">_seq_input_schema</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_output_schema</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
@@ -3188,6 +3213,7 @@
         <span class="k">return</span> <span class="n">_seq_output_schema</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
 
     <span class="nd">@property</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">config_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ConfigurableFieldSpec</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Get the config specs of the Runnable.</span>
 
@@ -3238,6 +3264,7 @@
 
         <span class="k">return</span> <span class="n">get_unique_config_specs</span><span class="p">(</span><span class="n">spec</span> <span class="k">for</span> <span class="n">spec</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">all_specs</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Graph</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Get the graph representation of the Runnable.</span>
 
@@ -3269,12 +3296,14 @@
 
         <span class="k">return</span> <span class="n">graph</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">| "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
             <span class="nb">repr</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">indent_lines_after_first</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="s2">"| "</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span>
         <span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__or__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
@@ -3303,6 +3332,7 @@
                 <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__ror__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
@@ -3333,6 +3363,7 @@
 
 <div class="viewcode-block" id="RunnableSequence.invoke">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableSequence.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableSequence.invoke">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Output</span><span class="p">:</span>
@@ -3372,6 +3403,7 @@
 
 <div class="viewcode-block" id="RunnableSequence.ainvoke">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableSequence.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableSequence.ainvoke">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ainvoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -3418,6 +3450,7 @@
 
 <div class="viewcode-block" id="RunnableSequence.batch">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableSequence.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableSequence.batch">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">batch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -3493,9 +3526,13 @@
                         <span class="o">**</span><span class="p">(</span><span class="n">kwargs</span> <span class="k">if</span> <span class="n">stepidx</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">{}),</span>
                     <span class="p">)</span>
                     <span class="c1"># If an input failed, add it to the map</span>
-                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">inp</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">remaining_idxs</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
-                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>
-                            <span class="n">failed_inputs_map</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">inp</span>
+                    <span class="n">failed_inputs_map</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="n">i</span><span class="p">:</span> <span class="n">inp</span>
+                            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">inp</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">remaining_idxs</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">)</span>
+                        <span class="p">}</span>
+                    <span class="p">)</span>
                     <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">inp</span> <span class="k">for</span> <span class="n">inp</span> <span class="ow">in</span> <span class="n">inputs</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">)]</span>
                     <span class="c1"># If all inputs have failed, stop processing</span>
                     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">failed_inputs_map</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">configs</span><span class="p">):</span>
@@ -3548,6 +3585,7 @@
 
 <div class="viewcode-block" id="RunnableSequence.abatch">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableSequence.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableSequence.abatch">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">abatch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -3626,9 +3664,13 @@
                         <span class="o">**</span><span class="p">(</span><span class="n">kwargs</span> <span class="k">if</span> <span class="n">stepidx</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">{}),</span>
                     <span class="p">)</span>
                     <span class="c1"># If an input failed, add it to the map</span>
-                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">inp</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">remaining_idxs</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
-                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>
-                            <span class="n">failed_inputs_map</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">inp</span>
+                    <span class="n">failed_inputs_map</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                        <span class="p">{</span>
+                            <span class="n">i</span><span class="p">:</span> <span class="n">inp</span>
+                            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">inp</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">remaining_idxs</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">)</span>
+                        <span class="p">}</span>
+                    <span class="p">)</span>
                     <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">inp</span> <span class="k">for</span> <span class="n">inp</span> <span class="ow">in</span> <span class="n">inputs</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">)]</span>
                     <span class="c1"># If all inputs have failed, stop processing</span>
                     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">failed_inputs_map</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">configs</span><span class="p">):</span>
@@ -3735,6 +3777,7 @@
         <span class="k">async</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="n">final_pipeline</span><span class="p">:</span>
             <span class="k">yield</span> <span class="n">output</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -3750,6 +3793,7 @@
 
 <div class="viewcode-block" id="RunnableSequence.stream">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableSequence.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableSequence.stream">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">stream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -3759,6 +3803,7 @@
         <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="nb">iter</span><span class="p">([</span><span class="nb">input</span><span class="p">]),</span> <span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">atransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -3775,6 +3820,7 @@
 
 <div class="viewcode-block" id="RunnableSequence.astream">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableSequence.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableSequence.astream">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">astream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -3793,8 +3839,9 @@
 <div class="viewcode-block" id="RunnableParallel">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableParallel.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableParallel">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RunnableParallel</span><span class="p">(</span><span class="n">RunnableSerializable</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]):</span>
-<span class="w">    </span><span class="sd">"""Runnable that runs a mapping of Runnables in parallel, and returns a mapping</span>
-<span class="sd">    of their outputs.</span>
+<span class="w">    </span><span class="sd">"""Runnable that runs a mapping of Runnables in parallel.</span>
+
+<span class="sd">    Returns a mapping of their outputs.</span>
 
 <span class="sd">    RunnableParallel is one of the two main composition primitives for the LCEL,</span>
 <span class="sd">    alongside RunnableSequence. It invokes Runnables concurrently, providing the same</span>
@@ -3892,6 +3939,12 @@
             <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">Runnable</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Input</span><span class="p">],</span> <span class="n">Any</span><span class="p">]]],</span>
         <span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create a RunnableParallel.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            steps__: The steps to include. Defaults to None.</span>
+<span class="sd">            **kwargs: Additional steps to include.</span>
+<span class="sd">        """</span>
         <span class="n">merged</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">steps__</span><span class="p">}</span> <span class="k">if</span> <span class="n">steps__</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
         <span class="n">merged</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>  <span class="c1"># type: ignore[call-arg]</span>
@@ -3899,18 +3952,20 @@
         <span class="p">)</span>
 
     <span class="nd">@classmethod</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="nd">@classmethod</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span>
         <span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_name</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">suffix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -3936,6 +3991,7 @@
 
         <span class="k">return</span> <span class="n">Any</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_input_schema</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
@@ -3965,6 +4021,7 @@
 
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_input_schema</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_output_schema</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
@@ -3980,6 +4037,7 @@
         <span class="k">return</span> <span class="n">create_model_v2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_name</span><span class="p">(</span><span class="s2">"Output"</span><span class="p">),</span> <span class="n">field_definitions</span><span class="o">=</span><span class="n">fields</span><span class="p">)</span>
 
     <span class="nd">@property</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">config_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ConfigurableFieldSpec</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Get the config specs of the Runnable.</span>
 
@@ -3990,6 +4048,7 @@
             <span class="n">spec</span> <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps__</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">step</span><span class="o">.</span><span class="n">config_specs</span>
         <span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Graph</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Get the graph representation of the Runnable.</span>
 
@@ -4026,6 +4085,7 @@
 
         <span class="k">return</span> <span class="n">graph</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">map_for_repr</span> <span class="o">=</span> <span class="s2">",</span><span class="se">\n</span><span class="s2">  "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">indent_lines_after_first</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">v</span><span class="p">),</span><span class="w"> </span><span class="s1">'  '</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">': '</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
@@ -4035,6 +4095,7 @@
 
 <div class="viewcode-block" id="RunnableParallel.invoke">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableParallel.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableParallel.invoke">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -4096,6 +4157,7 @@
 
 <div class="viewcode-block" id="RunnableParallel.ainvoke">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableParallel.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableParallel.ainvoke">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ainvoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -4201,6 +4263,7 @@
                     <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
                         <span class="k">pass</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -4213,6 +4276,7 @@
 
 <div class="viewcode-block" id="RunnableParallel.stream">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableParallel.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableParallel.stream">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">stream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -4273,6 +4337,7 @@
                 <span class="k">except</span> <span class="ne">StopAsyncIteration</span><span class="p">:</span>
                     <span class="k">pass</span>
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">atransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -4286,6 +4351,7 @@
 
 <div class="viewcode-block" id="RunnableParallel.astream">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableParallel.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableParallel.astream">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">astream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -4410,6 +4476,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            transform: The transform function.</span>
 <span class="sd">            atransform: The async transform function. Defaults to None.</span>
+<span class="sd">            name: The name of the Runnable. Defaults to None.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            TypeError: If the transform is not a generator function.</span>
@@ -4450,6 +4517,7 @@
         <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Any</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_input_schema</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
@@ -4491,6 +4559,7 @@
         <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Any</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_output_schema</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
@@ -4517,6 +4586,7 @@
             <span class="n">module_name</span><span class="o">=</span><span class="n">module</span><span class="p">,</span>
         <span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">RunnableGenerator</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_transform"</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s2">"_transform"</span><span class="p">):</span>
@@ -4528,9 +4598,11 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">"RunnableGenerator(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">)"</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -4547,6 +4619,7 @@
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
         <span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">stream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -4555,6 +4628,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="nb">iter</span><span class="p">([</span><span class="nb">input</span><span class="p">]),</span> <span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Output</span><span class="p">:</span>
@@ -4563,6 +4637,7 @@
             <span class="n">final</span> <span class="o">=</span> <span class="n">output</span> <span class="k">if</span> <span class="n">final</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">final</span> <span class="o">+</span> <span class="n">output</span>  <span class="c1"># type: ignore[operator]</span>
         <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"Output"</span><span class="p">,</span> <span class="n">final</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">atransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -4577,6 +4652,7 @@
             <span class="nb">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_atransform</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
         <span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">astream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -4588,6 +4664,7 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">atransform</span><span class="p">(</span><span class="n">input_aiter</span><span class="p">(),</span> <span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ainvoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Output</span><span class="p">:</span>
@@ -4745,6 +4822,7 @@
         <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Any</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_input_schema</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
@@ -4814,6 +4892,7 @@
         <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Any</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_output_schema</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
@@ -4864,11 +4943,13 @@
         <span class="k">return</span> <span class="n">deps</span>
 
     <span class="nd">@property</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">config_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ConfigurableFieldSpec</span><span class="p">]:</span>
         <span class="k">return</span> <span class="n">get_unique_config_specs</span><span class="p">(</span>
             <span class="n">spec</span> <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">deps</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">dep</span><span class="o">.</span><span class="n">config_specs</span>
         <span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">RunnableConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Graph</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">deps</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deps</span><span class="p">:</span>
             <span class="n">graph</span> <span class="o">=</span> <span class="n">Graph</span><span class="p">()</span>
@@ -4895,6 +4976,7 @@
 
         <span class="k">return</span> <span class="n">graph</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">RunnableLambda</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"func"</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s2">"func"</span><span class="p">):</span>
@@ -5071,6 +5153,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunnableConfig</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">ensure_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -5104,6 +5187,7 @@
             <span class="p">)</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ainvoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -5190,6 +5274,7 @@
             <span class="c1"># Otherwise, just yield it</span>
             <span class="k">yield</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"Output"</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -5210,6 +5295,7 @@
             <span class="p">)</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">stream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -5317,6 +5403,7 @@
             <span class="c1"># Otherwise, just yield it</span>
             <span class="k">yield</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"Output"</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">atransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -5331,6 +5418,7 @@
         <span class="p">):</span>
             <span class="k">yield</span> <span class="n">output</span>
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">astream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -5348,8 +5436,7 @@
 <div class="viewcode-block" id="RunnableEachBase">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableEachBase.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableEachBase">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RunnableEachBase</span><span class="p">(</span><span class="n">RunnableSerializable</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Output</span><span class="p">]]):</span>
-<span class="w">    </span><span class="sd">"""Runnable that delegates calls to another Runnable</span>
-<span class="sd">    with each element of the input sequence.</span>
+<span class="w">    </span><span class="sd">"""Runnable that calls another Runnable for each element of the input sequence.</span>
 
 <span class="sd">    Use only if creating a new RunnableEach subclass with different __init__ args.</span>
 
@@ -5367,6 +5454,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">InputType</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="o">.</span><span class="n">InputType</span><span class="p">]</span>  <span class="c1"># type: ignore[name-defined]</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_input_schema</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
@@ -5391,6 +5479,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">OutputType</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Output</span><span class="p">]]:</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="o">.</span><span class="n">OutputType</span><span class="p">]</span>  <span class="c1"># type: ignore[name-defined]</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_output_schema</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
@@ -5409,19 +5498,22 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">config_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ConfigurableFieldSpec</span><span class="p">]:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="o">.</span><span class="n">config_specs</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Graph</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="o">.</span><span class="n">get_graph</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="nd">@classmethod</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_invoke</span><span class="p">(</span>
@@ -5438,6 +5530,7 @@
 
 <div class="viewcode-block" id="RunnableEachBase.invoke">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableEachBase.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableEachBase.invoke">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
@@ -5458,6 +5551,7 @@
 
 <div class="viewcode-block" id="RunnableEachBase.ainvoke">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableEachBase.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableEachBase.ainvoke">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ainvoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
@@ -5466,6 +5560,7 @@
 
 <div class="viewcode-block" id="RunnableEachBase.astream_events">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableEachBase.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableEachBase.astream_events">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">astream_events</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -5483,8 +5578,7 @@
 <div class="viewcode-block" id="RunnableEach">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableEach.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableEach">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RunnableEach</span><span class="p">(</span><span class="n">RunnableEachBase</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">"""Runnable that delegates calls to another Runnable</span>
-<span class="sd">    with each element of the input sequence.</span>
+<span class="w">    </span><span class="sd">"""Runnable that calls another Runnable for each element of the input sequence.</span>
 
 <span class="sd">    It allows you to call multiple inputs with the bounded Runnable.</span>
 
@@ -5510,11 +5604,7 @@
 <span class="sd">            print(output)  # noqa: T201</span>
 <span class="sd">    """</span>
 
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
-
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_name</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">suffix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -5523,12 +5613,14 @@
 
 <div class="viewcode-block" id="RunnableEach.bind">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableEach.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableEach.bind">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunnableEach</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">]:</span>
         <span class="k">return</span> <span class="n">RunnableEach</span><span class="p">(</span><span class="n">bound</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="RunnableEach.with_config">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableEach.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableEach.with_config">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">with_config</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunnableEach</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">]:</span>
@@ -5537,6 +5629,7 @@
 
 <div class="viewcode-block" id="RunnableEach.with_listeners">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableEach.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableEach.with_listeners">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">with_listeners</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -5701,6 +5794,7 @@
         <span class="c1"># fields even though total=False on the typed dict.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="p">{}</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_name</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">suffix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -5724,6 +5818,7 @@
             <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="o">.</span><span class="n">OutputType</span>
         <span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_input_schema</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
@@ -5731,6 +5826,7 @@
             <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_input_schema</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="o">.</span><span class="n">get_input_schema</span><span class="p">(</span><span class="n">merge_configs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">config</span><span class="p">))</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_output_schema</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
@@ -5739,19 +5835,26 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="o">.</span><span class="n">get_output_schema</span><span class="p">(</span><span class="n">merge_configs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">config</span><span class="p">))</span>
 
     <span class="nd">@property</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">config_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ConfigurableFieldSpec</span><span class="p">]:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="o">.</span><span class="n">config_specs</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Graph</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="o">.</span><span class="n">get_graph</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_merge_configs</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
 
     <span class="nd">@classmethod</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="nd">@classmethod</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
+<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object.</span>
+
+<span class="sd">        Defaults to ["langchain", "schema", "runnable"].</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_merge_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">configs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">RunnableConfig</span><span class="p">:</span>
@@ -5760,6 +5863,7 @@
 
 <div class="viewcode-block" id="RunnableBindingBase.invoke">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableBindingBase.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableBindingBase.invoke">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -5775,6 +5879,7 @@
 
 <div class="viewcode-block" id="RunnableBindingBase.ainvoke">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableBindingBase.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableBindingBase.ainvoke">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ainvoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -5790,6 +5895,7 @@
 
 <div class="viewcode-block" id="RunnableBindingBase.batch">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableBindingBase.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableBindingBase.batch">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">batch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -5815,6 +5921,7 @@
 
 <div class="viewcode-block" id="RunnableBindingBase.abatch">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableBindingBase.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableBindingBase.abatch">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">abatch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -5860,6 +5967,7 @@
 
 <div class="viewcode-block" id="RunnableBindingBase.batch_as_completed">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableBindingBase.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableBindingBase.batch_as_completed">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">batch_as_completed</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -5914,6 +6022,7 @@
 
 <div class="viewcode-block" id="RunnableBindingBase.abatch_as_completed">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableBindingBase.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableBindingBase.abatch_as_completed">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">abatch_as_completed</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -5949,6 +6058,7 @@
 
 <div class="viewcode-block" id="RunnableBindingBase.stream">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableBindingBase.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableBindingBase.stream">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">stream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -5964,6 +6074,7 @@
 
 <div class="viewcode-block" id="RunnableBindingBase.astream">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableBindingBase.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableBindingBase.astream">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">astream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -5980,6 +6091,7 @@
 
 <div class="viewcode-block" id="RunnableBindingBase.astream_events">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableBindingBase.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableBindingBase.astream_events">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">astream_events</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -5992,6 +6104,7 @@
             <span class="k">yield</span> <span class="n">item</span></div>
 
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -6004,6 +6117,7 @@
             <span class="o">**</span><span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">},</span>
         <span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">atransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -6072,13 +6186,9 @@
 <span class="sd">            runnable_binding.invoke('Say "Parrot-MAGIC"') # Should return `Parrot`</span>
 <span class="sd">    """</span>
 
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
-
 <div class="viewcode-block" id="RunnableBinding.bind">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableBinding.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableBinding.bind">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Runnable</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Bind additional kwargs to a Runnable, returning a new Runnable.</span>
 
@@ -6092,6 +6202,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
             <span class="n">bound</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="p">,</span>
             <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">config_factories</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config_factories</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">},</span>
             <span class="n">custom_input_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">custom_input_type</span><span class="p">,</span>
             <span class="n">custom_output_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">custom_output_type</span><span class="p">,</span>
@@ -6100,6 +6211,7 @@
 
 <div class="viewcode-block" id="RunnableBinding.with_config">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableBinding.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableBinding.with_config">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">with_config</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -6110,6 +6222,7 @@
             <span class="n">bound</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="n">config</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="s2">"RunnableConfig"</span><span class="p">,</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">config</span> <span class="ow">or</span> <span class="p">{}),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">}),</span>
+            <span class="n">config_factories</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config_factories</span><span class="p">,</span>
             <span class="n">custom_input_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">custom_input_type</span><span class="p">,</span>
             <span class="n">custom_output_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">custom_output_type</span><span class="p">,</span>
         <span class="p">)</span></div>
@@ -6117,6 +6230,7 @@
 
 <div class="viewcode-block" id="RunnableBinding.with_listeners">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableBinding.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableBinding.with_listeners">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">with_listeners</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -6147,22 +6261,23 @@
 <span class="sd">        """</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers.root_listeners</span><span class="w"> </span><span class="kn">import</span> <span class="n">RootListenersTracer</span>
 
+        <span class="k">def</span><span class="w"> </span><span class="nf">listener_config_factory</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">RunnableConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunnableConfig</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">"callbacks"</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="n">RootListenersTracer</span><span class="p">(</span>
+                        <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                        <span class="n">on_start</span><span class="o">=</span><span class="n">on_start</span><span class="p">,</span>
+                        <span class="n">on_end</span><span class="o">=</span><span class="n">on_end</span><span class="p">,</span>
+                        <span class="n">on_error</span><span class="o">=</span><span class="n">on_error</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">],</span>
+            <span class="p">}</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
             <span class="n">bound</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span>
-            <span class="n">config_factories</span><span class="o">=</span><span class="p">[</span>
-                <span class="k">lambda</span> <span class="n">config</span><span class="p">:</span> <span class="p">{</span>
-                    <span class="s2">"callbacks"</span><span class="p">:</span> <span class="p">[</span>
-                        <span class="n">RootListenersTracer</span><span class="p">(</span>
-                            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
-                            <span class="n">on_start</span><span class="o">=</span><span class="n">on_start</span><span class="p">,</span>
-                            <span class="n">on_end</span><span class="o">=</span><span class="n">on_end</span><span class="p">,</span>
-                            <span class="n">on_error</span><span class="o">=</span><span class="n">on_error</span><span class="p">,</span>
-                        <span class="p">)</span>
-                    <span class="p">],</span>
-                <span class="p">}</span>
-            <span class="p">],</span>
+            <span class="n">config_factories</span><span class="o">=</span><span class="p">[</span><span class="n">listener_config_factory</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">config_factories</span><span class="p">,</span>
             <span class="n">custom_input_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">custom_input_type</span><span class="p">,</span>
             <span class="n">custom_output_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">custom_output_type</span><span class="p">,</span>
         <span class="p">)</span></div>
@@ -6170,6 +6285,7 @@
 
 <div class="viewcode-block" id="RunnableBinding.with_types">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableBinding.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableBinding.with_types">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">with_types</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">input_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span> <span class="n">BaseModel</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -6179,6 +6295,7 @@
             <span class="n">bound</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">config_factories</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config_factories</span><span class="p">,</span>
             <span class="n">custom_input_type</span><span class="o">=</span><span class="p">(</span>
                 <span class="n">input_type</span> <span class="k">if</span> <span class="n">input_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_input_type</span>
             <span class="p">),</span>
@@ -6190,15 +6307,18 @@
 
 <div class="viewcode-block" id="RunnableBinding.with_retry">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableBinding.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableBinding.with_retry">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">with_retry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Runnable</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">]:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
             <span class="n">bound</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="o">.</span><span class="n">with_retry</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">config_factories</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config_factories</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="n">attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
@@ -6339,6 +6459,7 @@
     <span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Runnable</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Decorate a function to make it a Runnable.</span>
+
 <span class="sd">    Sets the name of the Runnable to the name of the function.</span>
 <span class="sd">    Any runnables called by the function will be traced as dependencies.</span>
 

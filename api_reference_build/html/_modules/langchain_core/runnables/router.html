@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 01, 2025" name="docbuild:last-update"/>
+<meta content="Apr 02, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,9 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_core.runnables.router</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">"""Runnable that routes to a set of Runnables."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">starmap</span>
@@ -234,7 +236,7 @@
 <span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigDict</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span><span class="p">,</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Input</span><span class="p">,</span>
@@ -277,28 +279,27 @@
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.router.RouterRunnable.html#langchain_core.runnables.router.RouterRunnable">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RouterRunnable</span><span class="p">(</span><span class="n">RunnableSerializable</span><span class="p">[</span><span class="n">RouterInput</span><span class="p">,</span> <span class="n">Output</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">"""Runnable that routes to a set of Runnables based on Input['key'].</span>
+
 <span class="sd">    Returns the output of the selected Runnable.</span>
 
-<span class="sd">    Parameters:</span>
-<span class="sd">        runnables: A mapping of keys to Runnables.</span>
+<span class="sd">    Example:</span>
 
-<span class="sd">    For example,</span>
+<span class="sd">        .. code-block:: python</span>
 
-<span class="sd">    .. code-block:: python</span>
+<span class="sd">            from langchain_core.runnables.router import RouterRunnable</span>
+<span class="sd">            from langchain_core.runnables import RunnableLambda</span>
 
-<span class="sd">        from langchain_core.runnables.router import RouterRunnable</span>
-<span class="sd">        from langchain_core.runnables import RunnableLambda</span>
+<span class="sd">            add = RunnableLambda(func=lambda x: x + 1)</span>
+<span class="sd">            square = RunnableLambda(func=lambda x: x**2)</span>
 
-<span class="sd">        add = RunnableLambda(func=lambda x: x + 1)</span>
-<span class="sd">        square = RunnableLambda(func=lambda x: x**2)</span>
-
-<span class="sd">        router = RouterRunnable(runnables={"add": add, "square": square})</span>
-<span class="sd">        router.invoke({"key": "square", "input": 3})</span>
+<span class="sd">            router = RouterRunnable(runnables={"add": add, "square": square})</span>
+<span class="sd">            router.invoke({"key": "square", "input": 3})</span>
 <span class="sd">    """</span>
 
     <span class="n">runnables</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Runnable</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Output</span><span class="p">]]</span>
 
     <span class="nd">@property</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">config_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ConfigurableFieldSpec</span><span class="p">]:</span>
         <span class="k">return</span> <span class="n">get_unique_config_specs</span><span class="p">(</span>
             <span class="n">spec</span> <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">runnables</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">step</span><span class="o">.</span><span class="n">config_specs</span>
@@ -308,6 +309,11 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">runnables</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">Runnable</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Output</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Output</span><span class="p">]]],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create a RouterRunnable.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            runnables: A mapping of keys to Runnables.</span>
+<span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>  <span class="c1"># type: ignore[call-arg]</span>
             <span class="n">runnables</span><span class="o">=</span><span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">coerce_to_runnable</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">runnables</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
         <span class="p">)</span>
@@ -317,17 +323,20 @@
     <span class="p">)</span>
 
     <span class="nd">@classmethod</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return whether this class is serializable."""</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="nd">@classmethod</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
 
 <div class="viewcode-block" id="RouterRunnable.invoke">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.router.RouterRunnable.html#langchain_core.runnables.router.RouterRunnable.invoke">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">RouterInput</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Output</span><span class="p">:</span>
@@ -343,6 +352,7 @@
 
 <div class="viewcode-block" id="RouterRunnable.ainvoke">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.router.RouterRunnable.html#langchain_core.runnables.router.RouterRunnable.ainvoke">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ainvoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">RouterInput</span><span class="p">,</span>
@@ -361,6 +371,7 @@
 
 <div class="viewcode-block" id="RouterRunnable.batch">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.router.RouterRunnable.html#langchain_core.runnables.router.RouterRunnable.batch">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">batch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RouterInput</span><span class="p">],</span>
@@ -400,6 +411,7 @@
 
 <div class="viewcode-block" id="RouterRunnable.abatch">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.router.RouterRunnable.html#langchain_core.runnables.router.RouterRunnable.abatch">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">abatch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RouterInput</span><span class="p">],</span>
@@ -438,6 +450,7 @@
 
 <div class="viewcode-block" id="RouterRunnable.stream">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.router.RouterRunnable.html#langchain_core.runnables.router.RouterRunnable.stream">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">stream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">RouterInput</span><span class="p">,</span>
@@ -456,6 +469,7 @@
 
 <div class="viewcode-block" id="RouterRunnable.astream">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.router.RouterRunnable.html#langchain_core.runnables.router.RouterRunnable.astream">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">astream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">RouterInput</span><span class="p">,</span>

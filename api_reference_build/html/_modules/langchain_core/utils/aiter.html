@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 01, 2025" name="docbuild:last-update"/>
+<meta content="Apr 02, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,9 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_core.utils.aiter</h1><div class="highlight"><pre>
-<span></span><span class="sd">"""Adapted from</span>
+<span></span><span class="sd">"""Asynchronous iterator utilities.</span>
+
+<span class="sd">Adapted from</span>
 <span class="sd">https://github.com/maxfischer2781/asyncstdlib/blob/master/asyncstdlib/itertools.py</span>
 <span class="sd">MIT License.</span>
 <span class="sd">"""</span>
@@ -245,6 +247,8 @@
     <span class="n">cast</span><span class="p">,</span>
     <span class="n">overload</span><span class="p">,</span>
 <span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T"</span><span class="p">)</span>
 
@@ -309,9 +313,10 @@
 <span class="w">    </span><span class="sd">"""Dummy lock that provides the proper interface but no protection."""</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__aenter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">pass</span>
+<span class="w">        </span><span class="sd">"""Do nothing."""</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__aexit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Exception not handled."""</span>
         <span class="k">return</span> <span class="kc">False</span></div>
 
 
@@ -423,6 +428,14 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">lock</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AbstractAsyncContextManager</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Create a ``tee``.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            iterable: The iterable to split.</span>
+<span class="sd">            n: The number of iterators to create. Defaults to 2.</span>
+<span class="sd">            lock: The lock to synchronise access to the shared buffers.</span>
+<span class="sd">                Defaults to None.</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_iterator</span> <span class="o">=</span> <span class="n">iterable</span><span class="o">.</span><span class="fm">__aiter__</span><span class="p">()</span>  <span class="c1"># before 3.10 aiter() doesn't exist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_buffers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">deque</span><span class="p">[</span><span class="n">T</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="n">deque</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_children</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
@@ -437,6 +450,7 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the number of child iterators."""</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">)</span>
 
     <span class="nd">@overload</span>
@@ -448,15 +462,19 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">slice</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">AsyncIterator</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">AsyncIterator</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="o">...</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Return the child iterator(s) for the given index or slice."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">AsyncIterator</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Iterate over the child iterators."""</span>
         <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__aenter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Tee[T]"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the tee instance."""</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__aexit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Close all child iterators."""</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">aclose</span><span class="p">()</span>
         <span class="k">return</span> <span class="kc">False</span>
 
@@ -476,8 +494,7 @@
 <div class="viewcode-block" id="aclosing">
 <a class="viewcode-back" href="../../../core/utils/langchain_core.utils.aiter.aclosing.html#langchain_core.utils.aiter.aclosing">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">aclosing</span><span class="p">(</span><span class="n">AbstractAsyncContextManager</span><span class="p">):</span>  <span class="c1"># noqa: N801</span>
-<span class="w">    </span><span class="sd">"""Async context manager for safely finalizing an asynchronously cleaned-up</span>
-<span class="sd">    resource such as an async generator, calling its ``aclose()`` method.</span>
+<span class="w">    </span><span class="sd">"""Async context manager to wrap an AsyncGenerator that has a ``aclose()`` method.</span>
 
 <span class="sd">    Code like this:</span>
 
@@ -499,12 +516,19 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">thing</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">AsyncGenerator</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create the context manager.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            thing: The resource to wrap.</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">thing</span> <span class="o">=</span> <span class="n">thing</span></div>
 
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__aenter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">AsyncGenerator</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Any</span><span class="p">]]:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">thing</span>
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__aexit__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">exc_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="ne">BaseException</span><span class="p">]],</span>

@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 01, 2025" name="docbuild:last-update"/>
+<meta content="Apr 02, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,9 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_core.runnables.configurable</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">"""Runnables that can be dynamically configured."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">enum</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
@@ -287,12 +289,13 @@
     <span class="p">)</span>
 
     <span class="nd">@classmethod</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="nd">@classmethod</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
@@ -305,24 +308,28 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">OutputType</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="o">.</span><span class="n">OutputType</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_input_schema</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
         <span class="n">runnable</span><span class="p">,</span> <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">runnable</span><span class="o">.</span><span class="n">get_input_schema</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_output_schema</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
         <span class="n">runnable</span><span class="p">,</span> <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">runnable</span><span class="o">.</span><span class="n">get_output_schema</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Graph</span><span class="p">:</span>
         <span class="n">runnable</span><span class="p">,</span> <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">runnable</span><span class="o">.</span><span class="n">get_graph</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
 <div class="viewcode-block" id="DynamicRunnable.with_config">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.configurable.DynamicRunnable.html#langchain_core.runnables.configurable.DynamicRunnable.with_config">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">with_config</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -361,6 +368,7 @@
 
 <div class="viewcode-block" id="DynamicRunnable.invoke">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.configurable.DynamicRunnable.html#langchain_core.runnables.configurable.DynamicRunnable.invoke">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Output</span><span class="p">:</span>
@@ -370,6 +378,7 @@
 
 <div class="viewcode-block" id="DynamicRunnable.ainvoke">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.configurable.DynamicRunnable.html#langchain_core.runnables.configurable.DynamicRunnable.ainvoke">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ainvoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Output</span><span class="p">:</span>
@@ -379,6 +388,7 @@
 
 <div class="viewcode-block" id="DynamicRunnable.batch">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.configurable.DynamicRunnable.html#langchain_core.runnables.configurable.DynamicRunnable.batch">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">batch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -424,6 +434,7 @@
 
 <div class="viewcode-block" id="DynamicRunnable.abatch">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.configurable.DynamicRunnable.html#langchain_core.runnables.configurable.DynamicRunnable.abatch">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">abatch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -465,6 +476,7 @@
 
 <div class="viewcode-block" id="DynamicRunnable.stream">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.configurable.DynamicRunnable.html#langchain_core.runnables.configurable.DynamicRunnable.stream">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">stream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -477,6 +489,7 @@
 
 <div class="viewcode-block" id="DynamicRunnable.astream">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.configurable.DynamicRunnable.html#langchain_core.runnables.configurable.DynamicRunnable.astream">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">astream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span>
@@ -488,6 +501,7 @@
             <span class="k">yield</span> <span class="n">chunk</span></div>
 
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -497,6 +511,7 @@
         <span class="n">runnable</span><span class="p">,</span> <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">runnable</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">atransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span>
@@ -507,7 +522,8 @@
         <span class="k">async</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">runnable</span><span class="o">.</span><span class="n">atransform</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
             <span class="k">yield</span> <span class="n">chunk</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># type: ignore[misc]</span>
         <span class="n">attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">attr</span><span class="p">):</span>
 
@@ -615,11 +631,6 @@
 
     <span class="n">fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">AnyConfigurableField</span><span class="p">]</span>
 
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
-
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">config_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ConfigurableFieldSpec</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Get the configuration specs for the RunnableConfigurableFields.</span>
@@ -655,12 +666,10 @@
 
 <div class="viewcode-block" id="RunnableConfigurableFields.configurable_fields">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.configurable.RunnableConfigurableFields.html#langchain_core.runnables.configurable.RunnableConfigurableFields.configurable_fields">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">configurable_fields</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">AnyConfigurableField</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunnableSerializable</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get a new RunnableConfigurableFields with the specified</span>
-<span class="sd">        configurable fields.</span>
-<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="o">.</span><span class="n">configurable_fields</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">})</span></div>
 
 
@@ -804,12 +813,8 @@
 <span class="sd">    of the form &lt;which.id&gt;==&lt;alternative_key&gt;, eg. a key named "temperature" used by</span>
 <span class="sd">    the alternative named "gpt3" becomes "model==gpt3/temperature"."""</span>
 
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
-
     <span class="nd">@property</span>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">config_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ConfigurableFieldSpec</span><span class="p">]:</span>
         <span class="k">with</span> <span class="n">_enums_for_spec_lock</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">which_enum</span> <span class="o">:=</span> <span class="n">_enums_for_spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">which</span><span class="p">):</span>
@@ -859,6 +864,7 @@
 
 <div class="viewcode-block" id="RunnableConfigurableAlternatives.configurable_fields">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.configurable.RunnableConfigurableAlternatives.html#langchain_core.runnables.configurable.RunnableConfigurableAlternatives.configurable_fields">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">configurable_fields</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">AnyConfigurableField</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunnableSerializable</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">]:</span>
@@ -946,8 +952,7 @@
     <span class="n">spec</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ConfigurableFieldSingleOption</span><span class="p">,</span> <span class="n">ConfigurableFieldMultiOption</span><span class="p">],</span>
     <span class="n">description</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConfigurableFieldSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Make a ConfigurableFieldSpec for a ConfigurableFieldSingleOption or</span>
-<span class="sd">    ConfigurableFieldMultiOption.</span>
+<span class="w">    </span><span class="sd">"""Make a ConfigurableFieldSpec for a ConfigurableFieldSingleOption or ConfigurableFieldMultiOption.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        spec: The ConfigurableFieldSingleOption or ConfigurableFieldMultiOption.</span>
@@ -955,7 +960,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The ConfigurableFieldSpec.</span>
-<span class="sd">    """</span>
+<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
     <span class="k">with</span> <span class="n">_enums_for_spec_lock</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">enum</span> <span class="o">:=</span> <span class="n">_enums_for_spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">spec</span><span class="p">):</span>
             <span class="k">pass</span>
