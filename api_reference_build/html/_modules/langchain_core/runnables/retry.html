@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 10, 2025" name="docbuild:last-update"/>
+<meta content="Apr 11, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -240,7 +240,7 @@
     <span class="n">stop_after_attempt</span><span class="p">,</span>
     <span class="n">wait_exponential_jitter</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span><span class="p">,</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">,</span> <span class="n">RunnableBindingBase</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableConfig</span><span class="p">,</span> <span class="n">patch_config</span>
@@ -253,6 +253,22 @@
 
     <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T"</span><span class="p">,</span> <span class="n">CallbackManagerForChainRun</span><span class="p">,</span> <span class="n">AsyncCallbackManagerForChainRun</span><span class="p">)</span>
 <span class="n">U</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"U"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ExponentialJitterParams">
+<a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.retry.ExponentialJitterParams.html#langchain_core.runnables.retry.ExponentialJitterParams">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExponentialJitterParams</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Parameters for ``tenacity.wait_exponential_jitter``."""</span>
+
+    <span class="n">initial</span><span class="p">:</span> <span class="nb">float</span>
+<span class="w">    </span><span class="sd">"""Initial wait."""</span>
+    <span class="nb">max</span><span class="p">:</span> <span class="nb">float</span>
+<span class="w">    </span><span class="sd">"""Maximum wait."""</span>
+    <span class="n">exp_base</span><span class="p">:</span> <span class="nb">float</span>
+<span class="w">    </span><span class="sd">"""Base for exponential backoff."""</span>
+    <span class="n">jitter</span><span class="p">:</span> <span class="nb">float</span>
+<span class="w">    </span><span class="sd">"""Random additional wait sampled from random.uniform(0, jitter)."""</span></div>
+
 
 
 <div class="viewcode-block" id="RunnableRetry">
@@ -286,6 +302,7 @@
 <span class="sd">                retry_if_exception_type=(ValueError,), # Retry only on ValueError</span>
 <span class="sd">                wait_exponential_jitter=True, # Add jitter to the exponential backoff</span>
 <span class="sd">                stop_after_attempt=2, # Try twice</span>
+<span class="sd">                exponential_jitter_params={"initial": 2},  # if desired, customize backoff</span>
 <span class="sd">            )</span>
 
 <span class="sd">            # The method invocation above is equivalent to the longer form below:</span>
@@ -294,7 +311,8 @@
 <span class="sd">                bound=runnable,</span>
 <span class="sd">                retry_exception_types=(ValueError,),</span>
 <span class="sd">                max_attempt_number=2,</span>
-<span class="sd">                wait_exponential_jitter=True</span>
+<span class="sd">                wait_exponential_jitter=True,</span>
+<span class="sd">                exponential_jitter_params={"initial": 2},</span>
 <span class="sd">            )</span>
 
 <span class="sd">    This logic can be used to retry any Runnable, including a chain of Runnables,</span>
@@ -318,7 +336,7 @@
 <span class="sd">            # Bad</span>
 <span class="sd">            chain = template | model</span>
 <span class="sd">            retryable_chain = chain.with_retry()</span>
-<span class="sd">    """</span>
+<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
 
     <span class="n">retry_exception_types</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="ne">BaseException</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="ne">Exception</span><span class="p">,)</span>
 <span class="w">    </span><span class="sd">"""The exception types to retry on. By default all exceptions are retried.</span>
@@ -333,6 +351,11 @@
     <span class="n">wait_exponential_jitter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="w">    </span><span class="sd">"""Whether to add jitter to the exponential backoff."""</span>
 
+    <span class="n">exponential_jitter_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ExponentialJitterParams</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">"""Parameters for ``tenacity.wait_exponential_jitter``. Namely: ``initial``,</span>
+<span class="sd">    ``max``, ``exp_base``, and ``jitter`` (all float values).</span>
+<span class="sd">    """</span>
+
     <span class="n">max_attempt_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="w">    </span><span class="sd">"""The maximum number of attempts to retry the Runnable."""</span>
 
@@ -344,7 +367,9 @@
             <span class="n">kwargs</span><span class="p">[</span><span class="s2">"stop"</span><span class="p">]</span> <span class="o">=</span> <span class="n">stop_after_attempt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_attempt_number</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_exponential_jitter</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"wait"</span><span class="p">]</span> <span class="o">=</span> <span class="n">wait_exponential_jitter</span><span class="p">()</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"wait"</span><span class="p">]</span> <span class="o">=</span> <span class="n">wait_exponential_jitter</span><span class="p">(</span>
+                <span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exponential_jitter_params</span> <span class="ow">or</span> <span class="p">{})</span>
+            <span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">retry_exception_types</span><span class="p">:</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s2">"retry"</span><span class="p">]</span> <span class="o">=</span> <span class="n">retry_if_exception_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">retry_exception_types</span><span class="p">)</span>

@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 10, 2025" name="docbuild:last-update"/>
+<meta content="Apr 11, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -256,7 +256,10 @@
 <span class="sd">            pip install -U langchain-community azure-identity azure-search-documents</span>
 <span class="sd">            export AZURE_AI_SEARCH_SERVICE_NAME="&lt;YOUR_SEARCH_SERVICE_NAME&gt;"</span>
 <span class="sd">            export AZURE_AI_SEARCH_INDEX_NAME="&lt;YOUR_SEARCH_INDEX_NAME&gt;"</span>
+
 <span class="sd">            export AZURE_AI_SEARCH_API_KEY="&lt;YOUR_API_KEY&gt;"</span>
+<span class="sd">            or</span>
+<span class="sd">            export AZURE_AI_SEARCH_BEARER_TOKEN="&lt;YOUR_BEARER_TOKEN&gt;"</span>
 
 <span class="sd">    Key init args:</span>
 <span class="sd">        content_key: str</span>
@@ -320,6 +323,14 @@
 <span class="w">    </span><span class="sd">"""API version"""</span>
     <span class="n">aiosession</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientSession</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""ClientSession, in case we want to reuse connection for better performance."""</span>
+    <span class="n">azure_ad_token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+<span class="w">    </span><span class="sd">"""Your Azure Active Directory token.</span>
+
+<span class="sd">        Automatically inferred from env var `AZURE_AI_SEARCH_AD_TOKEN` if not provided.</span>
+
+<span class="sd">        For more:</span>
+<span class="sd">        https://www.microsoft.com/en-us/security/business/identity-access/microsoft-entra-id.</span>
+<span class="sd">    """</span>
     <span class="n">content_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"content"</span>
 <span class="w">    </span><span class="sd">"""Key in a retrieved result to set as the Document page_content."""</span>
     <span class="n">top_k</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -342,9 +353,19 @@
         <span class="n">values</span><span class="p">[</span><span class="s2">"index_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_from_dict_or_env</span><span class="p">(</span>
             <span class="n">values</span><span class="p">,</span> <span class="s2">"index_name"</span><span class="p">,</span> <span class="s2">"AZURE_AI_SEARCH_INDEX_NAME"</span>
         <span class="p">)</span>
-        <span class="n">values</span><span class="p">[</span><span class="s2">"api_key"</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_from_dict_or_env</span><span class="p">(</span>
-            <span class="n">values</span><span class="p">,</span> <span class="s2">"api_key"</span><span class="p">,</span> <span class="s2">"AZURE_AI_SEARCH_API_KEY"</span>
+        <span class="n">values</span><span class="p">[</span><span class="s2">"azure_ad_token"</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_from_dict_or_env</span><span class="p">(</span>
+            <span class="n">values</span><span class="p">,</span> <span class="s2">"azure_ad_token"</span><span class="p">,</span> <span class="s2">"AZURE_AI_SEARCH_AD_TOKEN"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">""</span>
         <span class="p">)</span>
+        <span class="n">values</span><span class="p">[</span><span class="s2">"api_key"</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_from_dict_or_env</span><span class="p">(</span>
+            <span class="n">values</span><span class="p">,</span> <span class="s2">"api_key"</span><span class="p">,</span> <span class="s2">"AZURE_AI_SEARCH_API_KEY"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">""</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="s2">"azure_ad_token"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">""</span> <span class="ow">and</span> <span class="n">values</span><span class="p">[</span><span class="s2">"api_key"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">""</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Missing credentials. Please pass one of `api_key`, `azure_ad_token`, "</span>
+                <span class="s2">"or the `AZURE_AI_SEARCH_API_KEY` or `AZURE_AI_SEARCH_AD_TOKEN` "</span>
+                <span class="s2">"environment variables."</span>
+            <span class="p">)</span>
+
         <span class="k">return</span> <span class="n">values</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_build_search_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -369,10 +390,14 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="p">{</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"Content-Type"</span><span class="p">:</span> <span class="s2">"application/json"</span><span class="p">,</span>
-            <span class="s2">"api-key"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="p">,</span>
         <span class="p">}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">azure_ad_token</span><span class="p">:</span>
+            <span class="n">headers</span><span class="p">[</span><span class="s2">"Authorization"</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Bearer </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">azure_ad_token</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">headers</span><span class="p">[</span><span class="s2">"api-key"</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">return</span> <span class="n">headers</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
         <span class="n">search_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_search_url</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>

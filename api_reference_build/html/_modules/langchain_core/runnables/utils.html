@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 10, 2025" name="docbuild:last-update"/>
+<meta content="Apr 11, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -228,6 +228,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">textwrap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextvars</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">inspect</span><span class="w"> </span><span class="kn">import</span> <span class="n">signature</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">groupby</span>
@@ -361,6 +362,29 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">asyncio_accepts_context</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Cache the result of checking if asyncio.create_task accepts a ``context`` arg."""</span>
     <span class="k">return</span> <span class="n">accepts_context</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="coro_with_context">
+<a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.utils.coro_with_context.html#langchain_core.runnables.utils.coro_with_context">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">coro_with_context</span><span class="p">(</span>
+    <span class="n">coro</span><span class="p">:</span> <span class="n">Awaitable</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">context</span><span class="p">:</span> <span class="n">Context</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">create_task</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Awaitable</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Await a coroutine with a context.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        coro: The coroutine to await.</span>
+<span class="sd">        context: The context to use.</span>
+<span class="sd">        create_task: Whether to create a task. Defaults to False.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The coroutine with the context.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">asyncio_accepts_context</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">coro</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type,call-arg]</span>
+    <span class="k">if</span> <span class="n">create_task</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">coro</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+    <span class="k">return</span> <span class="n">coro</span></div>
+
 
 
 <div class="viewcode-block" id="IsLocalDict">

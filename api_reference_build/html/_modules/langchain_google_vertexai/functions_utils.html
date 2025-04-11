@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 10, 2025" name="docbuild:last-update"/>
+<meta content="Apr 11, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -334,7 +334,7 @@
 <span class="w">    </span><span class="sd">"""Format a JSON schema from a Pydantic V2 BaseModel to gapic."""</span>
     <span class="n">converted_schema</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"definitions"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"$defs"</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"items"</span><span class="p">:</span>
             <span class="n">converted_schema</span><span class="p">[</span><span class="s2">"items"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_format_json_schema_to_gapic</span><span class="p">(</span>
@@ -379,7 +379,10 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_dict_to_gapic_schema</span><span class="p">(</span>
     <span class="n">schema</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">pydantic_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"v1"</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gapic</span><span class="o">.</span><span class="n">Schema</span><span class="p">:</span>
+    <span class="c1"># Resolve refs in schema because $refs and $defs are not supported</span>
+    <span class="c1"># by the Gemini API.</span>
     <span class="n">dereferenced_schema</span> <span class="o">=</span> <span class="n">dereference_refs</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="n">pydantic_version</span> <span class="o">==</span> <span class="s2">"v1"</span><span class="p">:</span>
         <span class="n">formatted_schema</span> <span class="o">=</span> <span class="n">_format_json_schema_to_gapic_v1</span><span class="p">(</span><span class="n">dereferenced_schema</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -441,16 +444,25 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_dict_to_function_declaration</span><span class="p">(</span>
     <span class="n">tool</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">FunctionDescription</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gapic</span><span class="o">.</span><span class="n">FunctionDeclaration</span><span class="p">:</span>
+    <span class="n">pydantic_version_v2</span> <span class="o">=</span> <span class="kc">False</span>
+
     <span class="c1"># Ensure we send "anyOf" parameters through pydantic v2 schema parsing</span>
-    <span class="n">pydantic_version</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="n">properties</span> <span class="o">=</span> <span class="n">tool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"parameters"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_v2</span><span class="p">(</span><span class="n">parameters</span><span class="p">):</span>
+        <span class="n">properties</span> <span class="o">=</span> <span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
         <span class="k">for</span> <span class="nb">property</span> <span class="ow">in</span> <span class="n">properties</span><span class="p">:</span>
             <span class="k">if</span> <span class="s2">"anyOf"</span> <span class="ow">in</span> <span class="nb">property</span><span class="p">:</span>
-                <span class="n">pydantic_version</span> <span class="o">=</span> <span class="s2">"v2"</span>
-    <span class="k">if</span> <span class="n">pydantic_version</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="s2">"parameters"</span> <span class="ow">in</span> <span class="nb">property</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">_check_v2</span><span class="p">(</span><span class="nb">property</span><span class="p">[</span><span class="s2">"parameters"</span><span class="p">])</span>
+            <span class="k">if</span> <span class="s2">"items"</span> <span class="ow">in</span> <span class="nb">property</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">_check_v2</span><span class="p">(</span><span class="nb">property</span><span class="p">[</span><span class="s2">"items"</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">pydantic_version_v2</span> <span class="o">=</span> <span class="n">_check_v2</span><span class="p">(</span><span class="n">tool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"parameters"</span><span class="p">,</span> <span class="p">{}))</span>
+    <span class="k">if</span> <span class="n">pydantic_version_v2</span><span class="p">:</span>
         <span class="n">parameters</span> <span class="o">=</span> <span class="n">_dict_to_gapic_schema</span><span class="p">(</span>
-            <span class="n">tool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"parameters"</span><span class="p">,</span> <span class="p">{}),</span> <span class="n">pydantic_version</span><span class="o">=</span><span class="n">pydantic_version</span>
+            <span class="n">tool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"parameters"</span><span class="p">,</span> <span class="p">{}),</span> <span class="n">pydantic_version</span><span class="o">=</span><span class="s2">"v2"</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">parameters</span> <span class="o">=</span> <span class="n">_dict_to_gapic_schema</span><span class="p">(</span><span class="n">tool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"parameters"</span><span class="p">,</span> <span class="p">{}))</span>

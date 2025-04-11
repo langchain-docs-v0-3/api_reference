@@ -50,11 +50,11 @@
 <link href="../../_static/favicon.png" rel="icon"/>
 <link href="../../search.html" rel="search" title="Search"/>
 <link href="langchain_core.runnables.router.RouterInput.html" rel="next" title="RouterInput"/>
-<link href="langchain_core.runnables.passthrough.RunnablePick.html" rel="prev" title="RunnablePick"/>
+<link href="langchain_core.runnables.retry.ExponentialJitterParams.html" rel="prev" title="ExponentialJitterParams"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 10, 2025" name="docbuild:last-update"/>
+<meta content="Apr 11, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -261,6 +261,7 @@
 <li class="toctree-l3"><a class="reference internal" href="langchain_core.runnables.passthrough.RunnableAssign.html">RunnableAssign</a></li>
 <li class="toctree-l3"><a class="reference internal" href="langchain_core.runnables.passthrough.RunnablePassthrough.html">RunnablePassthrough</a></li>
 <li class="toctree-l3"><a class="reference internal" href="langchain_core.runnables.passthrough.RunnablePick.html">RunnablePick</a></li>
+<li class="toctree-l3"><a class="reference internal" href="langchain_core.runnables.retry.ExponentialJitterParams.html">ExponentialJitterParams</a></li>
 <li class="toctree-l3 current active"><a class="current reference internal" href="#">RunnableRetry</a></li>
 <li class="toctree-l3"><a class="reference internal" href="langchain_core.runnables.router.RouterInput.html">RouterInput</a></li>
 <li class="toctree-l3"><a class="reference internal" href="langchain_core.runnables.router.RouterRunnable.html">RouterRunnable</a></li>
@@ -307,6 +308,7 @@
 <li class="toctree-l3"><a class="reference internal" href="langchain_core.runnables.utils.accepts_context.html">accepts_context</a></li>
 <li class="toctree-l3"><a class="reference internal" href="langchain_core.runnables.utils.accepts_run_manager.html">accepts_run_manager</a></li>
 <li class="toctree-l3"><a class="reference internal" href="langchain_core.runnables.utils.add.html">add</a></li>
+<li class="toctree-l3"><a class="reference internal" href="langchain_core.runnables.utils.coro_with_context.html">coro_with_context</a></li>
 <li class="toctree-l3"><a class="reference internal" href="langchain_core.runnables.utils.gated_coro.html">gated_coro</a></li>
 <li class="toctree-l3"><a class="reference internal" href="langchain_core.runnables.utils.gather_with_concurrency.html">gather_with_concurrency</a></li>
 <li class="toctree-l3"><a class="reference internal" href="langchain_core.runnables.utils.get_function_first_arg_dict_keys.html">get_function_first_arg_dict_keys</a></li>
@@ -440,6 +442,7 @@ Here’s an example that uses a RunnableLambda to raise an exception</p>
     <span class="n">retry_if_exception_type</span><span class="o">=</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,),</span> <span class="c1"># Retry only on ValueError</span>
     <span class="n">wait_exponential_jitter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="c1"># Add jitter to the exponential backoff</span>
     <span class="n">stop_after_attempt</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="c1"># Try twice</span>
+    <span class="n">exponential_jitter_params</span><span class="o">=</span><span class="p">{</span><span class="s2">"initial"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>  <span class="c1"># if desired, customize backoff</span>
 <span class="p">)</span>
 
 <span class="c1"># The method invocation above is equivalent to the longer form below:</span>
@@ -448,7 +451,8 @@ Here’s an example that uses a RunnableLambda to raise an exception</p>
     <span class="n">bound</span><span class="o">=</span><span class="n">runnable</span><span class="p">,</span>
     <span class="n">retry_exception_types</span><span class="o">=</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,),</span>
     <span class="n">max_attempt_number</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-    <span class="n">wait_exponential_jitter</span><span class="o">=</span><span class="kc">True</span>
+    <span class="n">wait_exponential_jitter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">exponential_jitter_params</span><span class="o">=</span><span class="p">{</span><span class="s2">"initial"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -525,6 +529,12 @@ Runnable with a custom type. Defaults to None.</p></li>
 <em class="property"><span class="pre">param</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">custom_output_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#langchain_core.runnables.retry.RunnableRetry.custom_output_type" title="Link to this definition">#</a></dt>
 <dd><p>Override the output type of the underlying Runnable with a custom type.</p>
 <p>The type can be a pydantic model, or a type annotation (e.g., <cite>List[str]</cite>).</p>
+</dd></dl>
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="langchain_core.runnables.retry.RunnableRetry.exponential_jitter_params">
+<em class="property"><span class="pre">param</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">exponential_jitter_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="langchain_core.runnables.retry.ExponentialJitterParams.html#langchain_core.runnables.retry.ExponentialJitterParams" title="langchain_core.runnables.retry.ExponentialJitterParams"><span class="pre">ExponentialJitterParams</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#langchain_core.runnables.retry.RunnableRetry.exponential_jitter_params" title="Link to this definition">#</a></dt>
+<dd><p>Parameters for <code class="docutils literal notranslate"><span class="pre">tenacity.wait_exponential_jitter</span></code>. Namely: <code class="docutils literal notranslate"><span class="pre">initial</span></code>,
+<code class="docutils literal notranslate"><span class="pre">max</span></code>, <code class="docutils literal notranslate"><span class="pre">exp_base</span></code>, and <code class="docutils literal notranslate"><span class="pre">jitter</span></code> (all float values).</p>
 </dd></dl>
 <dl class="py attribute pydantic_field">
 <dt class="sig sig-object py" id="langchain_core.runnables.retry.RunnableRetry.kwargs">
@@ -1374,7 +1384,7 @@ added to the run.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_core.runnables.retry.RunnableRetry.with_retry">
-<span class="sig-name descname"><span class="pre">with_retry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*,</span> <span class="pre">retry_if_exception_type:</span> <span class="pre">tuple[type[BaseException],</span> <span class="pre">...]</span> <span class="pre">=</span> <span class="pre">(&lt;class</span> <span class="pre">'Exception'&gt;,),</span> <span class="pre">wait_exponential_jitter:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True,</span> <span class="pre">stop_after_attempt:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">3</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="langchain_core.runnables.base.Runnable.html#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><span class="pre">Runnable</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Input</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Output</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#langchain_core.runnables.retry.RunnableRetry.with_retry" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">with_retry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*,</span> <span class="pre">retry_if_exception_type:</span> <span class="pre">tuple[type[BaseException],</span> <span class="pre">...]</span> <span class="pre">=</span> <span class="pre">(&lt;class</span> <span class="pre">'Exception'&gt;,),</span> <span class="pre">wait_exponential_jitter:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True,</span> <span class="pre">exponential_jitter_params:</span> <span class="pre">Optional[ExponentialJitterParams]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">stop_after_attempt:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">3</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="langchain_core.runnables.base.Runnable.html#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><span class="pre">Runnable</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Input</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Output</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#langchain_core.runnables.retry.RunnableRetry.with_retry" title="Link to this definition">#</a></dt>
 <dd><p>Create a new Runnable that retries the original Runnable on exceptions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1385,13 +1395,16 @@ Defaults to (Exception,).</p></li>
 time between retries. Defaults to True.</p></li>
 <li><p><strong>stop_after_attempt</strong> (<em>int</em>) – The maximum number of attempts to make before
 giving up. Defaults to 3.</p></li>
+<li><p><strong>exponential_jitter_params</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="langchain_core.runnables.retry.ExponentialJitterParams.html#langchain_core.runnables.retry.ExponentialJitterParams" title="langchain_core.runnables.retry.ExponentialJitterParams"><em>ExponentialJitterParams</em></a><em>]</em>) – Parameters for
+<code class="docutils literal notranslate"><span class="pre">tenacity.wait_exponential_jitter</span></code>. Namely: <code class="docutils literal notranslate"><span class="pre">initial</span></code>, <code class="docutils literal notranslate"><span class="pre">max</span></code>,
+<code class="docutils literal notranslate"><span class="pre">exp_base</span></code>, and <code class="docutils literal notranslate"><span class="pre">jitter</span></code> (all float values).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A new Runnable that retries the original Runnable on exceptions.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="langchain_core.runnables.base.Runnable.html#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><em>Runnable</em></a>[<em>Input</em>, <em>Output</em>]</p>
+<dd class="field-odd"><p><a class="reference internal" href="langchain_core.runnables.base.Runnable.html#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable">Runnable</a>[Input, Output]</p>
 </dd>
 </dl>
 <p>Example:</p>
@@ -1421,22 +1434,6 @@ giving up. Defaults to 3.</p></li>
 <span class="k">assert</span> <span class="p">(</span><span class="n">count</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>retry_if_exception_type</strong> (<em>tuple</em><em>[</em><em>type</em><em>[</em><em>BaseException</em><em>]</em><em>, </em><em>...</em><em>]</em>) – A tuple of exception types to retry on</p></li>
-<li><p><strong>wait_exponential_jitter</strong> (<em>bool</em>) – Whether to add jitter to the wait time
-between retries</p></li>
-<li><p><strong>stop_after_attempt</strong> (<em>int</em>) – The maximum number of attempts to make before giving up</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A new Runnable that retries the original Runnable on exceptions.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="langchain_core.runnables.base.Runnable.html#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><em>Runnable</em></a>[<em>Input</em>, <em>Output</em>]</p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_core.runnables.retry.RunnableRetry.with_types">
@@ -1477,6 +1474,7 @@ between retries</p></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_core.runnables.retry.RunnableRetry.config_factories"><code class="docutils literal notranslate"><span class="pre">config_factories</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_core.runnables.retry.RunnableRetry.custom_input_type"><code class="docutils literal notranslate"><span class="pre">custom_input_type</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_core.runnables.retry.RunnableRetry.custom_output_type"><code class="docutils literal notranslate"><span class="pre">custom_output_type</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_core.runnables.retry.RunnableRetry.exponential_jitter_params"><code class="docutils literal notranslate"><span class="pre">exponential_jitter_params</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_core.runnables.retry.RunnableRetry.kwargs"><code class="docutils literal notranslate"><span class="pre">kwargs</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_core.runnables.retry.RunnableRetry.max_attempt_number"><code class="docutils literal notranslate"><span class="pre">max_attempt_number</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_core.runnables.retry.RunnableRetry.retry_exception_types"><code class="docutils literal notranslate"><span class="pre">retry_exception_types</span></code></a></li>

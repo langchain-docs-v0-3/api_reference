@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 10, 2025" name="docbuild:last-update"/>
+<meta content="Apr 11, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -222,22 +222,60 @@
 <h1>Source code for langchain_community.utilities.jira</h1><div class="highlight"><pre>
 <span></span><span class="sd">"""Util that calls Jira."""</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_from_dict_or_env</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">model_validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
+
+
+<div class="viewcode-block" id="JiraOauth2Token">
+<a class="viewcode-back" href="../../../community/utilities/langchain_community.utilities.jira.JiraOauth2Token.html#langchain_community.utilities.jira.JiraOauth2Token">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">JiraOauth2Token</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Jira OAuth2 token."""</span>
+
+    <span class="n">access_token</span><span class="p">:</span> <span class="nb">str</span>
+<span class="w">    </span><span class="sd">"""Jira OAuth2 access token."""</span>
+    <span class="n">token_type</span><span class="p">:</span> <span class="nb">str</span>
+<span class="w">    </span><span class="sd">"""Jira OAuth2 token type ('bearer' or other)."""</span></div>
+
+
+
+<div class="viewcode-block" id="JiraOauth2">
+<a class="viewcode-back" href="../../../community/utilities/langchain_community.utilities.jira.JiraOauth2.html#langchain_community.utilities.jira.JiraOauth2">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">JiraOauth2</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Jira OAuth2."""</span>
+
+    <span class="n">client_id</span><span class="p">:</span> <span class="nb">str</span>
+<span class="w">    </span><span class="sd">"""Jira OAuth2 client ID."""</span>
+    <span class="n">token</span><span class="p">:</span> <span class="n">JiraOauth2Token</span>
+<span class="w">    </span><span class="sd">"""Jira OAuth2 token."""</span></div>
+
 
 
 <span class="c1"># TODO: think about error handling, more specific api specs, and jql/project limits</span>
 <div class="viewcode-block" id="JiraAPIWrapper">
 <a class="viewcode-back" href="../../../community/utilities/langchain_community.utilities.jira.JiraAPIWrapper.html#langchain_community.utilities.jira.JiraAPIWrapper">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">JiraAPIWrapper</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Wrapper for Jira API."""</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Wrapper for Jira API. You can connect to Jira with either an API token or OAuth2.</span>
+<span class="sd">    - with API token, you need to provide the JIRA_USERNAME and JIRA_API_TOKEN</span>
+<span class="sd">        environment variables or arguments.</span>
+<span class="sd">    ex: JIRA_USERNAME=your_username JIRA_API_TOKEN=your_api_token</span>
+<span class="sd">    - with OAuth2, you need to provide the JIRA_OAUTH2 environment variable or</span>
+<span class="sd">        argument as a dict having as fields "client_id" and "token" which is</span>
+<span class="sd">        a dict containing at least "access_token" and "token_type".</span>
+<span class="sd">    ex: JIRA_OAUTH2='{"client_id": "your_client_id", "token":</span>
+<span class="sd">        {"access_token": "your_access_token","token_type": "bearer"}}'</span>
+<span class="sd">    """</span>
 
     <span class="n">jira</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1">#: :meta private:</span>
     <span class="n">confluence</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">jira_username</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">jira_api_token</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">"""Jira API token when you choose to connect to Jira with api token."""</span>
+    <span class="n">jira_oauth2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">JiraOauth2</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">"""Jira OAuth2 token when you choose to connect to Jira with oauth2."""</span>
     <span class="n">jira_instance_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">jira_cloud</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -255,9 +293,29 @@
         <span class="n">values</span><span class="p">[</span><span class="s2">"jira_username"</span><span class="p">]</span> <span class="o">=</span> <span class="n">jira_username</span>
 
         <span class="n">jira_api_token</span> <span class="o">=</span> <span class="n">get_from_dict_or_env</span><span class="p">(</span>
-            <span class="n">values</span><span class="p">,</span> <span class="s2">"jira_api_token"</span><span class="p">,</span> <span class="s2">"JIRA_API_TOKEN"</span>
+            <span class="n">values</span><span class="p">,</span> <span class="s2">"jira_api_token"</span><span class="p">,</span> <span class="s2">"JIRA_API_TOKEN"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">""</span>
         <span class="p">)</span>
         <span class="n">values</span><span class="p">[</span><span class="s2">"jira_api_token"</span><span class="p">]</span> <span class="o">=</span> <span class="n">jira_api_token</span>
+
+        <span class="n">jira_oauth2</span> <span class="o">=</span> <span class="n">get_from_dict_or_env</span><span class="p">(</span>
+            <span class="n">values</span><span class="p">,</span> <span class="s2">"jira_oauth2"</span><span class="p">,</span> <span class="s2">"JIRA_OAUTH2"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">""</span>
+        <span class="p">)</span>
+        <span class="n">values</span><span class="p">[</span><span class="s2">"jira_oauth2"</span><span class="p">]</span> <span class="o">=</span> <span class="n">jira_oauth2</span>
+
+        <span class="k">if</span> <span class="n">jira_oauth2</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">jira_oauth2</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+                <span class="n">jira_oauth2</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">jira_oauth2</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                    <span class="s2">"json is not installed. Please install it with `pip install json`"</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">decoder</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"The format of the JIRA_OAUTH2 string is "</span>
+                    <span class="sa">f</span><span class="s2">"not a valid dictionary: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
 
         <span class="n">jira_instance_url</span> <span class="o">=</span> <span class="n">get_from_dict_or_env</span><span class="p">(</span>
             <span class="n">values</span><span class="p">,</span> <span class="s2">"jira_instance_url"</span><span class="p">,</span> <span class="s2">"JIRA_INSTANCE_URL"</span>
@@ -271,6 +329,12 @@
         <span class="n">jira_cloud</span> <span class="o">=</span> <span class="n">jira_cloud_str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"true"</span>
         <span class="n">values</span><span class="p">[</span><span class="s2">"jira_cloud"</span><span class="p">]</span> <span class="o">=</span> <span class="n">jira_cloud</span>
 
+        <span class="k">if</span> <span class="n">jira_api_token</span> <span class="ow">and</span> <span class="n">jira_oauth2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"You have to provide either a jira_api_token or a jira_oauth2. "</span>
+                <span class="s2">"Not both."</span>
+            <span class="p">)</span>
+
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">atlassian</span><span class="w"> </span><span class="kn">import</span> <span class="n">Confluence</span><span class="p">,</span> <span class="n">Jira</span>
         <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
@@ -279,26 +343,38 @@
                 <span class="s2">"Please install it with `pip install atlassian-python-api`"</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">jira_username</span> <span class="o">==</span> <span class="s2">""</span><span class="p">:</span>
-            <span class="n">jira</span> <span class="o">=</span> <span class="n">Jira</span><span class="p">(</span>
-                <span class="n">url</span><span class="o">=</span><span class="n">jira_instance_url</span><span class="p">,</span>
-                <span class="n">token</span><span class="o">=</span><span class="n">jira_api_token</span><span class="p">,</span>
-                <span class="n">cloud</span><span class="o">=</span><span class="n">jira_cloud</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">jira</span> <span class="o">=</span> <span class="n">Jira</span><span class="p">(</span>
+        <span class="k">if</span> <span class="n">jira_api_token</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">jira_username</span> <span class="o">==</span> <span class="s2">""</span><span class="p">:</span>
+                <span class="n">jira</span> <span class="o">=</span> <span class="n">Jira</span><span class="p">(</span>
+                    <span class="n">url</span><span class="o">=</span><span class="n">jira_instance_url</span><span class="p">,</span>
+                    <span class="n">token</span><span class="o">=</span><span class="n">jira_api_token</span><span class="p">,</span>
+                    <span class="n">cloud</span><span class="o">=</span><span class="n">jira_cloud</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">jira</span> <span class="o">=</span> <span class="n">Jira</span><span class="p">(</span>
+                    <span class="n">url</span><span class="o">=</span><span class="n">jira_instance_url</span><span class="p">,</span>
+                    <span class="n">username</span><span class="o">=</span><span class="n">jira_username</span><span class="p">,</span>
+                    <span class="n">password</span><span class="o">=</span><span class="n">jira_api_token</span><span class="p">,</span>
+                    <span class="n">cloud</span><span class="o">=</span><span class="n">jira_cloud</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="n">confluence</span> <span class="o">=</span> <span class="n">Confluence</span><span class="p">(</span>
                 <span class="n">url</span><span class="o">=</span><span class="n">jira_instance_url</span><span class="p">,</span>
                 <span class="n">username</span><span class="o">=</span><span class="n">jira_username</span><span class="p">,</span>
                 <span class="n">password</span><span class="o">=</span><span class="n">jira_api_token</span><span class="p">,</span>
                 <span class="n">cloud</span><span class="o">=</span><span class="n">jira_cloud</span><span class="p">,</span>
             <span class="p">)</span>
-
-        <span class="n">confluence</span> <span class="o">=</span> <span class="n">Confluence</span><span class="p">(</span>
-            <span class="n">url</span><span class="o">=</span><span class="n">jira_instance_url</span><span class="p">,</span>
-            <span class="n">username</span><span class="o">=</span><span class="n">jira_username</span><span class="p">,</span>
-            <span class="n">password</span><span class="o">=</span><span class="n">jira_api_token</span><span class="p">,</span>
-            <span class="n">cloud</span><span class="o">=</span><span class="n">jira_cloud</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">jira_oauth2</span><span class="p">:</span>
+            <span class="n">jira</span> <span class="o">=</span> <span class="n">Jira</span><span class="p">(</span>
+                <span class="n">url</span><span class="o">=</span><span class="n">jira_instance_url</span><span class="p">,</span>
+                <span class="n">oauth2</span><span class="o">=</span><span class="n">jira_oauth2</span><span class="p">,</span>
+                <span class="n">cloud</span><span class="o">=</span><span class="n">jira_cloud</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">confluence</span> <span class="o">=</span> <span class="n">Confluence</span><span class="p">(</span>
+                <span class="n">url</span><span class="o">=</span><span class="n">jira_instance_url</span><span class="p">,</span>
+                <span class="n">oauth2</span><span class="o">=</span><span class="n">jira_oauth2</span><span class="p">,</span>
+                <span class="n">cloud</span><span class="o">=</span><span class="n">jira_cloud</span><span class="p">,</span>
+            <span class="p">)</span>
 
         <span class="n">values</span><span class="p">[</span><span class="s2">"jira"</span><span class="p">]</span> <span class="o">=</span> <span class="n">jira</span>
         <span class="n">values</span><span class="p">[</span><span class="s2">"confluence"</span><span class="p">]</span> <span class="o">=</span> <span class="n">confluence</span>
@@ -323,7 +399,7 @@
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="n">assignee</span> <span class="o">=</span> <span class="s2">"None"</span>
             <span class="n">rel_issues</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="k">for</span> <span class="n">related_issue</span> <span class="ow">in</span> <span class="n">issue</span><span class="p">[</span><span class="s2">"fields"</span><span class="p">][</span><span class="s2">"issuelinks"</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">related_issue</span> <span class="ow">in</span> <span class="n">issue</span><span class="p">[</span><span class="s2">"fields"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"issuelinks"</span><span class="p">,</span> <span class="p">[]):</span>
                 <span class="k">if</span> <span class="s2">"inwardIssue"</span> <span class="ow">in</span> <span class="n">related_issue</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                     <span class="n">rel_type</span> <span class="o">=</span> <span class="n">related_issue</span><span class="p">[</span><span class="s2">"type"</span><span class="p">][</span><span class="s2">"inward"</span><span class="p">]</span>
                     <span class="n">rel_key</span> <span class="o">=</span> <span class="n">related_issue</span><span class="p">[</span><span class="s2">"inwardIssue"</span><span class="p">][</span><span class="s2">"key"</span><span class="p">]</span>
@@ -355,8 +431,8 @@
             <span class="nb">id</span> <span class="o">=</span> <span class="n">project</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span>
             <span class="n">key</span> <span class="o">=</span> <span class="n">project</span><span class="p">[</span><span class="s2">"key"</span><span class="p">]</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">project</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span>
-            <span class="nb">type</span> <span class="o">=</span> <span class="n">project</span><span class="p">[</span><span class="s2">"projectTypeKey"</span><span class="p">]</span>
-            <span class="n">style</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"style"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="nb">type</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"projectTypeKey"</span><span class="p">)</span>
+            <span class="n">style</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"style"</span><span class="p">)</span>
             <span class="n">parsed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="nb">id</span><span class="p">,</span> <span class="s2">"key"</span><span class="p">:</span> <span class="n">key</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="s2">"style"</span><span class="p">:</span> <span class="n">style</span><span class="p">}</span>
             <span class="p">)</span>
