@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 13, 2025" name="docbuild:last-update"/>
+<meta content="Apr 16, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -230,9 +230,8 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.language_models.chat_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseChatModel</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.messages</span><span class="w"> </span><span class="kn">import</span> <span class="n">AIMessage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.messages</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseMessage</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompts.chat</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatPromptTemplate</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableSequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pymongo</span><span class="w"> </span><span class="kn">import</span> <span class="n">MongoClient</span><span class="p">,</span> <span class="n">UpdateOne</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pymongo.collection</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pymongo.driver_info</span><span class="w"> </span><span class="kn">import</span> <span class="n">DriverInfo</span>
@@ -246,7 +245,7 @@
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAlias</span>  <span class="c1"># Python 3.10+</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAlias</span>  <span class="c1"># type:ignore[attr-defined]  # Python 3.10+</span>
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAlias</span>  <span class="c1"># Python 3.9 fallback</span>
 
@@ -323,12 +322,12 @@
         <span class="n">collection_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">collection</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Collection</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">entity_extraction_model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">,</span>
-        <span class="n">entity_prompt</span><span class="p">:</span> <span class="n">ChatPromptTemplate</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">query_prompt</span><span class="p">:</span> <span class="n">ChatPromptTemplate</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">entity_prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ChatPromptTemplate</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">query_prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ChatPromptTemplate</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">max_depth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-        <span class="n">allowed_entity_types</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">allowed_relationship_types</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">entity_examples</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">allowed_entity_types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">allowed_relationship_types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">entity_examples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">entity_name_examples</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
         <span class="n">validate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">validation_action</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"warn"</span><span class="p">,</span>
@@ -363,6 +362,8 @@
                 <span class="s2">"OR a MongoDB Collection."</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">collection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># collection is specified by uri and names</span>
+            <span class="k">assert</span> <span class="n">collection_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">assert</span> <span class="n">database_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="n">client</span><span class="p">:</span> <span class="n">MongoClient</span> <span class="o">=</span> <span class="n">MongoClient</span><span class="p">(</span>
                 <span class="n">connection_string</span><span class="p">,</span>
                 <span class="n">driver</span><span class="o">=</span><span class="n">DriverInfo</span><span class="p">(</span>
@@ -429,14 +430,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">entity_schema</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">allowed_entity_types</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">allowed_entity_types</span> <span class="o">=</span> <span class="n">allowed_entity_types</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">][</span><span class="s2">"type"</span><span class="p">][</span><span class="s2">"enum"</span><span class="p">]</span> <span class="o">=</span> <span class="n">allowed_entity_types</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">][</span><span class="s2">"type"</span><span class="p">][</span><span class="s2">"enum"</span><span class="p">]</span> <span class="o">=</span> <span class="n">allowed_entity_types</span>  <span class="c1"># type:ignore[index]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">allowed_entity_types</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">allowed_relationship_types</span><span class="p">:</span>
             <span class="c1"># Update Prompt</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">allowed_relationship_types</span> <span class="o">=</span> <span class="n">allowed_relationship_types</span>
             <span class="c1"># Update schema. Disallow other keys..</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">][</span><span class="s2">"relationships"</span><span class="p">][</span><span class="s2">"properties"</span><span class="p">][</span><span class="s2">"types"</span><span class="p">][</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">][</span><span class="s2">"relationships"</span><span class="p">][</span><span class="s2">"properties"</span><span class="p">][</span><span class="s2">"types"</span><span class="p">][</span>  <span class="c1"># type:ignore[index]</span>
                 <span class="s2">"enum"</span>
             <span class="p">]</span> <span class="o">=</span> <span class="n">allowed_relationship_types</span>
         <span class="k">else</span><span class="p">:</span>
@@ -444,7 +445,7 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">entity_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">entity_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""JSON Schema Object of Entities. Will be applied if validate is True.</span>
 
 <span class="sd">        See Also:</span>
@@ -464,10 +465,10 @@
         <span class="n">entity_prompt</span><span class="p">:</span> <span class="n">ChatPromptTemplate</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">entity_prompt</span><span class="p">,</span>
         <span class="n">query_prompt</span><span class="p">:</span> <span class="n">ChatPromptTemplate</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">query_prompt</span><span class="p">,</span>
         <span class="n">max_depth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-        <span class="n">allowed_entity_types</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">allowed_relationship_types</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">entity_examples</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">entity_name_examples</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">allowed_entity_types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">allowed_relationship_types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">entity_examples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">entity_name_examples</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
         <span class="n">validate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">validation_action</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"warn"</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MongoDBGraphStore</span><span class="p">:</span>
@@ -500,17 +501,17 @@
         <span class="p">)</span>
         <span class="n">collection</span> <span class="o">=</span> <span class="n">client</span><span class="p">[</span><span class="n">database_name</span><span class="p">]</span><span class="o">.</span><span class="n">create_collection</span><span class="p">(</span><span class="n">collection_name</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
-            <span class="n">collection</span><span class="p">,</span>
-            <span class="n">entity_extraction_model</span><span class="p">,</span>
-            <span class="n">entity_prompt</span><span class="p">,</span>
-            <span class="n">query_prompt</span><span class="p">,</span>
-            <span class="n">max_depth</span><span class="p">,</span>
-            <span class="n">allowed_entity_types</span><span class="p">,</span>
-            <span class="n">allowed_relationship_types</span><span class="p">,</span>
-            <span class="n">entity_examples</span><span class="p">,</span>
-            <span class="n">entity_name_examples</span><span class="p">,</span>
-            <span class="n">validate</span><span class="p">,</span>
-            <span class="n">validation_action</span><span class="p">,</span>
+            <span class="n">collection</span><span class="o">=</span><span class="n">collection</span><span class="p">,</span>
+            <span class="n">entity_extraction_model</span><span class="o">=</span><span class="n">entity_extraction_model</span><span class="p">,</span>
+            <span class="n">entity_prompt</span><span class="o">=</span><span class="n">entity_prompt</span><span class="p">,</span>
+            <span class="n">query_prompt</span><span class="o">=</span><span class="n">query_prompt</span><span class="p">,</span>
+            <span class="n">max_depth</span><span class="o">=</span><span class="n">max_depth</span><span class="p">,</span>
+            <span class="n">allowed_entity_types</span><span class="o">=</span><span class="n">allowed_entity_types</span><span class="p">,</span>
+            <span class="n">allowed_relationship_types</span><span class="o">=</span><span class="n">allowed_relationship_types</span><span class="p">,</span>
+            <span class="n">entity_examples</span><span class="o">=</span><span class="n">entity_examples</span><span class="p">,</span>
+            <span class="n">entity_name_examples</span><span class="o">=</span><span class="n">entity_name_examples</span><span class="p">,</span>
+            <span class="n">validate</span><span class="o">=</span><span class="n">validate</span><span class="p">,</span>
+            <span class="n">validation_action</span><span class="o">=</span><span class="n">validation_action</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
@@ -521,7 +522,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_write_entities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Entity</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">BulkWriteResult</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_write_entities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Entity</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">BulkWriteResult</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Isolate logic to insert and aggregate entities."""</span>
         <span class="n">operations</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">:</span>
@@ -563,6 +564,7 @@
         <span class="c1"># Execute bulk write for the entities</span>
         <span class="k">if</span> <span class="n">operations</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">bulk_write</span><span class="p">(</span><span class="n">operations</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="MongoDBGraphStore.add_documents">
 <a class="viewcode-back" href="../../../mongodb/graphrag/langchain_mongodb.graphrag.graph.MongoDBGraphStore.html#langchain_mongodb.graphrag.graph.MongoDBGraphStore.add_documents">[docs]</a>
@@ -586,7 +588,9 @@
             <span class="n">entities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_entities</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">page_content</span><span class="p">)</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Entities found: </span><span class="si">{</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="s1">'_id'</span><span class="p">]</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">entities</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="c1"># Insert new or combine with existing entities</span>
-            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_write_entities</span><span class="p">(</span><span class="n">entities</span><span class="p">))</span>
+            <span class="n">new_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_entities</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">new_results</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_results</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">results</span></div>
 
 
@@ -601,9 +605,9 @@
 <span class="sd">            List of Entity dictionaries.</span>
 <span class="sd">        """</span>
         <span class="c1"># Combine the LLM with the prompt template to form a chain</span>
-        <span class="n">chain</span><span class="p">:</span> <span class="n">RunnableSequence</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entity_prompt</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">entity_extraction_model</span>
+        <span class="n">chain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entity_prompt</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">entity_extraction_model</span>
         <span class="c1"># Invoke on a document to extract entities and relationships</span>
-        <span class="n">response</span><span class="p">:</span> <span class="n">AIMessage</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
             <span class="nb">dict</span><span class="p">(</span>
                 <span class="n">input_document</span><span class="o">=</span><span class="n">raw_document</span><span class="p">,</span>
                 <span class="n">entity_schema</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">entity_schema</span><span class="p">,</span>
@@ -614,6 +618,7 @@
         <span class="p">)</span>
         <span class="c1"># Post-Process output string into list of entity json documents</span>
         <span class="c1"># Strip the ```json prefix and trailing ```</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
         <span class="n">json_string</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="s2">"```json"</span><span class="p">)</span><span class="o">.</span><span class="n">removesuffix</span><span class="p">(</span><span class="s2">"```"</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="p">)</span>
@@ -636,9 +641,9 @@
 <span class="sd">            List of entity names / _ids.</span>
 <span class="sd">        """</span>
         <span class="c1"># Combine the llm with the prompt template to form a chain</span>
-        <span class="n">chain</span><span class="p">:</span> <span class="n">RunnableSequence</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_prompt</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">entity_extraction_model</span>
+        <span class="n">chain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_prompt</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">entity_extraction_model</span>
         <span class="c1"># Invoke on a document to extract entities and relationships</span>
-        <span class="n">response</span><span class="p">:</span> <span class="n">AIMessage</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
             <span class="nb">dict</span><span class="p">(</span>
                 <span class="n">input_document</span><span class="o">=</span><span class="n">raw_document</span><span class="p">,</span>
                 <span class="n">entity_name_examples</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">entity_name_examples</span><span class="p">,</span>
@@ -647,6 +652,7 @@
         <span class="p">)</span>
         <span class="c1"># Post-Process output string into list of entity json documents</span>
         <span class="c1"># Strip the ```json prefix and suffix</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
         <span class="n">json_string</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="s2">"```json"</span><span class="p">)</span><span class="o">.</span><span class="n">removesuffix</span><span class="p">(</span><span class="s2">"```"</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="p">)</span>
@@ -736,7 +742,7 @@
                 <span class="p">}</span>
             <span class="p">},</span>
         <span class="p">]</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">pipeline</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">pipeline</span><span class="p">))</span>  <span class="c1"># type:ignore[arg-type]</span></div>
 
 
 <div class="viewcode-block" id="MongoDBGraphStore.similarity_search">
@@ -762,9 +768,9 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">chat_response</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">chat_model</span><span class="p">:</span> <span class="n">BaseChatModel</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">prompt</span><span class="p">:</span> <span class="n">ChatPromptTemplate</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AIMessage</span><span class="p">:</span>
+        <span class="n">chat_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseChatModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ChatPromptTemplate</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseMessage</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Responds to a query given information found in Knowledge Graph.</span>
 
 <span class="sd">        Args:</span>
@@ -782,7 +788,7 @@
         <span class="c1"># Perform Retrieval on knowledge graph</span>
         <span class="n">related_entities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
         <span class="c1"># Combine the LLM with the prompt template to form a chain</span>
-        <span class="n">chain</span><span class="p">:</span> <span class="n">RunnableSequence</span> <span class="o">=</span> <span class="n">prompt</span> <span class="o">|</span> <span class="n">chat_model</span>
+        <span class="n">chain</span> <span class="o">=</span> <span class="n">prompt</span> <span class="o">|</span> <span class="n">chat_model</span>
         <span class="c1"># Invoke with query</span>
         <span class="k">return</span> <span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
             <span class="nb">dict</span><span class="p">(</span>

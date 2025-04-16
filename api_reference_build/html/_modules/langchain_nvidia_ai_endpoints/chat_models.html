@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 13, 2025" name="docbuild:last-update"/>
+<meta content="Apr 16, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -1035,6 +1035,7 @@
 
         <span class="c1"># check if the model supports structured output, warn if it does not</span>
         <span class="n">known_good</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">guided_schema</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">schema</span>
         <span class="c1"># todo: we need to store model: Model in this class</span>
         <span class="c1">#       instead of model: str (= Model.id)</span>
         <span class="c1">#  this should be: if not self.model.supports_tools: warnings.warn...</span>
@@ -1055,7 +1056,6 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="n">output_parser</span><span class="p">:</span> <span class="n">BaseOutputParser</span> <span class="o">=</span> <span class="n">JsonOutputParser</span><span class="p">()</span>
             <span class="n">nvext_param</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"guided_json"</span><span class="p">:</span> <span class="n">schema</span><span class="p">}</span>
-
         <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
             <span class="c1"># langchain's EnumOutputParser is not in langchain_core</span>
             <span class="c1"># and doesn't support streaming. this is a simple implementation</span>
@@ -1083,6 +1083,7 @@
                 <span class="p">)</span>
             <span class="n">output_parser</span> <span class="o">=</span> <span class="n">EnumOutputParser</span><span class="p">(</span><span class="n">enum</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>
             <span class="n">nvext_param</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"guided_choice"</span><span class="p">:</span> <span class="n">choices</span><span class="p">}</span>
+            <span class="n">guided_schema</span> <span class="o">=</span> <span class="n">choices</span>
 
         <span class="k">elif</span> <span class="n">is_basemodel_subclass</span><span class="p">(</span><span class="n">schema</span><span class="p">):</span>
             <span class="c1"># PydanticOutputParser does not support streaming. what we do</span>
@@ -1105,6 +1106,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">json_schema</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">schema</span><span class="p">()</span>
             <span class="n">nvext_param</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"guided_json"</span><span class="p">:</span> <span class="n">json_schema</span><span class="p">}</span>
+            <span class="n">guided_schema</span> <span class="o">=</span> <span class="n">json_schema</span>
 
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -1112,7 +1114,17 @@
                 <span class="s2">"representing a JSON schema, or an Enum."</span>
             <span class="p">)</span>
 
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">nvext</span><span class="o">=</span><span class="n">nvext_param</span><span class="p">)</span> <span class="o">|</span> <span class="n">output_parser</span></div>
+        <span class="n">ls_structured_output_format</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"schema"</span><span class="p">:</span> <span class="n">guided_schema</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span>
+                <span class="n">nvext</span><span class="o">=</span><span class="n">nvext_param</span><span class="p">,</span>
+                <span class="n">ls_structured_output_format</span><span class="o">=</span><span class="n">ls_structured_output_format</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">|</span> <span class="n">output_parser</span>
+        <span class="p">)</span></div>
 </div>
 
 </pre></div>

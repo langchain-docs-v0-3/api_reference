@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 13, 2025" name="docbuild:last-update"/>
+<meta content="Apr 16, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -522,13 +522,21 @@
 
 <span class="sd">        .. code-block:: python</span>
 
-<span class="sd">            [</span>
-<span class="sd">                {"type": "text", "text": "describe the weather in this image"},</span>
-<span class="sd">                {</span>
-<span class="sd">                    "type": "image_url",</span>
-<span class="sd">                    "image_url": {"url": f"data:image/jpeg;base64,{image_data}"},</span>
-<span class="sd">                },</span>
-<span class="sd">            ]</span>
+<span class="sd">            {</span>
+<span class="sd">                "type": "image",</span>
+<span class="sd">                "source_type": "base64",</span>
+<span class="sd">                "data": "&lt;base64 image data&gt;",</span>
+<span class="sd">                "mime_type": "image/jpeg",  # or appropriate mime-type</span>
+<span class="sd">            }</span>
+
+<span class="sd">        In addition to OpenAI-style content blocks:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            {</span>
+<span class="sd">                "type": "image_url",</span>
+<span class="sd">                "image_url": {"url": f"data:image/jpeg;base64,{image_data}"},</span>
+<span class="sd">            }</span>
 
 <span class="sd">        See https://python.langchain.com/docs/concepts/multimodality/</span>
 
@@ -538,6 +546,59 @@
 
 <span class="sd">            @property</span>
 <span class="sd">            def supports_image_inputs(self) -&gt; bool:</span>
+<span class="sd">                return True</span>
+
+<span class="sd">    .. dropdown:: supports_image_urls</span>
+
+<span class="sd">        Boolean property indicating whether the chat model supports image inputs from</span>
+<span class="sd">        URLs. Defaults to ``False``.</span>
+
+<span class="sd">        If set to ``True``, the chat model will be tested using content blocks of the</span>
+<span class="sd">        form</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            {</span>
+<span class="sd">                "type": "image",</span>
+<span class="sd">                "source_type": "url",</span>
+<span class="sd">                "url": "https://...",</span>
+<span class="sd">            }</span>
+
+<span class="sd">        See https://python.langchain.com/docs/concepts/multimodality/</span>
+
+<span class="sd">        Example:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            @property</span>
+<span class="sd">            def supports_image_urls(self) -&gt; bool:</span>
+<span class="sd">                return True</span>
+
+<span class="sd">    .. dropdown:: supports_pdf_inputs</span>
+
+<span class="sd">        Boolean property indicating whether the chat model supports PDF inputs.</span>
+<span class="sd">        Defaults to ``False``.</span>
+
+<span class="sd">        If set to ``True``, the chat model will be tested using content blocks of the</span>
+<span class="sd">        form</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            {</span>
+<span class="sd">                "type": "file",</span>
+<span class="sd">                "source_type": "base64",</span>
+<span class="sd">                "data": "&lt;base64 file data&gt;",</span>
+<span class="sd">                "mime_type": "application/pdf",</span>
+<span class="sd">            }</span>
+
+<span class="sd">        See https://python.langchain.com/docs/concepts/multimodality/</span>
+
+<span class="sd">        Example:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            @property</span>
+<span class="sd">            def supports_pdf_inputs(self) -&gt; bool:</span>
 <span class="sd">                return True</span>
 
 <span class="sd">    .. dropdown:: supports_video_inputs</span>
@@ -2187,13 +2248,84 @@
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">AIMessage</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="ChatModelIntegrationTests.test_pdf_inputs">
+<a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_pdf_inputs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_pdf_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Test that the model can process PDF inputs.</span>
+
+<span class="sd">        This test should be skipped (see Configuration below) if the model does not</span>
+<span class="sd">        support PDF inputs. These will take the form:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            {</span>
+<span class="sd">                "type": "image",</span>
+<span class="sd">                "source_type": "base64",</span>
+<span class="sd">                "data": "&lt;base64 image data&gt;",</span>
+<span class="sd">                "mime_type": "application/pdf",</span>
+<span class="sd">            }</span>
+
+<span class="sd">        See https://python.langchain.com/docs/concepts/multimodality/</span>
+
+<span class="sd">        .. dropdown:: Configuration</span>
+
+<span class="sd">            To disable this test, set ``supports_pdf_inputs`` to False in your</span>
+<span class="sd">            test class:</span>
+
+<span class="sd">            .. code-block:: python</span>
+
+<span class="sd">                class TestMyChatModelIntegration(ChatModelIntegrationTests):</span>
+
+<span class="sd">                    @property</span>
+<span class="sd">                    def supports_pdf_inputs(self) -&gt; bool:</span>
+<span class="sd">                        return False</span>
+
+<span class="sd">        .. dropdown:: Troubleshooting</span>
+
+<span class="sd">            If this test fails, check that the model can correctly handle messages</span>
+<span class="sd">            with pdf content blocks, including base64-encoded files. Otherwise, set</span>
+<span class="sd">            the ``supports_pdf_inputs`` property to False.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports_pdf_inputs</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Model does not support PDF inputs."</span><span class="p">)</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s2">"https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"</span>
+        <span class="n">pdf_data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">httpx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">content</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+
+        <span class="n">message</span> <span class="o">=</span> <span class="n">HumanMessage</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span>
+                    <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"Summarize this document:"</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"file"</span><span class="p">,</span>
+                    <span class="s2">"source_type"</span><span class="p">:</span> <span class="s2">"base64"</span><span class="p">,</span>
+                    <span class="s2">"mime_type"</span><span class="p">:</span> <span class="s2">"application/pdf"</span><span class="p">,</span>
+                    <span class="s2">"data"</span><span class="p">:</span> <span class="n">pdf_data</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">invoke</span><span class="p">([</span><span class="n">message</span><span class="p">])</span></div>
+
+
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_image_inputs">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_image_inputs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_image_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Test that the model can process image inputs.</span>
 
 <span class="sd">        This test should be skipped (see Configuration below) if the model does not</span>
-<span class="sd">        support image inputs These will take the form of messages with OpenAI-style</span>
+<span class="sd">        support image inputs. These will take the form:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            {</span>
+<span class="sd">                "type": "image",</span>
+<span class="sd">                "source_type": "base64",</span>
+<span class="sd">                "data": "&lt;base64 image data&gt;",</span>
+<span class="sd">                "mime_type": "image/jpeg",  # or appropriate mime-type</span>
+<span class="sd">            }</span>
+
+<span class="sd">        For backward-compatibility, we must also support OpenAI-style</span>
 <span class="sd">        image content blocks:</span>
 
 <span class="sd">        .. code-block:: python</span>
@@ -2208,6 +2340,17 @@
 
 <span class="sd">        See https://python.langchain.com/docs/concepts/multimodality/</span>
 
+<span class="sd">        If the property ``supports_image_urls`` is set to True, the test will also</span>
+<span class="sd">        check that we can process content blocks of the form:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            {</span>
+<span class="sd">                "type": "image",</span>
+<span class="sd">                "source_type": "url",</span>
+<span class="sd">                "url": "&lt;url&gt;",</span>
+<span class="sd">            }</span>
+
 <span class="sd">        .. dropdown:: Configuration</span>
 
 <span class="sd">            To disable this test, set ``supports_image_inputs`` to False in your</span>
@@ -2220,16 +2363,23 @@
 <span class="sd">                    def supports_image_inputs(self) -&gt; bool:</span>
 <span class="sd">                        return False</span>
 
+<span class="sd">                    # Can also explicitly disable testing image URLs:</span>
+<span class="sd">                    @property</span>
+<span class="sd">                    def supports_image_urls(self) -&gt; bool:</span>
+<span class="sd">                        return False</span>
+
 <span class="sd">        .. dropdown:: Troubleshooting</span>
 
 <span class="sd">            If this test fails, check that the model can correctly handle messages</span>
-<span class="sd">            with image content blocks in OpenAI format, including base64-encoded</span>
-<span class="sd">            images. Otherwise, set the ``supports_image_inputs`` property to False.</span>
+<span class="sd">            with image content blocks, including base64-encoded images. Otherwise, set</span>
+<span class="sd">            the ``supports_image_inputs`` property to False.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports_image_inputs</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Model does not support image message."</span><span class="p">)</span>
         <span class="n">image_url</span> <span class="o">=</span> <span class="s2">"https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg"</span>
         <span class="n">image_data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">httpx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">image_url</span><span class="p">)</span><span class="o">.</span><span class="n">content</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+
+        <span class="c1"># OpenAI format, base64 data</span>
         <span class="n">message</span> <span class="o">=</span> <span class="n">HumanMessage</span><span class="p">(</span>
             <span class="n">content</span><span class="o">=</span><span class="p">[</span>
                 <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"describe the weather in this image"</span><span class="p">},</span>
@@ -2239,7 +2389,35 @@
                 <span class="p">},</span>
             <span class="p">],</span>
         <span class="p">)</span>
-        <span class="n">model</span><span class="o">.</span><span class="n">invoke</span><span class="p">([</span><span class="n">message</span><span class="p">])</span></div>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">invoke</span><span class="p">([</span><span class="n">message</span><span class="p">])</span>
+
+        <span class="c1"># Standard format, base64 data</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="n">HumanMessage</span><span class="p">(</span>
+            <span class="n">content</span><span class="o">=</span><span class="p">[</span>
+                <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"describe the weather in this image"</span><span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"image"</span><span class="p">,</span>
+                    <span class="s2">"source_type"</span><span class="p">:</span> <span class="s2">"base64"</span><span class="p">,</span>
+                    <span class="s2">"mime_type"</span><span class="p">:</span> <span class="s2">"image/jpeg"</span><span class="p">,</span>
+                    <span class="s2">"data"</span><span class="p">:</span> <span class="n">image_data</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">invoke</span><span class="p">([</span><span class="n">message</span><span class="p">])</span>
+
+        <span class="c1"># Standard format, URL</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports_image_urls</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="n">HumanMessage</span><span class="p">(</span>
+                <span class="n">content</span><span class="o">=</span><span class="p">[</span>
+                    <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"describe the weather in this image"</span><span class="p">},</span>
+                    <span class="p">{</span>
+                        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"image"</span><span class="p">,</span>
+                        <span class="s2">"source_type"</span><span class="p">:</span> <span class="s2">"url"</span><span class="p">,</span>
+                        <span class="s2">"url"</span><span class="p">:</span> <span class="n">image_url</span><span class="p">,</span>
+                    <span class="p">},</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">_</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">invoke</span><span class="p">([</span><span class="n">message</span><span class="p">])</span></div>
 
 
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_image_tool_message">

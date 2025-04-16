@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 13, 2025" name="docbuild:last-update"/>
+<meta content="Apr 16, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -223,8 +223,10 @@
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">mimetypes</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">difflib</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_close_matches</span>
@@ -245,6 +247,7 @@
     <span class="n">cast</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">filetype</span>  <span class="c1"># type: ignore[import]</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">google.api_core</span>
 
 <span class="c1"># TODO: remove ignore once the google package is published with types</span>
@@ -284,6 +287,7 @@
     <span class="n">HumanMessage</span><span class="p">,</span>
     <span class="n">SystemMessage</span><span class="p">,</span>
     <span class="n">ToolMessage</span><span class="p">,</span>
+    <span class="n">is_data_content_block</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.messages.ai</span><span class="w"> </span><span class="kn">import</span> <span class="n">UsageMetadata</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.messages.tool</span><span class="w"> </span><span class="kn">import</span> <span class="n">invalid_tool_call</span><span class="p">,</span> <span class="n">tool_call</span><span class="p">,</span> <span class="n">tool_call_chunk</span>
@@ -462,7 +466,7 @@
     <span class="k">return</span> <span class="k">await</span> <span class="n">_achat_with_retry</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_openai_parts_format</span><span class="p">(</span><span class="n">part</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_lc_content_block</span><span class="p">(</span><span class="n">part</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="k">return</span> <span class="s2">"type"</span> <span class="ow">in</span> <span class="n">part</span>
 
 
@@ -477,10 +481,29 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">part</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Part</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">part</span><span class="p">))</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">part</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
-            <span class="c1"># OpenAI Format</span>
-            <span class="k">if</span> <span class="n">_is_openai_parts_format</span><span class="p">(</span><span class="n">part</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">_is_lc_content_block</span><span class="p">(</span><span class="n">part</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">part</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"text"</span><span class="p">:</span>
                     <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Part</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">part</span><span class="p">[</span><span class="s2">"text"</span><span class="p">]))</span>
+                <span class="k">elif</span> <span class="n">is_data_content_block</span><span class="p">(</span><span class="n">part</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">part</span><span class="p">[</span><span class="s2">"source_type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"url"</span><span class="p">:</span>
+                        <span class="n">bytes_</span> <span class="o">=</span> <span class="n">image_loader</span><span class="o">.</span><span class="n">_bytes_from_url</span><span class="p">(</span><span class="n">part</span><span class="p">[</span><span class="s2">"url"</span><span class="p">])</span>
+                    <span class="k">elif</span> <span class="n">part</span><span class="p">[</span><span class="s2">"source_type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"base64"</span><span class="p">:</span>
+                        <span class="n">bytes_</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">part</span><span class="p">[</span><span class="s2">"data"</span><span class="p">])</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"source_type must be url or base64."</span><span class="p">)</span>
+                    <span class="n">inline_data</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"data"</span><span class="p">:</span> <span class="n">bytes_</span><span class="p">}</span>
+                    <span class="k">if</span> <span class="s2">"mime_type"</span> <span class="ow">in</span> <span class="n">part</span><span class="p">:</span>
+                        <span class="n">inline_data</span><span class="p">[</span><span class="s2">"mime_type"</span><span class="p">]</span> <span class="o">=</span> <span class="n">part</span><span class="p">[</span><span class="s2">"mime_type"</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">source</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">part</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"url"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">part</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"data"</span><span class="p">))</span>
+                        <span class="n">mime_type</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">mime_type</span><span class="p">:</span>
+                            <span class="n">kind</span> <span class="o">=</span> <span class="n">filetype</span><span class="o">.</span><span class="n">guess</span><span class="p">(</span><span class="n">bytes_</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">kind</span><span class="p">:</span>
+                                <span class="n">mime_type</span> <span class="o">=</span> <span class="n">kind</span><span class="o">.</span><span class="n">mime</span>
+                        <span class="k">if</span> <span class="n">mime_type</span><span class="p">:</span>
+                            <span class="n">inline_data</span><span class="p">[</span><span class="s2">"mime_type"</span><span class="p">]</span> <span class="o">=</span> <span class="n">mime_type</span>
+                    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Part</span><span class="p">(</span><span class="n">inline_data</span><span class="o">=</span><span class="n">inline_data</span><span class="p">))</span>
                 <span class="k">elif</span> <span class="n">part</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"image_url"</span><span class="p">:</span>
                     <span class="n">img_url</span> <span class="o">=</span> <span class="n">part</span><span class="p">[</span><span class="s2">"image_url"</span><span class="p">]</span>
                     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">img_url</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>

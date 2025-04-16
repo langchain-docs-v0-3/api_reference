@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 13, 2025" name="docbuild:last-update"/>
+<meta content="Apr 16, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -247,7 +247,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span><span class="p">,</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core._api</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecated</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.load</span><span class="w"> </span><span class="kn">import</span> <span class="n">Serializable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.messages</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AIMessage</span><span class="p">,</span>
     <span class="n">AnyMessage</span><span class="p">,</span>
@@ -261,6 +260,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompt_values</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatPromptValue</span><span class="p">,</span> <span class="n">ImageURL</span><span class="p">,</span> <span class="n">PromptValue</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompts.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasePromptTemplate</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompts.image</span><span class="w"> </span><span class="kn">import</span> <span class="n">ImagePromptTemplate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompts.message</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseMessagePromptTemplate</span><span class="p">,</span>
+    <span class="n">_DictMessagePromptTemplate</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompts.prompt</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptTemplate</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompts.string</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">PromptTemplateFormat</span><span class="p">,</span>
@@ -272,102 +275,6 @@
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
-
-
-<div class="viewcode-block" id="BaseMessagePromptTemplate">
-<a class="viewcode-back" href="../../../core/prompts/langchain_core.prompts.chat.BaseMessagePromptTemplate.html#langchain.agents.schema.BaseMessagePromptTemplate">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">BaseMessagePromptTemplate</span><span class="p">(</span><span class="n">Serializable</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Base class for message prompt templates."""</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Return whether or not the class is serializable.</span>
-
-<span class="sd">        Returns: True.</span>
-<span class="sd">        """</span>
-        <span class="k">return</span> <span class="kc">True</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object.</span>
-
-<span class="sd">        Default namespace is ["langchain", "prompts", "chat"].</span>
-<span class="sd">        """</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"prompts"</span><span class="p">,</span> <span class="s2">"chat"</span><span class="p">]</span>
-
-<div class="viewcode-block" id="BaseMessagePromptTemplate.format_messages">
-<a class="viewcode-back" href="../../../core/prompts/langchain_core.prompts.chat.BaseMessagePromptTemplate.html#langchain.agents.schema.BaseMessagePromptTemplate.format_messages">[docs]</a>
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">format_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Format messages from kwargs. Should return a list of BaseMessages.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            **kwargs: Keyword arguments to use for formatting.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            List of BaseMessages.</span>
-<span class="sd">        """</span></div>
-
-
-<div class="viewcode-block" id="BaseMessagePromptTemplate.aformat_messages">
-<a class="viewcode-back" href="../../../core/prompts/langchain_core.prompts.chat.BaseMessagePromptTemplate.html#langchain.agents.schema.BaseMessagePromptTemplate.aformat_messages">[docs]</a>
-    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">aformat_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Async format messages from kwargs.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            **kwargs: Keyword arguments to use for formatting.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            List of BaseMessages.</span>
-<span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_messages</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
-
-
-    <span class="nd">@property</span>
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">input_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Input variables for this prompt template.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            List of input variables.</span>
-<span class="sd">        """</span>
-
-<div class="viewcode-block" id="BaseMessagePromptTemplate.pretty_repr">
-<a class="viewcode-back" href="../../../core/prompts/langchain_core.prompts.chat.BaseMessagePromptTemplate.html#langchain.agents.schema.BaseMessagePromptTemplate.pretty_repr">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">pretty_repr</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">html</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001,FBT002</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Human-readable representation.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            html: Whether to format as HTML. Defaults to False.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            Human-readable representation.</span>
-<span class="sd">        """</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
-
-
-<div class="viewcode-block" id="BaseMessagePromptTemplate.pretty_print">
-<a class="viewcode-back" href="../../../core/prompts/langchain_core.prompts.chat.BaseMessagePromptTemplate.html#langchain.agents.schema.BaseMessagePromptTemplate.pretty_print">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">pretty_print</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Print a human-readable representation."""</span>
-        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pretty_repr</span><span class="p">(</span><span class="n">html</span><span class="o">=</span><span class="n">is_interactive_env</span><span class="p">()))</span>  <span class="c1"># noqa: T201</span></div>
-
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChatPromptTemplate</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Combine two prompt templates.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            other: Another prompt template.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            Combined prompt template.</span>
-<span class="sd">        """</span>
-        <span class="n">prompt</span> <span class="o">=</span> <span class="n">ChatPromptTemplate</span><span class="p">(</span><span class="n">messages</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">prompt</span> <span class="o">+</span> <span class="n">other</span></div>
-
 
 
 <div class="viewcode-block" id="MessagesPlaceholder">
@@ -752,7 +659,10 @@
 <span class="w">    </span><span class="sd">"""Human message prompt template. This is a message sent from the user."""</span>
 
     <span class="n">prompt</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
-        <span class="n">StringPromptTemplate</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">StringPromptTemplate</span><span class="p">,</span> <span class="n">ImagePromptTemplate</span><span class="p">]]</span>
+        <span class="n">StringPromptTemplate</span><span class="p">,</span>
+        <span class="nb">list</span><span class="p">[</span>
+            <span class="n">Union</span><span class="p">[</span><span class="n">StringPromptTemplate</span><span class="p">,</span> <span class="n">ImagePromptTemplate</span><span class="p">,</span> <span class="n">_DictMessagePromptTemplate</span><span class="p">]</span>
+        <span class="p">],</span>
     <span class="p">]</span>
 <span class="w">    </span><span class="sd">"""Prompt template."""</span>
     <span class="n">additional_kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
@@ -763,7 +673,10 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_template</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Self</span><span class="p">],</span>
-        <span class="n">template</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_TextTemplateParam</span><span class="p">,</span> <span class="n">_ImageTemplateParam</span><span class="p">]]],</span>
+        <span class="n">template</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="nb">str</span><span class="p">,</span>
+            <span class="nb">list</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_TextTemplateParam</span><span class="p">,</span> <span class="n">_ImageTemplateParam</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span>
+        <span class="p">],</span>
         <span class="n">template_format</span><span class="p">:</span> <span class="n">PromptTemplateFormat</span> <span class="o">=</span> <span class="s2">"f-string"</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">partial_variables</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -846,6 +759,19 @@
                         <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Invalid image template: </span><span class="si">{</span><span class="n">tmpl</span><span class="si">}</span><span class="s2">"</span>
                         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
                     <span class="n">prompt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">img_template_obj</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tmpl</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">template_format</span> <span class="o">==</span> <span class="s2">"jinja2"</span><span class="p">:</span>
+                        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="s2">"jinja2 is unsafe and is not supported for templates "</span>
+                            <span class="s2">"expressed as dicts. Please use 'f-string' or 'mustache' "</span>
+                            <span class="s2">"format."</span>
+                        <span class="p">)</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                    <span class="n">data_template_obj</span> <span class="o">=</span> <span class="n">_DictMessagePromptTemplate</span><span class="p">(</span>
+                        <span class="n">template</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="s2">"dict[str, Any]"</span><span class="p">,</span> <span class="n">tmpl</span><span class="p">),</span>
+                        <span class="n">template_format</span><span class="o">=</span><span class="n">template_format</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">prompt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data_template_obj</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Invalid template: </span><span class="si">{</span><span class="n">tmpl</span><span class="si">}</span><span class="s2">"</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
@@ -923,11 +849,16 @@
         <span class="k">for</span> <span class="n">prompt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">prompt</span><span class="p">:</span>
             <span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span><span class="n">var</span><span class="p">:</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">prompt</span><span class="o">.</span><span class="n">input_variables</span><span class="p">}</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">StringPromptTemplate</span><span class="p">):</span>
-                <span class="n">formatted</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ImageURL</span><span class="p">]</span> <span class="o">=</span> <span class="n">prompt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="p">)</span>
+                <span class="n">formatted</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ImageURL</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">prompt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="o">**</span><span class="n">inputs</span>
+                <span class="p">)</span>
                 <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="n">formatted</span><span class="p">})</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">ImagePromptTemplate</span><span class="p">):</span>
                 <span class="n">formatted</span> <span class="o">=</span> <span class="n">prompt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="p">)</span>
                 <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"image_url"</span><span class="p">,</span> <span class="s2">"image_url"</span><span class="p">:</span> <span class="n">formatted</span><span class="p">})</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">_DictMessagePromptTemplate</span><span class="p">):</span>
+                <span class="n">formatted</span> <span class="o">=</span> <span class="n">prompt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="p">)</span>
+                <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">formatted</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_msg_class</span><span class="p">(</span>
             <span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span> <span class="n">additional_kwargs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">additional_kwargs</span>
         <span class="p">)</span>
@@ -950,11 +881,16 @@
         <span class="k">for</span> <span class="n">prompt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">prompt</span><span class="p">:</span>
             <span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span><span class="n">var</span><span class="p">:</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">prompt</span><span class="o">.</span><span class="n">input_variables</span><span class="p">}</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">StringPromptTemplate</span><span class="p">):</span>
-                <span class="n">formatted</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ImageURL</span><span class="p">]</span> <span class="o">=</span> <span class="k">await</span> <span class="n">prompt</span><span class="o">.</span><span class="n">aformat</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="p">)</span>
+                <span class="n">formatted</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ImageURL</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="k">await</span> <span class="n">prompt</span><span class="o">.</span><span class="n">aformat</span><span class="p">(</span>
+                    <span class="o">**</span><span class="n">inputs</span>
+                <span class="p">)</span>
                 <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="n">formatted</span><span class="p">})</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">ImagePromptTemplate</span><span class="p">):</span>
                 <span class="n">formatted</span> <span class="o">=</span> <span class="k">await</span> <span class="n">prompt</span><span class="o">.</span><span class="n">aformat</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="p">)</span>
                 <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"image_url"</span><span class="p">,</span> <span class="s2">"image_url"</span><span class="p">:</span> <span class="n">formatted</span><span class="p">})</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">_DictMessagePromptTemplate</span><span class="p">):</span>
+                <span class="n">formatted</span> <span class="o">=</span> <span class="n">prompt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="p">)</span>
+                <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">formatted</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_msg_class</span><span class="p">(</span>
             <span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span> <span class="n">additional_kwargs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">additional_kwargs</span>
         <span class="p">)</span>
@@ -1126,7 +1062,7 @@
         <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">object</span><span class="p">]],</span>
     <span class="p">],</span>
     <span class="nb">str</span><span class="p">,</span>
-    <span class="nb">dict</span><span class="p">,</span>
+    <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">]</span>
 
 
@@ -1301,7 +1237,8 @@
 
 <span class="sd">        """</span>
         <span class="n">_messages</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">_convert_to_message</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">template_format</span><span class="p">)</span> <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">messages</span>
+            <span class="n">_convert_to_message_template</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">template_format</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">messages</span>
         <span class="p">]</span>
 
         <span class="c1"># Automatically infer input variables from messages</span>
@@ -1388,7 +1325,7 @@
 <span class="sd">            ValueError: If input variables do not match.</span>
 <span class="sd">        """</span>
         <span class="n">messages</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="s2">"messages"</span><span class="p">]</span>
-        <span class="n">input_vars</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">input_vars</span><span class="p">:</span> <span class="nb">set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="n">optional_variables</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="n">input_types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_types"</span><span class="p">,</span> <span class="p">{})</span>
         <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">:</span>
@@ -1448,7 +1385,7 @@
 <div class="viewcode-block" id="ChatPromptTemplate.from_role_strings">
 <a class="viewcode-back" href="../../../core/prompts/langchain_core.prompts.chat.ChatPromptTemplate.html#langchain.agents.schema.ChatPromptTemplate.from_role_strings">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="nd">@deprecated</span><span class="p">(</span><span class="s2">"0.0.1"</span><span class="p">,</span> <span class="n">alternative</span><span class="o">=</span><span class="s2">"from_messages classmethod"</span><span class="p">,</span> <span class="n">pending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nd">@deprecated</span><span class="p">(</span><span class="s2">"0.0.1"</span><span class="p">,</span> <span class="n">alternative</span><span class="o">=</span><span class="s2">"from_messages"</span><span class="p">,</span> <span class="n">pending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_role_strings</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="n">string_messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChatPromptTemplate</span><span class="p">:</span>
@@ -1471,7 +1408,7 @@
 <div class="viewcode-block" id="ChatPromptTemplate.from_strings">
 <a class="viewcode-back" href="../../../core/prompts/langchain_core.prompts.chat.ChatPromptTemplate.html#langchain.agents.schema.ChatPromptTemplate.from_strings">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="nd">@deprecated</span><span class="p">(</span><span class="s2">"0.0.1"</span><span class="p">,</span> <span class="n">alternative</span><span class="o">=</span><span class="s2">"from_messages classmethod"</span><span class="p">,</span> <span class="n">pending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nd">@deprecated</span><span class="p">(</span><span class="s2">"0.0.1"</span><span class="p">,</span> <span class="n">alternative</span><span class="o">=</span><span class="s2">"from_messages"</span><span class="p">,</span> <span class="n">pending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_strings</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="n">string_messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseMessagePromptTemplate</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChatPromptTemplate</span><span class="p">:</span>
@@ -1637,7 +1574,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            message: representation of a message to append.</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_convert_to_message</span><span class="p">(</span><span class="n">message</span><span class="p">))</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_convert_to_message_template</span><span class="p">(</span><span class="n">message</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="ChatPromptTemplate.extend">
@@ -1648,7 +1585,9 @@
 <span class="sd">        Args:</span>
 <span class="sd">            messages: sequence of message representations to append.</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">_convert_to_message</span><span class="p">(</span><span class="n">message</span><span class="p">)</span> <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">])</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">_convert_to_message_template</span><span class="p">(</span><span class="n">message</span><span class="p">)</span> <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">]</span>
+        <span class="p">)</span></div>
 
 
     <span class="nd">@overload</span>
@@ -1776,7 +1715,7 @@
     <span class="k">return</span> <span class="n">message</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_convert_to_message</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_to_message_template</span><span class="p">(</span>
     <span class="n">message</span><span class="p">:</span> <span class="n">MessageLikeRepresentation</span><span class="p">,</span>
     <span class="n">template_format</span><span class="p">:</span> <span class="n">PromptTemplateFormat</span> <span class="o">=</span> <span class="s2">"f-string"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">,</span> <span class="n">BaseMessagePromptTemplate</span><span class="p">,</span> <span class="n">BaseChatPromptTemplate</span><span class="p">]:</span>
@@ -1839,6 +1778,10 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">_message</span>
+
+
+<span class="c1"># For backwards compat:</span>
+<span class="n">_convert_to_message</span> <span class="o">=</span> <span class="n">_convert_to_message_template</span>
 </pre></div>
 </article>
 </div>

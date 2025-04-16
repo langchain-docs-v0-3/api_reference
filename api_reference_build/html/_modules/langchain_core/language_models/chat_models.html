@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 13, 2025" name="docbuild:last-update"/>
+<meta content="Apr 16, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -275,6 +275,8 @@
     <span class="n">BaseMessageChunk</span><span class="p">,</span>
     <span class="n">HumanMessage</span><span class="p">,</span>
     <span class="n">convert_to_messages</span><span class="p">,</span>
+    <span class="n">convert_to_openai_image_block</span><span class="p">,</span>
+    <span class="n">is_data_content_block</span><span class="p">,</span>
     <span class="n">message_chunk_to_message</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.outputs</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -323,6 +325,41 @@
         <span class="n">generations</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">return</span> <span class="n">generations</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_for_tracing</span><span class="p">(</span><span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Format messages for tracing in on_chat_model_start.</span>
+
+<span class="sd">    For backward compatibility, we update image content blocks to OpenAI Chat</span>
+<span class="sd">    Completions format.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        messages: List of messages to format.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of messages formatted for tracing.</span>
+<span class="sd">    """</span>
+    <span class="n">messages_to_trace</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">:</span>
+        <span class="n">message_to_trace</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">block</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"image"</span>
+                    <span class="ow">and</span> <span class="n">is_data_content_block</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+                <span class="p">):</span>
+                    <span class="k">if</span> <span class="n">message_to_trace</span> <span class="ow">is</span> <span class="n">message</span><span class="p">:</span>
+                        <span class="n">message_to_trace</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">model_copy</span><span class="p">()</span>
+                        <span class="c1"># Also shallow-copy content</span>
+                        <span class="n">message_to_trace</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">message_to_trace</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+
+                    <span class="n">message_to_trace</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>  <span class="c1"># type: ignore[index]  # mypy confused by .model_copy</span>
+                        <span class="n">convert_to_openai_image_block</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+                    <span class="p">)</span>
+        <span class="n">messages_to_trace</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message_to_trace</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">messages_to_trace</span>
 
 
 <div class="viewcode-block" id="generate_from_stream">
@@ -677,7 +714,7 @@
             <span class="p">)</span>
             <span class="p">(</span><span class="n">run_manager</span><span class="p">,)</span> <span class="o">=</span> <span class="n">callback_manager</span><span class="o">.</span><span class="n">on_chat_model_start</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_serialized</span><span class="p">,</span>
-                <span class="p">[</span><span class="n">messages</span><span class="p">],</span>
+                <span class="p">[</span><span class="n">_format_for_tracing</span><span class="p">(</span><span class="n">messages</span><span class="p">)],</span>
                 <span class="n">invocation_params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
                 <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
                 <span class="n">name</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"run_name"</span><span class="p">),</span>
@@ -765,7 +802,7 @@
         <span class="p">)</span>
         <span class="p">(</span><span class="n">run_manager</span><span class="p">,)</span> <span class="o">=</span> <span class="k">await</span> <span class="n">callback_manager</span><span class="o">.</span><span class="n">on_chat_model_start</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_serialized</span><span class="p">,</span>
-            <span class="p">[</span><span class="n">messages</span><span class="p">],</span>
+            <span class="p">[</span><span class="n">_format_for_tracing</span><span class="p">(</span><span class="n">messages</span><span class="p">)],</span>
             <span class="n">invocation_params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
             <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"run_name"</span><span class="p">),</span>
@@ -945,9 +982,12 @@
             <span class="n">inheritable_metadata</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="n">messages_to_trace</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">_format_for_tracing</span><span class="p">(</span><span class="n">message_list</span><span class="p">)</span> <span class="k">for</span> <span class="n">message_list</span> <span class="ow">in</span> <span class="n">messages</span>
+        <span class="p">]</span>
         <span class="n">run_managers</span> <span class="o">=</span> <span class="n">callback_manager</span><span class="o">.</span><span class="n">on_chat_model_start</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_serialized</span><span class="p">,</span>
-            <span class="n">messages</span><span class="p">,</span>
+            <span class="n">messages_to_trace</span><span class="p">,</span>
             <span class="n">invocation_params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
             <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="n">run_name</span><span class="p">,</span>
@@ -1054,9 +1094,12 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
         <span class="p">)</span>
 
+        <span class="n">messages_to_trace</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">_format_for_tracing</span><span class="p">(</span><span class="n">message_list</span><span class="p">)</span> <span class="k">for</span> <span class="n">message_list</span> <span class="ow">in</span> <span class="n">messages</span>
+        <span class="p">]</span>
         <span class="n">run_managers</span> <span class="o">=</span> <span class="k">await</span> <span class="n">callback_manager</span><span class="o">.</span><span class="n">on_chat_model_start</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_serialized</span><span class="p">,</span>
-            <span class="n">messages</span><span class="p">,</span>
+            <span class="n">messages_to_trace</span><span class="p">,</span>
             <span class="n">invocation_params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
             <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="n">run_name</span><span class="p">,</span>
