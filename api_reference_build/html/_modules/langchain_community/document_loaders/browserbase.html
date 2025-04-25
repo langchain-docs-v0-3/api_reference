@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Apr 24, 2025" name="docbuild:last-update"/>
+<meta content="Apr 25, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,7 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_community.document_loaders.browserbase</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
 
@@ -232,7 +232,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">BrowserbaseLoader</span><span class="p">(</span><span class="n">BaseLoader</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Load pre-rendered web pages using a headless browser hosted on Browserbase.</span>
 
-<span class="sd">    Depends on `browserbase` package.</span>
+<span class="sd">    Depends on `browserbase` and `playwright` packages.</span>
 <span class="sd">    Get your API key from https://browserbase.com</span>
 <span class="sd">    """</span>
 
@@ -250,6 +250,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">urls</span> <span class="o">=</span> <span class="n">urls</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">text_content</span> <span class="o">=</span> <span class="n">text_content</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">session_id</span> <span class="o">=</span> <span class="n">session_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">project_id</span> <span class="o">=</span> <span class="n">project_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">proxy</span> <span class="o">=</span> <span class="n">proxy</span>
 
         <span class="k">try</span><span class="p">:</span>
@@ -258,28 +259,63 @@
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
                 <span class="s2">"You must run "</span>
                 <span class="s2">"`pip install --upgrade "</span>
-                <span class="s2">"browserbase` "</span>
+                <span class="s2">"browserbase playwright` "</span>
                 <span class="s2">"to use the Browserbase loader."</span>
             <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">browserbase</span> <span class="o">=</span> <span class="n">Browserbase</span><span class="p">(</span><span class="n">api_key</span><span class="p">,</span> <span class="n">project_id</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">browserbase</span> <span class="o">=</span> <span class="n">Browserbase</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BrowserbaseLoader.lazy_load">
 <a class="viewcode-back" href="../../../community/document_loaders/langchain_community.document_loaders.browserbase.BrowserbaseLoader.html#langchain_community.document_loaders.browserbase.BrowserbaseLoader.lazy_load">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">lazy_load</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Load pages from URLs"""</span>
-        <span class="n">pages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">browserbase</span><span class="o">.</span><span class="n">load_urls</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">urls</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">text_content</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxy</span>
-        <span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">playwright.sync_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">sync_playwright</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">"playwright is required for BrowserbaseLoader. "</span>
+                <span class="s2">"Please run `pip install --upgrade playwright`."</span>
+            <span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">page</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pages</span><span class="p">):</span>
-            <span class="k">yield</span> <span class="n">Document</span><span class="p">(</span>
-                <span class="n">page_content</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
-                <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
-                    <span class="s2">"url"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">urls</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-                <span class="p">},</span>
-            <span class="p">)</span></div>
+        <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">urls</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">sync_playwright</span><span class="p">()</span> <span class="k">as</span> <span class="n">playwright</span><span class="p">:</span>
+                <span class="c1"># Create or use existing session</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_id</span><span class="p">:</span>
+                    <span class="n">session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">browserbase</span><span class="o">.</span><span class="n">sessions</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">session_id</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_id</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"project_id is required to create a session"</span><span class="p">)</span>
+                    <span class="n">session_params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"project_id"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_id</span><span class="p">}</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">session_params</span><span class="p">[</span><span class="s2">"proxy"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proxy</span><span class="p">)</span>
+                    <span class="n">session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">browserbase</span><span class="o">.</span><span class="n">sessions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">session_params</span><span class="p">)</span>
+
+                <span class="c1"># Connect to the remote session</span>
+                <span class="n">browser</span> <span class="o">=</span> <span class="n">playwright</span><span class="o">.</span><span class="n">chromium</span><span class="o">.</span><span class="n">connect_over_cdp</span><span class="p">(</span><span class="n">session</span><span class="o">.</span><span class="n">connect_url</span><span class="p">)</span>
+                <span class="n">context</span> <span class="o">=</span> <span class="n">browser</span><span class="o">.</span><span class="n">contexts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">page</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">pages</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+                <span class="c1"># Navigate to URL and get content</span>
+                <span class="n">page</span><span class="o">.</span><span class="n">goto</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+                <span class="c1"># Get content based on the text_content flag</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">text_content</span><span class="p">:</span>
+                    <span class="n">page_text</span> <span class="o">=</span> <span class="n">page</span><span class="o">.</span><span class="n">inner_text</span><span class="p">(</span><span class="s2">"body"</span><span class="p">)</span>
+                    <span class="n">content</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">page_text</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">page_html</span> <span class="o">=</span> <span class="n">page</span><span class="o">.</span><span class="n">content</span><span class="p">()</span>
+                    <span class="n">content</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">page_html</span><span class="p">)</span>
+
+                <span class="c1"># Close browser</span>
+                <span class="n">page</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="n">browser</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+                <span class="k">yield</span> <span class="n">Document</span><span class="p">(</span>
+                    <span class="n">page_content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span>
+                    <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">"url"</span><span class="p">:</span> <span class="n">url</span><span class="p">,</span>
+                    <span class="p">},</span>
+                <span class="p">)</span></div>
 </div>
 
 </pre></div>
