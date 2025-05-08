@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 07, 2025" name="docbuild:last-update"/>
+<meta content="May 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -251,7 +251,6 @@
     <span class="n">MilvusClient</span><span class="p">,</span>
     <span class="n">MilvusException</span><span class="p">,</span>
     <span class="n">RRFRanker</span><span class="p">,</span>
-    <span class="n">SearchResult</span><span class="p">,</span>
     <span class="n">WeightedRanker</span><span class="p">,</span>
     <span class="n">utility</span><span class="p">,</span>
 <span class="p">)</span>
@@ -1498,10 +1497,14 @@
             <span class="n">batch_insert_list</span> <span class="o">=</span> <span class="n">insert_list</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
             <span class="c1"># Insert into the collection.</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">res</span><span class="p">:</span> <span class="n">Collection</span>
                 <span class="n">timeout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="ow">or</span> <span class="n">timeout</span>
-                <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">batch_insert_list</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-                <span class="n">pks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">primary_keys</span><span class="p">)</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">,</span>
+                    <span class="n">batch_insert_list</span><span class="p">,</span>
+                    <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">pks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="s2">"ids"</span><span class="p">])</span>
             <span class="k">except</span> <span class="n">MilvusException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">first_entity</span> <span class="o">=</span> <span class="p">{}</span>
                 <span class="k">if</span> <span class="n">batch_insert_list</span><span class="p">:</span>
@@ -1531,7 +1534,7 @@
         <span class="n">expr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SearchResult</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]]:</span>
 <span class="w">        </span><span class="sd">"""Perform a search on an embedding or a query text and return milvus search</span>
 <span class="sd">        results.</span>
 
@@ -1551,7 +1554,7 @@
 <span class="sd">            kwargs: Collection.search() keyword arguments.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            pymilvus.client.abstract.SearchResult: Milvus search result.</span>
+<span class="sd">            List[List[dict]]: Milvus search result.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"No existing collection to search."</span><span class="p">)</span>
@@ -1573,12 +1576,13 @@
             <span class="n">output_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"*"</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">output_fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remove_forbidden_fields</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[:])</span>
-        <span class="n">col_search_res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
+        <span class="n">col_search_res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">,</span>
             <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">embedding_or_text</span><span class="p">],</span>
             <span class="n">anns_field</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_vector_field</span><span class="p">,</span>
-            <span class="n">param</span><span class="o">=</span><span class="n">param</span><span class="p">,</span>
+            <span class="n">search_params</span><span class="o">=</span><span class="n">param</span><span class="p">,</span>
             <span class="n">limit</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
-            <span class="n">expr</span><span class="o">=</span><span class="n">expr</span><span class="p">,</span>
+            <span class="nb">filter</span><span class="o">=</span><span class="n">expr</span><span class="p">,</span>
             <span class="n">output_fields</span><span class="o">=</span><span class="n">output_fields</span><span class="p">,</span>
             <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="ow">or</span> <span class="n">timeout</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
@@ -1596,7 +1600,7 @@
         <span class="n">ranker_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SearchResult</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]]:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Perform a hybrid search on a query string and return milvus search results.</span>
 
@@ -1620,7 +1624,7 @@
 <span class="sd">            kwargs: Collection.hybrid_search() keyword arguments.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            pymilvus.client.abstract.SearchResult: Milvus search result.</span>
+<span class="sd">            List[List[dict]]: Milvus search result.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"No existing collection to search."</span><span class="p">)</span>
@@ -1665,9 +1669,10 @@
             <span class="n">output_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"*"</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">output_fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remove_forbidden_fields</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[:])</span>
-        <span class="n">col_search_res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="o">.</span><span class="n">hybrid_search</span><span class="p">(</span>
+        <span class="n">col_search_res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">hybrid_search</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">,</span>
             <span class="n">reqs</span><span class="o">=</span><span class="n">search_requests</span><span class="p">,</span>
-            <span class="n">rerank</span><span class="o">=</span><span class="n">reranker</span><span class="p">,</span>
+            <span class="n">ranker</span><span class="o">=</span><span class="n">reranker</span><span class="p">,</span>
             <span class="n">limit</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
             <span class="n">output_fields</span><span class="o">=</span><span class="n">output_fields</span><span class="p">,</span>
             <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="ow">or</span> <span class="n">timeout</span><span class="p">,</span>
@@ -1979,14 +1984,14 @@
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">scores</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">col_search_res</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">entity</span><span class="o">.</span><span class="n">fields</span><span class="p">}</span>
-            <span class="n">doc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_document</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">doc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_document</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">"entity"</span><span class="p">])</span>
             <span class="n">documents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
-            <span class="n">scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">score</span><span class="p">)</span>
-            <span class="n">ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+            <span class="n">scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">"distance"</span><span class="p">])</span>
+            <span class="n">ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_primary_field</span><span class="p">,</span> <span class="s2">"id"</span><span class="p">))</span>
 
-        <span class="n">vectors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>  <span class="c1"># type: ignore[union-attr]</span>
-            <span class="n">expr</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_primary_field</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">ids</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="n">vectors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">,</span>
+            <span class="nb">filter</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_primary_field</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">ids</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">output_fields</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_primary_field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vector_field</span><span class="p">],</span>
             <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
         <span class="p">)</span>
@@ -2197,15 +2202,14 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_documents_from_search_results</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">col_search_res</span><span class="p">:</span> <span class="n">SearchResult</span><span class="p">,</span>
+        <span class="n">col_search_res</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">col_search_res</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
         <span class="n">ret</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">col_search_res</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">entity</span><span class="o">.</span><span class="n">fields</span><span class="p">}</span>
-            <span class="n">doc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_document</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-            <span class="n">pair</span> <span class="o">=</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">score</span><span class="p">)</span>
+            <span class="n">doc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_document</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">"entity"</span><span class="p">])</span>
+            <span class="n">pair</span> <span class="o">=</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">result</span><span class="p">[</span><span class="s2">"distance"</span><span class="p">])</span>
             <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pair</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ret</span>
 
@@ -2243,8 +2247,10 @@
             <span class="k">return</span> <span class="kc">None</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">query_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-                <span class="n">expr</span><span class="o">=</span><span class="n">expr</span><span class="p">,</span> <span class="n">output_fields</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_primary_field</span><span class="p">]</span>
+            <span class="n">query_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">,</span>
+                <span class="nb">filter</span><span class="o">=</span><span class="n">expr</span><span class="p">,</span>
+                <span class="n">output_fields</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_primary_field</span><span class="p">],</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="n">MilvusException</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"Failed to get ids: </span><span class="si">%s</span><span class="s2"> error: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
@@ -2372,7 +2378,12 @@
             <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">expr</span><span class="o">=</span><span class="n">expr</span><span class="p">,</span> <span class="n">output_fields</span><span class="o">=</span><span class="n">fields</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">)</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">,</span>
+                <span class="nb">filter</span><span class="o">=</span><span class="n">expr</span><span class="p">,</span>
+                <span class="n">output_fields</span><span class="o">=</span><span class="n">fields</span><span class="p">,</span>
+                <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="k">return</span> <span class="p">[</span>
                 <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_text_field</span><span class="p">],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span>

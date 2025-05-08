@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 07, 2025" name="docbuild:last-update"/>
+<meta content="May 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -225,123 +225,53 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">guard_import</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_google_community._utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_google_credentials</span><span class="p">,</span>
+    <span class="n">import_googleapiclient_resource_builder</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">google.auth.transport.requests</span><span class="w"> </span><span class="kn">import</span> <span class="n">Request</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">google.oauth2.credentials</span><span class="w"> </span><span class="kn">import</span> <span class="n">Credentials</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">google_auth_oauthlib.flow</span><span class="w"> </span><span class="kn">import</span> <span class="n">InstalledAppFlow</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">googleapiclient.discovery</span><span class="w"> </span><span class="kn">import</span> <span class="n">Resource</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">googleapiclient.discovery</span><span class="w"> </span><span class="kn">import</span> <span class="n">build</span> <span class="k">as</span> <span class="n">build_resource</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="import_google">
-<a class="viewcode-back" href="../../../google_community/calendar/langchain_google_community.calendar.utils.import_google.html#langchain_google_community.calendar.utils.import_google">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">import_google</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Request</span><span class="p">,</span> <span class="n">Credentials</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Import google libraries.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        Tuple[Request, Credentials]: Request and Credentials classes.</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="p">(</span>
-        <span class="n">guard_import</span><span class="p">(</span>
-            <span class="n">module_name</span><span class="o">=</span><span class="s2">"google.auth.transport.requests"</span><span class="p">,</span>
-            <span class="n">pip_name</span><span class="o">=</span><span class="s2">"google-auth"</span><span class="p">,</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">Request</span><span class="p">,</span>
-        <span class="n">guard_import</span><span class="p">(</span>
-            <span class="n">module_name</span><span class="o">=</span><span class="s2">"google.oauth2.credentials"</span><span class="p">,</span> <span class="n">pip_name</span><span class="o">=</span><span class="s2">"google-auth"</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">Credentials</span><span class="p">,</span>
-    <span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="import_installed_app_flow">
-<a class="viewcode-back" href="../../../google_community/calendar/langchain_google_community.calendar.utils.import_installed_app_flow.html#langchain_google_community.calendar.utils.import_installed_app_flow">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">import_installed_app_flow</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">InstalledAppFlow</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Import InstalledAppFlow class.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        InstalledAppFlow: InstalledAppFlow class.</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">guard_import</span><span class="p">(</span>
-        <span class="n">module_name</span><span class="o">=</span><span class="s2">"google_auth_oauthlib.flow"</span><span class="p">,</span> <span class="n">pip_name</span><span class="o">=</span><span class="s2">"google-auth-oauthlib"</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">InstalledAppFlow</span></div>
-
-
-
-<div class="viewcode-block" id="import_googleapiclient_resource_builder">
-<a class="viewcode-back" href="../../../google_community/calendar/langchain_google_community.calendar.utils.import_googleapiclient_resource_builder.html#langchain_google_community.calendar.utils.import_googleapiclient_resource_builder">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">import_googleapiclient_resource_builder</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">build_resource</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Import googleapiclient.discovery.build function.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        build_resource: googleapiclient.discovery.build function.</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">guard_import</span><span class="p">(</span>
-        <span class="n">module_name</span><span class="o">=</span><span class="s2">"googleapiclient.discovery"</span><span class="p">,</span> <span class="n">pip_name</span><span class="o">=</span><span class="s2">"google-api-python-client"</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">build</span></div>
-
-
-
 <span class="n">DEFAULT_SCOPES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"https://www.googleapis.com/auth/calendar"</span><span class="p">]</span>
-<span class="n">DEFAULT_CREDS_TOKEN_FILE</span> <span class="o">=</span> <span class="s2">"token.json"</span>
-<span class="n">DEFAULT_CLIENT_SECRETS_FILE</span> <span class="o">=</span> <span class="s2">"credentials.json"</span>
 
 
-<div class="viewcode-block" id="get_google_credentials">
-<a class="viewcode-back" href="../../../google_community/calendar/langchain_google_community.calendar.utils.get_google_credentials.html#langchain_google_community.calendar.utils.get_google_credentials">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">get_google_credentials</span><span class="p">(</span>
-    <span class="n">token_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">client_secrets_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">scopes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Credentials</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Get credentials."""</span>
-    <span class="c1"># From https://developers.google.com/calendar/api/quickstart/python</span>
-    <span class="n">Request</span><span class="p">,</span> <span class="n">Credentials</span> <span class="o">=</span> <span class="n">import_google</span><span class="p">()</span>
-    <span class="n">InstalledAppFlow</span> <span class="o">=</span> <span class="n">import_installed_app_flow</span><span class="p">()</span>
-    <span class="n">creds</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">scopes</span> <span class="o">=</span> <span class="n">scopes</span> <span class="ow">or</span> <span class="n">DEFAULT_SCOPES</span>
-    <span class="n">token_file</span> <span class="o">=</span> <span class="n">token_file</span> <span class="ow">or</span> <span class="n">DEFAULT_CREDS_TOKEN_FILE</span>
-    <span class="n">client_secrets_file</span> <span class="o">=</span> <span class="n">client_secrets_file</span> <span class="ow">or</span> <span class="n">DEFAULT_CLIENT_SECRETS_FILE</span>
-    <span class="c1"># The file token.json stores the user's access and refresh tokens, and is</span>
-    <span class="c1"># created automatically when the authorization flow completes for the first</span>
-    <span class="c1"># time.</span>
-    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">token_file</span><span class="p">):</span>
-        <span class="n">creds</span> <span class="o">=</span> <span class="n">Credentials</span><span class="o">.</span><span class="n">from_authorized_user_file</span><span class="p">(</span><span class="n">token_file</span><span class="p">,</span> <span class="n">scopes</span><span class="p">)</span>
-    <span class="c1"># If there are no (valid) credentials available, let the user log in.</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">creds</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">creds</span><span class="o">.</span><span class="n">valid</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">creds</span> <span class="ow">and</span> <span class="n">creds</span><span class="o">.</span><span class="n">expired</span> <span class="ow">and</span> <span class="n">creds</span><span class="o">.</span><span class="n">refresh_token</span><span class="p">:</span>
-            <span class="n">creds</span><span class="o">.</span><span class="n">refresh</span><span class="p">(</span><span class="n">Request</span><span class="p">())</span>  <span class="c1"># type: ignore[call-arg]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># https://developers.google.com/calendar/api/quickstart/python#authorize_credentials_for_a_desktop_application # noqa</span>
-            <span class="n">flow</span> <span class="o">=</span> <span class="n">InstalledAppFlow</span><span class="o">.</span><span class="n">from_client_secrets_file</span><span class="p">(</span>
-                <span class="n">client_secrets_file</span><span class="p">,</span> <span class="n">scopes</span>
-            <span class="p">)</span>
-            <span class="n">creds</span> <span class="o">=</span> <span class="n">flow</span><span class="o">.</span><span class="n">run_local_server</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="c1"># Save the credentials for the next run</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">token_file</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">token</span><span class="p">:</span>
-            <span class="n">token</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">creds</span><span class="o">.</span><span class="n">to_json</span><span class="p">())</span>
-    <span class="k">return</span> <span class="n">creds</span></div>
-
-
-
-<div class="viewcode-block" id="build_resource_service">
-<a class="viewcode-back" href="../../../google_community/calendar/langchain_google_community.calendar.utils.build_resource_service.html#langchain_google_community.calendar.utils.build_resource_service">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">build_resource_service</span><span class="p">(</span>
+<div class="viewcode-block" id="build_calendar_service">
+<a class="viewcode-back" href="../../../google_community/calendar/langchain_google_community.calendar.utils.build_calendar_service.html#langchain_google_community.calendar.utils.build_calendar_service">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_calendar_service</span><span class="p">(</span>
     <span class="n">credentials</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Credentials</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">service_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"calendar"</span><span class="p">,</span>
     <span class="n">service_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"v3"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Resource</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build a Google Calendar service."""</span>
-    <span class="n">credentials</span> <span class="o">=</span> <span class="n">credentials</span> <span class="ow">or</span> <span class="n">get_google_credentials</span><span class="p">()</span>
+    <span class="n">credentials</span> <span class="o">=</span> <span class="n">credentials</span> <span class="ow">or</span> <span class="n">get_google_credentials</span><span class="p">(</span><span class="n">scopes</span><span class="o">=</span><span class="n">DEFAULT_SCOPES</span><span class="p">)</span>
     <span class="n">builder</span> <span class="o">=</span> <span class="n">import_googleapiclient_resource_builder</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">builder</span><span class="p">(</span><span class="n">service_name</span><span class="p">,</span> <span class="n">service_version</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="n">credentials</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="build_resouce_service">
+<a class="viewcode-back" href="../../../google_community/calendar/langchain_google_community.calendar.utils.build_resouce_service.html#langchain_google_community.calendar.utils.build_resouce_service">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_resouce_service</span><span class="p">(</span>
+    <span class="n">credentials</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Credentials</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">service_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"calendar"</span><span class="p">,</span>
+    <span class="n">service_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"v3"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Resource</span><span class="p">:</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+        <span class="s2">"build_resource_service is deprecated and will be removed in a future version."</span>
+        <span class="s2">"Use build_calendar_service instead."</span><span class="p">,</span>
+        <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">build_calendar_service</span><span class="p">(</span><span class="n">credentials</span><span class="p">,</span> <span class="n">service_name</span><span class="p">,</span> <span class="n">service_version</span><span class="p">)</span></div>
 
 
 

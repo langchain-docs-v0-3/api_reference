@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 07, 2025" name="docbuild:last-update"/>
+<meta content="May 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -324,6 +324,7 @@
         <span class="s2">"text_editor_"</span><span class="p">,</span>
         <span class="s2">"computer_"</span><span class="p">,</span>
         <span class="s2">"bash_"</span><span class="p">,</span>
+        <span class="s2">"web_search_"</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">tool_type</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="n">_builtin_tool_prefixes</span><span class="p">)</span>
 
@@ -1983,6 +1984,12 @@
     <span class="c1"># See https://github.com/anthropics/anthropic-sdk-python/blob/main/src/anthropic/lib/streaming/_messages.py  # noqa: E501</span>
     <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"message_start"</span> <span class="ow">and</span> <span class="n">stream_usage</span><span class="p">:</span>
         <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">_create_usage_metadata</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">usage</span><span class="p">)</span>
+        <span class="c1"># We pick up a cumulative count of output_tokens at the end of the stream,</span>
+        <span class="c1"># so here we zero out to avoid double counting.</span>
+        <span class="n">usage_metadata</span><span class="p">[</span><span class="s2">"total_tokens"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">usage_metadata</span><span class="p">[</span><span class="s2">"total_tokens"</span><span class="p">]</span> <span class="o">-</span> <span class="n">usage_metadata</span><span class="p">[</span><span class="s2">"output_tokens"</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">usage_metadata</span><span class="p">[</span><span class="s2">"output_tokens"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="s2">"model"</span><span class="p">):</span>
             <span class="n">response_metadata</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"model_name"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">model</span><span class="p">}</span>
         <span class="k">else</span><span class="p">:</span>
@@ -2056,7 +2063,11 @@
                 <span class="n">tool_call_chunks</span><span class="o">=</span><span class="p">[</span><span class="n">tool_call_chunk</span><span class="p">],</span>  <span class="c1"># type: ignore</span>
             <span class="p">)</span>
     <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"message_delta"</span> <span class="ow">and</span> <span class="n">stream_usage</span><span class="p">:</span>
-        <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">_create_usage_metadata</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="p">)</span>
+        <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">UsageMetadata</span><span class="p">(</span>
+            <span class="n">input_tokens</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">output_tokens</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">output_tokens</span><span class="p">,</span>
+            <span class="n">total_tokens</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">output_tokens</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">message_chunk</span> <span class="o">=</span> <span class="n">AIMessageChunk</span><span class="p">(</span>
             <span class="n">content</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
             <span class="n">usage_metadata</span><span class="o">=</span><span class="n">usage_metadata</span><span class="p">,</span>
@@ -2087,11 +2098,11 @@
 
     <span class="c1"># Anthropic input_tokens exclude cached token counts.</span>
     <span class="n">input_tokens</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="nb">getattr</span><span class="p">(</span><span class="n">anthropic_usage</span><span class="p">,</span> <span class="s2">"input_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">anthropic_usage</span><span class="p">,</span> <span class="s2">"input_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
         <span class="o">+</span> <span class="p">(</span><span class="n">input_token_details</span><span class="p">[</span><span class="s2">"cache_read"</span><span class="p">]</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
         <span class="o">+</span> <span class="p">(</span><span class="n">input_token_details</span><span class="p">[</span><span class="s2">"cache_creation"</span><span class="p">]</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
     <span class="p">)</span>
-    <span class="n">output_tokens</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">anthropic_usage</span><span class="p">,</span> <span class="s2">"output_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">output_tokens</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">anthropic_usage</span><span class="p">,</span> <span class="s2">"output_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span>
     <span class="k">return</span> <span class="n">UsageMetadata</span><span class="p">(</span>
         <span class="n">input_tokens</span><span class="o">=</span><span class="n">input_tokens</span><span class="p">,</span>
         <span class="n">output_tokens</span><span class="o">=</span><span class="n">output_tokens</span><span class="p">,</span>
