@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 10, 2025" name="docbuild:last-update"/>
+<meta content="May 11, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -247,14 +247,30 @@
 <div class="viewcode-block" id="CharacterTextSplitter.split_text">
 <a class="viewcode-back" href="../../text_splitters/character/langchain_text_splitters.character.CharacterTextSplitter.html#langchain_text_splitters.character.CharacterTextSplitter.split_text">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">split_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Split incoming text and return chunks."""</span>
-        <span class="c1"># First we naively split the large input into a bunch of smaller ones.</span>
-        <span class="n">separator</span> <span class="o">=</span> <span class="p">(</span>
+<span class="w">        </span><span class="sd">"""Split into chunks without re-inserting lookaround separators."""</span>
+        <span class="c1"># 1. Determine split pattern: raw regex or escaped literal</span>
+        <span class="n">sep_pattern</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_separator_regex</span> <span class="k">else</span> <span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="n">splits</span> <span class="o">=</span> <span class="n">_split_text_with_regex</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">separator</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keep_separator</span><span class="p">)</span>
-        <span class="n">_separator</span> <span class="o">=</span> <span class="s2">""</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keep_separator</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_merge_splits</span><span class="p">(</span><span class="n">splits</span><span class="p">,</span> <span class="n">_separator</span><span class="p">)</span></div>
+
+        <span class="c1"># 2. Initial split (keep separator if requested)</span>
+        <span class="n">splits</span> <span class="o">=</span> <span class="n">_split_text_with_regex</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">sep_pattern</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keep_separator</span><span class="p">)</span>
+
+        <span class="c1"># 3. Detect zero-width lookaround so we never re-insert it</span>
+        <span class="n">lookaround_prefixes</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"(?="</span><span class="p">,</span> <span class="s2">"(?&lt;!"</span><span class="p">,</span> <span class="s2">"(?&lt;="</span><span class="p">,</span> <span class="s2">"(?!"</span><span class="p">)</span>
+        <span class="n">is_lookaround</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_separator_regex</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">lookaround_prefixes</span>
+        <span class="p">)</span>
+
+        <span class="c1"># 4. Decide merge separator:</span>
+        <span class="c1">#    - if keep_separator or lookaround → don’t re-insert</span>
+        <span class="c1">#    - else → re-insert literal separator</span>
+        <span class="n">merge_sep</span> <span class="o">=</span> <span class="s2">""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keep_separator</span> <span class="ow">or</span> <span class="n">is_lookaround</span><span class="p">):</span>
+            <span class="n">merge_sep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span>
+
+        <span class="c1"># 5. Merge adjacent splits and return</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_merge_splits</span><span class="p">(</span><span class="n">splits</span><span class="p">,</span> <span class="n">merge_sep</span><span class="p">)</span></div>
 </div>
 
 
