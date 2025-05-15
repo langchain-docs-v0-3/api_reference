@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 14, 2025" name="docbuild:last-update"/>
+<meta content="May 15, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -696,10 +696,9 @@
 
             <span class="n">_source_ids</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"Sequence[str]"</span><span class="p">,</span> <span class="n">source_ids</span><span class="p">)</span>
 
-            <span class="n">uids_to_delete</span> <span class="o">=</span> <span class="n">record_manager</span><span class="o">.</span><span class="n">list_keys</span><span class="p">(</span>
-                <span class="n">group_ids</span><span class="o">=</span><span class="n">_source_ids</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="n">index_start_dt</span>
-            <span class="p">)</span>
-            <span class="k">if</span> <span class="n">uids_to_delete</span><span class="p">:</span>
+            <span class="k">while</span> <span class="n">uids_to_delete</span> <span class="o">:=</span> <span class="n">record_manager</span><span class="o">.</span><span class="n">list_keys</span><span class="p">(</span>
+                <span class="n">group_ids</span><span class="o">=</span><span class="n">_source_ids</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="n">index_start_dt</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">cleanup_batch_size</span>
+            <span class="p">):</span>
                 <span class="c1"># Then delete from vector store.</span>
                 <span class="n">_delete</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="n">uids_to_delete</span><span class="p">)</span>
                 <span class="c1"># First delete from record store.</span>
@@ -1013,10 +1012,9 @@
 
             <span class="n">_source_ids</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"Sequence[str]"</span><span class="p">,</span> <span class="n">source_ids</span><span class="p">)</span>
 
-            <span class="n">uids_to_delete</span> <span class="o">=</span> <span class="k">await</span> <span class="n">record_manager</span><span class="o">.</span><span class="n">alist_keys</span><span class="p">(</span>
-                <span class="n">group_ids</span><span class="o">=</span><span class="n">_source_ids</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="n">index_start_dt</span>
-            <span class="p">)</span>
-            <span class="k">if</span> <span class="n">uids_to_delete</span><span class="p">:</span>
+            <span class="k">while</span> <span class="n">uids_to_delete</span> <span class="o">:=</span> <span class="k">await</span> <span class="n">record_manager</span><span class="o">.</span><span class="n">alist_keys</span><span class="p">(</span>
+                <span class="n">group_ids</span><span class="o">=</span><span class="n">_source_ids</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="n">index_start_dt</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">cleanup_batch_size</span>
+            <span class="p">):</span>
                 <span class="c1"># Then delete from vector store.</span>
                 <span class="k">await</span> <span class="n">_adelete</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="n">uids_to_delete</span><span class="p">)</span>
                 <span class="c1"># First delete from record store.</span>

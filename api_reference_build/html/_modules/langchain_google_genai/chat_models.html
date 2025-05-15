@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 14, 2025" name="docbuild:last-update"/>
+<meta content="May 15, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -472,6 +472,23 @@
     <span class="k">return</span> <span class="s2">"type"</span> <span class="ow">in</span> <span class="n">part</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_openai_image_block</span><span class="p">(</span><span class="n">block</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Check if the block contains image data in OpenAI Chat Completions format."""</span>
+    <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"image_url"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&lt;=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">,</span> <span class="s2">"image_url"</span><span class="p">,</span> <span class="s2">"detail"</span><span class="p">})</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="n">image_url</span> <span class="o">:=</span> <span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"image_url"</span><span class="p">))</span>
+            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">image_url</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">image_url</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"url"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">return</span> <span class="kc">False</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_convert_to_parts</span><span class="p">(</span>
     <span class="n">raw_content</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Part</span><span class="p">]:</span>
@@ -559,14 +576,28 @@
     <span class="k">return</span> <span class="n">parts</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_convert_tool_message_to_part</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_tool_message_to_parts</span><span class="p">(</span>
     <span class="n">message</span><span class="p">:</span> <span class="n">ToolMessage</span> <span class="o">|</span> <span class="n">FunctionMessage</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Part</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Part</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Converts a tool or function message to a google part."""</span>
     <span class="c1"># Legacy agent stores tool name in message.additional_kwargs instead of message.name</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">message</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span>
     <span class="n">response</span><span class="p">:</span> <span class="n">Any</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Part</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">media_blocks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">other_blocks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="n">is_data_content_block</span><span class="p">(</span><span class="n">block</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_is_openai_image_block</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="n">media_blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">other_blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_convert_to_parts</span><span class="p">(</span><span class="n">media_blocks</span><span class="p">))</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">other_blocks</span>
+
+    <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="n">response</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">content</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
@@ -581,7 +612,8 @@
             <span class="p">),</span>
         <span class="p">)</span>
     <span class="p">)</span>
-    <span class="k">return</span> <span class="n">part</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">parts</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_ai_message_tool_messages_parts</span><span class="p">(</span>
@@ -599,8 +631,10 @@
             <span class="k">break</span>
         <span class="k">if</span> <span class="n">message</span><span class="o">.</span><span class="n">tool_call_id</span> <span class="ow">in</span> <span class="n">tool_calls_ids</span><span class="p">:</span>
             <span class="n">tool_call</span> <span class="o">=</span> <span class="n">tool_calls_ids</span><span class="p">[</span><span class="n">message</span><span class="o">.</span><span class="n">tool_call_id</span><span class="p">]</span>
-            <span class="n">part</span> <span class="o">=</span> <span class="n">_convert_tool_message_to_part</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">tool_call</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">))</span>
-            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
+            <span class="n">message_parts</span> <span class="o">=</span> <span class="n">_convert_tool_message_to_parts</span><span class="p">(</span>
+                <span class="n">message</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">tool_call</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">message_parts</span><span class="p">)</span>
             <span class="c1"># remove the id from the dict, so that we do not iterate over it again</span>
             <span class="n">tool_calls_ids</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">tool_call_id</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">parts</span>
@@ -667,7 +701,7 @@
                 <span class="n">system_instruction</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">FunctionMessage</span><span class="p">):</span>
             <span class="n">role</span> <span class="o">=</span> <span class="s2">"user"</span>
-            <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">_convert_tool_message_to_part</span><span class="p">(</span><span class="n">message</span><span class="p">)]</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="n">_convert_tool_message_to_parts</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Unexpected message with type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="si">}</span><span class="s2"> at the position </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">."</span>
