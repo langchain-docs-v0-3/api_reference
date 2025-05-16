@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 15, 2025" name="docbuild:last-update"/>
+<meta content="May 16, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -660,8 +660,22 @@
 <span class="w">    </span><span class="sd">"""Base url the model is hosted under."""</span>
 
     <span class="n">client_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="w">    </span><span class="sd">"""Additional kwargs to pass to the httpx Client.</span>
-<span class="sd">    For a full list of the params, see [this link](https://pydoc.dev/httpx/latest/httpx.Client.html)</span>
+<span class="w">    </span><span class="sd">"""Additional kwargs to pass to the httpx clients. </span>
+<span class="sd">    These arguments are passed to both synchronous and async clients.</span>
+<span class="sd">    Use sync_client_kwargs and async_client_kwargs to pass different arguments</span>
+<span class="sd">    to synchronous and asynchronous clients.</span>
+<span class="sd">    """</span>
+
+    <span class="n">async_client_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="w">    </span><span class="sd">"""Additional kwargs to merge with client_kwargs before</span>
+<span class="sd">    passing to the httpx AsyncClient.</span>
+<span class="sd">    For a full list of the params, see [this link](https://www.python-httpx.org/api/#asyncclient)</span>
+<span class="sd">    """</span>
+
+    <span class="n">sync_client_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="w">    </span><span class="sd">"""Additional kwargs to merge with client_kwargs before</span>
+<span class="sd">    passing to the httpx Client.</span>
+<span class="sd">    For a full list of the params, see [this link](https://www.python-httpx.org/api/#client)</span>
 <span class="sd">    """</span>
 
     <span class="n">_client</span><span class="p">:</span> <span class="n">Client</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
@@ -727,8 +741,17 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_set_clients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Set clients to use for ollama."""</span>
         <span class="n">client_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">,</span> <span class="o">**</span><span class="n">client_kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_async_client</span> <span class="o">=</span> <span class="n">AsyncClient</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">,</span> <span class="o">**</span><span class="n">client_kwargs</span><span class="p">)</span>
+
+        <span class="n">sync_client_kwargs</span> <span class="o">=</span> <span class="n">client_kwargs</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sync_client_kwargs</span><span class="p">:</span>
+            <span class="n">sync_client_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">sync_client_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">sync_client_kwargs</span><span class="p">}</span>
+
+        <span class="n">async_client_kwargs</span> <span class="o">=</span> <span class="n">client_kwargs</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client_kwargs</span><span class="p">:</span>
+            <span class="n">async_client_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">async_client_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">async_client_kwargs</span><span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">,</span> <span class="o">**</span><span class="n">sync_client_kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_async_client</span> <span class="o">=</span> <span class="n">AsyncClient</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">,</span> <span class="o">**</span><span class="n">async_client_kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_convert_messages_to_ollama_messages</span><span class="p">(</span>
