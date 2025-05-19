@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 18, 2025" name="docbuild:last-update"/>
+<meta content="May 19, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -308,6 +308,13 @@
 <span class="c1"># Error message for receiving a lexical_query for a non-hybrid search</span>
 <span class="n">ERROR_LEXICAL_QUERY_ON_NONHYBRID_SEARCH</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"Parameter 'lexical_query' cannot be passed for a non-hybrid search"</span>
+<span class="p">)</span>
+<span class="c1"># Warning message for retrieving scores on a hybrid search</span>
+<span class="n">WARNING_HYBRID_SEARCH_WITH_SCORES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Scores returned as part of a hybrid search, which come from the "</span>
+    <span class="s2">"reranking step, may not be deterministically computed solely based "</span>
+    <span class="s2">"on the query and result. Using the scores e.g. for "</span>
+    <span class="s2">"threshold-filtering may lead to unpredictable results and is discouraged."</span>
 <span class="p">)</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -2775,7 +2782,7 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">doc</span>
-            <span class="k">for</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_with_score_id</span><span class="p">(</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_similarity_search_with_score_id_impl</span><span class="p">(</span>
                 <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
                 <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
                 <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
@@ -2807,9 +2814,11 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            The list of (Document, score), the most similar to the query vector.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">WARNING_HYBRID_SEARCH_WITH_SCORES</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">score</span><span class="p">)</span>
-            <span class="k">for</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">score</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_with_score_id</span><span class="p">(</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">score</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_similarity_search_with_score_id_impl</span><span class="p">(</span>
                 <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
                 <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
                 <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
@@ -2818,16 +2827,14 @@
         <span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="AstraDBVectorStore.similarity_search_with_score_id">
-<a class="viewcode-back" href="../../astradb/vectorstores/langchain_astradb.vectorstores.AstraDBVectorStore.html#langchain_astradb.vectorstores.AstraDBVectorStore.similarity_search_with_score_id">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">similarity_search_with_score_id</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_similarity_search_with_score_id_impl</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="nb">filter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">lexical_query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">"""Return docs most similar to the query with score and id.</span>
+<span class="w">        </span><span class="sd">"""Implementation for similarity_search_with_score_id.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            query: Query to look up documents similar to.</span>
@@ -2881,6 +2888,37 @@
             <span class="n">sort</span><span class="o">=</span><span class="n">sort</span><span class="p">,</span>
             <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
             <span class="n">filter_dict</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="AstraDBVectorStore.similarity_search_with_score_id">
+<a class="viewcode-back" href="../../astradb/vectorstores/langchain_astradb.vectorstores.AstraDBVectorStore.html#langchain_astradb.vectorstores.AstraDBVectorStore.similarity_search_with_score_id">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">similarity_search_with_score_id</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
+        <span class="n">lexical_query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Return docs most similar to the query with score and id.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            query: Query to look up documents similar to.</span>
+<span class="sd">            k: Number of Documents to return. Defaults to 4.</span>
+<span class="sd">            filter: Filter on the metadata to apply.</span>
+<span class="sd">            lexical_query: for hybrid search, a specific query for the lexical</span>
+<span class="sd">                portion of the retrieval. If omitted or empty, defaults to the same</span>
+<span class="sd">                as 'query'. If passed on a non-hybrid search, an error is raised.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The list of (Document, score, id), the most similar to the query.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">WARNING_HYBRID_SEARCH_WITH_SCORES</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_similarity_search_with_score_id_impl</span><span class="p">(</span>
+            <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+            <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+            <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
+            <span class="n">lexical_query</span><span class="o">=</span><span class="n">lexical_query</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
@@ -3061,7 +3099,7 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">doc</span>
-            <span class="k">for</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">asimilarity_search_with_score_id</span><span class="p">(</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_asimilarity_search_with_score_id_impl</span><span class="p">(</span>
                 <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
                 <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
                 <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
@@ -3093,9 +3131,11 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            The list of (Document, score), the most similar to the query vector.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">WARNING_HYBRID_SEARCH_WITH_SCORES</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">score</span><span class="p">)</span>
-            <span class="k">for</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">score</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">asimilarity_search_with_score_id</span><span class="p">(</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">score</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_asimilarity_search_with_score_id_impl</span><span class="p">(</span>
                 <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
                 <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
                 <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
@@ -3104,16 +3144,14 @@
         <span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="AstraDBVectorStore.asimilarity_search_with_score_id">
-<a class="viewcode-back" href="../../astradb/vectorstores/langchain_astradb.vectorstores.AstraDBVectorStore.html#langchain_astradb.vectorstores.AstraDBVectorStore.asimilarity_search_with_score_id">[docs]</a>
-    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">asimilarity_search_with_score_id</span><span class="p">(</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_asimilarity_search_with_score_id_impl</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="nb">filter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">lexical_query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">"""Return docs most similar to the query with score and id.</span>
+<span class="w">        </span><span class="sd">"""Implementation for asimilarity_search_with_score_id.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            query: Query to look up documents similar to.</span>
@@ -3167,6 +3205,37 @@
             <span class="n">sort</span><span class="o">=</span><span class="n">sort</span><span class="p">,</span>
             <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
             <span class="n">filter_dict</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="AstraDBVectorStore.asimilarity_search_with_score_id">
+<a class="viewcode-back" href="../../astradb/vectorstores/langchain_astradb.vectorstores.AstraDBVectorStore.html#langchain_astradb.vectorstores.AstraDBVectorStore.asimilarity_search_with_score_id">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">asimilarity_search_with_score_id</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
+        <span class="n">lexical_query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Return docs most similar to the query with score and id.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            query: Query to look up documents similar to.</span>
+<span class="sd">            k: Number of Documents to return. Defaults to 4.</span>
+<span class="sd">            filter: Filter on the metadata to apply.</span>
+<span class="sd">            lexical_query: for hybrid search, a specific query for the lexical</span>
+<span class="sd">                portion of the retrieval. If omitted or empty, defaults to the same</span>
+<span class="sd">                as 'query'. If passed on a non-hybrid search, an error is raised.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The list of (Document, score, id), the most similar to the query.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">WARNING_HYBRID_SEARCH_WITH_SCORES</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_asimilarity_search_with_score_id_impl</span><span class="p">(</span>
+            <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+            <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+            <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
+            <span class="n">lexical_query</span><span class="o">=</span><span class="n">lexical_query</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
