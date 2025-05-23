@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 22, 2025" name="docbuild:last-update"/>
+<meta content="May 23, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -223,6 +223,7 @@
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Any</span><span class="p">,</span>
     <span class="n">Callable</span><span class="p">,</span>
@@ -1310,12 +1311,14 @@
 <span class="sd">            List[str]: The resulting keys for each inserted element.</span>
 <span class="sd">        """</span>
         <span class="n">texts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_id</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> <span class="p">(</span>
-                <span class="s2">"A list of valid ids are required when auto_id is False. "</span>
-                <span class="s2">"You can set `auto_id` to True in this Milvus instance to generate "</span>
-                <span class="s2">"ids automatically, or specify string-type ids for each text."</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_id</span> <span class="ow">and</span> <span class="n">ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"No ids provided and auto_id is False. "</span>
+                <span class="s2">"Setting auto_id to True automatically."</span><span class="p">,</span>
+                <span class="ne">UserWarning</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">auto_id</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_id</span> <span class="ow">and</span> <span class="n">ids</span><span class="p">:</span>  <span class="c1"># Check ids</span>
             <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
                 <span class="n">texts</span>
             <span class="p">),</span> <span class="s2">"Different lengths of texts and unique ids are provided."</span>
@@ -1324,12 +1327,11 @@
                 <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span> <span class="o">&lt;=</span> <span class="mi">65_535</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ids</span>
             <span class="p">),</span> <span class="s2">"Each id should be a string less than 65535 bytes."</span>
 
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="s2">"The ids parameter is ignored when auto_id is True. "</span>
-                    <span class="s2">"The ids will be generated automatically."</span>
-                <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_id</span> <span class="ow">and</span> <span class="n">ids</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"The ids parameter is ignored when auto_id is True. "</span>
+                <span class="s2">"The ids will be generated automatically."</span>
+            <span class="p">)</span>
 
         <span class="n">embeddings_functions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">EmbeddingType</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_as_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_func</span><span class="p">)</span>
         <span class="n">embeddings</span><span class="p">:</span> <span class="n">List</span> <span class="o">=</span> <span class="p">[]</span>
@@ -2244,7 +2246,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            List of IDs of the added texts.</span>
 <span class="sd">        """</span>
-        <span class="c1"># TODO: Handle the case where the user doesn't provide ids on the Collection</span>
         <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">page_content</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
         <span class="n">metadatas</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_texts</span><span class="p">(</span><span class="n">texts</span><span class="p">,</span> <span class="n">metadatas</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
@@ -2453,12 +2454,14 @@
 <span class="sd">            List[str]: The resulting keys for each inserted element.</span>
 <span class="sd">        """</span>
         <span class="n">texts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_id</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> <span class="p">(</span>
-                <span class="s2">"A list of valid ids are required when auto_id is False. "</span>
-                <span class="s2">"You can set `auto_id` to True in this Milvus instance to generate "</span>
-                <span class="s2">"ids automatically, or specify string-type ids for each text."</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_id</span> <span class="ow">and</span> <span class="n">ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"No ids provided and auto_id is False. "</span>
+                <span class="s2">"Setting auto_id to True automatically."</span><span class="p">,</span>
+                <span class="ne">UserWarning</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">auto_id</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_id</span> <span class="ow">and</span> <span class="n">ids</span><span class="p">:</span>  <span class="c1"># Check ids</span>
             <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
                 <span class="n">texts</span>
             <span class="p">),</span> <span class="s2">"Different lengths of texts and unique ids are provided."</span>
@@ -2467,12 +2470,11 @@
                 <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span> <span class="o">&lt;=</span> <span class="mi">65_535</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ids</span>
             <span class="p">),</span> <span class="s2">"Each id should be a string less than 65535 bytes."</span>
 
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="s2">"The ids parameter is ignored when auto_id is True. "</span>
-                    <span class="s2">"The ids will be generated automatically."</span>
-                <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_id</span> <span class="ow">and</span> <span class="n">ids</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"The ids parameter is ignored when auto_id is True. "</span>
+                <span class="s2">"The ids will be generated automatically."</span>
+            <span class="p">)</span>
 
         <span class="n">embeddings_functions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">EmbeddingType</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_as_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_func</span><span class="p">)</span>
         <span class="n">embeddings</span><span class="p">:</span> <span class="n">List</span> <span class="o">=</span> <span class="p">[]</span>
@@ -3273,7 +3275,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            List of IDs of the added texts.</span>
 <span class="sd">        """</span>
-        <span class="c1"># TODO: Handle the case where the user doesn't provide ids on the Collection</span>
         <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">page_content</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
         <span class="n">metadatas</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
         <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">aadd_texts</span><span class="p">(</span><span class="n">texts</span><span class="p">,</span> <span class="n">metadatas</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>

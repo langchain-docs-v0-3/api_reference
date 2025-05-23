@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 22, 2025" name="docbuild:last-update"/>
+<meta content="May 23, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -238,7 +238,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">annotated_types</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">typing_extensions</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_core</span><span class="w"> </span><span class="kn">import</span> <span class="n">PydanticUndefined</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAlias</span><span class="p">,</span> <span class="n">Unpack</span><span class="p">,</span> <span class="n">deprecated</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span><span class="p">,</span> <span class="n">TypeAlias</span><span class="p">,</span> <span class="n">Unpack</span><span class="p">,</span> <span class="n">deprecated</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_inspection</span><span class="w"> </span><span class="kn">import</span> <span class="n">typing_objects</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_inspection.introspection</span><span class="w"> </span><span class="kn">import</span> <span class="n">UNKNOWN</span><span class="p">,</span> <span class="n">AnnotationSource</span><span class="p">,</span> <span class="n">ForbiddenQualifier</span><span class="p">,</span> <span class="n">Qualifier</span><span class="p">,</span> <span class="n">inspect_annotation</span>
 
@@ -571,7 +571,7 @@
         <span class="n">field_info_annotations</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">metadata</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">FieldInfo</span><span class="p">)]</span>
         <span class="n">field_info</span> <span class="o">=</span> <span class="n">FieldInfo</span><span class="o">.</span><span class="n">merge_field_infos</span><span class="p">(</span><span class="o">*</span><span class="n">field_info_annotations</span><span class="p">,</span> <span class="n">annotation</span><span class="o">=</span><span class="n">type_expr</span><span class="p">)</span>
 
-        <span class="n">new_field_info</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">field_info</span><span class="p">)</span>
+        <span class="n">new_field_info</span> <span class="o">=</span> <span class="n">field_info</span><span class="o">.</span><span class="n">_copy</span><span class="p">()</span>
         <span class="n">new_field_info</span><span class="o">.</span><span class="n">annotation</span> <span class="o">=</span> <span class="n">type_expr</span>
         <span class="n">new_field_info</span><span class="o">.</span><span class="n">frozen</span> <span class="o">=</span> <span class="n">final</span> <span class="ow">or</span> <span class="n">field_info</span><span class="o">.</span><span class="n">frozen</span>
         <span class="n">field_metadata</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -700,7 +700,7 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">field_infos</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="c1"># No merging necessary, but we still need to make a copy and apply the overrides</span>
-            <span class="n">field_info</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">field_infos</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">field_info</span> <span class="o">=</span> <span class="n">field_infos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">_copy</span><span class="p">()</span>
             <span class="n">field_info</span><span class="o">.</span><span class="n">_attributes_set</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>
 
             <span class="n">default_override</span> <span class="o">=</span> <span class="n">overrides</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">'default'</span><span class="p">,</span> <span class="n">PydanticUndefined</span><span class="p">)</span>
@@ -810,6 +810,15 @@
             <span class="n">metadata</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_fields</span><span class="o">.</span><span class="n">pydantic_general_metadata</span><span class="p">(</span><span class="o">**</span><span class="n">general_metadata</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">metadata</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+        <span class="n">copied</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">attr_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'metadata'</span><span class="p">,</span> <span class="s1">'_attributes_set'</span><span class="p">,</span> <span class="s1">'_qualifiers'</span><span class="p">):</span>
+            <span class="c1"># Apply "deep-copy" behavior on collections attributes:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">copied</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">copied</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">copied</span>
+
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">deprecation_message</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The deprecation message to be emitted, or `None` if not set."""</span>
@@ -914,8 +923,12 @@
 <span class="sd">            pydantic._internal._generics.replace_types is used for replacing the typevars with</span>
 <span class="sd">                their concrete types.</span>
 <span class="sd">        """</span>
-        <span class="n">annotation</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_typing_extra</span><span class="o">.</span><span class="n">try_eval_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">annotation</span><span class="p">,</span> <span class="n">globalns</span><span class="p">,</span> <span class="n">localns</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">annotation</span> <span class="o">=</span> <span class="n">_generics</span><span class="o">.</span><span class="n">replace_types</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">typevars_map</span><span class="p">)</span>
+        <span class="n">annotation</span> <span class="o">=</span> <span class="n">_generics</span><span class="o">.</span><span class="n">replace_types</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">annotation</span><span class="p">,</span> <span class="n">typevars_map</span><span class="p">)</span>
+        <span class="n">annotation</span><span class="p">,</span> <span class="n">evaluated</span> <span class="o">=</span> <span class="n">_typing_extra</span><span class="o">.</span><span class="n">try_eval_type</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">globalns</span><span class="p">,</span> <span class="n">localns</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">annotation</span> <span class="o">=</span> <span class="n">annotation</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">evaluated</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_complete</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_original_annotation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotation</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__repr_args__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReprArgs</span><span class="p">:</span>
         <span class="k">yield</span> <span class="s1">'annotation'</span><span class="p">,</span> <span class="n">_repr</span><span class="o">.</span><span class="n">PlainRepr</span><span class="p">(</span><span class="n">_repr</span><span class="o">.</span><span class="n">display_as_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">annotation</span><span class="p">))</span>
