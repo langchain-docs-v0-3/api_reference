@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 25, 2025" name="docbuild:last-update"/>
+<meta content="May 26, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -729,7 +729,21 @@
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="n">text</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="k">if</span> <span class="n">text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">part</span><span class="o">.</span><span class="n">thought</span><span class="p">:</span>
+            <span class="n">thinking_message</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"thinking"</span><span class="p">,</span>
+                <span class="s2">"thinking"</span><span class="p">:</span> <span class="n">part</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">content</span><span class="p">:</span>
+                <span class="n">content</span> <span class="o">=</span> <span class="p">[</span><span class="n">thinking_message</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">content</span> <span class="o">=</span> <span class="p">[</span><span class="n">thinking_message</span><span class="p">,</span> <span class="n">content</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">thinking_message</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">"Unexpected content type"</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">content</span><span class="p">:</span>
                 <span class="n">content</span> <span class="o">=</span> <span class="n">text</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">text</span><span class="p">:</span>
@@ -917,6 +931,13 @@
             <span class="n">proto</span><span class="o">.</span><span class="n">Message</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">safety_rating</span><span class="p">,</span> <span class="n">use_integers_for_enums</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">safety_rating</span> <span class="ow">in</span> <span class="n">candidate</span><span class="o">.</span><span class="n">safety_ratings</span>
         <span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">grounding_metadata</span><span class="p">:</span>
+                <span class="n">generation_info</span><span class="p">[</span><span class="s2">"grounding_metadata"</span><span class="p">]</span> <span class="o">=</span> <span class="n">proto</span><span class="o">.</span><span class="n">Message</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span>
+                    <span class="n">candidate</span><span class="o">.</span><span class="n">grounding_metadata</span>
+                <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">pass</span>
         <span class="n">message</span> <span class="o">=</span> <span class="n">_parse_response_candidate</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">streaming</span><span class="o">=</span><span class="n">stream</span><span class="p">)</span>
         <span class="n">message</span><span class="o">.</span><span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">lc_usage</span>
         <span class="k">if</span> <span class="n">stream</span><span class="p">:</span>
@@ -1421,6 +1442,7 @@
             <span class="s2">"safety_settings"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">safety_settings</span><span class="p">,</span>
             <span class="s2">"response_modalities"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_modalities</span><span class="p">,</span>
             <span class="s2">"thinking_budget"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking_budget</span><span class="p">,</span>
+            <span class="s2">"include_thoughts"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_thoughts</span><span class="p">,</span>
         <span class="p">}</span>
 
 <div class="viewcode-block" id="ChatGoogleGenerativeAI.invoke">
@@ -1500,8 +1522,19 @@
                 <span class="s2">"top_k"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">top_k</span><span class="p">,</span>
                 <span class="s2">"top_p"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">top_p</span><span class="p">,</span>
                 <span class="s2">"response_modalities"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_modalities</span><span class="p">,</span>
-                <span class="s2">"thinking_config"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"thinking_budget"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking_budget</span><span class="p">}</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking_budget</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="s2">"thinking_config"</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="p">{</span><span class="s2">"thinking_budget"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking_budget</span><span class="p">}</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking_budget</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                        <span class="k">else</span> <span class="p">{}</span>
+                    <span class="p">)</span>
+                    <span class="o">|</span> <span class="p">(</span>
+                        <span class="p">{</span><span class="s2">"include_thoughts"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_thoughts</span><span class="p">}</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_thoughts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                        <span class="k">else</span> <span class="p">{}</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking_budget</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_thoughts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                 <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="p">}</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
