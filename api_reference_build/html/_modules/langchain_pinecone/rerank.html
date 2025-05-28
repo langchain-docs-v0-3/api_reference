@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 27, 2025" name="docbuild:last-update"/>
+<meta content="May 28, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -229,9 +229,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callbacks</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseDocumentCompressor</span><span class="p">,</span> <span class="n">Document</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">secret_from_env</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pinecone</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pinecone</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">SecretStr</span><span class="p">,</span> <span class="n">model_validator</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pinecone</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pinecone</span><span class="p">,</span> <span class="n">PineconeAsyncio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">SecretStr</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -241,18 +240,23 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">PineconeRerank</span><span class="p">(</span><span class="n">BaseDocumentCompressor</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Document compressor that uses `Pinecone Rerank API`."""</span>
 
-    <span class="n">client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Pinecone</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">"""Pinecone client to use for compressing documents."""</span>
+    <span class="n">async_client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PineconeAsyncio</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Pinecone client to use for compressing documents."""</span>
     <span class="n">top_n</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="w">    </span><span class="sd">"""Number of documents to return."""</span>
-    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">"""Model to use for reranking. Mandatory to specify the model name."""</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">"bge-reranker-v2-m3"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Model to use for reranking. Default is 'bge-reranker-v2-m3'."</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Model to use for reranking."""</span>
     <span class="n">pinecone_api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SecretStr</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="n">secret_from_env</span><span class="p">(</span><span class="s2">"PINECONE_API_KEY"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="p">)</span>
 <span class="w">    </span><span class="sd">"""Pinecone API key. Must be specified directly or via environment variable </span>
 <span class="sd">    PINECONE_API_KEY."""</span>
-    <span class="n">rank_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">rank_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Fields to use for reranking when documents are dictionaries."""</span>
     <span class="n">return_documents</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="w">    </span><span class="sd">"""Whether to return the documents in the reranking results."""</span>
@@ -262,40 +266,35 @@
         <span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">validate_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>  <span class="c1"># type: ignore[valid-type]</span>
-<span class="w">        </span><span class="sd">"""Validate that api key and python package exists in environment."""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pinecone_api_key</span><span class="p">,</span> <span class="n">SecretStr</span><span class="p">):</span>
-                <span class="n">pinecone_api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">pinecone_api_key</span><span class="o">.</span><span class="n">get_secret_value</span><span class="p">()</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">pinecone_api_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pinecone_api_key</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_api_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get the API key from SecretStr or directly."""</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pinecone_api_key</span><span class="p">,</span> <span class="n">SecretStr</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pinecone_api_key</span><span class="o">.</span><span class="n">get_secret_value</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pinecone_api_key</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">Pinecone</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">pinecone_api_key</span><span class="p">)</span>
-
-        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="s2">"inference"</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"The 'client' parameter must be an instance of pinecone.Pinecone.</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_sync_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pinecone</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get or create the sync client."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">Pinecone</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_api_key</span><span class="p">())</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">Pinecone</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">"The 'client' parameter must be an instance of Pinecone.</span><span class="se">\n</span><span class="s2">"</span>
                 <span class="s2">"You may create the Pinecone object like:</span><span class="se">\n\n</span><span class="s2">"</span>
                 <span class="s2">"from pinecone import Pinecone</span><span class="se">\n</span><span class="s2">client = Pinecone(api_key=...)"</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span>
 
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">validate_model_specified</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>  <span class="c1"># type: ignore[valid-type]</span>
-<span class="w">        </span><span class="sd">"""Validate that model is specified."""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"Did not find `model`! Please "</span>
-                <span class="s2">" pass `model` as a named parameter."</span>
-                <span class="s2">" Example models include 'bge-reranker-v2-m3'."</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_get_async_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PineconeAsyncio</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get or create the async client."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span> <span class="o">=</span> <span class="n">PineconeAsyncio</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_api_key</span><span class="p">())</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="p">,</span> <span class="n">PineconeAsyncio</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">"The 'async_client' parameter must be an instance of PineconeAsyncio.</span><span class="se">\n</span><span class="s2">"</span>
+                <span class="s2">"You may create the PineconeAsyncio object like:</span><span class="se">\n\n</span><span class="s2">"</span>
+                <span class="s2">"from pinecone import PineconeAsyncio</span><span class="se">\n</span><span class="s2">async_client = PineconeAsyncio(api_key=...)"</span>
             <span class="p">)</span>
-
-        <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_document_to_dict</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -330,126 +329,37 @@
         <span class="n">documents</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Document</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]],</span>
         <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">rank_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">rank_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">top_n</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">truncate</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"END"</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">"""Returns an ordered list of documents ordered by their relevance to the provided query.</span>
-
-<span class="sd">        This method reranks documents using Pinecone's reranking API as part of a two-stage</span>
-<span class="sd">        vector retrieval process to improve result quality. It first converts documents to the</span>
-<span class="sd">        appropriate format, then sends them along with the query to the reranking model. The</span>
-<span class="sd">        reranking model scores the results based on their semantic relevance to the query and</span>
-<span class="sd">        returns a new, more accurate ranking.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            query: The query to use for reranking.</span>
-<span class="sd">            documents: A sequence of documents to rerank. Can be strings, Document objects,</span>
-<span class="sd">                or dictionaries with an optional 'id' field and text content.</span>
-<span class="sd">            rank_fields: A sequence of keys to use for reranking when documents are dictionaries.</span>
-<span class="sd">                Only the first field is used for models that support a single rank field.</span>
-<span class="sd">            model: The model to use for reranking. Defaults to self.model.</span>
-<span class="sd">                Supported models include 'bge-reranker-v2-m3', 'pinecone-rerank-v0',</span>
-<span class="sd">                and 'cohere-rerank-3.5'.</span>
-<span class="sd">            top_n: The number of results to return. If None returns all results.</span>
-<span class="sd">                Defaults to self.top_n.</span>
-<span class="sd">            truncate: How to truncate documents if they exceed token limits. Options: "END",</span>
-<span class="sd">                "MIDDLE". Defaults to "END".</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            A list of dictionaries containing:</span>
-<span class="sd">                - id: The document ID</span>
-<span class="sd">                - index: The original index in the input documents sequence</span>
-<span class="sd">                - score: The relevance score (0-1, with 1 being most relevant)</span>
-<span class="sd">                - document: The document content (if return_documents=True)</span>
-
-<span class="sd">        Examples:</span>
-<span class="sd">            ```python</span>
-<span class="sd">            from langchain_pinecone import PineconeRerank</span>
-<span class="sd">            from langchain_core.documents import Document</span>
-<span class="sd">            from pinecone import Pinecone</span>
-
-<span class="sd">            # Initialize Pinecone client</span>
-<span class="sd">            pc = Pinecone(api_key="your-api-key")</span>
-
-<span class="sd">            # Create the reranker</span>
-<span class="sd">            reranker = PineconeRerank(</span>
-<span class="sd">                client=pc,</span>
-<span class="sd">                model="bge-reranker-v2-m3",</span>
-<span class="sd">                top_n=2</span>
-<span class="sd">            )</span>
-
-<span class="sd">            # Create sample documents</span>
-<span class="sd">            documents = [</span>
-<span class="sd">                Document(page_content="Apple is a popular fruit known for its sweetness."),</span>
-<span class="sd">                Document(page_content="Apple Inc. has revolutionized the tech industry."),</span>
-<span class="sd">                Document(page_content="An apple a day keeps the doctor away."),</span>
-<span class="sd">            ]</span>
-
-<span class="sd">            # Rerank documents</span>
-<span class="sd">            rerank_results = reranker.rerank(</span>
-<span class="sd">                documents=documents,</span>
-<span class="sd">                query="Tell me about the tech company Apple",</span>
-<span class="sd">            )</span>
-
-<span class="sd">            # Display results</span>
-<span class="sd">            for result in rerank_results:</span>
-<span class="sd">                print(f"Score: {result['score']}, Document: {result['document']}")</span>
-<span class="sd">            ```</span>
-
-<span class="sd">            Using dictionaries with custom fields:</span>
-<span class="sd">            ```python</span>
-<span class="sd">            # Create documents as dictionaries with custom fields</span>
-<span class="sd">            docs = [</span>
-<span class="sd">                {"id": "doc1", "content": "Apple is a fruit known for its sweetness."},</span>
-<span class="sd">                {"id": "doc2", "content": "Apple Inc. creates innovative tech products."},</span>
-<span class="sd">            ]</span>
-
-<span class="sd">            # Rerank using a custom field</span>
-<span class="sd">            results = reranker.rerank(</span>
-<span class="sd">                documents=docs,</span>
-<span class="sd">                query="tech companies",</span>
-<span class="sd">                rank_fields=["content"],</span>
-<span class="sd">                top_n=1</span>
-<span class="sd">            )</span>
-<span class="sd">            ```</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""Returns an ordered list of documents ordered by their relevance to the provided query."""</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># to avoid empty API call</span>
             <span class="k">return</span> <span class="p">[]</span>
 
+        <span class="c1"># Convert documents to dict format</span>
         <span class="n">docs</span> <span class="o">=</span> <span class="p">[</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_document_to_dict</span><span class="p">(</span><span class="n">document</span><span class="o">=</span><span class="n">doc</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">doc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
         <span class="p">]</span>
 
-        <span class="c1"># Handle rank_fields - Pinecone requires exactly one rank field</span>
-        <span class="n">effective_rank_fields</span> <span class="o">=</span> <span class="n">rank_fields</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank_fields</span>
-        <span class="k">if</span> <span class="n">effective_rank_fields</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">effective_rank_fields</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="c1"># Take only the first rank field if multiple are provided</span>
-            <span class="n">rank_field</span> <span class="o">=</span> <span class="p">[</span><span class="n">effective_rank_fields</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Default to "text" if no rank_fields are provided - this is the default for Pinecone</span>
-            <span class="n">rank_field</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"text"</span><span class="p">]</span>
-
-        <span class="n">top_n</span> <span class="o">=</span> <span class="n">top_n</span> <span class="k">if</span> <span class="n">top_n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">top_n</span>
-
-        <span class="n">model_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">or</span> <span class="n">model</span> <span class="ow">or</span> <span class="s2">"bge-reranker-v2-m3"</span>
-
-        <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"truncate"</span><span class="p">:</span> <span class="n">truncate</span><span class="p">}</span>
-
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Pinecone client not found. Please provide a client."</span><span class="p">)</span>
+            <span class="n">client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_sync_client</span><span class="p">()</span>
 
-            <span class="n">rerank_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">inference</span><span class="o">.</span><span class="n">rerank</span><span class="p">(</span>
-                <span class="n">model</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span>
+            <span class="c1"># Use self.model if model is None</span>
+            <span class="n">model_to_use</span> <span class="o">=</span> <span class="n">model</span> <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+            <span class="k">if</span> <span class="n">model_to_use</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># This should never happen due to validator</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No model specified for reranking"</span><span class="p">)</span>
+
+            <span class="n">rerank_result</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">inference</span><span class="o">.</span><span class="n">rerank</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model_to_use</span><span class="p">,</span>
                 <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
                 <span class="n">documents</span><span class="o">=</span><span class="n">docs</span><span class="p">,</span>
-                <span class="n">rank_fields</span><span class="o">=</span><span class="n">rank_field</span><span class="p">,</span>
-                <span class="n">top_n</span><span class="o">=</span><span class="n">top_n</span><span class="p">,</span>
+                <span class="n">rank_fields</span><span class="o">=</span><span class="n">rank_fields</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank_fields</span> <span class="ow">or</span> <span class="p">[</span><span class="s2">"text"</span><span class="p">],</span>
+                <span class="n">top_n</span><span class="o">=</span><span class="n">top_n</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">top_n</span><span class="p">,</span>
                 <span class="n">return_documents</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">return_documents</span><span class="p">,</span>
-                <span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span>
+                <span class="n">parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">"truncate"</span><span class="p">:</span> <span class="n">truncate</span><span class="p">},</span>
             <span class="p">)</span>
 
             <span class="n">result_dicts</span> <span class="o">=</span> <span class="p">[]</span>
@@ -472,6 +382,64 @@
             <span class="k">return</span> <span class="p">[]</span></div>
 
 
+<div class="viewcode-block" id="PineconeRerank.arerank">
+<a class="viewcode-back" href="../../pinecone/rerank/langchain_pinecone.rerank.PineconeRerank.html#langchain_pinecone.rerank.PineconeRerank.arerank">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">arerank</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">documents</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Document</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]],</span>
+        <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">rank_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">top_n</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">truncate</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"END"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Async rerank documents using Pinecone's reranking API."""</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># to avoid empty API call</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">docs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_document_to_dict</span><span class="p">(</span><span class="n">document</span><span class="o">=</span><span class="n">doc</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">doc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">client</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_async_client</span><span class="p">()</span>
+
+            <span class="c1"># Use self.model if model is None</span>
+            <span class="n">model_to_use</span> <span class="o">=</span> <span class="n">model</span> <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+            <span class="k">if</span> <span class="n">model_to_use</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># This should never happen due to validator</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No model specified for reranking"</span><span class="p">)</span>
+
+            <span class="n">rerank_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">inference</span><span class="o">.</span><span class="n">rerank</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model_to_use</span><span class="p">,</span>
+                <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+                <span class="n">documents</span><span class="o">=</span><span class="n">docs</span><span class="p">,</span>
+                <span class="n">rank_fields</span><span class="o">=</span><span class="n">rank_fields</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank_fields</span> <span class="ow">or</span> <span class="p">[</span><span class="s2">"text"</span><span class="p">],</span>
+                <span class="n">top_n</span><span class="o">=</span><span class="n">top_n</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">top_n</span><span class="p">,</span>
+                <span class="n">return_documents</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">return_documents</span><span class="p">,</span>
+                <span class="n">parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">"truncate"</span><span class="p">:</span> <span class="n">truncate</span><span class="p">},</span>
+            <span class="p">)</span>
+
+            <span class="n">result_dicts</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">result_item_data</span> <span class="ow">in</span> <span class="n">rerank_result</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+                <span class="n">result_dict</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">"id"</span><span class="p">:</span> <span class="n">result_item_data</span><span class="o">.</span><span class="n">document</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                    <span class="s2">"index"</span><span class="p">:</span> <span class="n">result_item_data</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+                    <span class="s2">"score"</span><span class="p">:</span> <span class="n">result_item_data</span><span class="o">.</span><span class="n">score</span><span class="p">,</span>
+                <span class="p">}</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_documents</span><span class="p">:</span>
+                    <span class="n">result_dict</span><span class="p">[</span><span class="s2">"document"</span><span class="p">]</span> <span class="o">=</span> <span class="n">result_item_data</span><span class="o">.</span><span class="n">document</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+
+                <span class="n">result_dicts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result_dict</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">result_dicts</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Async rerank error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[]</span></div>
+
+
 <div class="viewcode-block" id="PineconeRerank.compress_documents">
 <a class="viewcode-back" href="../../pinecone/rerank/langchain_pinecone.rerank.PineconeRerank.html#langchain_pinecone.rerank.PineconeRerank.compress_documents">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compress_documents</span><span class="p">(</span>
@@ -480,31 +448,51 @@
         <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">callbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callbacks</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        Compress documents using Pinecone's rerank API.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            documents: A sequence of documents to compress.</span>
-<span class="sd">            query: The query to use for compressing the documents.</span>
-<span class="sd">            callbacks: Callbacks to run during the compression process.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            A sequence of compressed documents.</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""Compress documents using Pinecone's rerank API."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">documents</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
 
         <span class="n">compressed</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">reranked_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rerank</span><span class="p">(</span><span class="n">documents</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
+        <span class="n">reranked_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rerank</span><span class="p">(</span><span class="n">documents</span><span class="o">=</span><span class="n">documents</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
 
-        <span class="c1"># If we didn't get any results, return an empty list</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">reranked_results</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
 
         <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">reranked_results</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">res</span><span class="p">[</span><span class="s2">"index"</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">doc_index</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s2">"index"</span><span class="p">]</span>
-                <span class="c1"># Make sure the index is within bounds</span>
+                <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">doc_index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">):</span>
+                    <span class="n">doc</span> <span class="o">=</span> <span class="n">documents</span><span class="p">[</span><span class="n">doc_index</span><span class="p">]</span>
+                    <span class="n">doc_copy</span> <span class="o">=</span> <span class="n">Document</span><span class="p">(</span>
+                        <span class="n">doc</span><span class="o">.</span><span class="n">page_content</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="n">doc_copy</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"relevance_score"</span><span class="p">]</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s2">"score"</span><span class="p">]</span>
+                    <span class="n">compressed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">doc_copy</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">compressed</span></div>
+
+
+<div class="viewcode-block" id="PineconeRerank.acompress_documents">
+<a class="viewcode-back" href="../../pinecone/rerank/langchain_pinecone.rerank.PineconeRerank.html#langchain_pinecone.rerank.PineconeRerank.acompress_documents">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">acompress_documents</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">documents</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Document</span><span class="p">],</span>
+        <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callbacks</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Async compress documents using Pinecone's rerank API."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">documents</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">compressed</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">reranked_results</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">arerank</span><span class="p">(</span><span class="n">documents</span><span class="o">=</span><span class="n">documents</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">reranked_results</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">reranked_results</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">res</span><span class="p">[</span><span class="s2">"index"</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">doc_index</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s2">"index"</span><span class="p">]</span>
                 <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">doc_index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">):</span>
                     <span class="n">doc</span> <span class="o">=</span> <span class="n">documents</span><span class="p">[</span><span class="n">doc_index</span><span class="p">]</span>
                     <span class="n">doc_copy</span> <span class="o">=</span> <span class="n">Document</span><span class="p">(</span>

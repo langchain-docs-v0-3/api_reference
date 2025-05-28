@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 27, 2025" name="docbuild:last-update"/>
+<meta content="May 28, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -437,6 +437,27 @@
 <span class="sd">                rating=7</span>
 <span class="sd">            )</span>
 
+<span class="sd">    Live Search:</span>
+<span class="sd">        xAI supports a `Live Search &lt;https://docs.x.ai/docs/guides/live-search&gt;`_</span>
+<span class="sd">        feature that enables Grok to ground its answers using results from web searches.</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from langchain_xai import ChatXAI</span>
+
+<span class="sd">            llm = ChatXAI(</span>
+<span class="sd">                model="grok-3-latest",</span>
+<span class="sd">                search_parameters={</span>
+<span class="sd">                    "mode": "auto",</span>
+<span class="sd">                    # Example optional parameters below:</span>
+<span class="sd">                    "max_search_results": 3,</span>
+<span class="sd">                    "from_date": "2025-05-26",</span>
+<span class="sd">                    "to_date": "2025-05-27",</span>
+<span class="sd">                }</span>
+<span class="sd">            )</span>
+
+<span class="sd">            llm.invoke("Provide me a digest of world news in the last 24 hours.")</span>
+
 <span class="sd">    Token usage:</span>
 <span class="sd">        .. code-block:: python</span>
 
@@ -499,6 +520,8 @@
 <span class="sd">    """</span>
     <span class="n">xai_api_base</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"https://api.x.ai/v1/"</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">"""Base URL path for API requests."""</span>
+    <span class="n">search_parameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">"""Parameters for search requests. Example: ``{"mode": "auto"}``."""</span>
 
     <span class="n">openai_api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SecretStr</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">openai_api_base</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -595,6 +618,18 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_default_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get default parameters."""</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_default_params</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_parameters</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"extra_body"</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+                <span class="n">params</span><span class="p">[</span><span class="s2">"extra_body"</span><span class="p">][</span><span class="s2">"search_parameters"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_parameters</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">params</span><span class="p">[</span><span class="s2">"extra_body"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"search_parameters"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_parameters</span><span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">params</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_chat_result</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">response</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">openai</span><span class="o">.</span><span class="n">BaseModel</span><span class="p">],</span>
@@ -608,6 +643,11 @@
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="s2">"reasoning_content"</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
             <span class="n">rtn</span><span class="o">.</span><span class="n">generations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"reasoning_content"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">reasoning_content</span>  <span class="c1"># type: ignore</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s2">"citations"</span><span class="p">):</span>
+            <span class="n">rtn</span><span class="o">.</span><span class="n">generations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"citations"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">citations</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">rtn</span>
@@ -630,6 +670,10 @@
                     <span class="n">generation_chunk</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"reasoning_content"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
                         <span class="n">reasoning_content</span>
                     <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">citations</span> <span class="o">:=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"citations"</span><span class="p">))</span> <span class="ow">and</span> <span class="n">generation_chunk</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">generation_chunk</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="n">AIMessageChunk</span><span class="p">):</span>
+                <span class="n">generation_chunk</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"citations"</span><span class="p">]</span> <span class="o">=</span> <span class="n">citations</span>
 
         <span class="k">return</span> <span class="n">generation_chunk</span>
 
