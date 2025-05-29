@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 28, 2025" name="docbuild:last-update"/>
+<meta content="May 29, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -311,10 +311,9 @@
 <dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span><a class="reference internal" href="../../_modules/langchain_redis/chat_message_history.html#RedisChatMessageHistory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_redis.chat_message_history.RedisChatMessageHistory" title="Link to this definition">#</a></dt>
-<dd><p>Redis-based implementation of chat message history.</p>
-<p>This class provides a way to store and retrieve chat message history using Redis.
-It implements the BaseChatMessageHistory interface and uses Redis JSON capabilities
-for efficient storage and retrieval of messages.</p>
+<dd><p>Redis-based implementation of chat message history using RedisVL.</p>
+<p>This class provides a way to store and retrieve chat message history using Redis
+with RedisVL for efficient indexing, querying, and document management.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="langchain_redis.chat_message_history.RedisChatMessageHistory.redis_client">
 <span class="sig-name descname"><span class="pre">redis_client</span></span><a class="headerlink" href="#langchain_redis.chat_message_history.RedisChatMessageHistory.redis_client" title="Link to this definition">#</a></dt>
@@ -375,11 +374,9 @@ for efficient storage and retrieval of messages.</p>
 Defaults to None (no expiration).</p></li>
 <li><p><strong>index_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the Redis search index.
 Defaults to “idx:chat_history”.</p></li>
-<li><p><strong>redis</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="../../community/vectorstores/langchain_community.vectorstores.redis.base.Redis.html#langchain_community.vectorstores.redis.base.Redis" title="langchain_community.vectorstores.redis.base.Redis"><em>Redis</em></a><em>]</em><em>, </em><em>optional</em>) – Existing Redis client instance. If provided,
-redis_url is ignored.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Additional keyword arguments to pass to the Redis client.</p></li>
-<li><p><strong>redis_client</strong> (<em>Redis</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>**kwargs</strong></p></li>
+<li><p><strong>redis_client</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="../../community/vectorstores/langchain_community.vectorstores.redis.base.Redis.html#langchain_community.vectorstores.redis.base.Redis" title="langchain_community.vectorstores.redis.base.Redis"><em>Redis</em></a><em>]</em><em>, </em><em>optional</em>) – Existing Redis client instance.
+If provided, redis_url is ignored.</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments to pass to the Redis client.</p></li>
 </ul>
 </dd>
 </dl>
@@ -390,7 +387,7 @@ redis_url is ignored.</p></li>
 <span class="n">history</span> <span class="o">=</span> <span class="n">RedisChatMessageHistory</span><span class="p">(</span>
     <span class="n">session_id</span><span class="o">=</span><span class="s2">"user123"</span><span class="p">,</span>
     <span class="n">redis_url</span><span class="o">=</span><span class="s2">"redis://localhost:6379"</span><span class="p">,</span>
-    <span class="n">ttl</span><span class="o">=</span><span class="mi">3600</span>  <span class="c1"># Messages expire after 1 hour</span>
+    <span class="n">ttl</span><span class="o">=</span><span class="mi">3600</span>  <span class="c1"># Expire chat history after 1 hour</span>
 <span class="p">)</span>
 
 <span class="c1"># Add messages to the history</span>
@@ -404,21 +401,22 @@ redis_url is ignored.</p></li>
 <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">message</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-<span class="c1"># Clear the history</span>
+<span class="c1"># Clear the history for the session</span>
 <span class="n">history</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 </pre></div>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <ul class="simple">
-<li><p>This class uses Redis JSON for storing messages, allowing for efficient
-querying and retrieval.</p></li>
-<li><p>A Redis search index is created to enable fast lookups and potential future
-search needs over the chat history.</p></li>
+<li><p>This class uses RedisVL for managing Redis JSON storage and search indexes,
+providing efficient querying and retrieval.</p></li>
+<li><p>A Redis search index is created to enable fast lookups and search
+capabilities over the chat history.</p></li>
 <li><p>If TTL is set, message entries will automatically expire after the
 specified duration.</p></li>
 <li><p>The session_id is used to group messages belonging to the same conversation
 or user session.</p></li>
+<li><p>RedisVL automatically handles tokenization and escaping for search queries.</p></li>
 </ul>
 </div>
 <p class="rubric">Attributes</p>
@@ -428,7 +426,7 @@ or user session.</p></li>
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">messages</span></code></p></td>
-<td><p></p></td>
+<td><p>Retrieve all messages for the current session, sorted by timestamp.</p></td>
 </tr>
 </tbody>
 </table>
@@ -449,7 +447,7 @@ or user session.</p></li>
 <td><p>Convenience method for adding an AI message string to the store.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_redis.chat_message_history.RedisChatMessageHistory.add_message" title="langchain_redis.chat_message_history.RedisChatMessageHistory.add_message"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_message</span></code></a>(message)</p></td>
-<td><p>Add a message to the chat history.</p></td>
+<td><p>Add a message to the chat history using RedisVL.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#langchain_redis.chat_message_history.RedisChatMessageHistory.add_messages" title="langchain_redis.chat_message_history.RedisChatMessageHistory.add_messages"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_messages</span></code></a>(messages)</p></td>
 <td><p>Add a list of messages.</p></td>
@@ -463,7 +461,10 @@ or user session.</p></li>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_redis.chat_message_history.RedisChatMessageHistory.clear" title="langchain_redis.chat_message_history.RedisChatMessageHistory.clear"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear</span></code></a>()</p></td>
 <td><p>Clear all messages from the chat history for the current session.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#langchain_redis.chat_message_history.RedisChatMessageHistory.search_messages" title="langchain_redis.chat_message_history.RedisChatMessageHistory.search_messages"><code class="xref py py-obj docutils literal notranslate"><span class="pre">search_messages</span></code></a>(query[, limit])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#langchain_redis.chat_message_history.RedisChatMessageHistory.delete" title="langchain_redis.chat_message_history.RedisChatMessageHistory.delete"><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete</span></code></a>()</p></td>
+<td><p>Delete all sessions and the chat history index from Redis.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_redis.chat_message_history.RedisChatMessageHistory.search_messages" title="langchain_redis.chat_message_history.RedisChatMessageHistory.search_messages"><code class="xref py py-obj docutils literal notranslate"><span class="pre">search_messages</span></code></a>(query[, limit])</p></td>
 <td><p>Search for messages in the chat history that match the given query.</p></td>
 </tr>
 </tbody>
@@ -551,8 +552,9 @@ persistence layer.</p>
 <dd><em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../core/messages/langchain_core.messages.base.BaseMessage.html#langchain_core.messages.base.BaseMessage" title="langchain_core.messages.base.BaseMessage"><span class="pre">BaseMessage</span></a></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_redis/chat_message_history.html#RedisChatMessageHistory.add_message"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_redis.chat_message_history.RedisChatMessageHistory.add_message" title="Link to this definition">#</a></dt>
-<dd><p>Add a message to the chat history.</p>
-<p>This method adds a new message to the Redis store for the current session.</p>
+<dd><p>Add a message to the chat history using RedisVL.</p>
+<p>This method adds a new message to the Redis store for the current session
+using RedisVL’s document loading capabilities.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>message</strong> (<a class="reference internal" href="../../core/messages/langchain_core.messages.base.BaseMessage.html#langchain_core.messages.base.BaseMessage" title="langchain_core.messages.base.BaseMessage"><em>BaseMessage</em></a>) – The message to add to the history. This should be an
@@ -593,8 +595,8 @@ HumanMessage, AIMessage, or SystemMessage.</p>
 <ul class="simple">
 <li><p>Each message is stored as a separate entry in Redis, associated
 with the current session_id.</p></li>
-<li><p>Messages are stored using Redis JSON capabilities for efficient storage
-and retrieval.</p></li>
+<li><p>Messages are stored using RedisVL’s JSON capabilities for efficient
+storage and retrieval.</p></li>
 <li><p>If a TTL (Time To Live) was specified when initializing the history,
 it will be applied to each message.</p></li>
 <li><p>The message’s content, type, and any additional data (like timestamp)
@@ -666,7 +668,7 @@ persistence layer.</p>
 <span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_redis/chat_message_history.html#RedisChatMessageHistory.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_redis.chat_message_history.RedisChatMessageHistory.clear" title="Link to this definition">#</a></dt>
 <dd><p>Clear all messages from the chat history for the current session.</p>
 <p>This method removes all messages associated with the current session_id from
-the Redis store.</p>
+the Redis store using RedisVL queries.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
@@ -696,15 +698,25 @@ the Redis store.</p>
 <p class="admonition-title">Note</p>
 <ul class="simple">
 <li><p>This method only clears messages for the current session_id.</p></li>
-<li><p>It uses a Redis search query to find all relevant messages and then
-deletes them.</p></li>
-<li><p>The operation is atomic - either all messages are deleted, or none are.</p></li>
+<li><p>It uses RedisVL’s FilterQuery to find all relevant messages and then
+deletes them individually using the Redis client.</p></li>
+<li><p>The operation removes all messages for the current session only.</p></li>
 <li><p>After clearing, the Redis search index is still maintained, allowing
 for immediate use of the same session_id for new messages if needed.</p></li>
 <li><p>This operation is irreversible. Make sure you want to remove all messages
 before calling this method.</p></li>
 </ul>
 </div>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="langchain_redis.chat_message_history.RedisChatMessageHistory.delete">
+<span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_redis/chat_message_history.html#RedisChatMessageHistory.delete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_redis.chat_message_history.RedisChatMessageHistory.delete" title="Link to this definition">#</a></dt>
+<dd><p>Delete all sessions and the chat history index from Redis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_redis.chat_message_history.RedisChatMessageHistory.search_messages">
@@ -716,7 +728,7 @@ before calling this method.</p></li>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/langchain_redis/chat_message_history.html#RedisChatMessageHistory.search_messages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_redis.chat_message_history.RedisChatMessageHistory.search_messages" title="Link to this definition">#</a></dt>
 <dd><p>Search for messages in the chat history that match the given query.</p>
 <p>This method performs a full-text search on the content of messages in the
-current session.</p>
+current session using RedisVL’s TextQuery capabilities.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -771,8 +783,8 @@ current session.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <ul class="simple">
-<li><p>The search is performed using the Redis search capabilities, which allows
-for efficient full-text search.</p></li>
+<li><p>The search is performed using RedisVL’s TextQuery capabilities, which
+allows for efficient full-text search.</p></li>
 <li><p>The search is case-insensitive and uses Redis’ default tokenization
 and stemming.</p></li>
 <li><p>Only messages from the current session (as defined by session_id)
@@ -816,6 +828,7 @@ conversation without having to iterate through all messages.</p></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_redis.chat_message_history.RedisChatMessageHistory.add_user_message"><code class="docutils literal notranslate"><span class="pre">add_user_message()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_redis.chat_message_history.RedisChatMessageHistory.aget_messages"><code class="docutils literal notranslate"><span class="pre">aget_messages()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_redis.chat_message_history.RedisChatMessageHistory.clear"><code class="docutils literal notranslate"><span class="pre">clear()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_redis.chat_message_history.RedisChatMessageHistory.delete"><code class="docutils literal notranslate"><span class="pre">delete()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_redis.chat_message_history.RedisChatMessageHistory.search_messages"><code class="docutils literal notranslate"><span class="pre">search_messages()</span></code></a></li>
 </ul>
 </li>

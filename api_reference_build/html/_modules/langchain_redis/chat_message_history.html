@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 28, 2025" name="docbuild:last-update"/>
+<meta content="May 29, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,7 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_redis.chat_message_history</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>  <span class="c1"># noqa: I001</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
@@ -228,10 +228,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.messages</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseMessage</span><span class="p">,</span> <span class="n">messages_from_dict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">redis</span><span class="w"> </span><span class="kn">import</span> <span class="n">Redis</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">redis.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResponseError</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">redis.commands.json.path</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">redis.commands.search.field</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericField</span><span class="p">,</span> <span class="n">TagField</span><span class="p">,</span> <span class="n">TextField</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">redis.commands.search.indexDefinition</span><span class="w"> </span><span class="kn">import</span> <span class="n">IndexDefinition</span><span class="p">,</span> <span class="n">IndexType</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">redis.commands.search.query</span><span class="w"> </span><span class="kn">import</span> <span class="n">Query</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">redisvl.index</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchIndex</span>  <span class="c1"># type: ignore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">redisvl.query</span><span class="w"> </span><span class="kn">import</span> <span class="n">CountQuery</span><span class="p">,</span> <span class="n">FilterQuery</span><span class="p">,</span> <span class="n">TextQuery</span>  <span class="c1"># type: ignore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">redisvl.query.filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tag</span>  <span class="c1"># type: ignore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ulid</span><span class="w"> </span><span class="kn">import</span> <span class="n">ULID</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_redis.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">__full_lib_name__</span>
 
@@ -261,11 +261,10 @@
 <div class="viewcode-block" id="RedisChatMessageHistory">
 <a class="viewcode-back" href="../../redis/chat_message_history/langchain_redis.chat_message_history.RedisChatMessageHistory.html#langchain_redis.chat_message_history.RedisChatMessageHistory">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RedisChatMessageHistory</span><span class="p">(</span><span class="n">BaseChatMessageHistory</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Redis-based implementation of chat message history.</span>
+<span class="w">    </span><span class="sd">"""Redis-based implementation of chat message history using RedisVL.</span>
 
-<span class="sd">    This class provides a way to store and retrieve chat message history using Redis.</span>
-<span class="sd">    It implements the BaseChatMessageHistory interface and uses Redis JSON capabilities</span>
-<span class="sd">    for efficient storage and retrieval of messages.</span>
+<span class="sd">    This class provides a way to store and retrieve chat message history using Redis</span>
+<span class="sd">    with RedisVL for efficient indexing, querying, and document management.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        redis_client (Redis): The Redis client instance.</span>
@@ -279,11 +278,11 @@
 <span class="sd">        redis_url (str, optional): URL of the Redis instance. Defaults to "redis://localhost:6379".</span>
 <span class="sd">        key_prefix (str, optional): Prefix for Redis keys. Defaults to "chat:".</span>
 <span class="sd">        ttl (Optional[int], optional): Time-to-live for entries in seconds.</span>
-<span class="sd">                                       Defaults to None (no expiration).</span>
+<span class="sd">            Defaults to None (no expiration).</span>
 <span class="sd">        index_name (str, optional): Name of the Redis search index.</span>
-<span class="sd">                                    Defaults to "idx:chat_history".</span>
-<span class="sd">        redis (Optional[Redis], optional): Existing Redis client instance. If provided,</span>
-<span class="sd">                                           redis_url is ignored.</span>
+<span class="sd">            Defaults to "idx:chat_history".</span>
+<span class="sd">        redis_client (Optional[Redis], optional): Existing Redis client instance.</span>
+<span class="sd">            If provided, redis_url is ignored.</span>
 <span class="sd">        **kwargs: Additional keyword arguments to pass to the Redis client.</span>
 
 <span class="sd">    Example:</span>
@@ -295,7 +294,7 @@
 <span class="sd">            history = RedisChatMessageHistory(</span>
 <span class="sd">                session_id="user123",</span>
 <span class="sd">                redis_url="redis://localhost:6379",</span>
-<span class="sd">                ttl=3600  # Messages expire after 1 hour</span>
+<span class="sd">                ttl=3600  # Expire chat history after 1 hour</span>
 <span class="sd">            )</span>
 
 <span class="sd">            # Add messages to the history</span>
@@ -309,18 +308,19 @@
 <span class="sd">            for message in messages:</span>
 <span class="sd">                print(f"{message.type}: {message.content}")</span>
 
-<span class="sd">            # Clear the history</span>
+<span class="sd">            # Clear the history for the session</span>
 <span class="sd">            history.clear()</span>
 
 <span class="sd">    Note:</span>
-<span class="sd">        - This class uses Redis JSON for storing messages, allowing for efficient</span>
-<span class="sd">          querying and retrieval.</span>
-<span class="sd">        - A Redis search index is created to enable fast lookups and potential future</span>
-<span class="sd">          search needs over the chat history.</span>
+<span class="sd">        - This class uses RedisVL for managing Redis JSON storage and search indexes,</span>
+<span class="sd">          providing efficient querying and retrieval.</span>
+<span class="sd">        - A Redis search index is created to enable fast lookups and search</span>
+<span class="sd">          capabilities over the chat history.</span>
 <span class="sd">        - If TTL is set, message entries will automatically expire after the</span>
 <span class="sd">          specified duration.</span>
 <span class="sd">        - The session_id is used to group messages belonging to the same conversation</span>
 <span class="sd">          or user session.</span>
+<span class="sd">        - RedisVL automatically handles tokenization and escaping for search queries.</span>
 <span class="sd">    """</span>
 
 <div class="viewcode-block" id="RedisChatMessageHistory.__init__">
@@ -335,7 +335,6 @@
         <span class="n">redis_client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Redis</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="c1"># TODO -- switch over to use RedisVL for this all</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">redis_client</span> <span class="o">=</span> <span class="n">redis_client</span> <span class="ow">or</span> <span class="n">Redis</span><span class="o">.</span><span class="n">from_url</span><span class="p">(</span><span class="n">redis_url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="c1"># Configure Redis client to use a no-op push handler when PubSub is initialized</span>
@@ -347,62 +346,74 @@
         <span class="k">except</span> <span class="n">ResponseError</span><span class="p">:</span>
             <span class="c1"># Fall back to a simple log echo</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">redis_client</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="n">__full_lib_name__</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">session_id</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"session_id must be a non-empty, valid string"</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">session_id</span> <span class="o">=</span> <span class="n">session_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">key_prefix</span> <span class="o">=</span> <span class="n">key_prefix</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ttl</span> <span class="o">=</span> <span class="n">ttl</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">index_name</span> <span class="o">=</span> <span class="n">index_name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_index</span><span class="p">()</span></div>
 
+        <span class="c1"># Create RedisVL SearchIndex</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_search_index</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_search_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create and configure the RedisVL SearchIndex."""</span>
+        <span class="n">schema</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"index"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"name"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_name</span><span class="p">,</span>
+                <span class="s2">"prefix"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_prefix</span><span class="p">,</span>
+                <span class="s2">"storage_type"</span><span class="p">:</span> <span class="s2">"json"</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s2">"fields"</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"session_id"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"tag"</span><span class="p">,</span> <span class="s2">"path"</span><span class="p">:</span> <span class="s2">"$.session_id"</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"content"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"path"</span><span class="p">:</span> <span class="s2">"$.data.content"</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"type"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"tag"</span><span class="p">,</span> <span class="s2">"path"</span><span class="p">:</span> <span class="s2">"$.type"</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"timestamp"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span> <span class="s2">"path"</span><span class="p">:</span> <span class="s2">"$.timestamp"</span><span class="p">},</span>
+            <span class="p">],</span>
+        <span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">SearchIndex</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">redis_client</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">redis_client</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_id</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">redis_client</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_name</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
-        <span class="k">except</span> <span class="n">ResponseError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-            <span class="k">if</span> <span class="s2">"unknown index name"</span> <span class="ow">in</span> <span class="n">msg</span> <span class="ow">or</span> <span class="s2">"no such index"</span> <span class="ow">in</span> <span class="n">msg</span><span class="p">:</span>
-                <span class="n">schema</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">TagField</span><span class="p">(</span><span class="s2">"$.session_id"</span><span class="p">,</span> <span class="n">as_name</span><span class="o">=</span><span class="s2">"session_id"</span><span class="p">),</span>
-                    <span class="n">TextField</span><span class="p">(</span><span class="s2">"$.data.content"</span><span class="p">,</span> <span class="n">as_name</span><span class="o">=</span><span class="s2">"content"</span><span class="p">),</span>
-                    <span class="n">TagField</span><span class="p">(</span><span class="s2">"$.type"</span><span class="p">,</span> <span class="n">as_name</span><span class="o">=</span><span class="s2">"type"</span><span class="p">),</span>
-                    <span class="n">NumericField</span><span class="p">(</span><span class="s2">"$.timestamp"</span><span class="p">,</span> <span class="n">as_name</span><span class="o">=</span><span class="s2">"timestamp"</span><span class="p">),</span>
-                <span class="p">)</span>
-                <span class="n">definition</span> <span class="o">=</span> <span class="n">IndexDefinition</span><span class="p">(</span>
-                    <span class="n">prefix</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">key_prefix</span><span class="p">],</span> <span class="n">index_type</span><span class="o">=</span><span class="n">IndexType</span><span class="o">.</span><span class="n">JSON</span>
-                <span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">redis_client</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_name</span><span class="p">)</span><span class="o">.</span><span class="n">create_index</span><span class="p">(</span>
-                    <span class="n">schema</span><span class="p">,</span> <span class="n">definition</span><span class="o">=</span><span class="n">definition</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span>
-
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">messages</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]:</span>  <span class="c1"># type: ignore</span>
-        <span class="n">query</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">Query</span><span class="p">(</span><span class="sa">f</span><span class="s2">"@session_id:</span><span class="se">{{</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">session_id</span><span class="si">}</span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">sort_by</span><span class="p">(</span><span class="s2">"timestamp"</span><span class="p">,</span> <span class="n">asc</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">paging</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">redis_client</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_name</span><span class="p">)</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Retrieve all messages for the current session, sorted by timestamp."""</span>
+        <span class="n">messages_query</span> <span class="o">=</span> <span class="n">FilterQuery</span><span class="p">(</span>
+            <span class="n">filter_expression</span><span class="o">=</span><span class="n">Tag</span><span class="p">(</span><span class="s2">"session_id"</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_id</span><span class="p">,</span>
+            <span class="n">return_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"type"</span><span class="p">,</span> <span class="s2">"$.data"</span><span class="p">],</span>
+            <span class="n">num_results</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">sort_by</span><span class="p">(</span><span class="s2">"timestamp"</span><span class="p">,</span> <span class="n">asc</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">messages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">messages_query</span><span class="p">)</span>
+
+        <span class="c1"># Unpack message results and load from dict</span>
         <span class="k">return</span> <span class="n">messages_from_dict</span><span class="p">(</span>
             <span class="p">[</span>
-                <span class="p">{</span>
-                    <span class="s2">"type"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">json</span><span class="p">)[</span><span class="s2">"type"</span><span class="p">],</span>
-                    <span class="s2">"data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">json</span><span class="p">)[</span><span class="s2">"data"</span><span class="p">],</span>
-                <span class="p">}</span>
-                <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">docs</span>
+                <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">msg</span><span class="p">[</span><span class="s2">"type"</span><span class="p">],</span> <span class="s2">"data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="s2">"$.data"</span><span class="p">])}</span>
+                <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">messages</span>
             <span class="p">]</span>
         <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_message_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Construct message key based on key prefix, session, and unique message ID."""</span>
+        <span class="k">if</span> <span class="n">message_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">message_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">ULID</span><span class="p">())</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key_prefix</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">session_id</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">message_id</span><span class="si">}</span><span class="s2">"</span>
 
 <div class="viewcode-block" id="RedisChatMessageHistory.add_message">
 <a class="viewcode-back" href="../../redis/chat_message_history/langchain_redis.chat_message_history.RedisChatMessageHistory.html#langchain_redis.chat_message_history.RedisChatMessageHistory.add_message">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">add_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n">BaseMessage</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Add a message to the chat history.</span>
+<span class="w">        </span><span class="sd">"""Add a message to the chat history using RedisVL.</span>
 
-<span class="sd">        This method adds a new message to the Redis store for the current session.</span>
+<span class="sd">        This method adds a new message to the Redis store for the current session</span>
+<span class="sd">        using RedisVL's document loading capabilities.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            message (BaseMessage): The message to add to the history. This should be an</span>
@@ -438,8 +449,8 @@
 <span class="sd">        Note:</span>
 <span class="sd">            - Each message is stored as a separate entry in Redis, associated</span>
 <span class="sd">              with the current session_id.</span>
-<span class="sd">            - Messages are stored using Redis JSON capabilities for efficient storage</span>
-<span class="sd">              and retrieval.</span>
+<span class="sd">            - Messages are stored using RedisVL's JSON capabilities for efficient</span>
+<span class="sd">              storage and retrieval.</span>
 <span class="sd">            - If a TTL (Time To Live) was specified when initializing the history,</span>
 <span class="sd">              it will be applied to each message.</span>
 <span class="sd">            - The message's content, type, and any additional data (like timestamp)</span>
@@ -451,22 +462,24 @@
 <span class="sd">              Consider implementing size limits if dealing with potentially</span>
 <span class="sd">              large messages.</span>
 <span class="sd">        """</span>
-        <span class="n">data_to_store</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span>
+        <span class="n">message_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">ULID</span><span class="p">())</span>
+        <span class="n">redis_msg</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"type"</span><span class="p">:</span> <span class="n">message</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>
+            <span class="s2">"message_id"</span><span class="p">:</span> <span class="n">message_id</span><span class="p">,</span>
             <span class="s2">"data"</span><span class="p">:</span> <span class="p">{</span>
                 <span class="s2">"content"</span><span class="p">:</span> <span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">,</span>
                 <span class="s2">"additional_kwargs"</span><span class="p">:</span> <span class="n">message</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="p">,</span>
                 <span class="s2">"type"</span><span class="p">:</span> <span class="n">message</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>
             <span class="p">},</span>
             <span class="s2">"session_id"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_id</span><span class="p">,</span>
-            <span class="s2">"timestamp"</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(),</span>
+            <span class="s2">"timestamp"</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">,</span>
         <span class="p">}</span>
 
-        <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key_prefix</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">session_id</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">data_to_store</span><span class="p">[</span><span class="s1">'timestamp'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">redis_client</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">Path</span><span class="o">.</span><span class="n">root_path</span><span class="p">(),</span> <span class="n">data_to_store</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ttl</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">redis_client</span><span class="o">.</span><span class="n">expire</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ttl</span><span class="p">)</span></div>
+        <span class="c1"># Use RedisVL to load the data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">redis_msg</span><span class="p">],</span> <span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_message_key</span><span class="p">(</span><span class="n">message_id</span><span class="p">)],</span> <span class="n">ttl</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ttl</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="RedisChatMessageHistory.clear">
@@ -475,7 +488,7 @@
 <span class="w">        </span><span class="sd">"""Clear all messages from the chat history for the current session.</span>
 
 <span class="sd">        This method removes all messages associated with the current session_id from</span>
-<span class="sd">        the Redis store.</span>
+<span class="sd">        the Redis store using RedisVL queries.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            None</span>
@@ -500,18 +513,40 @@
 
 <span class="sd">        Note:</span>
 <span class="sd">            - This method only clears messages for the current session_id.</span>
-<span class="sd">            - It uses a Redis search query to find all relevant messages and then</span>
-<span class="sd">              deletes them.</span>
-<span class="sd">            - The operation is atomic - either all messages are deleted, or none are.</span>
+<span class="sd">            - It uses RedisVL's FilterQuery to find all relevant messages and then</span>
+<span class="sd">              deletes them individually using the Redis client.</span>
+<span class="sd">            - The operation removes all messages for the current session only.</span>
 <span class="sd">            - After clearing, the Redis search index is still maintained, allowing</span>
 <span class="sd">              for immediate use of the same session_id for new messages if needed.</span>
 <span class="sd">            - This operation is irreversible. Make sure you want to remove all messages</span>
 <span class="sd">              before calling this method.</span>
 <span class="sd">        """</span>
-        <span class="n">query</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="sa">f</span><span class="s2">"@session_id:</span><span class="se">{{</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">session_id</span><span class="si">}</span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">paging</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)</span>
-        <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">redis_client</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_name</span><span class="p">)</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">docs</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">redis_client</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
+        <span class="c1"># Get total count of records to delete</span>
+        <span class="n">session_filter</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="s2">"session_id"</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_id</span>
+        <span class="n">count_query</span> <span class="o">=</span> <span class="n">CountQuery</span><span class="p">(</span><span class="n">filter_expression</span><span class="o">=</span><span class="n">session_filter</span><span class="p">)</span>
+        <span class="n">total_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">count_query</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">total_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Collect all keys first to avoid pagination issues during deletion</span>
+            <span class="n">all_keys</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">filter_query</span> <span class="o">=</span> <span class="n">FilterQuery</span><span class="p">(</span>
+                <span class="n">filter_expression</span><span class="o">=</span><span class="n">session_filter</span><span class="p">,</span> <span class="n">num_results</span><span class="o">=</span><span class="n">total_count</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Use pagination to collect all keys without deleting during iteration</span>
+            <span class="k">for</span> <span class="n">results</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">paginate</span><span class="p">(</span><span class="n">filter_query</span><span class="p">,</span> <span class="n">page_size</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+                <span class="n">all_keys</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">res</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span> <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">results</span><span class="p">])</span>
+
+            <span class="c1"># Now delete all keys at once</span>
+            <span class="k">if</span> <span class="n">all_keys</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">drop_keys</span><span class="p">(</span><span class="n">all_keys</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RedisChatMessageHistory.delete">
+<a class="viewcode-back" href="../../redis/chat_message_history/langchain_redis.chat_message_history.RedisChatMessageHistory.html#langchain_redis.chat_message_history.RedisChatMessageHistory.delete">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Delete all sessions and the chat history index from Redis."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="RedisChatMessageHistory.search_messages">
@@ -520,7 +555,7 @@
 <span class="w">        </span><span class="sd">"""Search for messages in the chat history that match the given query.</span>
 
 <span class="sd">        This method performs a full-text search on the content of messages in the</span>
-<span class="sd">        current session.</span>
+<span class="sd">        current session using RedisVL's TextQuery capabilities.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            query (str): The search query string to match against message content.</span>
@@ -565,8 +600,8 @@
 <span class="sd">                    print("---")</span>
 
 <span class="sd">        Note:</span>
-<span class="sd">            - The search is performed using the Redis search capabilities, which allows</span>
-<span class="sd">              for efficient full-text search.</span>
+<span class="sd">            - The search is performed using RedisVL's TextQuery capabilities, which</span>
+<span class="sd">              allows for efficient full-text search.</span>
 <span class="sd">            - The search is case-insensitive and uses Redis' default tokenization</span>
 <span class="sd">              and stemming.</span>
 <span class="sd">            - Only messages from the current session (as defined by session_id)</span>
@@ -577,19 +612,32 @@
 <span class="sd">            - This method is useful for quickly finding relevant parts of a</span>
 <span class="sd">              conversation without having to iterate through all messages.</span>
 <span class="sd">        """</span>
-        <span class="n">search_query</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">Query</span><span class="p">(</span><span class="sa">f</span><span class="s2">"(@session_id:</span><span class="se">{{</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">session_id</span><span class="si">}</span><span class="se">}}</span><span class="s2">) (@content:</span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">sort_by</span><span class="p">(</span><span class="s2">"timestamp"</span><span class="p">,</span> <span class="n">asc</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">paging</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">redis_client</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_name</span><span class="p">)</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">search_query</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">query</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[]</span>
 
-        <span class="k">return</span> <span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">json</span><span class="p">)[</span><span class="s2">"data"</span><span class="p">]</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">docs</span><span class="p">]</span></div>
+        <span class="n">text_query</span> <span class="o">=</span> <span class="n">TextQuery</span><span class="p">(</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+            <span class="n">text_field_name</span><span class="o">=</span><span class="s2">"content"</span><span class="p">,</span>
+            <span class="n">filter_expression</span><span class="o">=</span><span class="n">Tag</span><span class="p">(</span><span class="s2">"session_id"</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_id</span><span class="p">,</span>
+            <span class="n">return_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"type"</span><span class="p">,</span> <span class="s2">"$.data"</span><span class="p">],</span>
+            <span class="n">num_results</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span>
+            <span class="n">stopwords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Disable stopwords to avoid NLTK dependency</span>
+        <span class="p">)</span>
+
+        <span class="n">messages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">text_query</span><span class="p">)</span>
+
+        <span class="n">search_data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">:</span>
+            <span class="n">search_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="s2">"$.data"</span><span class="p">]))</span>
+
+        <span class="k">return</span> <span class="n">search_data</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="n">query</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="sa">f</span><span class="s2">"@session_id:</span><span class="se">{{</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">session_id</span><span class="si">}</span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">no_content</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">redis_client</span><span class="o">.</span><span class="n">ft</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_name</span><span class="p">)</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">total</span></div>
+<span class="w">        </span><span class="sd">"""Return the number of messages in the chat history for the current session."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
+            <span class="n">CountQuery</span><span class="p">(</span><span class="n">filter_expression</span><span class="o">=</span><span class="n">Tag</span><span class="p">(</span><span class="s2">"session_id"</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_id</span><span class="p">)</span>
+        <span class="p">)</span></div>
 
 </pre></div>
 </article>
