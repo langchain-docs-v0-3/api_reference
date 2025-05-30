@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 29, 2025" name="docbuild:last-update"/>
+<meta content="May 30, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -463,6 +463,31 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_one_message_to_text_writer</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="n">BaseMessage</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">ChatMessage</span><span class="p">):</span>
+        <span class="n">message_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="se">\n\n</span><span class="si">{</span><span class="n">message</span><span class="o">.</span><span class="n">role</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">HumanMessage</span><span class="p">):</span>
+        <span class="n">message_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"[INST] </span><span class="si">{</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2"> [/INST]"</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">AIMessage</span><span class="p">):</span>
+        <span class="n">message_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">SystemMessage</span><span class="p">):</span>
+        <span class="n">message_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"&lt;&lt;SYS&gt;&gt; </span><span class="si">{</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2"> &lt;&lt;/SYS&gt;&gt;"</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Got unknown type </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">message_text</span>
+
+
+<div class="viewcode-block" id="convert_messages_to_prompt_writer">
+<a class="viewcode-back" href="../../../aws/chat_models/langchain_aws.chat_models.bedrock.convert_messages_to_prompt_writer.html#langchain_aws.chat_models.bedrock.convert_messages_to_prompt_writer">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_messages_to_prompt_writer</span><span class="p">(</span><span class="n">messages</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Convert a list of messages to a prompt for Writer."""</span>
+
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">_convert_one_message_to_text_llama</span><span class="p">(</span><span class="n">message</span><span class="p">)</span> <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">]</span>
+    <span class="p">)</span></div>
+
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_image</span><span class="p">(</span><span class="n">image_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Formats an image of format data:image/jpeg;base64,{b64_string}</span>
@@ -794,6 +819,8 @@
                 <span class="n">human_prompt</span><span class="o">=</span><span class="s2">"</span><span class="se">\n\n</span><span class="s2">User:"</span><span class="p">,</span>
                 <span class="n">ai_prompt</span><span class="o">=</span><span class="s2">"</span><span class="se">\n\n</span><span class="s2">Bot:"</span><span class="p">,</span>
             <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">provider</span> <span class="o">==</span> <span class="s2">"writer"</span><span class="p">:</span>
+            <span class="n">prompt</span> <span class="o">=</span> <span class="n">convert_messages_to_prompt_writer</span><span class="p">(</span><span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Provider </span><span class="si">{</span><span class="n">provider</span><span class="si">}</span><span class="s2"> model does not support chat."</span>

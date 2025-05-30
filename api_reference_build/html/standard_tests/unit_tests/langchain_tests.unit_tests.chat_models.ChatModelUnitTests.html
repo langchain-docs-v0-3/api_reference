@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 29, 2025" name="docbuild:last-update"/>
+<meta content="May 30, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -245,6 +245,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../snowflake/index.html">Snowflake</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../sqlserver/index.html">Sqlserver</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../index.html">Standard Tests</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../conftest.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">conftest</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../integration_tests.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">integration_tests</span></code></a></li>
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="../unit_tests.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">unit_tests</span></code></a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l3 current active"><a class="current reference internal" href="#">ChatModelUnitTests</a></li>
@@ -640,6 +641,155 @@ that can track usage details associated with special types of tokens, such as
 cached, audio, or reasoning.</p>
 <p class="sd-card-text">Only needs to be overridden if these details are supplied.</p>
 </div>
+</details><details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">enable_vcr_tests</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">Property controlling whether to enable select tests that rely on
+<a class="reference external" href="https://vcrpy.readthedocs.io/en/latest/">VCR</a> caching of HTTP calls, such
+as benchmarking tests.</p>
+<p class="sd-card-text">To enable these tests, follow these steps:</p>
+<ol class="arabic">
+<li><p class="sd-card-text">Override the <code class="docutils literal notranslate"><span class="pre">enable_vcr_tests</span></code> property to return <code class="docutils literal notranslate"><span class="pre">True</span></code>:</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@property</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">enable_vcr_tests</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="kc">True</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p class="sd-card-text">Configure VCR to exclude sensitive headers and other information from cassettes.</p>
+<blockquote>
+<div><div class="admonition important">
+<p class="admonition-title">Important</p>
+<p class="sd-card-text">VCR will by default record authentication headers and other sensitive
+information in cassettes. Read below for how to configure what
+information is recorded in cassettes.</p>
+</div>
+<p class="sd-card-text">To add configuration to VCR, add a <code class="docutils literal notranslate"><span class="pre">conftest.py</span></code> file to the <code class="docutils literal notranslate"><span class="pre">tests/</span></code>
+directory and implement the <code class="docutils literal notranslate"><span class="pre">vcr_config</span></code> fixture there.</p>
+<p class="sd-card-text"><code class="docutils literal notranslate"><span class="pre">langchain-tests</span></code> excludes the headers <code class="docutils literal notranslate"><span class="pre">"authorization"</span></code>,
+<code class="docutils literal notranslate"><span class="pre">"x-api-key"</span></code>, and <code class="docutils literal notranslate"><span class="pre">"api-key"</span></code> from VCR cassettes. To pick up this
+configuration, you will need to add <code class="docutils literal notranslate"><span class="pre">conftest.py</span></code> as shown below. You can
+also exclude additional headers, override the default exclusions, or apply
+other customizations to the VCR configuration. See example below:</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text">tests/conftest.py</span><a class="headerlink" href="#id1" title="Link to this code">#</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_tests.conftest</span><span class="w"> </span><span class="kn">import</span> <span class="n">_base_vcr_config</span> <span class="k">as</span> <span class="n">_base_vcr_config</span>
+
+<span class="n">_EXTRA_HEADERS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># Specify additional headers to redact</span>
+    <span class="p">(</span><span class="s2">"user-agent"</span><span class="p">,</span> <span class="s2">"PLACEHOLDER"</span><span class="p">),</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">remove_response_headers</span><span class="p">(</span><span class="n">response</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="c1"># If desired, remove or modify headers in the response.</span>
+    <span class="n">response</span><span class="p">[</span><span class="s2">"headers"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">return</span> <span class="n">response</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s2">"session"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">vcr_config</span><span class="p">(</span><span class="n">_base_vcr_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>  <span class="c1"># noqa: F811</span>
+<span class="w">    </span><span class="sd">"""Extend the default configuration from langchain_tests."""</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">_base_vcr_config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"filter_headers"</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_EXTRA_HEADERS</span><span class="p">)</span>
+    <span class="n">config</span><span class="p">[</span><span class="s2">"before_record_response"</span><span class="p">]</span> <span class="o">=</span> <span class="n">remove_response_headers</span>
+
+    <span class="k">return</span> <span class="n">config</span>
+</pre></div>
+</div>
+</div>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Compressing cassettes</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text"><code class="docutils literal notranslate"><span class="pre">langchain-tests</span></code> includes a custom VCR serializer that compresses
+cassettes using gzip. To use it, register the <code class="docutils literal notranslate"><span class="pre">"yaml.gz"</span></code> serializer
+to your VCR fixture and enable this serializer in the config. See
+example below:</p>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">tests/conftest.py</span><a class="headerlink" href="#id2" title="Link to this code">#</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_tests.conftest</span><span class="w"> </span><span class="kn">import</span> <span class="n">YamlGzipSerializer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_tests.conftest</span><span class="w"> </span><span class="kn">import</span> <span class="n">_base_vcr_config</span> <span class="k">as</span> <span class="n">_base_vcr_config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">vcr</span><span class="w"> </span><span class="kn">import</span> <span class="n">VCR</span>
+
+<span class="n">_EXTRA_HEADERS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># Specify additional headers to redact</span>
+    <span class="p">(</span><span class="s2">"user-agent"</span><span class="p">,</span> <span class="s2">"PLACEHOLDER"</span><span class="p">),</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">remove_response_headers</span><span class="p">(</span><span class="n">response</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="c1"># If desired, remove or modify headers in the response.</span>
+    <span class="n">response</span><span class="p">[</span><span class="s2">"headers"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">return</span> <span class="n">response</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s2">"session"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">vcr_config</span><span class="p">(</span><span class="n">_base_vcr_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>  <span class="c1"># noqa: F811</span>
+<span class="w">    </span><span class="sd">"""Extend the default configuration from langchain_tests."""</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">_base_vcr_config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"filter_headers"</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_EXTRA_HEADERS</span><span class="p">)</span>
+    <span class="n">config</span><span class="p">[</span><span class="s2">"before_record_response"</span><span class="p">]</span> <span class="o">=</span> <span class="n">remove_response_headers</span>
+    <span class="c1"># New: enable serializer and set file extension</span>
+    <span class="n">config</span><span class="p">[</span><span class="s2">"serializer"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"yaml.gz"</span>
+    <span class="n">config</span><span class="p">[</span><span class="s2">"path_transformer"</span><span class="p">]</span> <span class="o">=</span> <span class="n">VCR</span><span class="o">.</span><span class="n">ensure_suffix</span><span class="p">(</span><span class="s2">".yaml.gz"</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">config</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">vcr</span><span class="p">(</span><span class="n">vcr_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VCR</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Override the default vcr fixture to include custom serializers"""</span>
+    <span class="n">my_vcr</span> <span class="o">=</span> <span class="n">VCR</span><span class="p">(</span><span class="o">**</span><span class="n">vcr_config</span><span class="p">)</span>
+    <span class="n">my_vcr</span><span class="o">.</span><span class="n">register_serializer</span><span class="p">(</span><span class="s2">"yaml.gz"</span><span class="p">,</span> <span class="n">YamlGzipSerializer</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">my_vcr</span>
+</pre></div>
+</div>
+</div>
+<p class="sd-card-text">You can inspect the contents of the compressed cassettes (e.g., to
+ensure no sensitive information is recorded) using the serializer:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_tests.conftest</span><span class="w"> </span><span class="kn">import</span> <span class="n">YamlGzipSerializer</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">"/path/to/tests/cassettes/TestClass_test.yaml.gz"</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+<span class="n">YamlGzipSerializer</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</details></div></blockquote>
+</li>
+<li><p class="sd-card-text">Run tests to generate VCR cassettes.</p>
+<blockquote>
+<div><p class="sd-card-text">Example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/integration_tests/test_chat_models.py::TestMyModel::test_stream_time
+</pre></div>
+</div>
+<p class="sd-card-text">This will generate a VCR cassette for the test in
+<code class="docutils literal notranslate"><span class="pre">tests/integration_tests/cassettes/</span></code>.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p class="sd-card-text">You should inspect the generated cassette to ensure that it does not
+contain sensitive information. If it does, you can modify the
+<code class="docutils literal notranslate"><span class="pre">vcr_config</span></code> fixture to exclude headers or modify the response
+before it is recorded.</p>
+</div>
+<p class="sd-card-text">You can then commit the cassette to your repository. Subsequent test runs
+will use the cassette instead of making HTTP calls.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p class="sd-card-text">Adding <code class="docutils literal notranslate"><span class="pre">--vcr-record=none</span></code> to the pytest command will ensure that
+no new cassettes are recorded, and only existing cassettes are used.
+Consider adding this to your CI configuration (e.g., modify relevant
+Makefile commands).</p>
+</div>
+</div></blockquote>
+</li>
+</ol>
+</div>
 </details><dl>
 <dt>Testing initialization from environment variables</dt><dd><p>Some unit tests may require testing initialization from environment variables.
 These tests can be enabled by overriding the <code class="docutils literal notranslate"><span class="pre">init_from_env_params</span></code>
@@ -680,52 +830,55 @@ and expected instance attributes to check.</p>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">chat_model_params</span></code></p></td>
 <td><p>Initialization parameters for the chat model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_structured_output</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">enable_vcr_tests</span></code></p></td>
+<td><p>(bool) whether to enable VCR tests for the chat model.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_structured_output</span></code></p></td>
 <td><p>(bool) whether the chat model supports structured output.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_tool_calling</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_tool_calling</span></code></p></td>
 <td><p>(bool) whether the model supports tool calling.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_tool_choice</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_tool_choice</span></code></p></td>
 <td><p>(bool) whether the model supports tool calling.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_from_env_params</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_from_env_params</span></code></p></td>
 <td><p>(tuple) environment variables, additional initialization args, and expected instance attributes for testing initialization from environment variables.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">returns_usage_metadata</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">returns_usage_metadata</span></code></p></td>
 <td><p>(bool) whether the chat model returns usage metadata on invoke and streaming responses.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">structured_output_kwargs</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">structured_output_kwargs</span></code></p></td>
 <td><p>If specified, additional kwargs for with_structured_output.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_usage_metadata_details</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_usage_metadata_details</span></code></p></td>
 <td><p>(dict) what usage metadata details are emitted in invoke and stream.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_anthropic_inputs</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_anthropic_inputs</span></code></p></td>
 <td><p>(bool) whether the chat model supports Anthropic-style inputs.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_audio_inputs</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_audio_inputs</span></code></p></td>
 <td><p>(bool) whether the chat model supports audio inputs, defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_image_inputs</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_image_inputs</span></code></p></td>
 <td><p>(bool) whether the chat model supports image inputs, defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_image_tool_message</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_image_tool_message</span></code></p></td>
 <td><p>(bool) whether the chat model supports ToolMessages that include image content.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_image_urls</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_image_urls</span></code></p></td>
 <td><p>(bool) whether the chat model supports image inputs from URLs, defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_json_mode</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_json_mode</span></code></p></td>
 <td><p>(bool) whether the chat model supports JSON mode.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_pdf_inputs</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_pdf_inputs</span></code></p></td>
 <td><p>(bool) whether the chat model supports PDF inputs, defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_video_inputs</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_video_inputs</span></code></p></td>
 <td><p>(bool) whether the chat model supports video inputs, defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">tool_choice_value</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">tool_choice_value</span></code></p></td>
 <td><p>(None or str) to use for tool choice when used in tests.</p></td>
 </tr>
 </tbody>
@@ -746,13 +899,16 @@ and expected instance attributes to check.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_streaming" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_streaming"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_init_streaming</span></code></a>()</p></td>
 <td><p>Test that model can be initialized with <code class="docutils literal notranslate"><span class="pre">streaming=True</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_serdes" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_serdes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_serdes</span></code></a>(model, snapshot)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_time" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_init_time</span></code></a>(benchmark)</p></td>
+<td><p>Test initialization time of the chat model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_serdes" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_serdes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_serdes</span></code></a>(model, snapshot)</p></td>
 <td><p>Test serialization and deserialization of the model.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_standard_params" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_standard_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_standard_params</span></code></a>(model)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_standard_params" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_standard_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_standard_params</span></code></a>(model)</p></td>
 <td><p>Test that model properly generates standard parameters.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_with_structured_output" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_with_structured_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_with_structured_output</span></code></a>(model, schema)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_with_structured_output" title="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_with_structured_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_with_structured_output</span></code></a>(model, schema)</p></td>
 <td><p>Test <code class="docutils literal notranslate"><span class="pre">with_structured_output</span></code> method.</p></td>
 </tr>
 </tbody>
@@ -841,6 +997,24 @@ boolean <code class="docutils literal notranslate"><span class="pre">streaming</
 </details><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_time">
+<span class="sig-name descname"><span class="pre">test_init_time</span></span><span class="sig-paren">(</span>
+<dl>
+<dd><em class="sig-param"><span class="n"><span class="pre">benchmark</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BenchmarkFixture</span></span></em>,</dd>
+</dl>
+<span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_tests/unit_tests/chat_models.html#ChatModelUnitTests.test_init_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_time" title="Link to this definition">#</a></dt>
+<dd><p>Test initialization time of the chat model. If this test fails, check that
+we are not introducing undue overhead in the model’s initialization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>benchmark</strong> (<em>BenchmarkFixture</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -948,6 +1122,7 @@ a utility function that will accommodate most formats: <a class="reference exter
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init"><code class="docutils literal notranslate"><span class="pre">test_init()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_from_env"><code class="docutils literal notranslate"><span class="pre">test_init_from_env()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_streaming"><code class="docutils literal notranslate"><span class="pre">test_init_streaming()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_init_time"><code class="docutils literal notranslate"><span class="pre">test_init_time()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_serdes"><code class="docutils literal notranslate"><span class="pre">test_serdes()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_standard_params"><code class="docutils literal notranslate"><span class="pre">test_standard_params()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_tests.unit_tests.chat_models.ChatModelUnitTests.test_with_structured_output"><code class="docutils literal notranslate"><span class="pre">test_with_structured_output()</span></code></a></li>

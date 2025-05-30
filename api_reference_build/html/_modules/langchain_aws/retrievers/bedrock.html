@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 29, 2025" name="docbuild:last-update"/>
+<meta content="May 30, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -326,6 +326,9 @@
 
 <span class="sd">            client: boto3 client for bedrock agent runtime.</span>
 
+<span class="sd">            guardrail_config: Configuration information for a guardrail that you want</span>
+<span class="sd">                to use in the request.</span>
+
 <span class="sd">            retrieval_config: Optional configuration for retrieval specified as a</span>
 <span class="sd">                Python object (RetrievalConfig) or as a dictionary</span>
 
@@ -357,6 +360,9 @@
     <span class="n">endpoint_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">client</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">guardrail_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">"guardrails"</span>
+    <span class="p">)</span>
     <span class="n">retrieval_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">RetrievalConfig</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">min_score_confidence</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
@@ -365,6 +371,8 @@
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_client</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">"guardrail_config"</span> <span class="ow">in</span> <span class="n">values</span> <span class="ow">and</span> <span class="s2">"guardrails"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+            <span class="n">values</span><span class="p">[</span><span class="s2">"guardrails"</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"guardrail_config"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"client"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">values</span><span class="p">[</span><span class="s2">"client"</span><span class="p">]</span> <span class="o">=</span> <span class="n">create_aws_client</span><span class="p">(</span>
                 <span class="n">region_name</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"region_name"</span><span class="p">),</span>
@@ -431,10 +439,21 @@
             <span class="s2">"retrievalQuery"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"text"</span><span class="p">:</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">()},</span>
             <span class="s2">"knowledgeBaseId"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">knowledge_base_id</span><span class="p">,</span>
         <span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">guardrail_config</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">guardrail_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"guardrailId"</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">guardrail_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"guardrailVersion"</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">"Guardrail configuration must be a dictionary with both 'guardrailId' "</span>
+                    <span class="s2">"and 'guardrailVersion' keys."</span>
+                <span class="p">)</span>
+            <span class="n">request</span><span class="p">[</span><span class="s2">"guardrailConfiguration"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">guardrail_config</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieval_config</span><span class="p">:</span>
-            <span class="n">request</span><span class="p">[</span><span class="s2">"retrievalConfiguration"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieval_config</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span>
-                <span class="n">exclude_none</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">by_alias</span><span class="o">=</span><span class="kc">True</span>
-            <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">retrieval_config</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">request</span><span class="p">[</span><span class="s2">"retrievalConfiguration"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieval_config</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">request</span><span class="p">[</span><span class="s2">"retrievalConfiguration"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieval_config</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span>
+                    <span class="n">exclude_none</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">by_alias</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span>
         <span class="k">return</span> <span class="n">request</span>
 
     <span class="nd">@staticmethod</span>

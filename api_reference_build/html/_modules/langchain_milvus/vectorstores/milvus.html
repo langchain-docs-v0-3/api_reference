@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 29, 2025" name="docbuild:last-update"/>
+<meta content="May 30, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -1271,6 +1271,67 @@
                 <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
             <span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_insert_list</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">embeddings</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]],</span>
+        <span class="n">metadatas</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">force_ids</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Prepare insert list for batch insertion.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            texts: List of texts to insert</span>
+<span class="sd">            embeddings: List of embeddings corresponding to the texts</span>
+<span class="sd">            metadatas: Optional metadata for each text</span>
+<span class="sd">            ids: Optional IDs for each text</span>
+<span class="sd">            force_ids: If force_ids, when auto_id is True and ids is not None,</span>
+<span class="sd">             it will return a list containing the customized ids, otherwise,</span>
+<span class="sd">             it will not contain the customized ids.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of dictionaries ready for insertion</span>
+<span class="sd">        """</span>
+        <span class="n">insert_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">vector_field_embeddings</span> <span class="ow">in</span> <span class="n">embeddings</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="n">vector_field_embeddings</span>
+            <span class="p">),</span> <span class="s2">"Mismatched lengths of texts and embeddings."</span>
+
+        <span class="k">if</span> <span class="n">metadatas</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="n">metadatas</span>
+            <span class="p">),</span> <span class="s2">"Mismatched lengths of texts and metadatas."</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">texts</span><span class="p">)),</span> <span class="n">texts</span><span class="p">):</span>
+            <span class="n">entity_dict</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadatas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">metadatas</span> <span class="k">else</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_id</span> <span class="ow">or</span> <span class="n">force_ids</span><span class="p">:</span>
+                <span class="n">entity_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_primary_field</span><span class="p">]</span> <span class="o">=</span> <span class="n">ids</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># type: ignore[index]</span>
+
+            <span class="n">entity_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_text_field</span><span class="p">]</span> <span class="o">=</span> <span class="n">text</span>
+
+            <span class="k">for</span> <span class="n">vector_field</span><span class="p">,</span> <span class="n">vector_field_embeddings</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_vector_fields_from_embedding</span><span class="p">,</span> <span class="n">embeddings</span>
+            <span class="p">):</span>
+                <span class="n">entity_dict</span><span class="p">[</span><span class="n">vector_field</span><span class="p">]</span> <span class="o">=</span> <span class="n">vector_field_embeddings</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_field</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">enable_dynamic_field</span><span class="p">:</span>
+                <span class="n">entity_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata_field</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="c1"># if not enable_dynamic_field, skip fields not in the collection.</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">enable_dynamic_field</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="c1"># If enable_dynamic_field, all fields are allowed.</span>
+                    <span class="n">entity_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+            <span class="n">insert_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity_dict</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">insert_list</span>
+
 <div class="viewcode-block" id="Milvus.add_texts">
 <a class="viewcode-back" href="../../../milvus/vectorstores/langchain_milvus.vectorstores.milvus.Milvus.html#langchain_milvus.vectorstores.milvus.Milvus.add_texts">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">add_texts</span><span class="p">(</span>
@@ -1459,42 +1520,12 @@
                 <span class="n">kwargs</span><span class="p">[</span><span class="s2">"timeout"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_init</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="n">insert_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="k">for</span> <span class="n">vector_field_embeddings</span> <span class="ow">in</span> <span class="n">embeddings</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
-                <span class="n">vector_field_embeddings</span>
-            <span class="p">),</span> <span class="s2">"Mismatched lengths of texts and embeddings."</span>
-
-        <span class="k">if</span> <span class="n">metadatas</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
-                <span class="n">metadatas</span>
-            <span class="p">),</span> <span class="s2">"Mismatched lengths of texts and metadatas."</span>
-
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">texts</span><span class="p">)),</span> <span class="n">texts</span><span class="p">):</span>
-            <span class="n">entity_dict</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadatas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">metadatas</span> <span class="k">else</span> <span class="p">{}</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_id</span><span class="p">:</span>
-                <span class="n">entity_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_primary_field</span><span class="p">]</span> <span class="o">=</span> <span class="n">ids</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># type: ignore[index]</span>
-
-            <span class="n">entity_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_text_field</span><span class="p">]</span> <span class="o">=</span> <span class="n">text</span>
-
-            <span class="k">for</span> <span class="n">vector_field</span><span class="p">,</span> <span class="n">vector_field_embeddings</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_vector_fields_from_embedding</span><span class="p">,</span> <span class="n">embeddings</span>
-            <span class="p">):</span>
-                <span class="n">entity_dict</span><span class="p">[</span><span class="n">vector_field</span><span class="p">]</span> <span class="o">=</span> <span class="n">vector_field_embeddings</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_field</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">enable_dynamic_field</span><span class="p">:</span>
-                <span class="n">entity_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata_field</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="c1"># if not enable_dynamic_field, skip fields not in the collection.</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">enable_dynamic_field</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
-                        <span class="k">continue</span>
-                    <span class="c1"># If enable_dynamic_field, all fields are allowed.</span>
-                    <span class="n">entity_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-
-            <span class="n">insert_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity_dict</span><span class="p">)</span>
+        <span class="n">insert_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_insert_list</span><span class="p">(</span>
+            <span class="n">texts</span><span class="o">=</span><span class="n">texts</span><span class="p">,</span>
+            <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span>
+            <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span>
+            <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="c1"># Total insert count</span>
         <span class="n">total_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">insert_list</span><span class="p">)</span>
@@ -1517,25 +1548,49 @@
                 <span class="p">)</span>
                 <span class="n">pks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="s2">"ids"</span><span class="p">])</span>
             <span class="k">except</span> <span class="n">MilvusException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">first_entity</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="k">if</span> <span class="n">batch_insert_list</span><span class="p">:</span>
-                    <span class="n">first_entity</span> <span class="o">=</span> <span class="n">batch_insert_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="n">log_entity</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">first_entity</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
-                        <span class="n">log_entity</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">v</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span><span class="si">}</span><span class="s2">... (truncated, total len: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">log_entity</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                    <span class="s2">"Failed to insert batch starting at entity: </span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">. "</span>
-                    <span class="s2">"First entity data: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
-                    <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
-                    <span class="n">total_count</span><span class="p">,</span>
-                    <span class="n">log_entity</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_handle_batch_operation_exception</span><span class="p">(</span>
+                    <span class="n">e</span><span class="p">,</span> <span class="n">batch_insert_list</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">total_count</span><span class="p">,</span> <span class="s2">"insert"</span>
                 <span class="p">)</span>
-                <span class="k">raise</span> <span class="n">e</span>
         <span class="k">return</span> <span class="n">pks</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_batch_operation_exception</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">e</span><span class="p">:</span> <span class="n">MilvusException</span><span class="p">,</span>
+        <span class="n">batch_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
+        <span class="n">batch_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">total_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">operation_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Handle batch operation exceptions with detailed logging.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            e: The MilvusException that occurred</span>
+<span class="sd">            batch_list: The batch list that caused the exception</span>
+<span class="sd">            batch_index: Current batch index (0-based)</span>
+<span class="sd">            total_count: Total number of entities</span>
+<span class="sd">            operation_name: Name of the operation (e.g., "insert", "upsert")</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            MilvusException: Re-raises the original exception after logging</span>
+<span class="sd">        """</span>
+        <span class="n">first_entity</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">batch_list</span><span class="p">:</span>
+            <span class="n">first_entity</span> <span class="o">=</span> <span class="n">batch_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">log_entity</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">first_entity</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
+                <span class="n">log_entity</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">v</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span><span class="si">}</span><span class="s2">... (truncated, total len: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">log_entity</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s2">"Failed to </span><span class="si">%s</span><span class="s2"> batch starting at entity: </span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">. "</span> <span class="s2">"First entity data: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">operation_name</span><span class="p">,</span>
+            <span class="n">batch_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">total_count</span><span class="p">,</span>
+            <span class="n">log_entity</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="n">e</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_collection_search</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -2286,34 +2341,69 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">documents</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Update/Insert documents to the vectorstore.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            ids: IDs to update - Let's call get_pks to get ids with expression \n</span>
 <span class="sd">            documents (List[Document]): Documents to add to the vectorstore.</span>
 
-<span class="sd">        Returns:</span>
-<span class="sd">            List[str]: IDs of the added texts.</span>
 <span class="sd">        """</span>
 
         <span class="k">if</span> <span class="n">documents</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"No documents to upsert."</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">return</span>
 
-        <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ids</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_documents</span><span class="p">(</span><span class="n">documents</span><span class="o">=</span><span class="n">documents</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="n">documents</span>
+            <span class="p">),</span> <span class="s2">"Different lengths of documents and unique ids are provided."</span>
+
+        <span class="n">embeddings_functions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">EmbeddingType</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_as_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_func</span><span class="p">)</span>
+        <span class="n">embeddings</span><span class="p">:</span> <span class="n">List</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">page_content</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
+        <span class="n">metadatas</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">embedding_func</span> <span class="ow">in</span> <span class="n">embeddings_functions</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">)</span>
-            <span class="k">except</span> <span class="n">MilvusException</span><span class="p">:</span>
-                <span class="k">pass</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_documents</span><span class="p">(</span><span class="n">documents</span><span class="o">=</span><span class="n">documents</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">MilvusException</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                <span class="s2">"Failed to upsert entities: </span><span class="si">%s</span><span class="s2"> error: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">,</span> <span class="n">exc</span>
-            <span class="p">)</span>
-            <span class="k">raise</span> <span class="n">exc</span></div>
+                <span class="n">embeddings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">embedding_func</span><span class="o">.</span><span class="n">embed_documents</span><span class="p">(</span><span class="n">texts</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
+                <span class="n">embeddings</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">embedding_func</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">texts</span><span class="p">])</span>
+
+        <span class="n">upsert_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_insert_list</span><span class="p">(</span>
+            <span class="n">texts</span><span class="o">=</span><span class="n">texts</span><span class="p">,</span>
+            <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span>
+            <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span>
+            <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span>
+            <span class="n">force_ids</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Total upsert count</span>
+        <span class="n">total_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">upsert_list</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="p">,</span> <span class="n">Collection</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">total_count</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+            <span class="c1"># Grab end index</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">total_count</span><span class="p">)</span>
+            <span class="n">batch_upsert_list</span> <span class="o">=</span> <span class="n">upsert_list</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+            <span class="c1"># Upsert into the collection.</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">timeout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="ow">or</span> <span class="n">timeout</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">upsert</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">,</span>
+                    <span class="n">batch_upsert_list</span><span class="p">,</span>
+                    <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="n">MilvusException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_handle_batch_operation_exception</span><span class="p">(</span>
+                    <span class="n">e</span><span class="p">,</span> <span class="n">batch_upsert_list</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">total_count</span><span class="p">,</span> <span class="s2">"upsert"</span>
+                <span class="p">)</span>
+        <span class="k">return</span></div>
 
 
     <span class="nd">@staticmethod</span>
@@ -2465,10 +2555,6 @@
             <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
                 <span class="n">texts</span>
             <span class="p">),</span> <span class="s2">"Different lengths of texts and unique ids are provided."</span>
-            <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">),</span> <span class="s2">"All ids should be strings."</span>
-            <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span>
-                <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span> <span class="o">&lt;=</span> <span class="mi">65_535</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ids</span>
-            <span class="p">),</span> <span class="s2">"Each id should be a string less than 65535 bytes."</span>
 
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_id</span> <span class="ow">and</span> <span class="n">ids</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
@@ -2573,42 +2659,12 @@
                 <span class="n">kwargs</span><span class="p">[</span><span class="s2">"timeout"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_init</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="n">insert_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="k">for</span> <span class="n">vector_field_embeddings</span> <span class="ow">in</span> <span class="n">embeddings</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
-                <span class="n">vector_field_embeddings</span>
-            <span class="p">),</span> <span class="s2">"Mismatched lengths of texts and embeddings."</span>
-
-        <span class="k">if</span> <span class="n">metadatas</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
-                <span class="n">metadatas</span>
-            <span class="p">),</span> <span class="s2">"Mismatched lengths of texts and metadatas."</span>
-
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">texts</span><span class="p">)),</span> <span class="n">texts</span><span class="p">):</span>
-            <span class="n">entity_dict</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadatas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">metadatas</span> <span class="k">else</span> <span class="p">{}</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_id</span><span class="p">:</span>
-                <span class="n">entity_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_primary_field</span><span class="p">]</span> <span class="o">=</span> <span class="n">ids</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># type: ignore[index]</span>
-
-            <span class="n">entity_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_text_field</span><span class="p">]</span> <span class="o">=</span> <span class="n">text</span>
-
-            <span class="k">for</span> <span class="n">vector_field</span><span class="p">,</span> <span class="n">vector_field_embeddings</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_vector_fields_from_embedding</span><span class="p">,</span> <span class="n">embeddings</span>
-            <span class="p">):</span>
-                <span class="n">entity_dict</span><span class="p">[</span><span class="n">vector_field</span><span class="p">]</span> <span class="o">=</span> <span class="n">vector_field_embeddings</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_field</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">enable_dynamic_field</span><span class="p">:</span>
-                <span class="n">entity_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata_field</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="c1"># if not enable_dynamic_field, skip fields not in the collection.</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">enable_dynamic_field</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
-                        <span class="k">continue</span>
-                    <span class="c1"># If enable_dynamic_field, all fields are allowed.</span>
-                    <span class="n">entity_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-
-            <span class="n">insert_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity_dict</span><span class="p">)</span>
+        <span class="n">insert_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_insert_list</span><span class="p">(</span>
+            <span class="n">texts</span><span class="o">=</span><span class="n">texts</span><span class="p">,</span>
+            <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span>
+            <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span>
+            <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="c1"># Total insert count</span>
         <span class="n">total_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">insert_list</span><span class="p">)</span>
@@ -2631,23 +2687,9 @@
                 <span class="p">)</span>
                 <span class="n">pks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="s2">"ids"</span><span class="p">])</span>
             <span class="k">except</span> <span class="n">MilvusException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">first_entity</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="k">if</span> <span class="n">batch_insert_list</span><span class="p">:</span>
-                    <span class="n">first_entity</span> <span class="o">=</span> <span class="n">batch_insert_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="n">log_entity</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">first_entity</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
-                        <span class="n">log_entity</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">v</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span><span class="si">}</span><span class="s2">... (truncated, total len: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">log_entity</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                    <span class="s2">"Failed to insert batch starting at entity: </span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">. "</span>
-                    <span class="s2">"First entity data: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
-                    <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
-                    <span class="n">total_count</span><span class="p">,</span>
-                    <span class="n">log_entity</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_handle_batch_operation_exception</span><span class="p">(</span>
+                    <span class="n">e</span><span class="p">,</span> <span class="n">batch_insert_list</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">total_count</span><span class="p">,</span> <span class="s2">"insert"</span>
                 <span class="p">)</span>
-                <span class="k">raise</span> <span class="n">e</span>
         <span class="k">return</span> <span class="n">pks</span></div>
 
 
@@ -3315,34 +3357,74 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">documents</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Async update/Insert documents to the vectorstore.</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Update/Insert documents to the vectorstore asynchronously.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            ids: IDs to update - Let's call get_pks to get ids with expression \n</span>
+<span class="sd">            ids: IDs to update - Let's call aget_pks to get ids with expression</span>
 <span class="sd">            documents (List[Document]): Documents to add to the vectorstore.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            List[str]: IDs of the added texts.</span>
+<span class="sd">            batch_size (int, optional): Batch size to use for upsert.</span>
+<span class="sd">                Defaults to 1000.</span>
+<span class="sd">            timeout (Optional[float]): Timeout for each batch upsert. Defaults</span>
+<span class="sd">                to None.</span>
+<span class="sd">            **kwargs: Other parameters in Milvus upsert api.</span>
 <span class="sd">        """</span>
 
         <span class="k">if</span> <span class="n">documents</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"No documents to upsert."</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">return</span>
 
-        <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ids</span><span class="p">:</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">aadd_documents</span><span class="p">(</span><span class="n">documents</span><span class="o">=</span><span class="n">documents</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="n">documents</span>
+        <span class="p">),</span> <span class="s2">"Different lengths of documents and unique ids are provided."</span>
+
+        <span class="n">embeddings_functions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">EmbeddingType</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_as_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_func</span><span class="p">)</span>
+        <span class="n">embeddings</span><span class="p">:</span> <span class="n">List</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">page_content</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
+        <span class="n">metadatas</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">embedding_func</span> <span class="ow">in</span> <span class="n">embeddings_functions</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">adelete</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">)</span>
-            <span class="k">except</span> <span class="n">MilvusException</span><span class="p">:</span>
-                <span class="k">pass</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">aadd_documents</span><span class="p">(</span><span class="n">documents</span><span class="o">=</span><span class="n">documents</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">MilvusException</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                <span class="s2">"Failed to upsert entities: </span><span class="si">%s</span><span class="s2"> error: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">,</span> <span class="n">exc</span>
-            <span class="p">)</span>
-            <span class="k">raise</span> <span class="n">exc</span></div>
+                <span class="n">embeddings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">await</span> <span class="n">embedding_func</span><span class="o">.</span><span class="n">aembed_documents</span><span class="p">(</span><span class="n">texts</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
+                <span class="n">embeddings</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="k">await</span> <span class="n">embedding_func</span><span class="o">.</span><span class="n">aembed_query</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">texts</span><span class="p">])</span>
+
+        <span class="n">upsert_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_insert_list</span><span class="p">(</span>
+            <span class="n">texts</span><span class="o">=</span><span class="n">texts</span><span class="p">,</span>
+            <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span>
+            <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span>
+            <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span>
+            <span class="n">force_ids</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Total upsert count</span>
+        <span class="n">total_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">upsert_list</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="p">,</span> <span class="n">Collection</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">total_count</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+            <span class="c1"># Grab end index</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">total_count</span><span class="p">)</span>
+            <span class="n">batch_upsert_list</span> <span class="o">=</span> <span class="n">upsert_list</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+            <span class="c1"># Upsert into the collection.</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">timeout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="ow">or</span> <span class="n">timeout</span>
+                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">aclient</span><span class="o">.</span><span class="n">upsert</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">,</span>
+                    <span class="n">batch_upsert_list</span><span class="p">,</span>
+                    <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="n">MilvusException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_handle_batch_operation_exception</span><span class="p">(</span>
+                    <span class="n">e</span><span class="p">,</span> <span class="n">batch_upsert_list</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">total_count</span><span class="p">,</span> <span class="s2">"upsert"</span>
+                <span class="p">)</span>
+        <span class="k">return</span></div>
 
 
 <div class="viewcode-block" id="Milvus.asearch_by_metadata">

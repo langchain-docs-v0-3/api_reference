@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 29, 2025" name="docbuild:last-update"/>
+<meta content="May 30, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -228,6 +228,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">httpx</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">vcr</span>  <span class="c1"># type: ignore[import-untyped]</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core._api</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn_deprecated</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseCallbackHandler</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.language_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseChatModel</span><span class="p">,</span> <span class="n">GenericFakeChatModel</span>
@@ -250,6 +251,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic.v1</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span> <span class="k">as</span> <span class="n">BaseModelV1</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic.v1</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span> <span class="k">as</span> <span class="n">FieldV1</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pytest_benchmark.fixture</span><span class="w"> </span><span class="kn">import</span> <span class="n">BenchmarkFixture</span>  <span class="c1"># type: ignore[import-untyped]</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">TypedDict</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_tests.unit_tests.chat_models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -743,7 +745,151 @@
 <span class="sd">        cached, audio, or reasoning.</span>
 
 <span class="sd">        Only needs to be overridden if these details are supplied.</span>
-<span class="sd">    """</span>
+
+<span class="sd">    .. dropdown:: enable_vcr_tests</span>
+
+<span class="sd">        Property controlling whether to enable select tests that rely on</span>
+<span class="sd">        `VCR &lt;https://vcrpy.readthedocs.io/en/latest/&gt;`_ caching of HTTP calls, such</span>
+<span class="sd">        as benchmarking tests.</span>
+
+<span class="sd">        To enable these tests, follow these steps:</span>
+
+<span class="sd">        1. Override the ``enable_vcr_tests`` property to return ``True``:</span>
+
+<span class="sd">            .. code-block:: python</span>
+
+<span class="sd">                @property</span>
+<span class="sd">                def enable_vcr_tests(self) -&gt; bool:</span>
+<span class="sd">                    return True</span>
+
+<span class="sd">        2. Configure VCR to exclude sensitive headers and other information from cassettes.</span>
+
+<span class="sd">            .. important::</span>
+<span class="sd">                VCR will by default record authentication headers and other sensitive</span>
+<span class="sd">                information in cassettes. Read below for how to configure what</span>
+<span class="sd">                information is recorded in cassettes.</span>
+
+<span class="sd">            To add configuration to VCR, add a ``conftest.py`` file to the ``tests/``</span>
+<span class="sd">            directory and implement the ``vcr_config`` fixture there.</span>
+
+<span class="sd">            ``langchain-tests`` excludes the headers ``"authorization"``,</span>
+<span class="sd">            ``"x-api-key"``, and ``"api-key"`` from VCR cassettes. To pick up this</span>
+<span class="sd">            configuration, you will need to add ``conftest.py`` as shown below. You can</span>
+<span class="sd">            also exclude additional headers, override the default exclusions, or apply</span>
+<span class="sd">            other customizations to the VCR configuration. See example below:</span>
+
+<span class="sd">            .. code-block:: python</span>
+<span class="sd">                :caption: tests/conftest.py</span>
+
+<span class="sd">                import pytest</span>
+<span class="sd">                from langchain_tests.conftest import _base_vcr_config as _base_vcr_config</span>
+
+<span class="sd">                _EXTRA_HEADERS = [</span>
+<span class="sd">                    # Specify additional headers to redact</span>
+<span class="sd">                    ("user-agent", "PLACEHOLDER"),</span>
+<span class="sd">                ]</span>
+
+
+<span class="sd">                def remove_response_headers(response: dict) -&gt; dict:</span>
+<span class="sd">                    # If desired, remove or modify headers in the response.</span>
+<span class="sd">                    response["headers"] = {}</span>
+<span class="sd">                    return response</span>
+
+
+<span class="sd">                @pytest.fixture(scope="session")</span>
+<span class="sd">                def vcr_config(_base_vcr_config: dict) -&gt; dict:  # noqa: F811</span>
+<span class="sd">                    \"\"\"Extend the default configuration from langchain_tests.\"\"\"</span>
+<span class="sd">                    config = _base_vcr_config.copy()</span>
+<span class="sd">                    config.setdefault("filter_headers", []).extend(_EXTRA_HEADERS)</span>
+<span class="sd">                    config["before_record_response"] = remove_response_headers</span>
+
+<span class="sd">                    return config</span>
+
+<span class="sd">            .. dropdown:: Compressing cassettes</span>
+
+<span class="sd">                ``langchain-tests`` includes a custom VCR serializer that compresses</span>
+<span class="sd">                cassettes using gzip. To use it, register the ``"yaml.gz"`` serializer</span>
+<span class="sd">                to your VCR fixture and enable this serializer in the config. See</span>
+<span class="sd">                example below:</span>
+
+<span class="sd">                .. code-block:: python</span>
+<span class="sd">                    :caption: tests/conftest.py</span>
+
+<span class="sd">                    import pytest</span>
+<span class="sd">                    from langchain_tests.conftest import YamlGzipSerializer</span>
+<span class="sd">                    from langchain_tests.conftest import _base_vcr_config as _base_vcr_config</span>
+<span class="sd">                    from vcr import VCR</span>
+
+<span class="sd">                    _EXTRA_HEADERS = [</span>
+<span class="sd">                        # Specify additional headers to redact</span>
+<span class="sd">                        ("user-agent", "PLACEHOLDER"),</span>
+<span class="sd">                    ]</span>
+
+
+<span class="sd">                    def remove_response_headers(response: dict) -&gt; dict:</span>
+<span class="sd">                        # If desired, remove or modify headers in the response.</span>
+<span class="sd">                        response["headers"] = {}</span>
+<span class="sd">                        return response</span>
+
+
+<span class="sd">                    @pytest.fixture(scope="session")</span>
+<span class="sd">                    def vcr_config(_base_vcr_config: dict) -&gt; dict:  # noqa: F811</span>
+<span class="sd">                        \"\"\"Extend the default configuration from langchain_tests.\"\"\"</span>
+<span class="sd">                        config = _base_vcr_config.copy()</span>
+<span class="sd">                        config.setdefault("filter_headers", []).extend(_EXTRA_HEADERS)</span>
+<span class="sd">                        config["before_record_response"] = remove_response_headers</span>
+<span class="sd">                        # New: enable serializer and set file extension</span>
+<span class="sd">                        config["serializer"] = "yaml.gz"</span>
+<span class="sd">                        config["path_transformer"] = VCR.ensure_suffix(".yaml.gz")</span>
+
+<span class="sd">                        return config</span>
+
+
+<span class="sd">                    @pytest.fixture</span>
+<span class="sd">                    def vcr(vcr_config: dict) -&gt; VCR:</span>
+<span class="sd">                        \"\"\"Override the default vcr fixture to include custom serializers\"\"\"</span>
+<span class="sd">                        my_vcr = VCR(**vcr_config)</span>
+<span class="sd">                        my_vcr.register_serializer("yaml.gz", YamlGzipSerializer)</span>
+<span class="sd">                        return my_vcr</span>
+
+<span class="sd">                You can inspect the contents of the compressed cassettes (e.g., to</span>
+<span class="sd">                ensure no sensitive information is recorded) using the serializer:</span>
+
+<span class="sd">                .. code-block:: python</span>
+
+<span class="sd">                    from langchain_tests.conftest import YamlGzipSerializer</span>
+
+<span class="sd">                    with open("/path/to/tests/cassettes/TestClass_test.yaml.gz", "r") as f:</span>
+<span class="sd">                        data = f.read()</span>
+
+<span class="sd">                    YamlGzipSerializer.deserialize(data)</span>
+
+<span class="sd">        3. Run tests to generate VCR cassettes.</span>
+
+<span class="sd">            Example:</span>
+
+<span class="sd">            .. code-block:: bash</span>
+
+<span class="sd">                uv run python -m pytest tests/integration_tests/test_chat_models.py::TestMyModel::test_stream_time</span>
+
+<span class="sd">            This will generate a VCR cassette for the test in</span>
+<span class="sd">            ``tests/integration_tests/cassettes/``.</span>
+
+<span class="sd">            .. important::</span>
+<span class="sd">                You should inspect the generated cassette to ensure that it does not</span>
+<span class="sd">                contain sensitive information. If it does, you can modify the</span>
+<span class="sd">                ``vcr_config`` fixture to exclude headers or modify the response</span>
+<span class="sd">                before it is recorded.</span>
+
+<span class="sd">            You can then commit the cassette to your repository. Subsequent test runs</span>
+<span class="sd">            will use the cassette instead of making HTTP calls.</span>
+
+<span class="sd">            .. tip::</span>
+<span class="sd">                Adding ``--vcr-record=none`` to the pytest command will ensure that</span>
+<span class="sd">                no new cassettes are recorded, and only existing cassettes are used.</span>
+<span class="sd">                Consider adding this to your CI configuration (e.g., modify relevant</span>
+<span class="sd">                Makefile commands).</span>
+<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">standard_chat_model_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
@@ -2997,6 +3143,48 @@
             <span class="p">]</span>
         <span class="p">)</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">AIMessage</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ChatModelIntegrationTests.test_stream_time">
+<a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_stream_time">[docs]</a>
+    <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">benchmark</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_stream_time</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">,</span> <span class="n">benchmark</span><span class="p">:</span> <span class="n">BenchmarkFixture</span><span class="p">,</span> <span class="n">vcr</span><span class="p">:</span> <span class="n">vcr</span><span class="o">.</span><span class="n">VCR</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Test that streaming does not introduce undue overhead.</span>
+
+<span class="sd">        See ``enable_vcr_tests`` dropdown :class:`above &lt;ChatModelIntegrationTests&gt;`</span>
+<span class="sd">        for more information.</span>
+
+<span class="sd">        .. dropdown:: Configuration</span>
+
+<span class="sd">            This test can be enabled or disabled using the ``enable_vcr_tests``</span>
+<span class="sd">            property. For example, to disable the test, set this property to ``False``:</span>
+
+<span class="sd">            .. code-block:: python</span>
+
+<span class="sd">                @property</span>
+<span class="sd">                def enable_vcr_tests(self) -&gt; bool:</span>
+<span class="sd">                    return False</span>
+
+<span class="sd">            .. important::</span>
+
+<span class="sd">                VCR will by default record authentication headers and other sensitive</span>
+<span class="sd">                information in cassettes. See ``enable_vcr_tests`` dropdown</span>
+<span class="sd">                :class:`above &lt;ChatModelIntegrationTests&gt;` for how to configure what</span>
+<span class="sd">                information is recorded in cassettes.</span>
+
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">enable_vcr_tests</span><span class="p">:</span>
+            <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"VCR not set up."</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_run</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cassette_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_test_stream_time"</span>
+            <span class="k">with</span> <span class="n">vcr</span><span class="o">.</span><span class="n">use_cassette</span><span class="p">(</span><span class="n">cassette_name</span><span class="p">,</span> <span class="n">record_mode</span><span class="o">=</span><span class="s2">"once"</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="s2">"Write a story about a cat."</span><span class="p">):</span>
+                    <span class="k">pass</span>
+
+        <span class="n">benchmark</span><span class="p">(</span><span class="n">_run</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke_with_audio_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AIMessage</span><span class="p">:</span>
