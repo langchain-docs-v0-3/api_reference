@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 31, 2025" name="docbuild:last-update"/>
+<meta content="Jun 01, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,37 +220,106 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_tests.conftest</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">gzip</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">gzip</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">os</span><span class="w"> </span><span class="kn">import</span> <span class="n">PathLike</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">vcr</span><span class="w"> </span><span class="kn">import</span> <span class="n">VCR</span>  <span class="c1"># type: ignore[import-untyped]</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">vcr.serializers</span><span class="w"> </span><span class="kn">import</span> <span class="n">yamlserializer</span>  <span class="c1"># type: ignore[import-untyped]</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">vcr</span><span class="w"> </span><span class="kn">import</span> <span class="n">VCR</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">vcr.persisters.filesystem</span><span class="w"> </span><span class="kn">import</span> <span class="n">CassetteNotFoundError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">vcr.request</span><span class="w"> </span><span class="kn">import</span> <span class="n">Request</span>
 
 
-<div class="viewcode-block" id="YamlGzipSerializer">
-<a class="viewcode-back" href="../../standard_tests/conftest/langchain_tests.conftest.YamlGzipSerializer.html#langchain_tests.conftest.YamlGzipSerializer">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">YamlGzipSerializer</span><span class="p">:</span>
-<div class="viewcode-block" id="YamlGzipSerializer.serialize">
-<a class="viewcode-back" href="../../standard_tests/conftest/langchain_tests.conftest.YamlGzipSerializer.html#langchain_tests.conftest.YamlGzipSerializer.serialize">[docs]</a>
+<div class="viewcode-block" id="CustomSerializer">
+<a class="viewcode-back" href="../../standard_tests/conftest/langchain_tests.conftest.CustomSerializer.html#langchain_tests.conftest.CustomSerializer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomSerializer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Custom serializer for VCR cassettes using YAML and gzip.</span>
+
+<span class="sd">    We're using a custom serializer to avoid the default yaml serializer</span>
+<span class="sd">    used by VCR, which is not designed to be safe for untrusted input.</span>
+
+<span class="sd">    This step is an extra precaution necessary because the cassette files</span>
+<span class="sd">    are in compressed YAML format, which makes it more difficult to inspect</span>
+<span class="sd">    their contents during development or debugging.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="CustomSerializer.serialize">
+<a class="viewcode-back" href="../../standard_tests/conftest/langchain_tests.conftest.CustomSerializer.html#langchain_tests.conftest.CustomSerializer.serialize">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">serialize</span><span class="p">(</span><span class="n">cassette_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="n">raw</span> <span class="o">=</span> <span class="n">yamlserializer</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">cassette_dict</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
-        <span class="n">compressed</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">compressed</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"ascii"</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">serialize</span><span class="p">(</span><span class="n">cassette_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Convert cassette to YAML and compress it."""</span>
+        <span class="n">cassette_dict</span><span class="p">[</span><span class="s2">"requests"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">_to_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">request</span> <span class="ow">in</span> <span class="n">cassette_dict</span><span class="p">[</span><span class="s2">"requests"</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="n">yml</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_dump</span><span class="p">(</span><span class="n">cassette_dict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">gzip</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">yml</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="YamlGzipSerializer.deserialize">
-<a class="viewcode-back" href="../../standard_tests/conftest/langchain_tests.conftest.YamlGzipSerializer.html#langchain_tests.conftest.YamlGzipSerializer.deserialize">[docs]</a>
+<div class="viewcode-block" id="CustomSerializer.deserialize">
+<a class="viewcode-back" href="../../standard_tests/conftest/langchain_tests.conftest.CustomSerializer.html#langchain_tests.conftest.CustomSerializer.deserialize">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">deserialize</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="n">compressed</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"ascii"</span><span class="p">))</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">compressed</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">yamlserializer</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">deserialize</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Decompress data and convert it from YAML."""</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="n">cassette</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">cassette</span><span class="p">[</span><span class="s2">"requests"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">Request</span><span class="o">.</span><span class="n">_from_dict</span><span class="p">(</span><span class="n">request</span><span class="p">)</span> <span class="k">for</span> <span class="n">request</span> <span class="ow">in</span> <span class="n">cassette</span><span class="p">[</span><span class="s2">"requests"</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">cassette</span></div>
 </div>
 
 
 
+<div class="viewcode-block" id="CustomPersister">
+<a class="viewcode-back" href="../../standard_tests/conftest/langchain_tests.conftest.CustomPersister.html#langchain_tests.conftest.CustomPersister">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomPersister</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A custom persister for VCR that uses the CustomSerializer."""</span>
+
+<div class="viewcode-block" id="CustomPersister.load_cassette">
+<a class="viewcode-back" href="../../standard_tests/conftest/langchain_tests.conftest.CustomPersister.html#langchain_tests.conftest.CustomPersister.load_cassette">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_cassette</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">cassette_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">PathLike</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="n">serializer</span><span class="p">:</span> <span class="n">CustomSerializer</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Load a cassette from a file."""</span>
+        <span class="c1"># If cassette path is already Path this is a no-op</span>
+        <span class="n">cassette_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cassette_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cassette_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">CassetteNotFoundError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Cassette file </span><span class="si">{</span><span class="n">cassette_path</span><span class="si">}</span><span class="s2"> does not exist."</span>
+            <span class="p">)</span>
+        <span class="k">with</span> <span class="n">cassette_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">deser</span> <span class="o">=</span> <span class="n">serializer</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">deser</span><span class="p">[</span><span class="s2">"requests"</span><span class="p">],</span> <span class="n">deser</span><span class="p">[</span><span class="s2">"responses"</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="CustomPersister.save_cassette">
+<a class="viewcode-back" href="../../standard_tests/conftest/langchain_tests.conftest.CustomPersister.html#langchain_tests.conftest.CustomPersister.save_cassette">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_cassette</span><span class="p">(</span>
+        <span class="n">cassette_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">PathLike</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+        <span class="n">cassette_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">serializer</span><span class="p">:</span> <span class="n">CustomSerializer</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Save a cassette to a file."""</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">serializer</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">cassette_dict</span><span class="p">)</span>
+        <span class="c1"># if cassette path is already Path this is no operation</span>
+        <span class="n">cassette_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cassette_path</span><span class="p">)</span>
+        <span class="n">cassette_folder</span> <span class="o">=</span> <span class="n">cassette_path</span><span class="o">.</span><span class="n">parent</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cassette_folder</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">cassette_folder</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">cassette_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># A list of headers that should be filtered out of the cassettes.</span>
+<span class="c1"># These are typically associated with sensitive information and should</span>
+<span class="c1"># not be stored in cassettes.</span>
 <span class="n">_BASE_FILTER_HEADERS</span> <span class="o">=</span> <span class="p">[</span>
     <span class="p">(</span><span class="s2">"authorization"</span><span class="p">,</span> <span class="s2">"PLACEHOLDER"</span><span class="p">),</span>
     <span class="p">(</span><span class="s2">"x-api-key"</span><span class="p">,</span> <span class="s2">"PLACEHOLDER"</span><span class="p">),</span>
@@ -260,14 +329,15 @@
 
 <span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s2">"session"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_base_vcr_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Configuration that every cassette will receive.</span>
+<span class="w">    </span><span class="sd">"""Configuration that every cassette will receive.</span>
+
 <span class="sd">    (Anything permitted by vcr.VCR(**kwargs) can be put here.)</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"record_mode"</span><span class="p">:</span> <span class="s2">"once"</span><span class="p">,</span>
         <span class="s2">"filter_headers"</span><span class="p">:</span> <span class="n">_BASE_FILTER_HEADERS</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
-        <span class="s2">"match_on"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"method"</span><span class="p">,</span> <span class="s2">"scheme"</span><span class="p">,</span> <span class="s2">"host"</span><span class="p">,</span> <span class="s2">"port"</span><span class="p">,</span> <span class="s2">"path"</span><span class="p">,</span> <span class="s2">"query"</span><span class="p">],</span>
+        <span class="s2">"match_on"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"method"</span><span class="p">,</span> <span class="s2">"uri"</span><span class="p">,</span> <span class="s2">"body"</span><span class="p">],</span>
+        <span class="s2">"allow_playback_repeats"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="s2">"decode_compressed_response"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="s2">"cassette_library_dir"</span><span class="p">:</span> <span class="s2">"tests/cassettes"</span><span class="p">,</span>
         <span class="s2">"path_transformer"</span><span class="p">:</span> <span class="n">VCR</span><span class="o">.</span><span class="n">ensure_suffix</span><span class="p">(</span><span class="s2">".yaml"</span><span class="p">),</span>

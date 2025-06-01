@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 31, 2025" name="docbuild:last-update"/>
+<meta content="Jun 01, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -917,7 +917,7 @@
 <span class="sd">                    :caption: tests/conftest.py</span>
 
 <span class="sd">                    import pytest</span>
-<span class="sd">                    from langchain_tests.conftest import YamlGzipSerializer</span>
+<span class="sd">                    from langchain_tests.conftest import CustomPersister, CustomSerializer</span>
 <span class="sd">                    from langchain_tests.conftest import _base_vcr_config as _base_vcr_config</span>
 <span class="sd">                    from vcr import VCR</span>
 
@@ -946,24 +946,26 @@
 <span class="sd">                        return config</span>
 
 
-<span class="sd">                    @pytest.fixture</span>
-<span class="sd">                    def vcr(vcr_config: dict) -&gt; VCR:</span>
-<span class="sd">                        \"\"\"Override the default vcr fixture to include custom serializers\"\"\"</span>
-<span class="sd">                        my_vcr = VCR(**vcr_config)</span>
-<span class="sd">                        my_vcr.register_serializer("yaml.gz", YamlGzipSerializer)</span>
-<span class="sd">                        return my_vcr</span>
+<span class="sd">                    def pytest_recording_configure(config: dict, vcr: VCR) -&gt; None:</span>
+<span class="sd">                        vcr.register_persister(CustomPersister())</span>
+<span class="sd">                        vcr.register_serializer("yaml.gz", CustomSerializer())</span>
+
 
 <span class="sd">                You can inspect the contents of the compressed cassettes (e.g., to</span>
-<span class="sd">                ensure no sensitive information is recorded) using the serializer:</span>
+<span class="sd">                ensure no sensitive information is recorded) using</span>
+
+<span class="sd">                .. code-block:: bash</span>
+
+<span class="sd">                    gunzip -k /path/to/tests/cassettes/TestClass_test.yaml.gz</span>
+
+<span class="sd">                or by using the serializer:</span>
 
 <span class="sd">                .. code-block:: python</span>
 
-<span class="sd">                    from langchain_tests.conftest import YamlGzipSerializer</span>
+<span class="sd">                    from langchain_tests.conftest import CustomPersister, CustomSerializer</span>
 
-<span class="sd">                    with open("/path/to/tests/cassettes/TestClass_test.yaml.gz", "r") as f:</span>
-<span class="sd">                        data = f.read()</span>
-
-<span class="sd">                    YamlGzipSerializer.deserialize(data)</span>
+<span class="sd">                    cassette_path = "/path/to/tests/cassettes/TestClass_test.yaml.gz"</span>
+<span class="sd">                    requests, responses = CustomPersister().load_cassette(path, CustomSerializer())</span>
 
 <span class="sd">        3. Run tests to generate VCR cassettes.</span>
 

@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="May 31, 2025" name="docbuild:last-update"/>
+<meta content="Jun 01, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -714,7 +714,7 @@ example below:</p>
 <div class="literal-block-wrapper docutils container" id="id4">
 <div class="code-block-caption"><span class="caption-text">tests/conftest.py</span><a class="headerlink" href="#id4" title="Link to this code">#</a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_tests.conftest</span><span class="w"> </span><span class="kn">import</span> <span class="n">YamlGzipSerializer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_tests.conftest</span><span class="w"> </span><span class="kn">import</span> <span class="n">CustomPersister</span><span class="p">,</span> <span class="n">CustomSerializer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_tests.conftest</span><span class="w"> </span><span class="kn">import</span> <span class="n">_base_vcr_config</span> <span class="k">as</span> <span class="n">_base_vcr_config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">vcr</span><span class="w"> </span><span class="kn">import</span> <span class="n">VCR</span>
 
@@ -743,23 +743,22 @@ example below:</p>
     <span class="k">return</span> <span class="n">config</span>
 
 
-<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">vcr</span><span class="p">(</span><span class="n">vcr_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VCR</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Override the default vcr fixture to include custom serializers"""</span>
-    <span class="n">my_vcr</span> <span class="o">=</span> <span class="n">VCR</span><span class="p">(</span><span class="o">**</span><span class="n">vcr_config</span><span class="p">)</span>
-    <span class="n">my_vcr</span><span class="o">.</span><span class="n">register_serializer</span><span class="p">(</span><span class="s2">"yaml.gz"</span><span class="p">,</span> <span class="n">YamlGzipSerializer</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">my_vcr</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">pytest_recording_configure</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">vcr</span><span class="p">:</span> <span class="n">VCR</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">vcr</span><span class="o">.</span><span class="n">register_persister</span><span class="p">(</span><span class="n">CustomPersister</span><span class="p">())</span>
+    <span class="n">vcr</span><span class="o">.</span><span class="n">register_serializer</span><span class="p">(</span><span class="s2">"yaml.gz"</span><span class="p">,</span> <span class="n">CustomSerializer</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
 <p class="sd-card-text">You can inspect the contents of the compressed cassettes (e.g., to
-ensure no sensitive information is recorded) using the serializer:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_tests.conftest</span><span class="w"> </span><span class="kn">import</span> <span class="n">YamlGzipSerializer</span>
+ensure no sensitive information is recorded) using</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>gunzip<span class="w"> </span>-k<span class="w"> </span>/path/to/tests/cassettes/TestClass_test.yaml.gz
+</pre></div>
+</div>
+<p class="sd-card-text">or by using the serializer:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_tests.conftest</span><span class="w"> </span><span class="kn">import</span> <span class="n">CustomPersister</span><span class="p">,</span> <span class="n">CustomSerializer</span>
 
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">"/path/to/tests/cassettes/TestClass_test.yaml.gz"</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-
-<span class="n">YamlGzipSerializer</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="n">cassette_path</span> <span class="o">=</span> <span class="s2">"/path/to/tests/cassettes/TestClass_test.yaml.gz"</span>
+<span class="n">requests</span><span class="p">,</span> <span class="n">responses</span> <span class="o">=</span> <span class="n">CustomPersister</span><span class="p">()</span><span class="o">.</span><span class="n">load_cassette</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">CustomSerializer</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -1757,7 +1756,7 @@ objects like so:</p>
 <dl>
 <dd><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../core/language_models/langchain_core.language_models.chat_models.BaseChatModel.html#langchain_core.language_models.chat_models.BaseChatModel" title="langchain_core.language_models.chat_models.BaseChatModel"><span class="pre">BaseChatModel</span></a></span></em>,</dd>
 <dd><em class="sig-param"><span class="n"><span class="pre">benchmark</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BenchmarkFixture</span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">vcr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">VCR</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">vcr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Cassette</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_tests/integration_tests/chat_models.html#ChatModelIntegrationTests.test_stream_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_stream_time" title="Link to this definition">#</a></dt>
 <dd><p>Test that streaming does not introduce undue overhead.</p>
@@ -1786,7 +1785,7 @@ information is recorded in cassettes.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="../../core/language_models/langchain_core.language_models.chat_models.BaseChatModel.html#langchain_core.language_models.chat_models.BaseChatModel" title="langchain_core.language_models.chat_models.BaseChatModel"><em>BaseChatModel</em></a>)</p></li>
 <li><p><strong>benchmark</strong> (<em>BenchmarkFixture</em>)</p></li>
-<li><p><strong>vcr</strong> (<em>VCR</em>)</p></li>
+<li><p><strong>vcr</strong> (<em>Cassette</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
