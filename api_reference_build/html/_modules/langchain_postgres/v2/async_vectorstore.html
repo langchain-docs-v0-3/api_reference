@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 02, 2025" name="docbuild:last-update"/>
+<meta content="Jun 03, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -236,6 +236,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.ext.asyncio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncEngine</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">PGEngine</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.hybrid_search_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">HybridSearchConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.indexes</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DEFAULT_DISTANCE_STRATEGY</span><span class="p">,</span>
     <span class="n">DEFAULT_INDEX_NAME_SUFFIX</span><span class="p">,</span>
@@ -303,6 +304,7 @@
         <span class="n">fetch_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">lambda_mult</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
         <span class="n">index_query_options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">QueryOptions</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">hybrid_search_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HybridSearchConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""AsyncPGVectorStore constructor.</span>
 <span class="sd">        Args:</span>
@@ -321,6 +323,7 @@
 <span class="sd">            fetch_k (int): Number of Documents to fetch to pass to MMR algorithm.</span>
 <span class="sd">            lambda_mult (float): Number between 0 and 1 that determines the degree of diversity among the results with 0 corresponding to maximum diversity and 1 to minimum diversity. Defaults to 0.5.</span>
 <span class="sd">            index_query_options (QueryOptions): Index query option.</span>
+<span class="sd">            hybrid_search_config (HybridSearchConfig): Hybrid search configuration. Defaults to None.</span>
 
 
 <span class="sd">        Raises:</span>
@@ -344,7 +347,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">=</span> <span class="n">k</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fetch_k</span> <span class="o">=</span> <span class="n">fetch_k</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">lambda_mult</span> <span class="o">=</span> <span class="n">lambda_mult</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">index_query_options</span> <span class="o">=</span> <span class="n">index_query_options</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_query_options</span> <span class="o">=</span> <span class="n">index_query_options</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span> <span class="o">=</span> <span class="n">hybrid_search_config</span></div>
 
 
 <div class="viewcode-block" id="AsyncPGVectorStore.create">
@@ -368,6 +372,7 @@
         <span class="n">fetch_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">lambda_mult</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
         <span class="n">index_query_options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">QueryOptions</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">hybrid_search_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HybridSearchConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncPGVectorStore</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Create an AsyncPGVectorStore instance.</span>
 
@@ -387,6 +392,7 @@
 <span class="sd">            fetch_k (int): Number of Documents to fetch to pass to MMR algorithm.</span>
 <span class="sd">            lambda_mult (float): Number between 0 and 1 that determines the degree of diversity among the results with 0 corresponding to maximum diversity and 1 to minimum diversity. Defaults to 0.5.</span>
 <span class="sd">            index_query_options (QueryOptions): Index query option.</span>
+<span class="sd">            hybrid_search_config (HybridSearchConfig): Hybrid search configuration. Defaults to None.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            AsyncPGVectorStore</span>
@@ -422,6 +428,15 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Content column, </span><span class="si">{</span><span class="n">content_column</span><span class="si">}</span><span class="s2">, is type, </span><span class="si">{</span><span class="n">content_type</span><span class="si">}</span><span class="s2">. It must be a type of character string."</span>
             <span class="p">)</span>
+        <span class="k">if</span> <span class="n">hybrid_search_config</span><span class="p">:</span>
+            <span class="n">tsv_column_name</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_column</span>
+                <span class="k">if</span> <span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_column</span>
+                <span class="k">else</span> <span class="n">content_column</span> <span class="o">+</span> <span class="s2">"_tsv"</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">tsv_column_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">columns</span> <span class="ow">or</span> <span class="n">columns</span><span class="p">[</span><span class="n">tsv_column_name</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"tsvector"</span><span class="p">:</span>
+                <span class="c1"># mark tsv_column as empty because there is no TSV column in table</span>
+                <span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_column</span> <span class="o">=</span> <span class="s2">""</span>
         <span class="k">if</span> <span class="n">embedding_column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Embedding column, </span><span class="si">{</span><span class="n">embedding_column</span><span class="si">}</span><span class="s2">, does not exist."</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">columns</span><span class="p">[</span><span class="n">embedding_column</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"USER-DEFINED"</span><span class="p">:</span>
@@ -465,6 +480,7 @@
             <span class="n">fetch_k</span><span class="o">=</span><span class="n">fetch_k</span><span class="p">,</span>
             <span class="n">lambda_mult</span><span class="o">=</span><span class="n">lambda_mult</span><span class="p">,</span>
             <span class="n">index_query_options</span><span class="o">=</span><span class="n">index_query_options</span><span class="p">,</span>
+            <span class="n">hybrid_search_config</span><span class="o">=</span><span class="n">hybrid_search_config</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
@@ -505,7 +521,12 @@
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata_columns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
                 <span class="k">else</span> <span class="s2">""</span>
             <span class="p">)</span>
-            <span class="n">insert_stmt</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'INSERT INTO "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">schema_name</span><span class="si">}</span><span class="s1">"."</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s1">"("</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id_column</span><span class="si">}</span><span class="s1">", "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">content_column</span><span class="si">}</span><span class="s1">", "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_column</span><span class="si">}</span><span class="s1">"</span><span class="si">{</span><span class="n">metadata_col_names</span><span class="si">}</span><span class="s1">'</span>
+            <span class="n">hybrid_search_column</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s1">', "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_column</span><span class="si">}</span><span class="s1">"'</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_column</span>
+                <span class="k">else</span> <span class="s2">""</span>
+            <span class="p">)</span>
+            <span class="n">insert_stmt</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'INSERT INTO "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">schema_name</span><span class="si">}</span><span class="s1">"."</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s1">"("</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id_column</span><span class="si">}</span><span class="s1">", "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">content_column</span><span class="si">}</span><span class="s1">", "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_column</span><span class="si">}</span><span class="s1">"</span><span class="si">{</span><span class="n">hybrid_search_column</span><span class="si">}{</span><span class="n">metadata_col_names</span><span class="si">}</span><span class="s1">'</span>
             <span class="n">values</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">"id"</span><span class="p">:</span> <span class="nb">id</span><span class="p">,</span>
                 <span class="s2">"content"</span><span class="p">:</span> <span class="n">content</span><span class="p">,</span>
@@ -516,6 +537,14 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">embedding</span> <span class="ow">and</span> <span class="n">can_inline_embed</span><span class="p">:</span>
                 <span class="n">values_stmt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"VALUES (:id, :content, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_service</span><span class="o">.</span><span class="n">embed_query_inline</span><span class="p">(</span><span class="n">content</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>  <span class="c1"># type: ignore</span>
 
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_column</span><span class="p">:</span>
+                <span class="n">lang</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_lang</span><span class="si">}</span><span class="s2">',"</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_lang</span>
+                    <span class="k">else</span> <span class="s2">""</span>
+                <span class="p">)</span>
+                <span class="n">values_stmt</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">", to_tsvector(</span><span class="si">{</span><span class="n">lang</span><span class="si">}</span><span class="s2"> :tsv_content)"</span>
+                <span class="n">values</span><span class="p">[</span><span class="s2">"tsv_content"</span><span class="p">]</span> <span class="o">=</span> <span class="n">content</span>
             <span class="c1"># Add metadata</span>
             <span class="n">extra</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">metadata_column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata_columns</span><span class="p">:</span>
@@ -539,6 +568,9 @@
                 <span class="n">values_stmt</span> <span class="o">+=</span> <span class="s2">")"</span>
 
             <span class="n">upsert_stmt</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">' ON CONFLICT ("</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id_column</span><span class="si">}</span><span class="s1">") DO UPDATE SET "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">content_column</span><span class="si">}</span><span class="s1">" = EXCLUDED."</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">content_column</span><span class="si">}</span><span class="s1">", "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_column</span><span class="si">}</span><span class="s1">" = EXCLUDED."</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_column</span><span class="si">}</span><span class="s1">"'</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_column</span><span class="p">:</span>
+                <span class="n">upsert_stmt</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">', "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_column</span><span class="si">}</span><span class="s1">" = EXCLUDED."</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_column</span><span class="si">}</span><span class="s1">"'</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata_json_column</span><span class="p">:</span>
                 <span class="n">upsert_stmt</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">', "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata_json_column</span><span class="si">}</span><span class="s1">" = EXCLUDED."</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata_json_column</span><span class="si">}</span><span class="s1">"'</span>
@@ -652,6 +684,7 @@
         <span class="n">fetch_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">lambda_mult</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
         <span class="n">index_query_options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">QueryOptions</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">hybrid_search_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HybridSearchConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncPGVectorStore</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Create an AsyncPGVectorStore instance from texts.</span>
@@ -697,6 +730,7 @@
             <span class="n">fetch_k</span><span class="o">=</span><span class="n">fetch_k</span><span class="p">,</span>
             <span class="n">lambda_mult</span><span class="o">=</span><span class="n">lambda_mult</span><span class="p">,</span>
             <span class="n">index_query_options</span><span class="o">=</span><span class="n">index_query_options</span><span class="p">,</span>
+            <span class="n">hybrid_search_config</span><span class="o">=</span><span class="n">hybrid_search_config</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">await</span> <span class="n">vs</span><span class="o">.</span><span class="n">aadd_texts</span><span class="p">(</span><span class="n">texts</span><span class="p">,</span> <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">vs</span></div>
@@ -725,6 +759,7 @@
         <span class="n">fetch_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">lambda_mult</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
         <span class="n">index_query_options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">QueryOptions</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">hybrid_search_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HybridSearchConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncPGVectorStore</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Create an AsyncPGVectorStore instance from documents.</span>
@@ -771,6 +806,7 @@
             <span class="n">fetch_k</span><span class="o">=</span><span class="n">fetch_k</span><span class="p">,</span>
             <span class="n">lambda_mult</span><span class="o">=</span><span class="n">lambda_mult</span><span class="p">,</span>
             <span class="n">index_query_options</span><span class="o">=</span><span class="n">index_query_options</span><span class="p">,</span>
+            <span class="n">hybrid_search_config</span><span class="o">=</span><span class="n">hybrid_search_config</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">page_content</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
         <span class="n">metadatas</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
@@ -786,16 +822,30 @@
         <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">RowMapping</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Perform similarity search query on database."""</span>
-        <span class="n">k</span> <span class="o">=</span> <span class="n">k</span> <span class="k">if</span> <span class="n">k</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Perform similarity search (or hybrid search) query on database.</span>
+<span class="sd">        Queries might be slow if the hybrid search column does not exist.</span>
+<span class="sd">        For best hybrid search performance, consider creating a TSV column</span>
+<span class="sd">        and adding GIN index.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">max</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">primary_top_k</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">secondary_top_k</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span>
+                <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span>
+            <span class="p">)</span>
         <span class="n">operator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_strategy</span><span class="o">.</span><span class="n">operator</span>
         <span class="n">search_function</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_strategy</span><span class="o">.</span><span class="n">search_function</span>
 
-        <span class="n">columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata_columns</span> <span class="o">+</span> <span class="p">[</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">id_column</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">content_column</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">embedding_column</span><span class="p">,</span>
-        <span class="p">]</span>
+        <span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata_columns</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata_json_column</span><span class="p">:</span>
             <span class="n">columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata_json_column</span><span class="p">)</span>
 
@@ -805,7 +855,7 @@
         <span class="n">filter_dict</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="nb">filter</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">filter</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="n">safe_filter</span><span class="p">,</span> <span class="n">filter_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_filter_clause</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
-        <span class="n">param_filter</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"WHERE </span><span class="si">{</span><span class="n">safe_filter</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">safe_filter</span> <span class="k">else</span> <span class="s2">""</span>
+
         <span class="n">inline_embed_func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_service</span><span class="p">,</span> <span class="s2">"embed_query_inline"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">embedding</span> <span class="ow">and</span> <span class="nb">callable</span><span class="p">(</span><span class="n">inline_embed_func</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"query"</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="n">query_embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_service</span><span class="o">.</span><span class="n">embed_query_inline</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">"query"</span><span class="p">])</span>  <span class="c1"># type: ignore</span>
@@ -813,8 +863,9 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">query_embedding</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">dimension</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">dimension</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">embedding</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
             <span class="n">embedding_data_string</span> <span class="o">=</span> <span class="s2">":query_embedding"</span>
-        <span class="n">stmt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""SELECT </span><span class="si">{</span><span class="n">column_names</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">search_function</span><span class="si">}</span><span class="s2">("</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_column</span><span class="si">}</span><span class="s2">", </span><span class="si">{</span><span class="n">embedding_data_string</span><span class="si">}</span><span class="s2">) as distance</span>
-<span class="s2">        FROM "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">schema_name</span><span class="si">}</span><span class="s2">"."</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s2">" </span><span class="si">{</span><span class="n">param_filter</span><span class="si">}</span><span class="s2"> ORDER BY "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_column</span><span class="si">}</span><span class="s2">" </span><span class="si">{</span><span class="n">operator</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">embedding_data_string</span><span class="si">}</span><span class="s2"> LIMIT :k;</span>
+        <span class="n">where_filters</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"WHERE </span><span class="si">{</span><span class="n">safe_filter</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">safe_filter</span> <span class="k">else</span> <span class="s2">""</span>
+        <span class="n">dense_query_stmt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""SELECT </span><span class="si">{</span><span class="n">column_names</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">search_function</span><span class="si">}</span><span class="s2">("</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_column</span><span class="si">}</span><span class="s2">", </span><span class="si">{</span><span class="n">embedding_data_string</span><span class="si">}</span><span class="s2">) as distance</span>
+<span class="s2">        FROM "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">schema_name</span><span class="si">}</span><span class="s2">"."</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s2">" </span><span class="si">{</span><span class="n">where_filters</span><span class="si">}</span><span class="s2"> ORDER BY "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_column</span><span class="si">}</span><span class="s2">" </span><span class="si">{</span><span class="n">operator</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">embedding_data_string</span><span class="si">}</span><span class="s2"> LIMIT :k;</span>
 <span class="s2">        """</span>
         <span class="n">param_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"query_embedding"</span><span class="p">:</span> <span class="n">query_embedding</span><span class="p">,</span> <span class="s2">"k"</span><span class="p">:</span> <span class="n">k</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">filter_dict</span><span class="p">:</span>
@@ -825,15 +876,51 @@
                 <span class="k">for</span> <span class="n">query_option</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index_query_options</span><span class="o">.</span><span class="n">to_parameter</span><span class="p">():</span>
                     <span class="n">query_options_stmt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"SET LOCAL </span><span class="si">{</span><span class="n">query_option</span><span class="si">}</span><span class="s2">;"</span>
                     <span class="k">await</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="n">query_options_stmt</span><span class="p">))</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="n">stmt</span><span class="p">),</span> <span class="n">param_dict</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="n">dense_query_stmt</span><span class="p">),</span> <span class="n">param_dict</span><span class="p">)</span>
                 <span class="n">result_map</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">mappings</span><span class="p">()</span>
-                <span class="n">results</span> <span class="o">=</span> <span class="n">result_map</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+                <span class="n">dense_results</span> <span class="o">=</span> <span class="n">result_map</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="n">stmt</span><span class="p">),</span> <span class="n">param_dict</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="n">dense_query_stmt</span><span class="p">),</span> <span class="n">param_dict</span><span class="p">)</span>
                 <span class="n">result_map</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">mappings</span><span class="p">()</span>
-                <span class="n">results</span> <span class="o">=</span> <span class="n">result_map</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">results</span>
+                <span class="n">dense_results</span> <span class="o">=</span> <span class="n">result_map</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+
+        <span class="n">hybrid_search_config</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">"hybrid_search_config"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span>
+        <span class="p">)</span>
+        <span class="n">fts_query</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">fts_query</span>
+            <span class="k">if</span> <span class="n">hybrid_search_config</span> <span class="ow">and</span> <span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">fts_query</span>
+            <span class="k">else</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fts_query"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">hybrid_search_config</span> <span class="ow">and</span> <span class="n">fts_query</span><span class="p">:</span>
+            <span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">fusion_function_parameters</span><span class="p">[</span><span class="s2">"fetch_top_k"</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span>
+            <span class="c1"># do the sparse query</span>
+            <span class="n">lang</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_lang</span><span class="si">}</span><span class="s2">',"</span>
+                <span class="k">if</span> <span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_lang</span>
+                <span class="k">else</span> <span class="s2">""</span>
+            <span class="p">)</span>
+            <span class="n">query_tsv</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"plainto_tsquery(</span><span class="si">{</span><span class="n">lang</span><span class="si">}</span><span class="s2"> :fts_query)"</span>
+            <span class="n">param_dict</span><span class="p">[</span><span class="s2">"fts_query"</span><span class="p">]</span> <span class="o">=</span> <span class="n">fts_query</span>
+            <span class="k">if</span> <span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_column</span><span class="p">:</span>
+                <span class="n">content_tsv</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'"</span><span class="si">{</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_column</span><span class="si">}</span><span class="s1">"'</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">content_tsv</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'to_tsvector(</span><span class="si">{</span><span class="n">lang</span><span class="si">}</span><span class="s1"> "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">content_column</span><span class="si">}</span><span class="s1">")'</span>
+            <span class="n">and_filters</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"AND (</span><span class="si">{</span><span class="n">safe_filter</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">safe_filter</span> <span class="k">else</span> <span class="s2">""</span>
+            <span class="n">sparse_query_stmt</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'SELECT </span><span class="si">{</span><span class="n">column_names</span><span class="si">}</span><span class="s1">, ts_rank_cd(</span><span class="si">{</span><span class="n">content_tsv</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="n">query_tsv</span><span class="si">}</span><span class="s1">) as distance FROM "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">schema_name</span><span class="si">}</span><span class="s1">"."</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s1">" WHERE </span><span class="si">{</span><span class="n">content_tsv</span><span class="si">}</span><span class="s1"> @@ </span><span class="si">{</span><span class="n">query_tsv</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">and_filters</span><span class="si">}</span><span class="s1">  ORDER BY distance desc LIMIT </span><span class="si">{</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">secondary_top_k</span><span class="si">}</span><span class="s1">;'</span>
+            <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="n">sparse_query_stmt</span><span class="p">),</span> <span class="n">param_dict</span><span class="p">)</span>
+                <span class="n">result_map</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">mappings</span><span class="p">()</span>
+                <span class="n">sparse_results</span> <span class="o">=</span> <span class="n">result_map</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+
+            <span class="n">combined_results</span> <span class="o">=</span> <span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">fusion_function</span><span class="p">(</span>
+                <span class="n">dense_results</span><span class="p">,</span>
+                <span class="n">sparse_results</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">fusion_function_parameters</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">combined_results</span>
+        <span class="k">return</span> <span class="n">dense_results</span>
 
 <div class="viewcode-block" id="AsyncPGVectorStore.asimilarity_search">
 <a class="viewcode-back" href="../../../postgres/v2/langchain_postgres.v2.async_vectorstore.AsyncPGVectorStore.html#langchain_postgres.v2.async_vectorstore.AsyncPGVectorStore.asimilarity_search">[docs]</a>
@@ -852,6 +939,14 @@
             <span class="k">else</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_service</span><span class="o">.</span><span class="n">aembed_query</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">"query"</span><span class="p">]</span> <span class="o">=</span> <span class="n">query</span>
+
+        <span class="c1"># add fts_query to hybrid_search_config</span>
+        <span class="n">hybrid_search_config</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">"hybrid_search_config"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">hybrid_search_config</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">fts_query</span><span class="p">:</span>
+            <span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">fts_query</span> <span class="o">=</span> <span class="n">query</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"hybrid_search_config"</span><span class="p">]</span> <span class="o">=</span> <span class="n">hybrid_search_config</span>
 
         <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">asimilarity_search_by_vector</span><span class="p">(</span>
             <span class="n">embedding</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
@@ -886,6 +981,14 @@
             <span class="k">else</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_service</span><span class="o">.</span><span class="n">aembed_query</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">"query"</span><span class="p">]</span> <span class="o">=</span> <span class="n">query</span>
+
+        <span class="c1"># add fts_query to hybrid_search_config</span>
+        <span class="n">hybrid_search_config</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">"hybrid_search_config"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">hybrid_search_config</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">fts_query</span><span class="p">:</span>
+            <span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">fts_query</span> <span class="o">=</span> <span class="n">query</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"hybrid_search_config"</span><span class="p">]</span> <span class="o">=</span> <span class="n">hybrid_search_config</span>
 
         <span class="n">docs</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">asimilarity_search_with_score_by_vector</span><span class="p">(</span>
             <span class="n">embedding</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
@@ -1047,6 +1150,44 @@
         <span class="k">return</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">documents_with_scores</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">mmr_selected</span><span class="p">]</span></div>
 
 
+<div class="viewcode-block" id="AsyncPGVectorStore.aapply_hybrid_search_index">
+<a class="viewcode-back" href="../../../postgres/v2/langchain_postgres.v2.async_vectorstore.AsyncPGVectorStore.html#langchain_postgres.v2.async_vectorstore.AsyncPGVectorStore.aapply_hybrid_search_index">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">aapply_hybrid_search_index</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">concurrently</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Creates a TSV index in the vector store table if possible."""</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span>
+            <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">index_type</span>
+            <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">index_name</span>
+        <span class="p">):</span>
+            <span class="c1"># no index needs to be created</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Hybrid Search Config cannot create index."</span><span class="p">)</span>
+
+        <span class="n">lang</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_lang</span><span class="si">}</span><span class="s2">',"</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_lang</span>
+            <span class="k">else</span> <span class="s2">""</span>
+        <span class="p">)</span>
+        <span class="n">tsv_column_name</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_column</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">tsv_column</span>
+            <span class="k">else</span> <span class="sa">f</span><span class="s2">"to_tsvector(</span><span class="si">{</span><span class="n">lang</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">content_column</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+        <span class="n">tsv_index_query</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'CREATE INDEX </span><span class="si">{</span><span class="s2">"CONCURRENTLY"</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">concurrently</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s2">""</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">index_name</span><span class="si">}</span><span class="s1"> ON "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">schema_name</span><span class="si">}</span><span class="s1">"."</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s1">" USING </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search_config</span><span class="o">.</span><span class="n">index_type</span><span class="si">}</span><span class="s1">(</span><span class="si">{</span><span class="n">tsv_column_name</span><span class="si">}</span><span class="s1">);'</span>
+        <span class="k">if</span> <span class="n">concurrently</span><span class="p">:</span>
+            <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+                <span class="n">autocommit_conn</span> <span class="o">=</span> <span class="k">await</span> <span class="n">conn</span><span class="o">.</span><span class="n">execution_options</span><span class="p">(</span>
+                    <span class="n">isolation_level</span><span class="o">=</span><span class="s2">"AUTOCOMMIT"</span>
+                <span class="p">)</span>
+                <span class="k">await</span> <span class="n">autocommit_conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="n">tsv_index_query</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+                <span class="k">await</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="n">tsv_index_query</span><span class="p">))</span>
+                <span class="k">await</span> <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span></div>
+
+
 <div class="viewcode-block" id="AsyncPGVectorStore.aapply_vector_index">
 <a class="viewcode-back" href="../../../postgres/v2/langchain_postgres.v2.async_vectorstore.AsyncPGVectorStore.html#langchain_postgres.v2.async_vectorstore.AsyncPGVectorStore.aapply_vector_index">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">aapply_vector_index</span><span class="p">(</span>
@@ -1077,6 +1218,7 @@
                 <span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table_name</span> <span class="o">+</span> <span class="n">DEFAULT_INDEX_NAME_SUFFIX</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">name</span>
         <span class="n">stmt</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'CREATE INDEX </span><span class="si">{</span><span class="s2">"CONCURRENTLY"</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">concurrently</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s2">""</span><span class="si">}</span><span class="s1"> "</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">" ON "</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">schema_name</span><span class="si">}</span><span class="s1">"."</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s1">" USING </span><span class="si">{</span><span class="n">index</span><span class="o">.</span><span class="n">index_type</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_column</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">function</span><span class="si">}</span><span class="s1">) </span><span class="si">{</span><span class="n">params</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="nb">filter</span><span class="si">}</span><span class="s1">;'</span>
+
         <span class="k">if</span> <span class="n">concurrently</span><span class="p">:</span>
             <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
                 <span class="n">autocommit_conn</span> <span class="o">=</span> <span class="k">await</span> <span class="n">conn</span><span class="o">.</span><span class="n">execution_options</span><span class="p">(</span>

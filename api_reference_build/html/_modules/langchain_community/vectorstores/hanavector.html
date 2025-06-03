@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 02, 2025" name="docbuild:last-update"/>
+<meta content="Jun 03, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -237,7 +237,6 @@
     <span class="n">Optional</span><span class="p">,</span>
     <span class="n">Pattern</span><span class="p">,</span>
     <span class="n">Tuple</span><span class="p">,</span>
-    <span class="n">Type</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -246,6 +245,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">Embeddings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_in_executor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.vectorstores</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorStore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.vectorstores.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DistanceStrategy</span><span class="p">,</span>
@@ -393,7 +393,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_check_column</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span> <span class="n">column_name</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_table_exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>  <span class="c1"># type: ignore[no-untyped-def]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_table_exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="n">sql_str</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">"SELECT COUNT(*) FROM SYS.TABLES WHERE SCHEMA_NAME = CURRENT_SCHEMA"</span>
             <span class="s2">" AND TABLE_NAME = ?"</span>
@@ -409,9 +409,13 @@
             <span class="n">cur</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="k">return</span> <span class="kc">False</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_check_column</span><span class="p">(</span>  <span class="c1"># type: ignore[no-untyped-def]</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">column_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">column_length</span><span class="o">=</span><span class="kc">None</span>
-    <span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_column</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">column_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">column_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">column_length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">sql_str</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">"SELECT DATA_TYPE_NAME, LENGTH FROM SYS.TABLE_COLUMNS WHERE "</span>
             <span class="s2">"SCHEMA_NAME = CURRENT_SCHEMA "</span>
@@ -658,8 +662,8 @@
 <div class="viewcode-block" id="HanaDB.from_texts">
 <a class="viewcode-back" href="../../../community/vectorstores/langchain_community.vectorstores.hanavector.HanaDB.html#langchain_community.vectorstores.hanavector.HanaDB.from_texts">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_texts</span><span class="p">(</span>  <span class="c1"># type: ignore[no-untyped-def, override]</span>
-        <span class="bp">cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">HanaDB</span><span class="p">],</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_texts</span><span class="p">(</span>  <span class="c1"># type: ignore[override]</span>
+        <span class="bp">cls</span><span class="p">,</span>
         <span class="n">texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">embedding</span><span class="p">:</span> <span class="n">Embeddings</span><span class="p">,</span>
         <span class="n">metadatas</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -672,7 +676,7 @@
         <span class="n">vector_column_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">default_vector_column_length</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">specific_metadata_columns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">):</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Create a HanaDB instance from raw documents.</span>
 <span class="sd">        This is a user-friendly interface that:</span>
 <span class="sd">            1. Embeds documents.</span>
@@ -773,12 +777,12 @@
         <span class="p">)</span>
         <span class="n">order_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">" order by CS </span><span class="si">{</span><span class="n">HANA_DISTANCE_FUNCTION</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">distance_strategy</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
         <span class="n">where_str</span><span class="p">,</span> <span class="n">query_tuple</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_where_by_filter</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
-        <span class="n">query_tuple</span> <span class="o">=</span> <span class="p">(</span><span class="n">embedding_as_str</span><span class="p">,)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">query_tuple</span><span class="p">)</span>
+        <span class="n">query_params</span> <span class="o">=</span> <span class="p">(</span><span class="n">embedding_as_str</span><span class="p">,)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">query_tuple</span><span class="p">)</span>
         <span class="n">sql_str</span> <span class="o">=</span> <span class="n">sql_str</span> <span class="o">+</span> <span class="n">where_str</span>
         <span class="n">sql_str</span> <span class="o">=</span> <span class="n">sql_str</span> <span class="o">+</span> <span class="n">order_str</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
-            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql_str</span><span class="p">,</span> <span class="n">query_tuple</span><span class="p">)</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql_str</span><span class="p">,</span> <span class="n">query_params</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">cur</span><span class="o">.</span><span class="n">has_result_set</span><span class="p">():</span>
                 <span class="n">rows</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
@@ -835,15 +839,15 @@
         <span class="k">return</span> <span class="p">[</span><span class="n">doc</span> <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">docs_and_scores</span><span class="p">]</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_create_where_by_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">filter</span><span class="p">):</span>  <span class="c1"># type: ignore[no-untyped-def]</span>
-        <span class="n">query_tuple</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_where_by_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]:</span>
+        <span class="n">query_tuple</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">where_str</span> <span class="o">=</span> <span class="s2">""</span>
         <span class="k">if</span> <span class="nb">filter</span><span class="p">:</span>
             <span class="n">where_str</span><span class="p">,</span> <span class="n">query_tuple</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_filter_object</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
             <span class="n">where_str</span> <span class="o">=</span> <span class="s2">" WHERE "</span> <span class="o">+</span> <span class="n">where_str</span>
         <span class="k">return</span> <span class="n">where_str</span><span class="p">,</span> <span class="n">query_tuple</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_process_filter_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">filter</span><span class="p">):</span>  <span class="c1"># type: ignore[no-untyped-def]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_filter_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]:</span>
         <span class="n">query_tuple</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">where_str</span> <span class="o">=</span> <span class="s2">""</span>
         <span class="k">if</span> <span class="nb">filter</span><span class="p">:</span>

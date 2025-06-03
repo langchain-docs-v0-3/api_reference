@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 02, 2025" name="docbuild:last-update"/>
+<meta content="Jun 03, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -319,10 +319,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">graph</span> <span class="o">=</span> <span class="n">rdflib</span><span class="o">.</span><span class="n">Graph</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">identifier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bind_namespaces</span><span class="o">=</span><span class="s2">"none"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_connectivity</span><span class="p">()</span>
 
+        <span class="n">ontology_schema_graph</span><span class="p">:</span> <span class="s2">"rdflib.Graph"</span>
         <span class="k">if</span> <span class="n">local_file</span><span class="p">:</span>
             <span class="n">ontology_schema_graph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_ontology_schema_from_file</span><span class="p">(</span>
                 <span class="n">local_file</span><span class="p">,</span>
-                <span class="n">local_file_format</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
+                <span class="n">local_file_format</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_user_query</span><span class="p">(</span><span class="n">query_ontology</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
@@ -367,7 +368,9 @@
             <span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_load_ontology_schema_from_file</span><span class="p">(</span><span class="n">local_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">local_file_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>  <span class="c1"># type: ignore[no-untyped-def, assignment]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_ontology_schema_from_file</span><span class="p">(</span>
+        <span class="n">local_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">local_file_format</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"rdflib.ConjunctiveGraph"</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Parse the ontology schema statements from the provided file</span>
 <span class="sd">        """</span>
@@ -404,7 +407,7 @@
                 <span class="s2">"Invalid query type. Only CONSTRUCT queries are supported."</span>
             <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_load_ontology_schema_with_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>  <span class="c1"># type: ignore[no-untyped-def]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_ontology_schema_with_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"rdflib.Graph"</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Execute the query for collecting the ontology schema statements</span>
 <span class="sd">        """</span>
@@ -414,6 +417,9 @@
             <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">ParserError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Generated SPARQL statement is invalid</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">results</span><span class="o">.</span><span class="n">graph</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Missing graph in results."</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">results</span><span class="o">.</span><span class="n">graph</span>
 
