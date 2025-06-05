@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 04, 2025" name="docbuild:last-update"/>
+<meta content="Jun 05, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -372,7 +372,8 @@
 <span class="sd">                # search_depth="basic",</span>
 <span class="sd">                # time_range="day",</span>
 <span class="sd">                # include_domains=None,</span>
-<span class="sd">                # exclude_domains=None</span>
+<span class="sd">                # exclude_domains=None,</span>
+<span class="sd">                # country=None</span>
 <span class="sd">            )</span>
 
 <span class="sd">    Invoke directly with args:</span>
@@ -452,8 +453,9 @@
 <span class="sd">    </span>
 <span class="sd">    Default is False.</span>
 <span class="sd">    """</span>
-    <span class="n">include_raw_content</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
-<span class="w">    </span><span class="sd">"""Include cleaned and parsed HTML of each site search results. </span>
+    <span class="n">include_raw_content</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"markdown"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">"""Include an LLM-generated answer to the provided query. basic or true returns a </span>
+<span class="sd">    quick answer. advanced returns a more detailed answer.</span>
 <span class="sd">    </span>
 <span class="sd">    Default is False.</span>
 <span class="sd">    """</span>
@@ -461,6 +463,13 @@
 <span class="w">    </span><span class="sd">"""Include a descriptive text for each image in the search results.</span>
 <span class="sd">    </span>
 <span class="sd">    Default is False.</span>
+<span class="sd">    """</span>
+    <span class="n">country</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">"""Boost search results from a specific country. This will prioritize content from </span>
+<span class="sd">    the selected country in the search results. Available only if topic is general.</span>
+<span class="sd">    </span>
+<span class="sd">    To see the countries supported visit our docs https://docs.tavily.com/documentation/api-reference/endpoint/search</span>
+<span class="sd">    Default is None.</span>
 <span class="sd">    """</span>
     <span class="n">api_wrapper</span><span class="p">:</span> <span class="n">TavilySearchAPIWrapper</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">TavilySearchAPIWrapper</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
 
@@ -513,6 +522,7 @@
                 <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_images</span><span class="p">,</span>
                 <span class="n">time_range</span><span class="o">=</span><span class="n">time_range</span> <span class="k">if</span> <span class="n">time_range</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_range</span><span class="p">,</span>
                 <span class="n">topic</span><span class="o">=</span><span class="n">topic</span> <span class="k">if</span> <span class="n">topic</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">topic</span><span class="p">,</span>
+                <span class="n">country</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">country</span><span class="p">,</span>
                 <span class="n">max_results</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_results</span><span class="p">,</span>
                 <span class="n">include_answer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">include_answer</span><span class="p">,</span>
                 <span class="n">include_raw_content</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">include_raw_content</span><span class="p">,</span>
@@ -571,6 +581,7 @@
                 <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_images</span><span class="p">,</span>
                 <span class="n">time_range</span><span class="o">=</span><span class="n">time_range</span> <span class="k">if</span> <span class="n">time_range</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_range</span><span class="p">,</span>
                 <span class="n">topic</span><span class="o">=</span><span class="n">topic</span> <span class="k">if</span> <span class="n">topic</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">topic</span><span class="p">,</span>
+                <span class="n">country</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">country</span><span class="p">,</span>
                 <span class="n">max_results</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_results</span><span class="p">,</span>
                 <span class="n">include_answer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">include_answer</span><span class="p">,</span>
                 <span class="n">include_raw_content</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">include_raw_content</span><span class="p">,</span>

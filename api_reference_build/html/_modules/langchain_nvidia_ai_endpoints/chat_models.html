@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 04, 2025" name="docbuild:last-update"/>
+<meta content="Jun 05, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -488,7 +488,9 @@
         <span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Sampling temperature in [0, 1]"</span>
     <span class="p">)</span>
     <span class="n">max_tokens</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="mi">1024</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Maximum # of tokens to generate"</span>
+        <span class="mi">1024</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Maximum # of tokens to generate"</span><span class="p">,</span>
+        <span class="n">alias</span><span class="o">=</span><span class="s2">"max_completion_tokens"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">top_p</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Top-p for distribution sampling"</span><span class="p">)</span>
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"The seed for deterministic results"</span><span class="p">)</span>
@@ -511,6 +513,8 @@
 <span class="sd">                            Format for base URL is http://host:port</span>
 <span class="sd">            temperature (float): Sampling temperature in [0, 1].</span>
 <span class="sd">            max_tokens (int): Maximum number of tokens to generate.</span>
+<span class="sd">                              Deprecated, use max_completion_tokens instead</span>
+<span class="sd">            max_completion_tokens (int): Maximum number of tokens to generate.</span>
 <span class="sd">            top_p (float): Top-p for distribution sampling.</span>
 <span class="sd">            seed (int): A seed for deterministic results.</span>
 <span class="sd">            stop (list[str]): A list of cased stop words.</span>
@@ -527,6 +531,16 @@
 <span class="sd">                model="meta-llama3-8b-instruct"</span>
 <span class="sd">            )</span>
 <span class="sd">        """</span>
+        <span class="c1"># Show deprecation warning if max_tokens was used</span>
+        <span class="k">if</span> <span class="s2">"max_tokens"</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"The 'max_tokens' parameter is deprecated and will be removed "</span>
+                <span class="s2">"in a future version. "</span>
+                <span class="s2">"Please use 'max_completion_tokens' instead."</span><span class="p">,</span>
+                <span class="ne">DeprecationWarning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c1"># allow nvidia_base_url as an alternative for base_url</span>
         <span class="n">base_url</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"nvidia_base_url"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">)</span>
@@ -586,7 +600,11 @@
             <span class="n">ls_model_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">or</span> <span class="s2">"UNKNOWN"</span><span class="p">,</span>
             <span class="n">ls_model_type</span><span class="o">=</span><span class="s2">"chat"</span><span class="p">,</span>
             <span class="n">ls_temperature</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"temperature"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span><span class="p">),</span>
-            <span class="n">ls_max_tokens</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"max_tokens"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tokens</span><span class="p">),</span>
+            <span class="c1"># TODO: remove max_tokens once all models support max_completion_tokens</span>
+            <span class="n">ls_max_tokens</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"max_completion_tokens"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tokens</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"max_tokens"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tokens</span><span class="p">)</span>
+            <span class="p">),</span>
             <span class="c1"># mypy error: Extra keys ("ls_top_p", "ls_seed")</span>
             <span class="c1">#  for TypedDict "LangSmithParams"  [typeddict-item]</span>
             <span class="c1"># ls_top_p=params.get("top_p", self.top_p),</span>
@@ -1000,7 +1018,7 @@
 <span class="sd">        For Pydantic schema and Enum, the output will be None if the response is</span>
 <span class="sd">        insufficient to construct the object or otherwise invalid. For instance,</span>
 <span class="sd">        ```</span>
-<span class="sd">        llm = ChatNVIDIA(max_tokens=1)</span>
+<span class="sd">        llm = ChatNVIDIA(max_completion_tokens=1)</span>
 <span class="sd">        structured_llm = llm.with_structured_output(Joke)</span>
 <span class="sd">        print(structured_llm.invoke("Tell me a joke about NVIDIA"))</span>
 
