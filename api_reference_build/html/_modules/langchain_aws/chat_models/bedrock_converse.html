@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 05, 2025" name="docbuild:last-update"/>
+<meta content="Jun 06, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -713,7 +713,8 @@
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">additional_model_request_fields</span> <span class="ow">or</span> <span class="n">model_kwargs</span><span class="p">:</span>
             <span class="n">values</span><span class="p">[</span><span class="s2">"additional_model_request_fields"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="o">**</span><span class="n">model_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="n">additional_model_request_fields</span>
+                <span class="o">**</span><span class="n">model_kwargs</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">additional_model_request_fields</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="k">return</span> <span class="n">values</span>
 
@@ -758,7 +759,8 @@
             <span class="p">(</span>
                 <span class="n">provider</span> <span class="o">==</span> <span class="s2">"anthropic"</span>
                 <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span>
-                    <span class="n">x</span> <span class="ow">in</span> <span class="n">model_id_lower</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"claude-3"</span><span class="p">,</span> <span class="s2">"claude-sonnet-4"</span><span class="p">,</span> <span class="s2">"claude-opus-4"</span><span class="p">]</span>
+                    <span class="n">x</span> <span class="ow">in</span> <span class="n">model_id_lower</span>
+                    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"claude-3"</span><span class="p">,</span> <span class="s2">"claude-sonnet-4"</span><span class="p">,</span> <span class="s2">"claude-opus-4"</span><span class="p">]</span>
                 <span class="p">)</span>
             <span class="p">)</span>
             <span class="ow">or</span>
@@ -1188,14 +1190,26 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">curr</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="p">[]}</span>
 
-            <span class="n">curr</span><span class="p">[</span><span class="s2">"content"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">{</span>
-                    <span class="s2">"toolResult"</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="s2">"content"</span><span class="p">:</span> <span class="n">content</span><span class="p">,</span>
-                        <span class="s2">"toolUseId"</span><span class="p">:</span> <span class="n">msg</span><span class="o">.</span><span class="n">tool_call_id</span><span class="p">,</span>
-                        <span class="s2">"status"</span><span class="p">:</span> <span class="n">msg</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
-                    <span class="p">}</span>
-                <span class="p">}</span>
+            <span class="n">tool_result_content</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">special_blocks</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">_is_cache_point</span><span class="p">(</span><span class="n">block</span><span class="p">):</span>
+                    <span class="n">special_blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">tool_result_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+
+            <span class="n">curr</span><span class="p">[</span><span class="s2">"content"</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s2">"toolResult"</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">"content"</span><span class="p">:</span> <span class="n">tool_result_content</span><span class="p">,</span>
+                            <span class="s2">"toolUseId"</span><span class="p">:</span> <span class="n">msg</span><span class="o">.</span><span class="n">tool_call_id</span><span class="p">,</span>
+                            <span class="s2">"status"</span><span class="p">:</span> <span class="n">msg</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+                        <span class="p">}</span>
+                    <span class="p">},</span>
+                    <span class="o">*</span><span class="n">special_blocks</span><span class="p">,</span>
+                <span class="p">]</span>
             <span class="p">)</span>
             <span class="n">bedrock_messages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">curr</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
