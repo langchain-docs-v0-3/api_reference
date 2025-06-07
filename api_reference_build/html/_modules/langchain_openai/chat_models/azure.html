@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 06, 2025" name="docbuild:last-update"/>
+<meta content="Jun 07, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -1035,8 +1035,52 @@
 
 <span class="sd">                Note: ``strict`` can only be non-null if ``method`` is</span>
 <span class="sd">                ``"json_schema"`` or ``"function_calling"``.</span>
+<span class="sd">            tools:</span>
+<span class="sd">                A list of tool-like objects to bind to the chat model. Requires that:</span>
 
-<span class="sd">            kwargs: Additional keyword args aren't supported.</span>
+<span class="sd">                - ``method`` is ``"json_schema"`` (default).</span>
+<span class="sd">                - ``strict=True``</span>
+<span class="sd">                - ``include_raw=True``</span>
+
+<span class="sd">                If a model elects to call a</span>
+<span class="sd">                tool, the resulting ``AIMessage`` in ``"raw"`` will include tool calls.</span>
+
+<span class="sd">                .. dropdown:: Example</span>
+
+<span class="sd">                    .. code-block:: python</span>
+
+<span class="sd">                        from langchain.chat_models import init_chat_model</span>
+<span class="sd">                        from pydantic import BaseModel</span>
+
+
+<span class="sd">                        class ResponseSchema(BaseModel):</span>
+<span class="sd">                            response: str</span>
+
+
+<span class="sd">                        def get_weather(location: str) -&gt; str:</span>
+<span class="sd">                            \"\"\"Get weather at a location.\"\"\"</span>
+<span class="sd">                            pass</span>
+
+<span class="sd">                        llm = init_chat_model("openai:gpt-4o-mini")</span>
+
+<span class="sd">                        structured_llm = llm.with_structured_output(</span>
+<span class="sd">                            ResponseSchema,</span>
+<span class="sd">                            tools=[get_weather],</span>
+<span class="sd">                            strict=True,</span>
+<span class="sd">                            include_raw=True,</span>
+<span class="sd">                        )</span>
+
+<span class="sd">                        structured_llm.invoke("What's the weather in Boston?")</span>
+
+<span class="sd">                    .. code-block:: python</span>
+
+<span class="sd">                        {</span>
+<span class="sd">                            "raw": AIMessage(content="", tool_calls=[...], ...),</span>
+<span class="sd">                            "parsing_error": None,</span>
+<span class="sd">                            "parsed": None,</span>
+<span class="sd">                        }</span>
+
+<span class="sd">            kwargs: Additional keyword args are passed through to the model.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A Runnable that takes same inputs as a :class:`langchain_core.language_models.chat.BaseChatModel`.</span>
@@ -1061,6 +1105,12 @@
 <span class="sd">        .. versionchanged:: 0.3.0</span>
 
 <span class="sd">            ``method`` default changed from "function_calling" to "json_schema".</span>
+
+<span class="sd">        .. versionchanged:: 0.3.12</span>
+<span class="sd">            Support for ``tools`` added.</span>
+
+<span class="sd">        .. versionchanged:: 0.3.21</span>
+<span class="sd">            Pass ``kwargs`` through to the model.</span>
 
 <span class="sd">        .. dropdown:: Example: schema=Pydantic class, method="json_schema", include_raw=False, strict=True</span>
 

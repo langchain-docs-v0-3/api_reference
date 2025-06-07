@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 06, 2025" name="docbuild:last-update"/>
+<meta content="Jun 07, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -287,7 +287,7 @@
 </a>
 </li>
 <li class="breadcrumb-item"><a class="nav-link" href="../../reference.html">LangChain Python API Reference</a></li>
-<li class="breadcrumb-item"><a class="nav-link" href="../index.html">langchain-openai: 0.3.19</a></li>
+<li class="breadcrumb-item"><a class="nav-link" href="../index.html">langchain-openai: 0.3.21</a></li>
 <li class="breadcrumb-item"><a class="nav-link" href="../chat_models.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">chat_models</span></code></a></li>
 <li aria-current="page" class="breadcrumb-item active"><span class="ellipsis">AzureChatOpenAI</span></li>
 </ul>
@@ -2299,7 +2299,51 @@ enabled by default. Pass <code class="docutils literal notranslate"><span class=
 <p>Note: <code class="docutils literal notranslate"><span class="pre">strict</span></code> can only be non-null if <code class="docutils literal notranslate"><span class="pre">method</span></code> is
 <code class="docutils literal notranslate"><span class="pre">"json_schema"</span></code> or <code class="docutils literal notranslate"><span class="pre">"function_calling"</span></code>.</p>
 </p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – Additional keyword args aren’t supported.</p></li>
+<li><p><strong>tools</strong> – <p>A list of tool-like objects to bind to the chat model. Requires that:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">method</span></code> is <code class="docutils literal notranslate"><span class="pre">"json_schema"</span></code> (default).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">strict=True</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">include_raw=True</span></code></p></li>
+</ul>
+<p>If a model elects to call a
+tool, the resulting <code class="docutils literal notranslate"><span class="pre">AIMessage</span></code> in <code class="docutils literal notranslate"><span class="pre">"raw"</span></code> will include tool calls.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Example</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg aria-hidden="true" class="sd-octicon sd-octicon-chevron-right" height="1.5em" version="1.1" viewbox="0 0 24 24" width="1.5em"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain.chat_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_chat_model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ResponseSchema</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">response</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_weather</span><span class="p">(</span><span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Get weather at a location."""</span>
+    <span class="k">pass</span>
+
+<span class="n">llm</span> <span class="o">=</span> <span class="n">init_chat_model</span><span class="p">(</span><span class="s2">"openai:gpt-4o-mini"</span><span class="p">)</span>
+
+<span class="n">structured_llm</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">with_structured_output</span><span class="p">(</span>
+    <span class="n">ResponseSchema</span><span class="p">,</span>
+    <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">get_weather</span><span class="p">],</span>
+    <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">include_raw</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">structured_llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"What's the weather in Boston?"</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">"raw"</span><span class="p">:</span> <span class="n">AIMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">tool_calls</span><span class="o">=</span><span class="p">[</span><span class="o">...</span><span class="p">],</span> <span class="o">...</span><span class="p">),</span>
+    <span class="s2">"parsing_error"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="s2">"parsed"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</details></p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Additional keyword args are passed through to the model.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2330,6 +2374,12 @@ Support for <code class="docutils literal notranslate"><span class="pre">method=
 </div>
 <div class="versionchanged">
 <p><span class="versionmodified changed">Changed in version 0.3.0: </span><code class="docutils literal notranslate"><span class="pre">method</span></code> default changed from “function_calling” to “json_schema”.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 0.3.12: </span>Support for <code class="docutils literal notranslate"><span class="pre">tools</span></code> added.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 0.3.21: </span>Pass <code class="docutils literal notranslate"><span class="pre">kwargs</span></code> through to the model.</p>
 </div>
 <details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
 <summary class="sd-summary-title sd-card-header">
