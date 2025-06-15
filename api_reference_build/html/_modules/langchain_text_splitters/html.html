@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 14, 2025" name="docbuild:last-update"/>
+<meta content="Jun 15, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -232,10 +232,12 @@
     <span class="n">Dict</span><span class="p">,</span>
     <span class="n">Iterable</span><span class="p">,</span>
     <span class="n">List</span><span class="p">,</span>
+    <span class="n">Literal</span><span class="p">,</span>
     <span class="n">Optional</span><span class="p">,</span>
     <span class="n">Sequence</span><span class="p">,</span>
     <span class="n">Tuple</span><span class="p">,</span>
     <span class="n">TypedDict</span><span class="p">,</span>
+    <span class="n">Union</span><span class="p">,</span>
     <span class="n">cast</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -801,6 +803,8 @@
 <span class="sd">        preserve_parent_metadata (bool): Whether to pass through parent document</span>
 <span class="sd">            metadata to split documents when calling</span>
 <span class="sd">            ``transform_documents/atransform_documents()``.</span>
+<span class="sd">        keep_separator (Union[bool, Literal["start", "end"]]): Whether separators</span>
+<span class="sd">            should be at the beginning of a chunk, at the end, or not at all.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        .. code-block:: python</span>
@@ -852,6 +856,7 @@
         <span class="n">allowlist_tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">denylist_tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">preserve_parent_metadata</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">keep_separator</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"start"</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Initialize splitter."""</span>
         <span class="k">try</span><span class="p">:</span>
@@ -879,6 +884,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_external_metadata</span> <span class="o">=</span> <span class="n">external_metadata</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_allowlist_tags</span> <span class="o">=</span> <span class="n">allowlist_tags</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_preserve_parent_metadata</span> <span class="o">=</span> <span class="n">preserve_parent_metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_keep_separator</span> <span class="o">=</span> <span class="n">keep_separator</span>
         <span class="k">if</span> <span class="n">allowlist_tags</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_allowlist_tags</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
                 <span class="nb">set</span><span class="p">(</span><span class="n">allowlist_tags</span> <span class="o">+</span> <span class="p">[</span><span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">header</span> <span class="ow">in</span> <span class="n">headers_to_split_on</span><span class="p">])</span>
@@ -893,12 +899,15 @@
         <span class="k">if</span> <span class="n">separators</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_recursive_splitter</span> <span class="o">=</span> <span class="n">RecursiveCharacterTextSplitter</span><span class="p">(</span>
                 <span class="n">separators</span><span class="o">=</span><span class="n">separators</span><span class="p">,</span>
+                <span class="n">keep_separator</span><span class="o">=</span><span class="n">keep_separator</span><span class="p">,</span>
                 <span class="n">chunk_size</span><span class="o">=</span><span class="n">max_chunk_size</span><span class="p">,</span>
                 <span class="n">chunk_overlap</span><span class="o">=</span><span class="n">chunk_overlap</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_recursive_splitter</span> <span class="o">=</span> <span class="n">RecursiveCharacterTextSplitter</span><span class="p">(</span>
-                <span class="n">chunk_size</span><span class="o">=</span><span class="n">max_chunk_size</span><span class="p">,</span> <span class="n">chunk_overlap</span><span class="o">=</span><span class="n">chunk_overlap</span>
+                <span class="n">keep_separator</span><span class="o">=</span><span class="n">keep_separator</span><span class="p">,</span>
+                <span class="n">chunk_size</span><span class="o">=</span><span class="n">max_chunk_size</span><span class="p">,</span>
+                <span class="n">chunk_overlap</span><span class="o">=</span><span class="n">chunk_overlap</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stopword_removal</span><span class="p">:</span>
