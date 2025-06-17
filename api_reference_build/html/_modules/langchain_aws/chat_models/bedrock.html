@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 16, 2025" name="docbuild:last-update"/>
+<meta content="Jun 17, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -752,6 +752,25 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                         <span class="sa">f</span><span class="s2">"Content items must be str or dict, instead was: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">item</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+
+            <span class="c1"># Add tool calls if present (for AIMessage)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">AIMessage</span><span class="p">)</span> <span class="ow">and</span> <span class="n">message</span><span class="o">.</span><span class="n">tool_calls</span><span class="p">:</span>
+                <span class="c1"># Track which tool call IDs we've already processed</span>
+                <span class="n">used_tool_call_ids</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">block</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">tool_blocks</span>
+                    <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"tool_use"</span>
+                <span class="p">}</span>
+                <span class="c1"># Only add tool calls that haven't been processed yet</span>
+                <span class="n">new_tool_calls</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">tc</span>
+                    <span class="k">for</span> <span class="n">tc</span> <span class="ow">in</span> <span class="n">message</span><span class="o">.</span><span class="n">tool_calls</span>
+                    <span class="k">if</span> <span class="n">tc</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">used_tool_call_ids</span>
+                <span class="p">]</span>
+                <span class="k">if</span> <span class="n">new_tool_calls</span><span class="p">:</span>
+                    <span class="n">tool_blocks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                        <span class="n">_lc_tool_calls_to_anthropic_tool_use_blocks</span><span class="p">(</span><span class="n">new_tool_calls</span><span class="p">)</span>
                     <span class="p">)</span>
 
             <span class="c1"># For assistant messages, when thinking blocks exist, ensure they come first</span>
