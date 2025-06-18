@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 17, 2025" name="docbuild:last-update"/>
+<meta content="Jun 18, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -726,14 +726,30 @@
     <span class="n">max_tokens</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">"""Maximum number of tokens to generate."""</span>
     <span class="n">reasoning_effort</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">"""Constrains effort on reasoning for reasoning models. </span>
-<span class="sd">    </span>
-<span class="sd">    Reasoning models only, like OpenAI o1 and o3-mini.</span>
+<span class="w">    </span><span class="sd">"""Constrains effort on reasoning for reasoning models. For use with the Chat</span>
+<span class="sd">    Completions API.</span>
+
+<span class="sd">    Reasoning models only, like OpenAI o1, o3, and o4-mini.</span>
 
 <span class="sd">    Currently supported values are low, medium, and high. Reducing reasoning effort </span>
 <span class="sd">    can result in faster responses and fewer tokens used on reasoning in a response.</span>
-<span class="sd">    </span>
+
 <span class="sd">    .. versionadded:: 0.2.14</span>
+<span class="sd">    """</span>
+    <span class="n">reasoning</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">"""Reasoning parameters for reasoning models, i.e., OpenAI o-series models (o1, o3,</span>
+<span class="sd">    o4-mini, etc.). For use with the Responses API.</span>
+
+<span class="sd">    Example:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        reasoning={</span>
+<span class="sd">            "effort": "medium",  # can be "low", "medium", or "high"</span>
+<span class="sd">            "summary": "auto",  # can be "auto", "concise", or "detailed"</span>
+<span class="sd">        }</span>
+
+<span class="sd">    .. versionadded:: 0.3.24</span>
 <span class="sd">    """</span>
     <span class="n">tiktoken_model_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""The model name to pass to tiktoken when using this class. </span>
@@ -780,9 +796,39 @@
 <span class="sd">    However this does not prevent a user from directly passed in the parameter during</span>
 <span class="sd">    invocation. </span>
 <span class="sd">    """</span>
+
+    <span class="n">include</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">"""Additional fields to include in generations from Responses API.</span>
+
+<span class="sd">    Supported values:</span>
+
+<span class="sd">    - ``"file_search_call.results"``</span>
+<span class="sd">    - ``"message.input_image.image_url"``</span>
+<span class="sd">    - ``"computer_call_output.output.image_url"``</span>
+<span class="sd">    - ``"reasoning.encrypted_content"``</span>
+<span class="sd">    - ``"code_interpreter_call.outputs"``</span>
+
+<span class="sd">    .. versionadded:: 0.3.24</span>
+<span class="sd">    """</span>
+
     <span class="n">service_tier</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Latency tier for request. Options are 'auto', 'default', or 'flex'. Relevant</span>
 <span class="sd">    for users of OpenAI's scale tier service.</span>
+<span class="sd">    """</span>
+
+    <span class="n">store</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">"""If True, OpenAI may store response data for future use. Defaults to True</span>
+<span class="sd">    for the Responses API and False for the Chat Completions API.</span>
+
+<span class="sd">    .. versionadded:: 0.3.24</span>
+<span class="sd">    """</span>
+
+    <span class="n">truncation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">"""Truncation strategy (Responses API). Can be ``"auto"`` or ``"disabled"``</span>
+<span class="sd">    (default). If ``"auto"``, model may drop input items from the middle of the</span>
+<span class="sd">    message sequence to fit the context window.</span>
+
+<span class="sd">    .. versionadded:: 0.3.24</span>
 <span class="sd">    """</span>
 
     <span class="n">use_responses_api</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -909,7 +955,11 @@
             <span class="s2">"n"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span>
             <span class="s2">"temperature"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span>
             <span class="s2">"reasoning_effort"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">reasoning_effort</span><span class="p">,</span>
+            <span class="s2">"reasoning"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">reasoning</span><span class="p">,</span>
+            <span class="s2">"include"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">include</span><span class="p">,</span>
             <span class="s2">"service_tier"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">service_tier</span><span class="p">,</span>
+            <span class="s2">"truncation"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">truncation</span><span class="p">,</span>
+            <span class="s2">"store"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">,</span>
         <span class="p">}</span>
 
         <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
@@ -1248,6 +1298,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_use_responses_api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">use_responses_api</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_responses_api</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">include</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">reasoning</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">truncation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">_use_responses_api</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
 
@@ -3372,7 +3428,13 @@
     <span class="n">uses_builtin_tools</span> <span class="o">=</span> <span class="s2">"tools"</span> <span class="ow">in</span> <span class="n">payload</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span>
         <span class="n">_is_builtin_tool</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span> <span class="k">for</span> <span class="n">tool</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">[</span><span class="s2">"tools"</span><span class="p">]</span>
     <span class="p">)</span>
-    <span class="n">responses_only_args</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"previous_response_id"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"truncation"</span><span class="p">,</span> <span class="s2">"include"</span><span class="p">}</span>
+    <span class="n">responses_only_args</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"include"</span><span class="p">,</span>
+        <span class="s2">"previous_response_id"</span><span class="p">,</span>
+        <span class="s2">"reasoning"</span><span class="p">,</span>
+        <span class="s2">"text"</span><span class="p">,</span>
+        <span class="s2">"truncation"</span><span class="p">,</span>
+    <span class="p">}</span>
     <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">uses_builtin_tools</span> <span class="ow">or</span> <span class="n">responses_only_args</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">payload</span><span class="p">))</span>
 
 
@@ -3383,7 +3445,7 @@
     <span class="k">for</span> <span class="n">legacy_token_param</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"max_tokens"</span><span class="p">,</span> <span class="s2">"max_completion_tokens"</span><span class="p">]:</span>
         <span class="k">if</span> <span class="n">legacy_token_param</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">:</span>
             <span class="n">payload</span><span class="p">[</span><span class="s2">"max_output_tokens"</span><span class="p">]</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">legacy_token_param</span><span class="p">)</span>
-    <span class="k">if</span> <span class="s2">"reasoning_effort"</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s2">"reasoning_effort"</span> <span class="ow">in</span> <span class="n">payload</span> <span class="ow">and</span> <span class="s2">"reasoning"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">:</span>
         <span class="n">payload</span><span class="p">[</span><span class="s2">"reasoning"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"effort"</span><span class="p">:</span> <span class="n">payload</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"reasoning_effort"</span><span class="p">)}</span>
 
     <span class="n">payload</span><span class="p">[</span><span class="s2">"input"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_construct_responses_api_input</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
