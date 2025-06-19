@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 18, 2025" name="docbuild:last-update"/>
+<meta content="Jun 19, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -1001,8 +1001,8 @@
 
 <span class="sd">    Key init args — completion params:</span>
 <span class="sd">        model: str</span>
-<span class="sd">            Name of ChatVertexAI model to use. e.g. "gemini-1.5-flash-001",</span>
-<span class="sd">            "gemini-1.5-pro-001", etc.</span>
+<span class="sd">            Name of ChatVertexAI model to use. e.g. "gemini-2.0-flash-001",</span>
+<span class="sd">            "gemini-2.5-pro", etc.</span>
 <span class="sd">        temperature: Optional[float]</span>
 <span class="sd">            Sampling temperature.</span>
 <span class="sd">        seed: Optional[int]</span>
@@ -1846,6 +1846,7 @@
                 <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">content</span><span class="o">.</span><span class="n">parts</span><span class="p">:</span>
                     <span class="n">raw_part</span> <span class="o">=</span> <span class="n">proto</span><span class="o">.</span><span class="n">Message</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
                     <span class="n">_</span> <span class="o">=</span> <span class="n">raw_part</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"thought"</span><span class="p">)</span>
+                    <span class="n">_</span> <span class="o">=</span> <span class="n">raw_part</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"thought_signature"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
                     <span class="n">v1_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v1Part</span><span class="p">(</span><span class="o">**</span><span class="n">raw_part</span><span class="p">))</span>
                 <span class="n">v1_contens</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v1Content</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="n">content</span><span class="o">.</span><span class="n">role</span><span class="p">,</span> <span class="n">parts</span><span class="o">=</span><span class="n">v1_parts</span><span class="p">))</span>
             <span class="k">return</span> <span class="n">v1_contens</span>
@@ -2586,7 +2587,11 @@
     <span class="n">output_tokens</span> <span class="o">=</span> <span class="n">raw_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"candidates_token_count"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="n">total_tokens</span> <span class="o">=</span> <span class="n">raw_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"total_token_count"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="n">thought_tokens</span> <span class="o">=</span> <span class="n">raw_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"thoughts_token_count"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">count</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">count</span> <span class="ow">in</span> <span class="p">[</span><span class="n">input_tokens</span><span class="p">,</span> <span class="n">output_tokens</span><span class="p">,</span> <span class="n">total_tokens</span><span class="p">]):</span>
+    <span class="n">cache_read_tokens</span> <span class="o">=</span> <span class="n">raw_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cached_content_token_count"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">all</span><span class="p">(</span>
+        <span class="n">count</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">count</span> <span class="ow">in</span> <span class="p">[</span><span class="n">input_tokens</span><span class="p">,</span> <span class="n">output_tokens</span><span class="p">,</span> <span class="n">total_tokens</span><span class="p">,</span> <span class="n">cache_read_tokens</span><span class="p">]</span>
+    <span class="p">):</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">thought_tokens</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -2594,6 +2599,7 @@
                 <span class="n">input_tokens</span><span class="o">=</span><span class="n">input_tokens</span><span class="p">,</span>
                 <span class="n">output_tokens</span><span class="o">=</span><span class="n">output_tokens</span><span class="p">,</span>
                 <span class="n">total_tokens</span><span class="o">=</span><span class="n">total_tokens</span><span class="p">,</span>
+                <span class="n">input_token_details</span><span class="o">=</span><span class="p">{</span><span class="s2">"cache_read"</span><span class="p">:</span> <span class="n">cache_read_tokens</span><span class="p">},</span>
                 <span class="n">output_token_details</span><span class="o">=</span><span class="p">{</span><span class="s2">"reasoning"</span><span class="p">:</span> <span class="n">thought_tokens</span><span class="p">},</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -2601,6 +2607,7 @@
                 <span class="n">input_tokens</span><span class="o">=</span><span class="n">input_tokens</span><span class="p">,</span>
                 <span class="n">output_tokens</span><span class="o">=</span><span class="n">output_tokens</span><span class="p">,</span>
                 <span class="n">total_tokens</span><span class="o">=</span><span class="n">total_tokens</span><span class="p">,</span>
+                <span class="n">input_token_details</span><span class="o">=</span><span class="p">{</span><span class="s2">"cache_read"</span><span class="p">:</span> <span class="n">cache_read_tokens</span><span class="p">},</span>
             <span class="p">)</span>
 
 
