@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 20, 2025" name="docbuild:last-update"/>
+<meta content="Jun 21, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,7 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_core.tools.base</h1><div class="highlight"><pre>
-<span></span><span class="sd">"""Base for Tools."""</span>
+<span></span><span class="sd">"""Base classes and utilities for LangChain tools."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -301,15 +301,31 @@
 <div class="viewcode-block" id="SchemaAnnotationError">
 <a class="viewcode-back" href="../../../core/tools/langchain_core.tools.base.SchemaAnnotationError.html#langchain_azure_dynamic_sessions.tools.sessions.SchemaAnnotationError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SchemaAnnotationError</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Raised when 'args_schema' is missing or has an incorrect type annotation."""</span></div>
+<span class="w">    </span><span class="sd">"""Raised when args_schema is missing or has an incorrect type annotation."""</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_annotated_type</span><span class="p">(</span><span class="n">typ</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Check if a type is an Annotated type.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        typ: The type to check.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if the type is an Annotated type, False otherwise.</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span> <span class="ow">is</span> <span class="n">typing</span><span class="o">.</span><span class="n">Annotated</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_annotation_description</span><span class="p">(</span><span class="n">arg_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Extract description from an Annotated type.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        arg_type: The type to extract description from.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The description string if found, None otherwise.</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">_is_annotated_type</span><span class="p">(</span><span class="n">arg_type</span><span class="p">):</span>
         <span class="n">annotated_args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">arg_type</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">annotation</span> <span class="ow">in</span> <span class="n">annotated_args</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
@@ -325,7 +341,17 @@
     <span class="n">filter_args</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">include_injected</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Get the arguments from a function's signature."""</span>
+<span class="w">    </span><span class="sd">"""Get filtered arguments from a function's signature.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        inferred_model: The Pydantic model inferred from the function.</span>
+<span class="sd">        func: The function to extract arguments from.</span>
+<span class="sd">        filter_args: Arguments to exclude from the result.</span>
+<span class="sd">        include_injected: Whether to include injected arguments.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dictionary of filtered arguments with their schema definitions.</span>
+<span class="sd">    """</span>
     <span class="n">schema</span> <span class="o">=</span> <span class="n">inferred_model</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()[</span><span class="s2">"properties"</span><span class="p">]</span>
     <span class="n">valid_keys</span> <span class="o">=</span> <span class="n">signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span>
     <span class="k">return</span> <span class="p">{</span>
@@ -340,9 +366,17 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_python_function_docstring</span><span class="p">(</span>
     <span class="n">function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">annotations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">error_on_invalid_docstring</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Parse the function and argument descriptions from the docstring of a function.</span>
+<span class="w">    </span><span class="sd">"""Parse function and argument descriptions from a docstring.</span>
 
 <span class="sd">    Assumes the function docstring follows Google Python style guide.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        function: The function to parse the docstring from.</span>
+<span class="sd">        annotations: Type annotations for the function parameters.</span>
+<span class="sd">        error_on_invalid_docstring: Whether to raise an error on invalid docstring.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tuple containing the function description and argument descriptions.</span>
 <span class="sd">    """</span>
     <span class="n">docstring</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getdoc</span><span class="p">(</span><span class="n">function</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_parse_google_docstring</span><span class="p">(</span>
@@ -355,7 +389,15 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_validate_docstring_args_against_annotations</span><span class="p">(</span>
     <span class="n">arg_descriptions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">annotations</span><span class="p">:</span> <span class="nb">dict</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Raise error if docstring arg is not in type annotations."""</span>
+<span class="w">    </span><span class="sd">"""Validate that docstring arguments match function annotations.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        arg_descriptions: Arguments described in the docstring.</span>
+<span class="sd">        annotations: Type annotations from the function signature.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If a docstring argument is not found in function signature.</span>
+<span class="sd">    """</span>
     <span class="k">for</span> <span class="n">docstring_arg</span> <span class="ow">in</span> <span class="n">arg_descriptions</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">docstring_arg</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">annotations</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Arg </span><span class="si">{</span><span class="n">docstring_arg</span><span class="si">}</span><span class="s2"> in docstring not found in function signature."</span>
@@ -368,7 +410,16 @@
     <span class="n">parse_docstring</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">error_on_invalid_docstring</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Infer argument descriptions from a function's docstring."""</span>
+<span class="w">    </span><span class="sd">"""Infer argument descriptions from function docstring and annotations.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The function to infer descriptions from.</span>
+<span class="sd">        parse_docstring: Whether to parse the docstring for descriptions.</span>
+<span class="sd">        error_on_invalid_docstring: Whether to raise error on invalid docstring.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tuple containing the function description and argument descriptions.</span>
+<span class="sd">    """</span>
     <span class="n">annotations</span> <span class="o">=</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_type_hints</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">include_extras</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">parse_docstring</span><span class="p">:</span>
         <span class="n">description</span><span class="p">,</span> <span class="n">arg_descriptions</span> <span class="o">=</span> <span class="n">_parse_python_function_docstring</span><span class="p">(</span>
@@ -388,7 +439,15 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_pydantic_annotation</span><span class="p">(</span><span class="n">annotation</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">pydantic_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"v2"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Determine if a type annotation is a Pydantic model."""</span>
+<span class="w">    </span><span class="sd">"""Check if a type annotation is a Pydantic model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        annotation: The type annotation to check.</span>
+<span class="sd">        pydantic_version: The Pydantic version to check against ("v1" or "v2").</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if the annotation is a Pydantic model, False otherwise.</span>
+<span class="sd">    """</span>
     <span class="n">base_model_class</span> <span class="o">=</span> <span class="n">BaseModelV1</span> <span class="k">if</span> <span class="n">pydantic_version</span> <span class="o">==</span> <span class="s2">"v1"</span> <span class="k">else</span> <span class="n">BaseModel</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">base_model_class</span><span class="p">)</span>
@@ -399,7 +458,18 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_function_annotations_are_pydantic_v1</span><span class="p">(</span>
     <span class="n">signature</span><span class="p">:</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Signature</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Determine if all Pydantic annotations in a function signature are from V1."""</span>
+<span class="w">    </span><span class="sd">"""Check if all Pydantic annotations in a function are from V1.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        signature: The function signature to check.</span>
+<span class="sd">        func: The function being checked.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if all Pydantic annotations are from V1, False otherwise.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        NotImplementedError: If the function contains mixed V1 and V2 annotations.</span>
+<span class="sd">    """</span>
     <span class="n">any_v1_annotations</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
         <span class="n">_is_pydantic_annotation</span><span class="p">(</span><span class="n">parameter</span><span class="o">.</span><span class="n">annotation</span><span class="p">,</span> <span class="n">pydantic_version</span><span class="o">=</span><span class="s2">"v1"</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">parameter</span> <span class="ow">in</span> <span class="n">signature</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
@@ -418,15 +488,11 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_SchemaConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Configuration for the pydantic model.</span>
+<span class="w">    </span><span class="sd">"""Configuration for Pydantic models generated from function signatures.</span>
 
-<span class="sd">    This is used to configure the pydantic model created from</span>
-<span class="sd">    a function's signature.</span>
-
-<span class="sd">    Parameters:</span>
+<span class="sd">    Attributes:</span>
 <span class="sd">        extra: Whether to allow extra fields in the model.</span>
 <span class="sd">        arbitrary_types_allowed: Whether to allow arbitrary types in the model.</span>
-<span class="sd">            Defaults to True.</span>
 <span class="sd">    """</span>
 
     <span class="n">extra</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"forbid"</span>
@@ -539,12 +605,11 @@
 <div class="viewcode-block" id="ToolException">
 <a class="viewcode-back" href="../../../core/tools/langchain_core.tools.base.ToolException.html#langchain_azure_dynamic_sessions.tools.sessions.ToolException">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ToolException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>  <span class="c1"># noqa: N818</span>
-<span class="w">    </span><span class="sd">"""Optional exception that tool throws when execution error occurs.</span>
+<span class="w">    </span><span class="sd">"""Exception thrown when a tool execution error occurs.</span>
 
-<span class="sd">    When this exception is thrown, the agent will not stop working,</span>
-<span class="sd">    but it will handle the exception according to the handle_tool_error</span>
-<span class="sd">    variable of the tool, and the processing result will be returned</span>
-<span class="sd">    to the agent as observation, and printed in red on the console.</span>
+<span class="sd">    This exception allows tools to signal errors without stopping the agent.</span>
+<span class="sd">    The error is handled according to the tool's handle_tool_error setting,</span>
+<span class="sd">    and the result is returned as an observation to the agent.</span>
 <span class="sd">    """</span></div>
 
 
@@ -555,10 +620,21 @@
 <div class="viewcode-block" id="BaseTool">
 <a class="viewcode-back" href="../../../core/tools/langchain_core.tools.base.BaseTool.html#langchain_azure_dynamic_sessions.tools.sessions.BaseTool">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseTool</span><span class="p">(</span><span class="n">RunnableSerializable</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">ToolCall</span><span class="p">],</span> <span class="n">Any</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">"""Interface LangChain tools must implement."""</span>
+<span class="w">    </span><span class="sd">"""Base class for all LangChain tools.</span>
+
+<span class="sd">    This abstract class defines the interface that all LangChain tools must implement.</span>
+<span class="sd">    Tools are components that can be called by agents to perform specific actions.</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Create the definition of the new tool class."""</span>
+<span class="w">        </span><span class="sd">"""Validate the tool class definition during subclass creation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            **kwargs: Additional keyword arguments passed to the parent class.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            SchemaAnnotationError: If args_schema has incorrect type annotation.</span>
+<span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="n">args_schema_type</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__annotations__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"args_schema"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -677,13 +753,21 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_single_input</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Whether the tool only accepts a single input."""</span>
+<span class="w">        </span><span class="sd">"""Check if the tool accepts only a single input argument.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if the tool has only one input argument, False otherwise.</span>
+<span class="sd">        """</span>
         <span class="n">keys</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"kwargs"</span><span class="p">}</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The arguments of the tool."""</span>
+<span class="w">        </span><span class="sd">"""Get the tool's input arguments schema.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary containing the tool's argument properties.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="n">json_schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span>
         <span class="k">else</span><span class="p">:</span>
@@ -693,7 +777,11 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">tool_call_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArgsSchema</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The schema for a tool call."""</span>
+<span class="w">        </span><span class="sd">"""Get the schema for tool calls, excluding injected arguments.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The schema that should be used for tool calls from language models.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="p">:</span>
                 <span class="k">return</span> <span class="p">{</span>
@@ -763,11 +851,19 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_input</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">tool_input</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">],</span> <span class="n">tool_call_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">"""Convert tool input to a pydantic model.</span>
+<span class="w">        </span><span class="sd">"""Parse and validate tool input using the args schema.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            tool_input: The input to the tool.</span>
-<span class="sd">            tool_call_id: The id of the tool call.</span>
+<span class="sd">            tool_input: The raw input to the tool.</span>
+<span class="sd">            tool_call_id: The ID of the tool call, if available.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The parsed and validated input.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If string input is provided with JSON schema or if</span>
+<span class="sd">                InjectedToolCallId is required but not provided.</span>
+<span class="sd">            NotImplementedError: If args_schema is not a supported type.</span>
 <span class="sd">        """</span>
         <span class="n">input_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool_input</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -779,10 +875,13 @@
                     <span class="p">)</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
                 <span class="n">key_</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">get_fields</span><span class="p">(</span><span class="n">input_args</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
-                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">input_args</span><span class="p">,</span> <span class="s2">"model_validate"</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">input_args</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">):</span>
                     <span class="n">input_args</span><span class="o">.</span><span class="n">model_validate</span><span class="p">({</span><span class="n">key_</span><span class="p">:</span> <span class="n">tool_input</span><span class="p">})</span>
-                <span class="k">else</span><span class="p">:</span>
+                <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">input_args</span><span class="p">,</span> <span class="n">BaseModelV1</span><span class="p">):</span>
                     <span class="n">input_args</span><span class="o">.</span><span class="n">parse_obj</span><span class="p">({</span><span class="n">key_</span><span class="p">:</span> <span class="n">tool_input</span><span class="p">})</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"args_schema must be a Pydantic BaseModel, got </span><span class="si">{</span><span class="n">input_args</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">tool_input</span>
         <span class="k">if</span> <span class="n">input_args</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_args</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -876,6 +975,18 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_to_args_and_kwargs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">tool_input</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">],</span> <span class="n">tool_call_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Convert tool input to positional and keyword arguments.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tool_input: The input to the tool.</span>
+<span class="sd">            tool_call_id: The ID of the tool call, if available.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A tuple of (positional_args, keyword_args) for the tool.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            TypeError: If the tool input type is invalid.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args_schema</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
@@ -1136,13 +1247,29 @@
 <a class="viewcode-back" href="../../../core/tools/langchain_core.tools.base.BaseTool.html#langchain_azure_dynamic_sessions.tools.sessions.BaseTool.__call__">[docs]</a>
     <span class="nd">@deprecated</span><span class="p">(</span><span class="s2">"0.1.47"</span><span class="p">,</span> <span class="n">alternative</span><span class="o">=</span><span class="s2">"invoke"</span><span class="p">,</span> <span class="n">removal</span><span class="o">=</span><span class="s2">"1.0"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tool_input</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Make tool callable."""</span>
+<span class="w">        </span><span class="sd">"""Make tool callable (deprecated).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tool_input: The input to the tool.</span>
+<span class="sd">            callbacks: Callbacks to use during execution.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The tool's output.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">tool_input</span><span class="p">,</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">)</span></div>
 </div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_tool_call</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Check if the input is a tool call dictionary.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x: The input to check.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if the input is a tool call, False otherwise.</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"tool_call"</span>
 
 
@@ -1153,6 +1280,18 @@
         <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Union</span><span class="p">[</span><span class="n">ValidationError</span><span class="p">,</span> <span class="n">ValidationErrorV1</span><span class="p">]],</span> <span class="nb">str</span><span class="p">]</span>
     <span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Handle validation errors based on the configured flag.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        e: The validation error that occurred.</span>
+<span class="sd">        flag: How to handle the error (bool, string, or callable).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The error message to return.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the flag type is unexpected.</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">flag</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
         <span class="n">content</span> <span class="o">=</span> <span class="s2">"Tool input validation error"</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">flag</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -1173,6 +1312,18 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">flag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ToolException</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Handle tool execution errors based on the configured flag.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        e: The tool exception that occurred.</span>
+<span class="sd">        flag: How to handle the error (bool, string, or callable).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The error message to return.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the flag type is unexpected.</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">flag</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
         <span class="n">content</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span> <span class="k">else</span> <span class="s2">"Tool execution error"</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">flag</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -1193,6 +1344,16 @@
     <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">],</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">],</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Prepare arguments for tool execution.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        value: The input value (string, dict, or ToolCall).</span>
+<span class="sd">        config: The runnable configuration.</span>
+<span class="sd">        **kwargs: Additional keyword arguments.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tuple of (tool_input, run_kwargs).</span>
+<span class="sd">    """</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">ensure_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">_is_tool_call</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
         <span class="n">tool_call_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"ToolCall"</span><span class="p">,</span> <span class="n">value</span><span class="p">)[</span><span class="s2">"id"</span><span class="p">]</span>
@@ -1222,6 +1383,18 @@
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">status</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">ToolOutputMixin</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Format tool output as a ToolMessage if appropriate.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        content: The main content of the tool output.</span>
+<span class="sd">        artifact: Any artifact data from the tool.</span>
+<span class="sd">        tool_call_id: The ID of the tool call.</span>
+<span class="sd">        name: The name of the tool.</span>
+<span class="sd">        status: The execution status.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The formatted output, either as a ToolMessage or the original content.</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">ToolOutputMixin</span><span class="p">)</span> <span class="ow">or</span> <span class="n">tool_call_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">content</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_message_content_type</span><span class="p">(</span><span class="n">content</span><span class="p">):</span>
@@ -1236,14 +1409,32 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_message_content_type</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Check for OpenAI or Anthropic format tool message content."""</span>
+<span class="w">    </span><span class="sd">"""Check if object is valid message content format.</span>
+
+<span class="sd">    Validates content for OpenAI or Anthropic format tool messages.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        obj: The object to check.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if the object is valid message content, False otherwise.</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
         <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">_is_message_content_block</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">)</span>
     <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_message_content_block</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Check for OpenAI or Anthropic format tool message content blocks."""</span>
+<span class="w">    </span><span class="sd">"""Check if object is a valid message content block.</span>
+
+<span class="sd">    Validates content blocks for OpenAI or Anthropic format.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        obj: The object to check.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if the object is a valid content block, False otherwise.</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">True</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -1252,6 +1443,14 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_stringify</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Convert content to string, preferring JSON format.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        content: The content to stringify.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        String representation of the content.</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
@@ -1259,6 +1458,14 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_type_hints</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Get type hints from a function, handling partial functions.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        func: The function to get type hints from.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dictionary of type hints, or None if extraction fails.</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">):</span>
         <span class="n">func</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="n">func</span>
     <span class="k">try</span><span class="p">:</span>
@@ -1268,6 +1475,14 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_runnable_config_param</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Find the parameter name for RunnableConfig in a function.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        func: The function to check.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The parameter name for RunnableConfig, or None if not found.</span>
+<span class="sd">    """</span>
     <span class="n">type_hints</span> <span class="o">=</span> <span class="n">_get_type_hints</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">type_hints</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -1280,34 +1495,56 @@
 <div class="viewcode-block" id="InjectedToolArg">
 <a class="viewcode-back" href="../../../core/tools/langchain_core.tools.base.InjectedToolArg.html#langchain_azure_dynamic_sessions.tools.sessions.InjectedToolArg">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InjectedToolArg</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Annotation for a Tool arg that is **not** meant to be generated by a model."""</span></div>
+<span class="w">    </span><span class="sd">"""Annotation for tool arguments that are injected at runtime.</span>
+
+<span class="sd">    Tool arguments annotated with this class are not included in the tool</span>
+<span class="sd">    schema sent to language models and are instead injected during execution.</span>
+<span class="sd">    """</span></div>
 
 
 
 <div class="viewcode-block" id="InjectedToolCallId">
 <a class="viewcode-back" href="../../../core/tools/langchain_core.tools.base.InjectedToolCallId.html#langchain_azure_dynamic_sessions.tools.sessions.InjectedToolCallId">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InjectedToolCallId</span><span class="p">(</span><span class="n">InjectedToolArg</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Annotation for injecting the tool_call_id.</span>
+<span class="w">    </span><span class="sd">"""Annotation for injecting the tool call ID.</span>
+
+<span class="sd">    This annotation is used to mark a tool parameter that should receive</span>
+<span class="sd">    the tool call ID at runtime.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        ..code-block:: python</span>
+<span class="sd">        ```python</span>
+<span class="sd">        from typing_extensions import Annotated</span>
+<span class="sd">        from langchain_core.messages import ToolMessage</span>
+<span class="sd">        from langchain_core.tools import tool, InjectedToolCallId</span>
 
-<span class="sd">            from typing_extensions import Annotated</span>
-
-<span class="sd">            from langchain_core.messages import ToolMessage</span>
-<span class="sd">            from langchain_core.tools import tool, InjectedToolCallID</span>
-
-<span class="sd">            @tool</span>
-<span class="sd">            def foo(x: int, tool_call_id: Annotated[str, InjectedToolCallID]) -&gt; ToolMessage:</span>
-<span class="sd">                \"\"\"Return x.\"\"\"</span>
-<span class="sd">                return ToolMessage(str(x), artifact=x, name="foo", tool_call_id=tool_call_id)</span>
-<span class="sd">    """</span>  <span class="c1"># noqa: E501</span></div>
+<span class="sd">        @tool</span>
+<span class="sd">        def foo(</span>
+<span class="sd">            x: int, tool_call_id: Annotated[str, InjectedToolCallId]</span>
+<span class="sd">        ) -&gt; ToolMessage:</span>
+<span class="sd">            \"\"\"Return x.\"\"\"</span>
+<span class="sd">            return ToolMessage(</span>
+<span class="sd">                str(x),</span>
+<span class="sd">                artifact=x,</span>
+<span class="sd">                name="foo",</span>
+<span class="sd">                tool_call_id=tool_call_id</span>
+<span class="sd">            )</span>
+<span class="sd">        ```</span>
+<span class="sd">    """</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_injected_arg_type</span><span class="p">(</span>
     <span class="n">type_</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">injected_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">InjectedToolArg</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Check if a type annotation indicates an injected argument.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        type_: The type annotation to check.</span>
+<span class="sd">        injected_type: The specific injected type to check for.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if the type is an injected argument, False otherwise.</span>
+<span class="sd">    """</span>
     <span class="n">injected_type</span> <span class="o">=</span> <span class="n">injected_type</span> <span class="ow">or</span> <span class="n">InjectedToolArg</span>
     <span class="k">return</span> <span class="nb">any</span><span class="p">(</span>
         <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">injected_type</span><span class="p">)</span>
@@ -1393,6 +1630,16 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">default_to_bound</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Replace TypeVars in a type annotation with concrete types.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        type_: The type annotation to process.</span>
+<span class="sd">        generic_map: Mapping of TypeVars to concrete types.</span>
+<span class="sd">        default_to_bound: Whether to use TypeVar bounds as defaults.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The type with TypeVars replaced.</span>
+<span class="sd">    """</span>
     <span class="n">generic_map</span> <span class="o">=</span> <span class="n">generic_map</span> <span class="ow">or</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">type_</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">type_</span> <span class="ow">in</span> <span class="n">generic_map</span><span class="p">:</span>
@@ -1412,13 +1659,21 @@
 <div class="viewcode-block" id="BaseToolkit">
 <a class="viewcode-back" href="../../../core/tools/langchain_core.tools.base.BaseToolkit.html#langchain_azure_dynamic_sessions.tools.sessions.BaseToolkit">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseToolkit</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Base Toolkit representing a collection of related tools."""</span>
+<span class="w">    </span><span class="sd">"""Base class for toolkits containing related tools.</span>
+
+<span class="sd">    A toolkit is a collection of related tools that can be used together</span>
+<span class="sd">    to accomplish a specific task or work with a particular system.</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="BaseToolkit.get_tools">
 <a class="viewcode-back" href="../../../core/tools/langchain_core.tools.base.BaseToolkit.html#langchain_azure_dynamic_sessions.tools.sessions.BaseToolkit.get_tools">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_tools</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseTool</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the tools in the toolkit."""</span></div>
+<span class="w">        </span><span class="sd">"""Get all tools in the toolkit.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of tools contained in this toolkit.</span>
+<span class="sd">        """</span></div>
 </div>
 
 </pre></div>

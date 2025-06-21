@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 20, 2025" name="docbuild:last-update"/>
+<meta content="Jun 21, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -229,6 +229,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jsonpatch</span>  <span class="c1"># type: ignore[import-untyped]</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">model_validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic.v1</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span> <span class="k">as</span> <span class="n">BaseModelV1</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">OutputParserException</span>
@@ -522,10 +523,13 @@
                 <span class="n">pydantic_schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pydantic_schema</span><span class="p">[</span><span class="n">fn_name</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">pydantic_schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pydantic_schema</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">pydantic_schema</span><span class="p">,</span> <span class="s2">"model_validate_json"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">pydantic_schema</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">):</span>
                 <span class="n">pydantic_args</span> <span class="o">=</span> <span class="n">pydantic_schema</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">_args</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">pydantic_schema</span><span class="p">,</span> <span class="n">BaseModelV1</span><span class="p">):</span>
                 <span class="n">pydantic_args</span> <span class="o">=</span> <span class="n">pydantic_schema</span><span class="o">.</span><span class="n">parse_raw</span><span class="p">(</span><span class="n">_args</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Unsupported pydantic schema: </span><span class="si">{</span><span class="n">pydantic_schema</span><span class="si">}</span><span class="s2">"</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">pydantic_args</span></div>
 </div>
 
