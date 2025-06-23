@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 22, 2025" name="docbuild:last-update"/>
+<meta content="Jun 23, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -285,6 +285,7 @@
 <span class="p">)</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">astrapy.api_options</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIOptions</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">astrapy.authentication</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
         <span class="n">EmbeddingHeadersProvider</span><span class="p">,</span>
         <span class="n">RerankingHeadersProvider</span><span class="p">,</span>
@@ -328,7 +329,7 @@
 <span class="sd">    This class represents all that can be returned from the collection when running</span>
 <span class="sd">    a query, which goes beyond just the corresponding Document.</span>
 
-<span class="sd">    Atributes:</span>
+<span class="sd">    Attributes:</span>
 <span class="sd">        document: a ``langchain.schema.Document`` object representing the query result.</span>
 <span class="sd">        id: the ID of the returned document.</span>
 <span class="sd">        embedding: the embedding vector associated to the document. This may be None,</span>
@@ -894,6 +895,7 @@
         <span class="n">autodetect_collection</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">ext_callers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">component_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">COMPONENT_NAME_VECTORSTORE</span><span class="p">,</span>
+        <span class="n">api_options</span><span class="p">:</span> <span class="n">APIOptions</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">collection_rerank</span><span class="p">:</span> <span class="n">CollectionRerankOptions</span> <span class="o">|</span> <span class="n">RerankServiceOptions</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">collection_reranking_api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">RerankingHeadersProvider</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">collection_lexical</span><span class="p">:</span> <span class="nb">str</span>
@@ -906,7 +908,7 @@
         <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
         <span class="o">|</span> <span class="n">HybridLimitFactorPrescription</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""A vector store wich uses DataStax Astra DB as backend.</span>
+<span class="w">        </span><span class="sd">"""A vector store which uses DataStax Astra DB as backend.</span>
 
 <span class="sd">        For more on Astra DB, visit</span>
 <span class="sd">        https://docs.datastax.com/en/astra-db-serverless/index.html</span>
@@ -1010,6 +1012,13 @@
 <span class="sd">                Defaults to "langchain_vectorstore", but can be overridden if this</span>
 <span class="sd">                component actually serves as the building block for another component</span>
 <span class="sd">                (such as when the vector store is used within a ``GraphRetriever``).</span>
+<span class="sd">            api_options: an instance of ``astrapy.utils.api_options.APIOptions`` that</span>
+<span class="sd">                can be supplied to customize the interaction with the Data API</span>
+<span class="sd">                regarding serialization/deserialization, timeouts, custom headers</span>
+<span class="sd">                and so on. The provided options are applied on top of settings already</span>
+<span class="sd">                tailored to this library, and if specified will take precedence.</span>
+<span class="sd">                Passing None (default) means no customization is requested.</span>
+<span class="sd">                Refer to the astrapy documentation for details.</span>
 <span class="sd">            collection_rerank: providing reranking settings is necessary to run</span>
 <span class="sd">                hybrid searches for similarity. This parameter can be an instance</span>
 <span class="sd">                of the astrapy classes `CollectionRerankOptions` or</span>
@@ -1175,6 +1184,7 @@
                 <span class="n">environment</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span>
                 <span class="n">ext_callers</span><span class="o">=</span><span class="n">ext_callers</span><span class="p">,</span>
                 <span class="n">component_name</span><span class="o">=</span><span class="n">component_name</span><span class="p">,</span>
+                <span class="n">api_options</span><span class="o">=</span><span class="n">api_options</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">c_descriptor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Collection '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="si">}</span><span class="s2">' not found."</span>
@@ -1256,6 +1266,7 @@
             <span class="n">collection_embedding_api_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_embedding_api_key</span><span class="p">,</span>
             <span class="n">ext_callers</span><span class="o">=</span><span class="n">ext_callers</span><span class="p">,</span>
             <span class="n">component_name</span><span class="o">=</span><span class="n">component_name</span><span class="p">,</span>
+            <span class="n">api_options</span><span class="o">=</span><span class="n">api_options</span><span class="p">,</span>
             <span class="n">collection_rerank</span><span class="o">=</span><span class="n">collection_rerank</span><span class="p">,</span>
             <span class="n">collection_reranking_api_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_reranking_api_key</span><span class="p">,</span>
             <span class="n">collection_lexical</span><span class="o">=</span><span class="n">collection_lexical</span><span class="p">,</span>

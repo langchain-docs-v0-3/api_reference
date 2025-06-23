@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 22, 2025" name="docbuild:last-update"/>
+<meta content="Jun 23, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -259,7 +259,6 @@
 <span class="sd">        .. code-block:: python</span>
 
 <span class="sd">            from langchain_community.bedrock_embeddings import BedrockEmbeddings</span>
-<span class="sd">            </span>
 <span class="sd">            region_name ="us-east-1"</span>
 <span class="sd">            credentials_profile_name = "default"</span>
 <span class="sd">            model_id = "amazon.titan-embed-text-v1"</span>
@@ -331,6 +330,10 @@
     <span class="n">model_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Keyword arguments to pass to the model."""</span>
 
+    <span class="n">provider</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">"""Name of the provider, e.g., amazon, cohere, etc..</span>
+<span class="sd">    If not specified, the provider will be inferred from the model_id."""</span>
+
     <span class="n">endpoint_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Needed if you don't want to default to us-east-1 endpoint"""</span>
 
@@ -346,9 +349,9 @@
     <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">provider</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Provider of the model."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_inferred_provider</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Inferred provider of the model."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">provider</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
@@ -372,7 +375,7 @@
         <span class="c1"># replace newlines, which can negatively affect performance.</span>
         <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">linesep</span><span class="p">,</span> <span class="s2">" "</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">provider</span> <span class="o">==</span> <span class="s2">"cohere"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inferred_provider</span> <span class="o">==</span> <span class="s2">"cohere"</span><span class="p">:</span>
             <span class="c1"># Cohere input_type depends on usage</span>
             <span class="c1"># for embedding documents use "search_document"</span>
             <span class="c1"># for embedding queries for retrieval use "search_query"</span>
@@ -448,7 +451,7 @@
 <span class="sd">        """</span>
 
         <span class="c1"># If we are able to make use of Cohere's multiple embeddings, use that</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">provider</span> <span class="o">==</span> <span class="s2">"cohere"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inferred_provider</span> <span class="o">==</span> <span class="s2">"cohere"</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embed_cohere_documents</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteratively_embed_documents</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span></div>
@@ -485,7 +488,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Embeddings for the text.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">provider</span> <span class="o">==</span> <span class="s2">"cohere"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inferred_provider</span> <span class="o">==</span> <span class="s2">"cohere"</span><span class="p">:</span>
             <span class="n">embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_func</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">input_type</span><span class="o">=</span><span class="s2">"search_query"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_func</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
