@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 23, 2025" name="docbuild:last-update"/>
+<meta content="Jun 24, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -282,7 +282,7 @@
 </a>
 </li>
 <li class="breadcrumb-item"><a class="nav-link" href="../../reference.html">LangChain Python API Reference</a></li>
-<li class="breadcrumb-item"><a class="nav-link" href="../index.html">langchain-groq: 0.3.2</a></li>
+<li class="breadcrumb-item"><a class="nav-link" href="../index.html">langchain-groq: 0.3.4</a></li>
 <li class="breadcrumb-item"><a class="nav-link" href="../chat_models.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">chat_models</span></code></a></li>
 <li aria-current="page" class="breadcrumb-item active"><span class="ellipsis">ChatGroq</span></li>
 </ul>
@@ -300,8 +300,7 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">langchain_groq.chat_models.</span></span><span class="sig-name descname"><span class="pre">ChatGroq</span></span><a class="reference internal" href="../../_modules/langchain_groq/chat_models.html#ChatGroq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_groq.chat_models.ChatGroq" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../core/language_models/langchain_core.language_models.chat_models.BaseChatModel.html#langchain_core.language_models.chat_models.BaseChatModel" title="langchain_core.language_models.chat_models.BaseChatModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseChatModel</span></code></a></p>
 <p><cite>Groq</cite> Chat large language models API.</p>
-<blockquote>
-<div><p>To use, you should have the
+<p>To use, you should have the
 environment variable <code class="docutils literal notranslate"><span class="pre">GROQ_API_KEY</span></code> set with your API key.</p>
 <p>Any parameters that are valid to be passed to the groq.create call
 can be passed in, even if not explicitly saved on this class.</p>
@@ -319,6 +318,13 @@ can be passed in, even if not explicitly saved on this class.</p>
 <dt>temperature: float</dt><dd><p>Sampling temperature. Ranges from 0.0 to 1.0.</p>
 </dd>
 <dt>max_tokens: Optional[int]</dt><dd><p>Max number of tokens to generate.</p>
+</dd>
+<dt>reasoning_format: Optional[Literal[“parsed”, “raw”, “hidden]]</dt><dd><p>The format for reasoning output.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">parsed</span></code>: Separates reasoning into a dedicated field while keeping the response concise.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">raw</span></code>: Includes reasoning within think tags in the content.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hidden</span></code>: Returns only the final answer.</p></li>
+</ul>
 </dd>
 <dt>model_kwargs: Dict[str, Any]</dt><dd><p>Holds any model parameters valid for create call not
 explicitly specified.</p>
@@ -374,7 +380,11 @@ section.</p>
 </pre></div>
 </div>
 </dd>
-<dt>Stream:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">llm</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">messages</span><span class="p">):</span>
+</dl>
+<p>Stream:</p>
+<blockquote>
+<div><p>Streaming <cite>text</cite> for each content chunk received:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">llm</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">messages</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span> <span class="n">end</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -389,6 +399,7 @@ section.</p>
 <span class="nb">id</span><span class="o">=</span><span class="s1">'run-4e9f926b-73f5-483b-8ef5-09533d925853</span>
 </pre></div>
 </div>
+<p>Reconstructing a full response:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">stream</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
 <span class="n">full</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
@@ -397,33 +408,17 @@ section.</p>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">AIMessageChunk</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s1">'The English sentence "I love programming"</span>
-<span class="n">can</span> <span class="n">be</span> <span class="n">translated</span> <span class="n">to</span> <span class="n">French</span> <span class="k">as</span> <span class="s2">"J'aime programmer"</span><span class="o">.</span>
-<span class="n">Here</span><span class="s1">'s the breakdown of the sentence:</span>
+<span class="n">can</span> <span class="n">be</span> <span class="n">translated</span> <span class="n">to</span> <span class="n">French</span> <span class="k">as</span> <span class="s2">"J'aime programmer"</span><span class="o">.</span> <span class="n">Here</span><span class="s1">'s the</span>
+<span class="n">breakdown</span> <span class="n">of</span> <span class="n">the</span> <span class="n">sentence</span><span class="p">:</span> <span class="s2">"J'aime"</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">French</span> <span class="n">equivalent</span> <span class="n">of</span> <span class="s2">"</span>
+<span class="n">I</span> <span class="n">love</span><span class="s2">", and "</span><span class="n">programmer</span><span class="s2">" is the French infinitive for "</span><span class="n">to</span> <span class="n">program</span><span class="s2">".</span>
+<span class="n">So</span><span class="p">,</span> <span class="n">the</span> <span class="n">literal</span> <span class="n">translation</span> <span class="ow">is</span> <span class="s2">"I love to program"</span><span class="o">.</span> <span class="n">However</span><span class="p">,</span> <span class="ow">in</span>
+<span class="n">English</span> <span class="n">we</span> <span class="n">often</span> <span class="n">omit</span> <span class="n">the</span> <span class="s2">"to"</span> <span class="n">when</span> <span class="n">talking</span> <span class="n">about</span> <span class="n">activities</span> <span class="n">we</span>
+<span class="n">love</span><span class="p">,</span> <span class="ow">and</span> <span class="n">the</span> <span class="n">same</span> <span class="n">applies</span> <span class="n">to</span> <span class="n">French</span><span class="o">.</span> <span class="n">Therefore</span><span class="p">,</span> <span class="s2">"J'aime</span>
+<span class="n">programmer</span><span class="s2">" is the correct and natural way to express "</span><span class="n">I</span> <span class="n">love</span>
+<span class="n">programming</span><span class="s2">" in French.', response_metadata={'finish_reason':</span>
+<span class="s1">'stop'</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="s1">'run-a3c35ac4-0750-4d08-ac55-bfc63805de76'</span><span class="p">)</span>
 </pre></div>
 </div>
-</dd>
-</dl>
-</div></blockquote>
-<ul class="simple">
-<li><dl class="simple">
-<dt>“J’aime” is the</dt><dd><p>French equivalent of “I love”</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>“programmer” is the French</dt><dd><p>infinitive for “to program”</p>
-</dd>
-</dl>
-</li>
-</ul>
-<dl>
-<dt>So, the literal translation</dt><dd><blockquote>
-<div><p>is “I love to program”. However, in English we often omit the
-“to” when talking about activities we love, and the same applies
-to French. Therefore, “J’aime programmer” is the correct and
-natural way to express “I love programming” in French.’,
-response_metadata={‘finish_reason’: ‘stop’},
-id=’run-a3c35ac4-0750-4d08-ac55-bfc63805de76’)</p>
 </div></blockquote>
 <dl>
 <dt>Async:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
@@ -507,8 +502,6 @@ id=’run-a3c35ac4-0750-4d08-ac55-bfc63805de76’)</p>
 <span class="s1">'logprobs'</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
 </pre></div>
 </div>
-</dd>
-</dl>
 </dd>
 </dl>
 <div class="admonition note">
@@ -627,6 +620,16 @@ http_client as well if you’d like a custom client for sync invocations.</p>
 <dt class="sig sig-object py" id="langchain_groq.chat_models.ChatGroq.rate_limiter">
 <em class="property"><span class="pre">param</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rate_limiter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../../core/rate_limiters/langchain_core.rate_limiters.BaseRateLimiter.html#langchain_core.rate_limiters.BaseRateLimiter" title="langchain_core.rate_limiters.BaseRateLimiter"><span class="pre">BaseRateLimiter</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#langchain_groq.chat_models.ChatGroq.rate_limiter" title="Link to this definition">#</a></dt>
 <dd><p>An optional rate limiter to use for limiting the number of requests.</p>
+</dd></dl>
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="langchain_groq.chat_models.ChatGroq.reasoning_format">
+<em class="property"><span class="pre">param</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reasoning_format</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'parsed'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'raw'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'hidden'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#langchain_groq.chat_models.ChatGroq.reasoning_format" title="Link to this definition">#</a></dt>
+<dd><p>The format for reasoning output.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">parsed</span></code>: Separates reasoning into a dedicated field while keeping the response concise.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">raw</span></code>: Includes reasoning within think tags in the content.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hidden</span></code>: Returns only the final answer.</p></li>
+</ul>
 </dd></dl>
 <dl class="py attribute pydantic_field">
 <dt class="sig sig-object py" id="langchain_groq.chat_models.ChatGroq.request_timeout">
@@ -2143,6 +2146,7 @@ an instance of <code class="docutils literal notranslate"><span class="pre">sche
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_groq.chat_models.ChatGroq.model_name"><code class="docutils literal notranslate"><span class="pre">model_name</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_groq.chat_models.ChatGroq.n"><code class="docutils literal notranslate"><span class="pre">n</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_groq.chat_models.ChatGroq.rate_limiter"><code class="docutils literal notranslate"><span class="pre">rate_limiter</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_groq.chat_models.ChatGroq.reasoning_format"><code class="docutils literal notranslate"><span class="pre">reasoning_format</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_groq.chat_models.ChatGroq.request_timeout"><code class="docutils literal notranslate"><span class="pre">request_timeout</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_groq.chat_models.ChatGroq.stop"><code class="docutils literal notranslate"><span class="pre">stop</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_groq.chat_models.ChatGroq.streaming"><code class="docutils literal notranslate"><span class="pre">streaming</span></code></a></li>
