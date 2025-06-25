@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 24, 2025" name="docbuild:last-update"/>
+<meta content="Jun 25, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -227,6 +227,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncIterable</span><span class="p">,</span> <span class="n">AsyncIterator</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">islice</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -239,8 +240,6 @@
     <span class="n">Union</span><span class="p">,</span>
     <span class="n">cast</span><span class="p">,</span>
 <span class="p">)</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">model_validator</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.document_loaders.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseLoader</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
@@ -257,94 +256,51 @@
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T"</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_hash_string_to_uuid</span><span class="p">(</span><span class="n">input_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_hash_string_to_uuid</span><span class="p">(</span><span class="n">input_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Hashes a string and returns the corresponding UUID."""</span>
     <span class="n">hash_value</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">(</span>
         <span class="n">input_string</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">),</span> <span class="n">usedforsecurity</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid5</span><span class="p">(</span><span class="n">NAMESPACE_UUID</span><span class="p">,</span> <span class="n">hash_value</span><span class="p">))</span>
+
+
+<span class="n">_WARNED_ABOUT_SHA1</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_warn_about_sha1</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Emit a one-time warning about SHA-1 collision weaknesses."""</span>
+    <span class="c1"># Global variable OK in this case</span>
+    <span class="k">global</span> <span class="n">_WARNED_ABOUT_SHA1</span>  <span class="c1"># noqa: PLW0603</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_WARNED_ABOUT_SHA1</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">"Using SHA-1 for document hashing. SHA-1 is *not* "</span>
+            <span class="s2">"collision-resistant; a motivated attacker can construct distinct inputs "</span>
+            <span class="s2">"that map to the same fingerprint. If this matters in your "</span>
+            <span class="s2">"threat model, switch to a stronger algorithm such "</span>
+            <span class="s2">"as 'blake2b', 'sha256', or 'sha512' by specifying "</span>
+            <span class="s2">" `key_encoder` parameter in the the `index` or `aindex` function. "</span><span class="p">,</span>
+            <span class="n">category</span><span class="o">=</span><span class="ne">UserWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">_WARNED_ABOUT_SHA1</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_hash_string</span><span class="p">(</span>
+    <span class="n">input_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"sha1"</span><span class="p">,</span> <span class="s2">"sha256"</span><span class="p">,</span> <span class="s2">"sha512"</span><span class="p">,</span> <span class="s2">"blake2b"</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Hash *input_string* to a deterministic UUID using the configured algorithm."""</span>
+    <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s2">"sha1"</span><span class="p">:</span>
+        <span class="n">_warn_about_sha1</span><span class="p">()</span>
+    <span class="n">hash_value</span> <span class="o">=</span> <span class="n">_calculate_hash</span><span class="p">(</span><span class="n">input_string</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid5</span><span class="p">(</span><span class="n">NAMESPACE_UUID</span><span class="p">,</span> <span class="n">hash_value</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_hash_nested_dict_to_uuid</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Hashes a nested dictionary and returns the corresponding UUID."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_hash_nested_dict</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"sha1"</span><span class="p">,</span> <span class="s2">"sha256"</span><span class="p">,</span> <span class="s2">"sha512"</span><span class="p">,</span> <span class="s2">"blake2b"</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Hash a nested dictionary to a UUID using the configured algorithm."""</span>
     <span class="n">serialized_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">hash_value</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">(</span>
-        <span class="n">serialized_data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">),</span> <span class="n">usedforsecurity</span><span class="o">=</span><span class="kc">False</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid5</span><span class="p">(</span><span class="n">NAMESPACE_UUID</span><span class="p">,</span> <span class="n">hash_value</span><span class="p">)</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">_HashedDocument</span><span class="p">(</span><span class="n">Document</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""A hashed document with a unique ID."""</span>
-
-    <span class="n">uid</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">hash_</span><span class="p">:</span> <span class="nb">str</span>
-<span class="w">    </span><span class="sd">"""The hash of the document including content and metadata."""</span>
-    <span class="n">content_hash</span><span class="p">:</span> <span class="nb">str</span>
-<span class="w">    </span><span class="sd">"""The hash of the document content."""</span>
-    <span class="n">metadata_hash</span><span class="p">:</span> <span class="nb">str</span>
-<span class="w">    </span><span class="sd">"""The hash of the document metadata."""</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span>
-
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_hashes</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Root validator to calculate content and metadata hash."""</span>
-        <span class="n">content</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"page_content"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
-        <span class="n">metadata</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"metadata"</span><span class="p">,</span> <span class="p">{})</span>
-
-        <span class="n">forbidden_keys</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"hash_"</span><span class="p">,</span> <span class="s2">"content_hash"</span><span class="p">,</span> <span class="s2">"metadata_hash"</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">forbidden_keys</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Metadata cannot contain key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> as it "</span>
-                    <span class="sa">f</span><span class="s2">"is reserved for internal use."</span>
-                <span class="p">)</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-
-        <span class="n">content_hash</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">_hash_string_to_uuid</span><span class="p">(</span><span class="n">content</span><span class="p">))</span>
-
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">metadata_hash</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">_hash_nested_dict_to_uuid</span><span class="p">(</span><span class="n">metadata</span><span class="p">))</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Failed to hash metadata: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">. "</span>
-                <span class="sa">f</span><span class="s2">"Please use a dict that can be serialized using json."</span>
-            <span class="p">)</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-
-        <span class="n">values</span><span class="p">[</span><span class="s2">"content_hash"</span><span class="p">]</span> <span class="o">=</span> <span class="n">content_hash</span>
-        <span class="n">values</span><span class="p">[</span><span class="s2">"metadata_hash"</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata_hash</span>
-        <span class="n">values</span><span class="p">[</span><span class="s2">"hash_"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">_hash_string_to_uuid</span><span class="p">(</span><span class="n">content_hash</span> <span class="o">+</span> <span class="n">metadata_hash</span><span class="p">))</span>
-
-        <span class="n">_uid</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"uid"</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">_uid</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">values</span><span class="p">[</span><span class="s2">"uid"</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="s2">"hash_"</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">values</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">to_document</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Document</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Return a Document object."""</span>
-        <span class="k">return</span> <span class="n">Document</span><span class="p">(</span>
-            <span class="nb">id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">uid</span><span class="p">,</span>
-            <span class="n">page_content</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">page_content</span><span class="p">,</span>
-            <span class="n">metadata</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_document</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span> <span class="n">document</span><span class="p">:</span> <span class="n">Document</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">uid</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_HashedDocument</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Create a HashedDocument from a Document."""</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>  <span class="c1"># type: ignore[call-arg]</span>
-            <span class="n">uid</span><span class="o">=</span><span class="n">uid</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
-            <span class="n">page_content</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">page_content</span><span class="p">,</span>
-            <span class="n">metadata</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">_hash_string</span><span class="p">(</span><span class="n">serialized_data</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_batch</span><span class="p">(</span><span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">iterable</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span>
@@ -390,14 +346,16 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_deduplicate_in_order</span><span class="p">(</span>
-    <span class="n">hashed_documents</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">_HashedDocument</span><span class="p">],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">_HashedDocument</span><span class="p">]:</span>
+    <span class="n">hashed_documents</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Document</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Deduplicate a list of hashed documents while preserving order."""</span>
     <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
     <span class="k">for</span> <span class="n">hashed_doc</span> <span class="ow">in</span> <span class="n">hashed_documents</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">hashed_doc</span><span class="o">.</span><span class="n">hash_</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
-            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">hashed_doc</span><span class="o">.</span><span class="n">hash_</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">hashed_doc</span><span class="o">.</span><span class="n">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+            <span class="c1"># At this stage, the id is guaranteed to be a string.</span>
+            <span class="c1"># Avoiding unnecessary run time checks.</span>
+            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="s2">"str"</span><span class="p">,</span> <span class="n">hashed_doc</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
             <span class="k">yield</span> <span class="n">hashed_doc</span>
 
 
@@ -406,6 +364,94 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">IndexingException</span><span class="p">(</span><span class="n">LangChainException</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Raised when an indexing operation fails."""</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_calculate_hash</span><span class="p">(</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"sha1"</span><span class="p">,</span> <span class="s2">"sha256"</span><span class="p">,</span> <span class="s2">"sha512"</span><span class="p">,</span> <span class="s2">"blake2b"</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return a hexadecimal digest of *text* using *algorithm*."""</span>
+    <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s2">"sha1"</span><span class="p">:</span>
+        <span class="c1"># Calculate the SHA-1 hash and return it as a UUID.</span>
+        <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">),</span> <span class="n">usedforsecurity</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid5</span><span class="p">(</span><span class="n">NAMESPACE_UUID</span><span class="p">,</span> <span class="n">digest</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s2">"blake2b"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">blake2b</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s2">"sha256"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s2">"sha512"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha512</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Unsupported hashing algorithm: </span><span class="si">{</span><span class="n">algorithm</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_document_with_hash</span><span class="p">(</span>
+    <span class="n">document</span><span class="p">:</span> <span class="n">Document</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">key_encoder</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="n">Callable</span><span class="p">[[</span><span class="n">Document</span><span class="p">],</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"sha1"</span><span class="p">,</span> <span class="s2">"sha256"</span><span class="p">,</span> <span class="s2">"sha512"</span><span class="p">,</span> <span class="s2">"blake2b"</span><span class="p">]</span>
+    <span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Document</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Calculate a hash of the document, and assign it to the uid.</span>
+
+<span class="sd">    When using one of the predefined hashing algorithms, the hash is calculated</span>
+<span class="sd">    by hashing the content and the metadata of the document.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        document: Document to hash.</span>
+<span class="sd">        key_encoder: Hashing algorithm to use for hashing the document.</span>
+<span class="sd">            If not provided, a default encoder using SHA-1 will be used.</span>
+<span class="sd">            SHA-1 is not collision-resistant, and a motivated attacker</span>
+<span class="sd">            could craft two different texts that hash to the</span>
+<span class="sd">            same cache key.</span>
+
+<span class="sd">            New applications should use one of the alternative encoders</span>
+<span class="sd">            or provide a custom and strong key encoder function to avoid this risk.</span>
+
+<span class="sd">            When changing the key encoder, you must change the</span>
+<span class="sd">            index as well to avoid duplicated documents in the cache.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Document with a unique identifier based on the hash of the content and metadata.</span>
+<span class="sd">    """</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">document</span><span class="o">.</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{})</span>
+
+    <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">key_encoder</span><span class="p">):</span>
+        <span class="c1"># If key_encoder is a callable, we use it to generate the hash.</span>
+        <span class="n">hash_</span> <span class="o">=</span> <span class="n">key_encoder</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># The hashes are calculated separate for the content and the metadata.</span>
+        <span class="n">content_hash</span> <span class="o">=</span> <span class="n">_calculate_hash</span><span class="p">(</span><span class="n">document</span><span class="o">.</span><span class="n">page_content</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="n">key_encoder</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">serialized_meta</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Failed to hash metadata: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">. "</span>
+                <span class="sa">f</span><span class="s2">"Please use a dict that can be serialized using json."</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="n">metadata_hash</span> <span class="o">=</span> <span class="n">_calculate_hash</span><span class="p">(</span><span class="n">serialized_meta</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="n">key_encoder</span><span class="p">)</span>
+        <span class="n">hash_</span> <span class="o">=</span> <span class="n">_calculate_hash</span><span class="p">(</span><span class="n">content_hash</span> <span class="o">+</span> <span class="n">metadata_hash</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="n">key_encoder</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Document</span><span class="p">(</span>
+        <span class="c1"># Assign a unique identifier based on the hash.</span>
+        <span class="nb">id</span><span class="o">=</span><span class="n">hash_</span><span class="p">,</span>
+        <span class="n">page_content</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">page_content</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="n">document</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="c1"># This internal abstraction was imported by the langchain package internally, so</span>
+<span class="c1"># we keep it here for backwards compatibility.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_HashedDocument</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Raise an error if this class is instantiated."""</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"_HashedDocument is an internal abstraction that was deprecated in "</span>
+            <span class="s2">" langchain-core 0.3.63. This abstraction is marked as private and "</span>
+            <span class="s2">" should not have been used directly. If you are seeing this error, please "</span>
+            <span class="s2">" update your code appropriately."</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_delete</span><span class="p">(</span>
@@ -461,6 +507,9 @@
     <span class="n">source_id_key</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Document</span><span class="p">],</span> <span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">cleanup_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_000</span><span class="p">,</span>
     <span class="n">force_update</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">key_encoder</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="n">Literal</span><span class="p">[</span><span class="s2">"sha1"</span><span class="p">,</span> <span class="s2">"sha256"</span><span class="p">,</span> <span class="s2">"sha512"</span><span class="p">,</span> <span class="s2">"blake2b"</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Document</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="s2">"sha1"</span><span class="p">,</span>
     <span class="n">upsert_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IndexingResult</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Index data from the loader into the vector store.</span>
@@ -521,6 +570,23 @@
 <span class="sd">        force_update: Force update documents even if they are present in the</span>
 <span class="sd">            record manager. Useful if you are re-indexing with updated embeddings.</span>
 <span class="sd">            Default is False.</span>
+<span class="sd">        key_encoder: Hashing algorithm to use for hashing the document content and</span>
+<span class="sd">            metadata. Default is "sha1".</span>
+<span class="sd">            Other options include "blake2b", "sha256", and "sha512".</span>
+
+<span class="sd">            .. versionadded:: 0.3.66</span>
+
+<span class="sd">        key_encoder: Hashing algorithm to use for hashing the document.</span>
+<span class="sd">            If not provided, a default encoder using SHA-1 will be used.</span>
+<span class="sd">            SHA-1 is not collision-resistant, and a motivated attacker</span>
+<span class="sd">            could craft two different texts that hash to the</span>
+<span class="sd">            same cache key.</span>
+
+<span class="sd">            New applications should use one of the alternative encoders</span>
+<span class="sd">            or provide a custom and strong key encoder function to avoid this risk.</span>
+
+<span class="sd">            When changing the key encoder, you must change the</span>
+<span class="sd">            index as well to avoid duplicated documents in the cache.</span>
 <span class="sd">        upsert_kwargs: Additional keyword arguments to pass to the add_documents</span>
 <span class="sd">                       method of the VectorStore or the upsert method of the</span>
 <span class="sd">                       DocumentIndex. For example, you can use this to</span>
@@ -543,6 +609,11 @@
 
 <span class="sd">        * Added `scoped_full` cleanup mode.</span>
 <span class="sd">    """</span>
+    <span class="c1"># Behavior is deprecated, but we keep it for backwards compatibility.</span>
+    <span class="c1"># # Warn only once per process.</span>
+    <span class="k">if</span> <span class="n">key_encoder</span> <span class="o">==</span> <span class="s2">"sha1"</span><span class="p">:</span>
+        <span class="n">_warn_about_sha1</span><span class="p">()</span>
+
     <span class="k">if</span> <span class="n">cleanup</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"incremental"</span><span class="p">,</span> <span class="s2">"full"</span><span class="p">,</span> <span class="s2">"scoped_full"</span><span class="p">,</span> <span class="kc">None</span><span class="p">}:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">"cleanup should be one of 'incremental', 'full', 'scoped_full' or None. "</span>
@@ -605,12 +676,15 @@
     <span class="k">for</span> <span class="n">doc_batch</span> <span class="ow">in</span> <span class="n">_batch</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">doc_iterator</span><span class="p">):</span>
         <span class="n">hashed_docs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
             <span class="n">_deduplicate_in_order</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">_HashedDocument</span><span class="o">.</span><span class="n">from_document</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">doc_batch</span><span class="p">]</span>
+                <span class="p">[</span>
+                    <span class="n">_get_document_with_hash</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">key_encoder</span><span class="o">=</span><span class="n">key_encoder</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">doc_batch</span>
+                <span class="p">]</span>
             <span class="p">)</span>
         <span class="p">)</span>
 
         <span class="n">source_ids</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">source_id_assigner</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">hashed_docs</span>
+            <span class="n">source_id_assigner</span><span class="p">(</span><span class="n">hashed_doc</span><span class="p">)</span> <span class="k">for</span> <span class="n">hashed_doc</span> <span class="ow">in</span> <span class="n">hashed_docs</span>
         <span class="p">]</span>
 
         <span class="k">if</span> <span class="n">cleanup</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"incremental"</span><span class="p">,</span> <span class="s2">"scoped_full"</span><span class="p">}:</span>
@@ -621,8 +695,8 @@
                         <span class="sa">f</span><span class="s2">"Source ids are required when cleanup mode is "</span>
                         <span class="sa">f</span><span class="s2">"incremental or scoped_full. "</span>
                         <span class="sa">f</span><span class="s2">"Document that starts with "</span>
-                        <span class="sa">f</span><span class="s2">"content: </span><span class="si">{</span><span class="n">hashed_doc</span><span class="o">.</span><span class="n">page_content</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span><span class="si">}</span><span class="s2"> was not assigned "</span>
-                        <span class="sa">f</span><span class="s2">"as source id."</span>
+                        <span class="sa">f</span><span class="s2">"content: </span><span class="si">{</span><span class="n">hashed_doc</span><span class="o">.</span><span class="n">page_content</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span><span class="si">}</span><span class="s2"> "</span>
+                        <span class="sa">f</span><span class="s2">"was not assigned as source id."</span>
                     <span class="p">)</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"scoped_full"</span><span class="p">:</span>
@@ -630,7 +704,9 @@
             <span class="c1"># source ids cannot be None after for loop above.</span>
             <span class="n">source_ids</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"Sequence[str]"</span><span class="p">,</span> <span class="n">source_ids</span><span class="p">)</span>
 
-        <span class="n">exists_batch</span> <span class="o">=</span> <span class="n">record_manager</span><span class="o">.</span><span class="n">exists</span><span class="p">([</span><span class="n">doc</span><span class="o">.</span><span class="n">uid</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">hashed_docs</span><span class="p">])</span>
+        <span class="n">exists_batch</span> <span class="o">=</span> <span class="n">record_manager</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span>
+            <span class="n">cast</span><span class="p">(</span><span class="s2">"Sequence[str]"</span><span class="p">,</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">hashed_docs</span><span class="p">])</span>
+        <span class="p">)</span>
 
         <span class="c1"># Filter out documents that already exist in the record store.</span>
         <span class="n">uids</span> <span class="o">=</span> <span class="p">[]</span>
@@ -638,14 +714,15 @@
         <span class="n">uids_to_refresh</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">seen_docs</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">hashed_doc</span><span class="p">,</span> <span class="n">doc_exists</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">hashed_docs</span><span class="p">,</span> <span class="n">exists_batch</span><span class="p">):</span>
+            <span class="n">hashed_id</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"str"</span><span class="p">,</span> <span class="n">hashed_doc</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">doc_exists</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">force_update</span><span class="p">:</span>
-                    <span class="n">seen_docs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">hashed_doc</span><span class="o">.</span><span class="n">uid</span><span class="p">)</span>
+                    <span class="n">seen_docs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">hashed_id</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">uids_to_refresh</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hashed_doc</span><span class="o">.</span><span class="n">uid</span><span class="p">)</span>
+                    <span class="n">uids_to_refresh</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hashed_id</span><span class="p">)</span>
                     <span class="k">continue</span>
-            <span class="n">uids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hashed_doc</span><span class="o">.</span><span class="n">uid</span><span class="p">)</span>
-            <span class="n">docs_to_index</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hashed_doc</span><span class="o">.</span><span class="n">to_document</span><span class="p">())</span>
+            <span class="n">uids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hashed_id</span><span class="p">)</span>
+            <span class="n">docs_to_index</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hashed_doc</span><span class="p">)</span>
 
         <span class="c1"># Update refresh timestamp</span>
         <span class="k">if</span> <span class="n">uids_to_refresh</span><span class="p">:</span>
@@ -675,7 +752,7 @@
         <span class="c1"># Update ALL records, even if they already exist since we want to refresh</span>
         <span class="c1"># their timestamp.</span>
         <span class="n">record_manager</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">uid</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">hashed_docs</span><span class="p">],</span>
+            <span class="n">cast</span><span class="p">(</span><span class="s2">"Sequence[str]"</span><span class="p">,</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">hashed_docs</span><span class="p">]),</span>
             <span class="n">group_ids</span><span class="o">=</span><span class="n">source_ids</span><span class="p">,</span>
             <span class="n">time_at_least</span><span class="o">=</span><span class="n">index_start_dt</span><span class="p">,</span>
         <span class="p">)</span>
@@ -683,7 +760,6 @@
         <span class="c1"># If source IDs are provided, we can do the deletion incrementally!</span>
         <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"incremental"</span><span class="p">:</span>
             <span class="c1"># Get the uids of the documents that were not returned by the loader.</span>
-
             <span class="c1"># mypy isn't good enough to determine that source ids cannot be None</span>
             <span class="c1"># here due to a check that's happening above, so we check again.</span>
             <span class="k">for</span> <span class="n">source_id</span> <span class="ow">in</span> <span class="n">source_ids</span><span class="p">:</span>
@@ -770,6 +846,9 @@
     <span class="n">source_id_key</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Document</span><span class="p">],</span> <span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">cleanup_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_000</span><span class="p">,</span>
     <span class="n">force_update</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">key_encoder</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="n">Literal</span><span class="p">[</span><span class="s2">"sha1"</span><span class="p">,</span> <span class="s2">"sha256"</span><span class="p">,</span> <span class="s2">"sha512"</span><span class="p">,</span> <span class="s2">"blake2b"</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Document</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="s2">"sha1"</span><span class="p">,</span>
     <span class="n">upsert_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IndexingResult</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Async index data from the loader into the vector store.</span>
@@ -829,6 +908,17 @@
 <span class="sd">        force_update: Force update documents even if they are present in the</span>
 <span class="sd">            record manager. Useful if you are re-indexing with updated embeddings.</span>
 <span class="sd">            Default is False.</span>
+<span class="sd">        key_encoder: Hashing algorithm to use for hashing the document.</span>
+<span class="sd">            If not provided, a default encoder using SHA-1 will be used.</span>
+<span class="sd">            SHA-1 is not collision-resistant, and a motivated attacker</span>
+<span class="sd">            could craft two different texts that hash to the</span>
+<span class="sd">            same cache key.</span>
+
+<span class="sd">            New applications should use one of the alternative encoders</span>
+<span class="sd">            or provide a custom and strong key encoder function to avoid this risk.</span>
+
+<span class="sd">            When changing the key encoder, you must change the</span>
+<span class="sd">            index as well to avoid duplicated documents in the cache.</span>
 <span class="sd">        upsert_kwargs: Additional keyword arguments to pass to the aadd_documents</span>
 <span class="sd">                       method of the VectorStore or the aupsert method of the</span>
 <span class="sd">                       DocumentIndex. For example, you can use this to</span>
@@ -851,6 +941,11 @@
 
 <span class="sd">        * Added `scoped_full` cleanup mode.</span>
 <span class="sd">    """</span>
+    <span class="c1"># Behavior is deprecated, but we keep it for backwards compatibility.</span>
+    <span class="c1"># # Warn only once per process.</span>
+    <span class="k">if</span> <span class="n">key_encoder</span> <span class="o">==</span> <span class="s2">"sha1"</span><span class="p">:</span>
+        <span class="n">_warn_about_sha1</span><span class="p">()</span>
+
     <span class="k">if</span> <span class="n">cleanup</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"incremental"</span><span class="p">,</span> <span class="s2">"full"</span><span class="p">,</span> <span class="s2">"scoped_full"</span><span class="p">,</span> <span class="kc">None</span><span class="p">}:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">"cleanup should be one of 'incremental', 'full', 'scoped_full' or None. "</span>
@@ -924,7 +1019,10 @@
     <span class="k">async</span> <span class="k">for</span> <span class="n">doc_batch</span> <span class="ow">in</span> <span class="n">_abatch</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">async_doc_iterator</span><span class="p">):</span>
         <span class="n">hashed_docs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
             <span class="n">_deduplicate_in_order</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">_HashedDocument</span><span class="o">.</span><span class="n">from_document</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">doc_batch</span><span class="p">]</span>
+                <span class="p">[</span>
+                    <span class="n">_get_document_with_hash</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">key_encoder</span><span class="o">=</span><span class="n">key_encoder</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">doc_batch</span>
+                <span class="p">]</span>
             <span class="p">)</span>
         <span class="p">)</span>
 
@@ -940,8 +1038,8 @@
                         <span class="sa">f</span><span class="s2">"Source ids are required when cleanup mode is "</span>
                         <span class="sa">f</span><span class="s2">"incremental or scoped_full. "</span>
                         <span class="sa">f</span><span class="s2">"Document that starts with "</span>
-                        <span class="sa">f</span><span class="s2">"content: </span><span class="si">{</span><span class="n">hashed_doc</span><span class="o">.</span><span class="n">page_content</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span><span class="si">}</span><span class="s2"> was not assigned "</span>
-                        <span class="sa">f</span><span class="s2">"as source id."</span>
+                        <span class="sa">f</span><span class="s2">"content: </span><span class="si">{</span><span class="n">hashed_doc</span><span class="o">.</span><span class="n">page_content</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span><span class="si">}</span><span class="s2"> "</span>
+                        <span class="sa">f</span><span class="s2">"was not assigned as source id."</span>
                     <span class="p">)</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">cleanup</span> <span class="o">==</span> <span class="s2">"scoped_full"</span><span class="p">:</span>
@@ -949,7 +1047,9 @@
             <span class="c1"># source ids cannot be None after for loop above.</span>
             <span class="n">source_ids</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"Sequence[str]"</span><span class="p">,</span> <span class="n">source_ids</span><span class="p">)</span>
 
-        <span class="n">exists_batch</span> <span class="o">=</span> <span class="k">await</span> <span class="n">record_manager</span><span class="o">.</span><span class="n">aexists</span><span class="p">([</span><span class="n">doc</span><span class="o">.</span><span class="n">uid</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">hashed_docs</span><span class="p">])</span>
+        <span class="n">exists_batch</span> <span class="o">=</span> <span class="k">await</span> <span class="n">record_manager</span><span class="o">.</span><span class="n">aexists</span><span class="p">(</span>
+            <span class="n">cast</span><span class="p">(</span><span class="s2">"Sequence[str]"</span><span class="p">,</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">hashed_docs</span><span class="p">])</span>
+        <span class="p">)</span>
 
         <span class="c1"># Filter out documents that already exist in the record store.</span>
         <span class="n">uids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -957,14 +1057,15 @@
         <span class="n">uids_to_refresh</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">seen_docs</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">hashed_doc</span><span class="p">,</span> <span class="n">doc_exists</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">hashed_docs</span><span class="p">,</span> <span class="n">exists_batch</span><span class="p">):</span>
+            <span class="n">hashed_id</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"str"</span><span class="p">,</span> <span class="n">hashed_doc</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">doc_exists</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">force_update</span><span class="p">:</span>
-                    <span class="n">seen_docs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">hashed_doc</span><span class="o">.</span><span class="n">uid</span><span class="p">)</span>
+                    <span class="n">seen_docs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">hashed_id</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">uids_to_refresh</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hashed_doc</span><span class="o">.</span><span class="n">uid</span><span class="p">)</span>
+                    <span class="n">uids_to_refresh</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hashed_id</span><span class="p">)</span>
                     <span class="k">continue</span>
-            <span class="n">uids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hashed_doc</span><span class="o">.</span><span class="n">uid</span><span class="p">)</span>
-            <span class="n">docs_to_index</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hashed_doc</span><span class="o">.</span><span class="n">to_document</span><span class="p">())</span>
+            <span class="n">uids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hashed_id</span><span class="p">)</span>
+            <span class="n">docs_to_index</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hashed_doc</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">uids_to_refresh</span><span class="p">:</span>
             <span class="c1"># Must be updated to refresh timestamp.</span>
@@ -993,7 +1094,7 @@
         <span class="c1"># Update ALL records, even if they already exist since we want to refresh</span>
         <span class="c1"># their timestamp.</span>
         <span class="k">await</span> <span class="n">record_manager</span><span class="o">.</span><span class="n">aupdate</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">uid</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">hashed_docs</span><span class="p">],</span>
+            <span class="n">cast</span><span class="p">(</span><span class="s2">"Sequence[str]"</span><span class="p">,</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">hashed_docs</span><span class="p">]),</span>
             <span class="n">group_ids</span><span class="o">=</span><span class="n">source_ids</span><span class="p">,</span>
             <span class="n">time_at_least</span><span class="o">=</span><span class="n">index_start_dt</span><span class="p">,</span>
         <span class="p">)</span>

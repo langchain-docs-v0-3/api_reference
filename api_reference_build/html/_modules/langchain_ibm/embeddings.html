@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 24, 2025" name="docbuild:last-update"/>
+<meta content="Jun 25, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -240,7 +240,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">WatsonxEmbeddings</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">,</span> <span class="n">LangChainEmbeddings</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""IBM watsonx.ai embedding models."""</span>
 
-    <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">model_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Type of model to use."""</span>
 
     <span class="n">project_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -309,7 +309,19 @@
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validate that credentials and python package exists in environment."""</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">watsonx_client</span><span class="p">,</span> <span class="n">APIClient</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">watsonx_embed</span><span class="p">,</span> <span class="n">Embeddings</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">watsonx_embed</span><span class="p">,</span> <span class="s2">"model_id"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">project_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">watsonx_embed</span><span class="p">,</span> <span class="s2">"_client"</span><span class="p">),</span>
+                <span class="s2">"default_project_id"</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">space_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">watsonx_embed</span><span class="p">,</span> <span class="s2">"_client"</span><span class="p">),</span> <span class="s2">"default_space_id"</span>
+            <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">watsonx_embed</span><span class="p">,</span> <span class="s2">"params"</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">watsonx_client</span><span class="p">,</span> <span class="n">APIClient</span><span class="p">):</span>
             <span class="n">watsonx_embed</span> <span class="o">=</span> <span class="n">Embeddings</span><span class="p">(</span>
                 <span class="n">model_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_id</span><span class="p">,</span>
                 <span class="n">params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span>
