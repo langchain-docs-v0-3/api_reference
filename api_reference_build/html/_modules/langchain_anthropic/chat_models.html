@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 25, 2025" name="docbuild:last-update"/>
+<meta content="Jun 26, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -291,6 +291,10 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotRequired</span><span class="p">,</span> <span class="n">TypedDict</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_anthropic._client_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_get_default_async_httpx_client</span><span class="p">,</span>
+    <span class="n">_get_default_httpx_client</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_anthropic.output_parsers</span><span class="w"> </span><span class="kn">import</span> <span class="n">extract_tool_calls</span>
 
 <span class="n">_message_type_lookups</span> <span class="o">=</span> <span class="p">{</span>
@@ -1527,11 +1531,29 @@
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">anthropic</span><span class="o">.</span><span class="n">Client</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">anthropic</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_client_params</span><span class="p">)</span>
+        <span class="n">client_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client_params</span>
+        <span class="n">http_client_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"base_url"</span><span class="p">:</span> <span class="n">client_params</span><span class="p">[</span><span class="s2">"base_url"</span><span class="p">]}</span>
+        <span class="k">if</span> <span class="s2">"timeout"</span> <span class="ow">in</span> <span class="n">client_params</span><span class="p">:</span>
+            <span class="n">http_client_params</span><span class="p">[</span><span class="s2">"timeout"</span><span class="p">]</span> <span class="o">=</span> <span class="n">client_params</span><span class="p">[</span><span class="s2">"timeout"</span><span class="p">]</span>
+        <span class="n">http_client</span> <span class="o">=</span> <span class="n">_get_default_httpx_client</span><span class="p">(</span><span class="o">**</span><span class="n">http_client_params</span><span class="p">)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="o">**</span><span class="n">client_params</span><span class="p">,</span>
+            <span class="s2">"http_client"</span><span class="p">:</span> <span class="n">http_client</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">anthropic</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_async_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">anthropic</span><span class="o">.</span><span class="n">AsyncClient</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">anthropic</span><span class="o">.</span><span class="n">AsyncClient</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_client_params</span><span class="p">)</span>
+        <span class="n">client_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client_params</span>
+        <span class="n">http_client_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"base_url"</span><span class="p">:</span> <span class="n">client_params</span><span class="p">[</span><span class="s2">"base_url"</span><span class="p">]}</span>
+        <span class="k">if</span> <span class="s2">"timeout"</span> <span class="ow">in</span> <span class="n">client_params</span><span class="p">:</span>
+            <span class="n">http_client_params</span><span class="p">[</span><span class="s2">"timeout"</span><span class="p">]</span> <span class="o">=</span> <span class="n">client_params</span><span class="p">[</span><span class="s2">"timeout"</span><span class="p">]</span>
+        <span class="n">http_client</span> <span class="o">=</span> <span class="n">_get_default_async_httpx_client</span><span class="p">(</span><span class="o">**</span><span class="n">http_client_params</span><span class="p">)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="o">**</span><span class="n">client_params</span><span class="p">,</span>
+            <span class="s2">"http_client"</span><span class="p">:</span> <span class="n">http_client</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">anthropic</span><span class="o">.</span><span class="n">AsyncClient</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_request_payload</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>

@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 25, 2025" name="docbuild:last-update"/>
+<meta content="Jun 26, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -761,6 +761,15 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>  <span class="c1"># todo: remove</span>
 <span class="w">        </span><span class="sd">"""Generates payload for the _NVIDIAClient API to send to service."""</span>
         <span class="n">messages</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Add system message for thinking mode if specified</span>
+        <span class="n">thinking_mode</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"thinking_mode"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">thinking_mode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">"detailed thinking on"</span> <span class="k">if</span> <span class="n">thinking_mode</span> <span class="k">else</span> <span class="s2">"detailed thinking off"</span>
+            <span class="p">)</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"system"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">content</span><span class="p">})</span>
+
         <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
                 <span class="c1"># (WFH) this shouldn't ever be reached but leaving this here bcs</span>
@@ -1147,6 +1156,52 @@
                 <span class="n">ls_structured_output_format</span><span class="o">=</span><span class="n">ls_structured_output_format</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="o">|</span> <span class="n">output_parser</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ChatNVIDIA.with_thinking_mode">
+<a class="viewcode-back" href="../../nvidia_ai_endpoints/chat_models/langchain_nvidia_ai_endpoints.chat_models.ChatNVIDIA.html#langchain_nvidia_ai_endpoints.chat_models.ChatNVIDIA.with_thinking_mode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_thinking_mode</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Runnable</span><span class="p">[</span><span class="n">LanguageModelInput</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Configure the model to use thinking mode.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            enabled (bool): Whether to enable thinking mode. Defaults to True.</span>
+<span class="sd">            **kwargs: Additional keyword arguments.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A runnable that will use thinking mode when enabled.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            .. code-block:: python</span>
+
+<span class="sd">                from langchain_nvidia_ai_endpoints import ChatNVIDIA</span>
+
+<span class="sd">                model = ChatNVIDIA(model="nvidia/llama-3.1-nemotron-nano-8b-v1")</span>
+
+<span class="sd">                # Enable thinking mode</span>
+<span class="sd">                thinking_model = model.with_thinking_mode(enabled=True)</span>
+<span class="sd">                response = thinking_model.invoke("Hello")</span>
+
+<span class="sd">                # Disable thinking mode</span>
+<span class="sd">                no_thinking_model = model.with_thinking_mode(enabled=False)</span>
+<span class="sd">                response = no_thinking_model.invoke("Hello")</span>
+<span class="sd">        """</span>
+        <span class="c1"># check if the model supports thinking mode, warn if it does not</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">model</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">supports_thinking</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Model '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="si">}</span><span class="s2">' does not support thinking mode. "</span>
+                <span class="s2">"The thinking mode configuration will be ignored."</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span>
+            <span class="n">thinking_mode</span><span class="o">=</span><span class="n">enabled</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span></div>
 </div>
 
