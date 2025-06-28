@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 27, 2025" name="docbuild:last-update"/>
+<meta content="Jun 28, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -307,7 +307,7 @@
 <div class="viewcode-block" id="ChatGroq">
 <a class="viewcode-back" href="../../groq/chat_models/langchain_groq.chat_models.ChatGroq.html#langchain_groq.chat_models.ChatGroq">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ChatGroq</span><span class="p">(</span><span class="n">BaseChatModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""`Groq` Chat large language models API.</span>
+<span class="w">    </span><span class="sd">"""Groq Chat large language models API.</span>
 
 <span class="sd">    To use, you should have the</span>
 <span class="sd">    environment variable ``GROQ_API_KEY`` set with your API key.</span>
@@ -326,17 +326,27 @@
 
 <span class="sd">    Key init args — completion params:</span>
 <span class="sd">        model: str</span>
-<span class="sd">            Name of Groq model to use. E.g. "llama-3.1-8b-instant".</span>
+<span class="sd">            Name of Groq model to use, e.g. ``llama-3.1-8b-instant``.</span>
 <span class="sd">        temperature: float</span>
-<span class="sd">            Sampling temperature. Ranges from 0.0 to 1.0.</span>
+<span class="sd">            Sampling temperature. Ranges from ``0.0`` to ``1.0``.</span>
 <span class="sd">        max_tokens: Optional[int]</span>
 <span class="sd">            Max number of tokens to generate.</span>
 <span class="sd">        reasoning_format: Optional[Literal["parsed", "raw", "hidden]]</span>
-<span class="sd">            The format for reasoning output.</span>
+<span class="sd">            The format for reasoning output. Groq will default to ``raw`` if left</span>
+<span class="sd">            undefined.</span>
 
-<span class="sd">            - ``parsed``: Separates reasoning into a dedicated field while keeping the response concise.</span>
-<span class="sd">            - ``raw``: Includes reasoning within think tags in the content.</span>
-<span class="sd">            - ``hidden``: Returns only the final answer.</span>
+<span class="sd">            - ``'parsed'``: Separates reasoning into a dedicated field while keeping the</span>
+<span class="sd">              response concise. Reasoning will be returned in the</span>
+<span class="sd">              ``additional_kwargs.reasoning_content`` field of the response.</span>
+<span class="sd">            - ``'raw'``: Includes reasoning within think tags (e.g.</span>
+<span class="sd">              ``&lt;think&gt;{reasoning_content}&lt;/think&gt;``).</span>
+<span class="sd">            - ``'hidden'``: Returns only the final answer content. Note: this only</span>
+<span class="sd">              supresses reasoning content in the response; the model will still perform</span>
+<span class="sd">              reasoning unless overridden in ``reasoning_effort``.</span>
+
+<span class="sd">            See the `Groq documentation</span>
+<span class="sd">            &lt;https://console.groq.com/docs/reasoning#reasoning&gt;`__ for more</span>
+<span class="sd">            details and a list of supported reasoning models.</span>
 <span class="sd">        model_kwargs: Dict[str, Any]</span>
 <span class="sd">            Holds any model parameters valid for create call not</span>
 <span class="sd">            explicitly specified.</span>
@@ -347,7 +357,7 @@
 <span class="sd">        max_retries: int</span>
 <span class="sd">            Max number of retries.</span>
 <span class="sd">        api_key: Optional[str]</span>
-<span class="sd">            Groq API key. If not passed in will be read from env var GROQ_API_KEY.</span>
+<span class="sd">            Groq API key. If not passed in will be read from env var ``GROQ_API_KEY``.</span>
 <span class="sd">        base_url: Optional[str]</span>
 <span class="sd">            Base URL path for API requests, leave blank if not using a proxy</span>
 <span class="sd">            or service emulator.</span>
@@ -392,11 +402,9 @@
 <span class="sd">            'logprobs': None}, id='run-ecc71d70-e10c-4b69-8b8c-b8027d95d4b8-0')</span>
 
 <span class="sd">    Stream:</span>
-
-<span class="sd">        Streaming `text` for each content chunk received:</span>
-
 <span class="sd">        .. code-block:: python</span>
 
+<span class="sd">            # Streaming `text` for each content chunk received</span>
 <span class="sd">            for chunk in llm.stream(messages):</span>
 <span class="sd">                print(chunk.text(), end="")</span>
 
@@ -412,10 +420,9 @@
 <span class="sd">            content='' response_metadata={'finish_reason': 'stop'}</span>
 <span class="sd">            id='run-4e9f926b-73f5-483b-8ef5-09533d925853</span>
 
-<span class="sd">        Reconstructing a full response:</span>
-
 <span class="sd">        .. code-block:: python</span>
 
+<span class="sd">            # Reconstructing a full response</span>
 <span class="sd">            stream = llm.stream(messages)</span>
 <span class="sd">            full = next(stream)</span>
 <span class="sd">            for chunk in stream:</span>
@@ -507,7 +514,7 @@
 
 <span class="sd">        See ``ChatGroq.with_structured_output()`` for more.</span>
 
-<span class="sd">    Response metadata</span>
+<span class="sd">    Response metadata:</span>
 <span class="sd">        .. code-block:: python</span>
 
 <span class="sd">            ai_msg = llm.invoke(messages)</span>
@@ -526,7 +533,7 @@
 <span class="sd">            'system_fingerprint': 'fp_c5f20b5bb1',</span>
 <span class="sd">            'finish_reason': 'stop',</span>
 <span class="sd">            'logprobs': None}</span>
-<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">    """</span>
 
     <span class="n">client</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1">#: :meta private:</span>
     <span class="n">async_client</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1">#: :meta private:</span>
@@ -536,23 +543,44 @@
 <span class="w">    </span><span class="sd">"""What sampling temperature to use."""</span>
     <span class="n">stop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">"stop_sequences"</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">"""Default stop sequences."""</span>
-    <span class="n">reasoning_format</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"parsed"</span><span class="p">,</span> <span class="s2">"raw"</span><span class="p">,</span> <span class="s2">"hidden"</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">"""The format for reasoning output.</span>
+    <span class="n">reasoning_format</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"parsed"</span><span class="p">,</span> <span class="s2">"raw"</span><span class="p">,</span> <span class="s2">"hidden"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""The format for reasoning output. Groq will default to raw if left undefined.</span>
 
-<span class="sd">            - ``parsed``: Separates reasoning into a dedicated field while keeping the response concise.</span>
-<span class="sd">            - ``raw``: Includes reasoning within think tags in the content.</span>
-<span class="sd">            - ``hidden``: Returns only the final answer.</span>
-<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">    - ``'parsed'``: Separates reasoning into a dedicated field while keeping the</span>
+<span class="sd">      response concise. Reasoning will be returned in the</span>
+<span class="sd">      ``additional_kwargs.reasoning_content`` field of the response.</span>
+<span class="sd">    - ``'raw'``: Includes reasoning within think tags (e.g.</span>
+<span class="sd">      ``&lt;think&gt;{reasoning_content}&lt;/think&gt;``).</span>
+<span class="sd">    - ``'hidden'``: Returns only the final answer content. Note: this only supresses</span>
+<span class="sd">      reasoning content in the response; the model will still perform reasoning unless</span>
+<span class="sd">      overridden in ``reasoning_effort``.</span>
+
+<span class="sd">    See the `Groq documentation &lt;https://console.groq.com/docs/reasoning#reasoning&gt;`__</span>
+<span class="sd">    for more details and a list of supported reasoning models.</span>
+<span class="sd">    """</span>
+    <span class="n">reasoning_effort</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"none"</span><span class="p">,</span> <span class="s2">"default"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""The level of effort the model will put into reasoning. Groq will default to</span>
+<span class="sd">    enabling reasoning if left undefined. If set to ``none``, ``reasoning_format`` will</span>
+<span class="sd">    not apply and ``reasoning_content`` will not be returned.</span>
+
+<span class="sd">    - ``'none'``: Disable reasoning. The model will not use any reasoning tokens when</span>
+<span class="sd">      generating a response.</span>
+<span class="sd">    - ``'default'``: Enable reasoning.</span>
+
+<span class="sd">    See the `Groq documentation</span>
+<span class="sd">    &lt;https://console.groq.com/docs/reasoning#options-for-reasoning-effort&gt;`__ for more</span>
+<span class="sd">    details and a list of models that support setting a reasoning effort.</span>
+<span class="sd">    """</span>
     <span class="n">model_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">"""Holds any model parameters valid for `create` call not explicitly specified."""</span>
     <span class="n">groq_api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SecretStr</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">alias</span><span class="o">=</span><span class="s2">"api_key"</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="n">secret_from_env</span><span class="p">(</span><span class="s2">"GROQ_API_KEY"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="p">)</span>
-<span class="w">    </span><span class="sd">"""Automatically inferred from env var `GROQ_API_KEY` if not provided."""</span>
+<span class="w">    </span><span class="sd">"""Automatically inferred from env var ``GROQ_API_KEY`` if not provided."""</span>
     <span class="n">groq_api_base</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">alias</span><span class="o">=</span><span class="s2">"base_url"</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="n">from_env</span><span class="p">(</span><span class="s2">"GROQ_API_BASE"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="p">)</span>
-<span class="w">    </span><span class="sd">"""Base URL path for API requests, leave blank if not using a proxy or service</span>
+<span class="w">    </span><span class="sd">"""Base URL path for API requests. Leave blank if not using a proxy or service</span>
 <span class="sd">        emulator."""</span>
     <span class="c1"># to support explicit proxy for Groq</span>
     <span class="n">groq_proxy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
@@ -650,11 +678,11 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span> <span class="o">=</span> <span class="n">groq</span><span class="o">.</span><span class="n">AsyncGroq</span><span class="p">(</span>
                     <span class="o">**</span><span class="n">client_params</span><span class="p">,</span> <span class="o">**</span><span class="n">async_specific</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span>
-        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
                 <span class="s2">"Could not import groq python package. "</span>
                 <span class="s2">"Please install it with `pip install groq`."</span>
-            <span class="p">)</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="c1">#</span>
@@ -848,6 +876,7 @@
             <span class="s2">"temperature"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span><span class="p">,</span>
             <span class="s2">"stop"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
             <span class="s2">"reasoning_format"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">reasoning_format</span><span class="p">,</span>
+            <span class="s2">"reasoning_effort"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">reasoning_effort</span><span class="p">,</span>
             <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tokens</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1461,7 +1490,7 @@
             <span class="k">for</span> <span class="n">raw_tool_call</span> <span class="ow">in</span> <span class="n">raw_tool_calls</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">tool_calls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">parse_tool_call</span><span class="p">(</span><span class="n">raw_tool_call</span><span class="p">,</span> <span class="n">return_id</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pylint: disable=broad-except</span>
                     <span class="n">invalid_tool_calls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                         <span class="n">make_invalid_tool_call</span><span class="p">(</span><span class="n">raw_tool_call</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
                     <span class="p">)</span>

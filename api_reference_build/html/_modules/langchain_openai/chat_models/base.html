@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 27, 2025" name="docbuild:last-update"/>
+<meta content="Jun 28, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -2520,11 +2520,23 @@
 <span class="sd">        `docs &lt;https://python.langchain.com/docs/integrations/chat/openai/&gt;`_ for more</span>
 <span class="sd">        detail.</span>
 
+<span class="sd">        .. note::</span>
+<span class="sd">            ``langchain-openai &gt;= 0.3.26`` allows users to opt-in to an updated</span>
+<span class="sd">            AIMessage format when using the Responses API. Setting</span>
+
+<span class="sd">            ..  code-block:: python</span>
+
+<span class="sd">                llm = ChatOpenAI(model="...", output_version="responses/v1")</span>
+
+<span class="sd">            will format output from reasoning summaries, built-in tool invocations, and</span>
+<span class="sd">            other response items into the message's ``content`` field, rather than</span>
+<span class="sd">            ``additional_kwargs``. We recommend this format for new applications.</span>
+
 <span class="sd">        .. code-block:: python</span>
 
 <span class="sd">            from langchain_openai import ChatOpenAI</span>
 
-<span class="sd">            llm = ChatOpenAI(model="gpt-4o-mini")</span>
+<span class="sd">            llm = ChatOpenAI(model="gpt-4.1-mini", output_version="responses/v1")</span>
 
 <span class="sd">            tool = {"type": "web_search_preview"}</span>
 <span class="sd">            llm_with_tools = llm.bind_tools([tool])</span>
@@ -2565,7 +2577,7 @@
 
 <span class="sd">            from langchain_openai import ChatOpenAI</span>
 
-<span class="sd">            llm = ChatOpenAI(model="gpt-4o-mini", use_responses_api=True)</span>
+<span class="sd">            llm = ChatOpenAI(model="gpt-4.1-mini", use_responses_api=True)</span>
 <span class="sd">            response = llm.invoke("Hi, I'm Bob.")</span>
 <span class="sd">            response.text()</span>
 
@@ -2584,10 +2596,33 @@
 
 <span class="sd">            "Your name is Bob. How can I help you today, Bob?"</span>
 
+<span class="sd">        .. versionadded:: 0.3.26</span>
+
+<span class="sd">        You can also initialize ChatOpenAI with :attr:`use_previous_response_id`.</span>
+<span class="sd">        Input messages up to the most recent response will then be dropped from request</span>
+<span class="sd">        payloads, and ``previous_response_id`` will be set using the ID of the most</span>
+<span class="sd">        recent response.</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            llm = ChatOpenAI(model="gpt-4.1-mini", use_previous_response_id=True)</span>
+
 <span class="sd">    .. dropdown:: Reasoning output</span>
 
 <span class="sd">        OpenAI's Responses API supports `reasoning models &lt;https://platform.openai.com/docs/guides/reasoning?api-mode=responses&gt;`_</span>
 <span class="sd">        that expose a summary of internal reasoning processes.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            ``langchain-openai &gt;= 0.3.26`` allows users to opt-in to an updated</span>
+<span class="sd">            AIMessage format when using the Responses API. Setting</span>
+
+<span class="sd">            ..  code-block:: python</span>
+
+<span class="sd">                llm = ChatOpenAI(model="...", output_version="responses/v1")</span>
+
+<span class="sd">            will format output from reasoning summaries, built-in tool invocations, and</span>
+<span class="sd">            other response items into the message's ``content`` field, rather than</span>
+<span class="sd">            ``additional_kwargs``. We recommend this format for new applications.</span>
 
 <span class="sd">        .. code-block:: python</span>
 
@@ -2599,24 +2634,23 @@
 <span class="sd">            }</span>
 
 <span class="sd">            llm = ChatOpenAI(</span>
-<span class="sd">                model="o4-mini", use_responses_api=True, model_kwargs={"reasoning": reasoning}</span>
+<span class="sd">                model="o4-mini", reasoning=reasoning, output_version="responses/v1"</span>
 <span class="sd">            )</span>
 <span class="sd">            response = llm.invoke("What is 3^3?")</span>
 
+<span class="sd">            # Response text</span>
 <span class="sd">            print(f"Output: {response.text()}")</span>
-<span class="sd">            print(f"Reasoning: {response.additional_kwargs['reasoning']}")</span>
+
+<span class="sd">            # Reasoning summaries</span>
+<span class="sd">            for block in response.content:</span>
+<span class="sd">                if block["type"] == "reasoning":</span>
+<span class="sd">                    for summary in block["summary"]:</span>
+<span class="sd">                        print(summary["text"])</span>
 
 <span class="sd">        .. code-block:: none</span>
 
-<span class="sd">            Output: 3^3 = 27.</span>
-
-<span class="sd">            Reasoning: {</span>
-<span class="sd">                'id': 'rs_67fffc44b1c08191b6ca9bead6d832590433145b1786f809',</span>
-<span class="sd">                'summary': [</span>
-<span class="sd">                    {'text': 'The user wants to know...', 'type': 'summary_text'}</span>
-<span class="sd">                ],</span>
-<span class="sd">                'type': 'reasoning'</span>
-<span class="sd">            }</span>
+<span class="sd">            Output: 3³ = 27</span>
+<span class="sd">            Reasoning: The user wants to know...</span>
 
 <span class="sd">    .. dropdown:: Structured output</span>
 
@@ -3486,19 +3520,23 @@
     <span class="n">input_tokens</span> <span class="o">=</span> <span class="n">oai_token_usage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="n">output_tokens</span> <span class="o">=</span> <span class="n">oai_token_usage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"output_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="n">total_tokens</span> <span class="o">=</span> <span class="n">oai_token_usage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"total_tokens"</span><span class="p">,</span> <span class="n">input_tokens</span> <span class="o">+</span> <span class="n">output_tokens</span><span class="p">)</span>
-
     <span class="n">output_token_details</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">"audio"</span><span class="p">:</span> <span class="p">(</span><span class="n">oai_token_usage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"completion_tokens_details"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="s2">"audio_tokens"</span>
-        <span class="p">),</span>
-        <span class="s2">"reasoning"</span><span class="p">:</span> <span class="p">(</span><span class="n">oai_token_usage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"output_token_details"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">"reasoning"</span><span class="p">:</span> <span class="p">(</span><span class="n">oai_token_usage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"output_tokens_details"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
             <span class="s2">"reasoning_tokens"</span>
-        <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">}</span>
+    <span class="n">input_token_details</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"cache_read"</span><span class="p">:</span> <span class="p">(</span><span class="n">oai_token_usage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_tokens_details"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">"cached_tokens"</span>
+        <span class="p">)</span>
     <span class="p">}</span>
     <span class="k">return</span> <span class="n">UsageMetadata</span><span class="p">(</span>
         <span class="n">input_tokens</span><span class="o">=</span><span class="n">input_tokens</span><span class="p">,</span>
         <span class="n">output_tokens</span><span class="o">=</span><span class="n">output_tokens</span><span class="p">,</span>
         <span class="n">total_tokens</span><span class="o">=</span><span class="n">total_tokens</span><span class="p">,</span>
+        <span class="n">input_token_details</span><span class="o">=</span><span class="n">InputTokenDetails</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">input_token_details</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span>
+        <span class="p">),</span>
         <span class="n">output_token_details</span><span class="o">=</span><span class="n">OutputTokenDetails</span><span class="p">(</span>
             <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">output_token_details</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span>
         <span class="p">),</span>

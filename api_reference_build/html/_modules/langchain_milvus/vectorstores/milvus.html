@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jun 27, 2025" name="docbuild:last-update"/>
+<meta content="Jun 28, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -605,12 +605,31 @@
         <span class="c1"># Create the connection to the server</span>
         <span class="k">if</span> <span class="n">connection_args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">connection_args</span> <span class="o">=</span> <span class="n">DEFAULT_MILVUS_CONNECTION</span>
+
+        <span class="c1"># Store connection args for potential async client creation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_connection_args</span> <span class="o">=</span> <span class="n">connection_args</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_milvus_client</span> <span class="o">=</span> <span class="n">MilvusClient</span><span class="p">(</span>
             <span class="o">**</span><span class="n">connection_args</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_async_milvus_client</span> <span class="o">=</span> <span class="n">AsyncMilvusClient</span><span class="p">(</span>
-            <span class="o">**</span><span class="n">connection_args</span><span class="p">,</span>
-        <span class="p">)</span>
+
+        <span class="c1"># Safely create AsyncMilvusClient to avoid failures in multithreading</span>
+        <span class="c1"># environments</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_async_milvus_client</span> <span class="o">=</span> <span class="n">AsyncMilvusClient</span><span class="p">(</span>
+                <span class="o">**</span><span class="n">connection_args</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># If creation fails (e.g., no event loop in multithreading</span>
+            <span class="c1"># environment), set to None. This won't affect Milvus instance</span>
+            <span class="c1"># creation, async operations will only fail when actually needed</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Failed to initialize AsyncMilvusClient during Milvus "</span>
+                <span class="sa">f</span><span class="s2">"initialization: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">. Async operations will be unavailable "</span>
+                <span class="sa">f</span><span class="s2">"until AsyncMilvusClient is successfully created."</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_async_milvus_client</span> <span class="o">=</span> <span class="kc">None</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">alias</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">_using</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Collection</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -795,6 +814,57 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">aclient</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncMilvusClient</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Get async client."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_milvus_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Try to create AsyncMilvusClient in current environment</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+
+                <span class="c1"># Check current thread environment</span>
+                <span class="n">current_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">current_thread</span><span class="p">()</span>
+                <span class="n">is_main_thread</span> <span class="o">=</span> <span class="n">current_thread</span> <span class="ow">is</span> <span class="n">threading</span><span class="o">.</span><span class="n">main_thread</span><span class="p">()</span>
+
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># Try to get current event loop</span>
+                    <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">loop</span><span class="o">.</span><span class="n">is_running</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_main_thread</span><span class="p">:</span>
+                        <span class="c1"># In non-main thread with running loop, create directly</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_async_milvus_client</span> <span class="o">=</span> <span class="n">AsyncMilvusClient</span><span class="p">(</span>
+                            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection_args</span>
+                        <span class="p">)</span>
+                    <span class="k">elif</span> <span class="ow">not</span> <span class="n">loop</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
+                        <span class="c1"># Loop exists but not running, set it as current thread's loop</span>
+                        <span class="n">asyncio</span><span class="o">.</span><span class="n">set_event_loop</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_async_milvus_client</span> <span class="o">=</span> <span class="n">AsyncMilvusClient</span><span class="p">(</span>
+                            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection_args</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># Other cases, create directly</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_async_milvus_client</span> <span class="o">=</span> <span class="n">AsyncMilvusClient</span><span class="p">(</span>
+                            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection_args</span>
+                        <span class="p">)</span>
+                <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+                    <span class="c1"># No event loop, create a new one</span>
+                    <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">new_event_loop</span><span class="p">()</span>
+                    <span class="n">asyncio</span><span class="o">.</span><span class="n">set_event_loop</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_async_milvus_client</span> <span class="o">=</span> <span class="n">AsyncMilvusClient</span><span class="p">(</span>
+                        <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_connection_args</span>
+                    <span class="p">)</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># If still fails, raise clear error message</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Failed to create AsyncMilvusClient: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">. "</span>
+                    <span class="sa">f</span><span class="s2">"This usually happens in multithreading environments "</span>
+                    <span class="sa">f</span><span class="s2">"(like Streamlit) where event loops are not properly "</span>
+                    <span class="sa">f</span><span class="s2">"configured. To fix this issue, you can: "</span>
+                    <span class="sa">f</span><span class="s2">"1. Use only synchronous methods (avoid methods "</span>
+                    <span class="sa">f</span><span class="s2">"starting with 'a') "</span>
+                    <span class="sa">f</span><span class="s2">"2. Create the Milvus instance in the main thread "</span>
+                    <span class="sa">f</span><span class="s2">"3. Or ensure proper asyncio event loop setup in your "</span>
+                    <span class="sa">f</span><span class="s2">"environment."</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_milvus_client</span>
 
     <span class="nd">@property</span>
