@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 01, 2025" name="docbuild:last-update"/>
+<meta content="Jul 02, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -496,6 +496,7 @@
         <span class="n">autoset_encoding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">encoding</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">proxies</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ssl</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Initialize with URL to crawl and any subdirectories to exclude.</span>
 
@@ -503,16 +504,18 @@
 <span class="sd">            url: The URL to crawl.</span>
 <span class="sd">            max_depth: The max depth of the recursive loading.</span>
 <span class="sd">            use_async: Whether to use asynchronous loading.</span>
-<span class="sd">                If True, lazy_load function will not be lazy, but it will still work in the</span>
-<span class="sd">                expected way, just not lazy.</span>
+<span class="sd">                If ``True``, ``lazy_load()`` will not be lazy, but it will still work in</span>
+<span class="sd">                the expected way, just not lazy.</span>
 <span class="sd">            extractor: A function to extract document contents from raw HTML.</span>
 <span class="sd">                When extract function returns an empty string, the document is</span>
 <span class="sd">                ignored. Default returns the raw HTML.</span>
 <span class="sd">            metadata_extractor: A function to extract metadata from args: raw HTML, the</span>
 <span class="sd">                source url, and the requests.Response/aiohttp.ClientResponse object</span>
 <span class="sd">                (args in that order).</span>
+
 <span class="sd">                Default extractor will attempt to use BeautifulSoup4 to extract the</span>
 <span class="sd">                title, description and language of the page.</span>
+
 <span class="sd">                ..code-block:: python</span>
 
 <span class="sd">                    import requests</span>
@@ -525,38 +528,54 @@
 <span class="sd">                        return {"source": url, "content_type": content_type}</span>
 
 <span class="sd">            exclude_dirs: A list of subdirectories to exclude.</span>
-<span class="sd">            timeout: The timeout for the requests, in the unit of seconds. If None then</span>
-<span class="sd">                connection will not timeout.</span>
-<span class="sd">            prevent_outside: If True, prevent loading from urls which are not children</span>
+<span class="sd">            timeout: The timeout for the requests, in the unit of seconds. If ``None``</span>
+<span class="sd">                then connection will not timeout.</span>
+<span class="sd">            prevent_outside: If ``True``, prevent loading from urls which are not children</span>
 <span class="sd">                of the root url.</span>
 <span class="sd">            link_regex: Regex for extracting sub-links from the raw html of a web page.</span>
 <span class="sd">            headers: Default request headers to use for all requests.</span>
-<span class="sd">            check_response_status: If True, check HTTP response status and skip</span>
-<span class="sd">                URLs with error responses (400-599).</span>
-<span class="sd">            continue_on_failure: If True, continue if getting or parsing a link raises</span>
+<span class="sd">            check_response_status: If ``True``, check HTTP response status and skip</span>
+<span class="sd">                URLs with error responses (``400-599``).</span>
+<span class="sd">            continue_on_failure: If ``True``, continue if getting or parsing a link raises</span>
 <span class="sd">                an exception. Otherwise, raise the exception.</span>
 <span class="sd">            base_url: The base url to check for outside links against.</span>
 <span class="sd">            autoset_encoding: Whether to automatically set the encoding of the response.</span>
-<span class="sd">                If True, the encoding of the response will be set to the apparent</span>
-<span class="sd">                encoding, unless the `encoding` argument has already been explicitly set.</span>
+<span class="sd">                If ``True``, the encoding of the response will be set to the apparent</span>
+<span class="sd">                encoding, unless the ``encoding`` argument has already been explicitly set.</span>
 <span class="sd">            encoding: The encoding of the response. If manually set, the encoding will be</span>
-<span class="sd">                set to given value, regardless of the `autoset_encoding` argument.</span>
+<span class="sd">                set to given value, regardless of the ``autoset_encoding`` argument.</span>
 <span class="sd">            proxies: A dictionary mapping protocol names to the proxy URLs to be used for requests.</span>
 <span class="sd">                This allows the crawler to route its requests through specified proxy servers.</span>
-<span class="sd">                If None, no proxies will be used and requests will go directly to the target URL.</span>
+<span class="sd">                If ``None``, no proxies will be used and requests will go directly to the target URL.</span>
+
 <span class="sd">                Example usage:</span>
+
 <span class="sd">                ..code-block:: python</span>
 
 <span class="sd">                    proxies = {</span>
 <span class="sd">                        "http": "http://10.10.1.10:3128",</span>
 <span class="sd">                        "https": "https://10.10.1.10:1080",</span>
 <span class="sd">                    }</span>
+
+<span class="sd">            ssl: Whether to verify SSL certificates during requests.</span>
+<span class="sd">                By default, SSL certificate verification is enabled (``ssl=True``),</span>
+<span class="sd">                ensuring secure HTTPS connections. Setting this to ``False`` disables SSL</span>
+<span class="sd">                certificate verification, which can be useful when crawling internal</span>
+<span class="sd">                services, development environments, or sites with misconfigured or</span>
+<span class="sd">                self-signed certificates.</span>
+
+<span class="sd">                **Use with caution:** Disabling SSL verification exposes your crawler to</span>
+<span class="sd">                man-in-the-middle (MitM) attacks, data tampering, and potential</span>
+<span class="sd">                interception of sensitive information. This significantly compromises</span>
+<span class="sd">                the security and integrity of the communication. It should never be</span>
+<span class="sd">                used in production or when handling sensitive data.</span>
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">url</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span> <span class="o">=</span> <span class="n">max_depth</span> <span class="k">if</span> <span class="n">max_depth</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">2</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">use_async</span> <span class="o">=</span> <span class="n">use_async</span> <span class="k">if</span> <span class="n">use_async</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">extractor</span> <span class="o">=</span> <span class="n">extractor</span> <span class="k">if</span> <span class="n">extractor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssl</span> <span class="o">=</span> <span class="n">ssl</span>
         <span class="n">metadata_extractor</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">metadata_extractor</span>
             <span class="k">if</span> <span class="n">metadata_extractor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -674,7 +693,7 @@
             <span class="n">session</span>
             <span class="k">if</span> <span class="n">session</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="k">else</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientSession</span><span class="p">(</span>
-                <span class="n">connector</span><span class="o">=</span><span class="n">aiohttp</span><span class="o">.</span><span class="n">TCPConnector</span><span class="p">(</span><span class="n">ssl</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                <span class="n">connector</span><span class="o">=</span><span class="n">aiohttp</span><span class="o">.</span><span class="n">TCPConnector</span><span class="p">(</span><span class="n">ssl</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ssl</span><span class="p">),</span>
                 <span class="n">timeout</span><span class="o">=</span><span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientTimeout</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">),</span>
                 <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
             <span class="p">)</span>

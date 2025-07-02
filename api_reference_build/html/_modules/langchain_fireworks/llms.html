@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 01, 2025" name="docbuild:last-update"/>
+<meta content="Jul 02, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -226,7 +226,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">aiohttp</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientSession</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">aiohttp</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientSession</span><span class="p">,</span> <span class="n">ClientTimeout</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AsyncCallbackManagerForLLMRun</span><span class="p">,</span>
     <span class="n">CallbackManagerForLLMRun</span><span class="p">,</span>
@@ -246,15 +246,17 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">Fireworks</span><span class="p">(</span><span class="n">LLM</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""LLM models from `Fireworks`.</span>
 
-<span class="sd">    To use, you'll need an API key which you can find here:</span>
-<span class="sd">    https://fireworks.ai This can be passed in as init param</span>
-<span class="sd">    ``fireworks_api_key`` or set as environment variable ``FIREWORKS_API_KEY``.</span>
+<span class="sd">    To use, you'll need an `API key &lt;https://fireworks.ai&gt;`__. This can be passed in as</span>
+<span class="sd">    init param ``fireworks_api_key`` or set as environment variable</span>
+<span class="sd">    ``FIREWORKS_API_KEY``.</span>
 
-<span class="sd">    Fireworks AI API reference: https://readme.fireworks.ai/</span>
+<span class="sd">    `Fireworks AI API reference &lt;https://readme.fireworks.ai/&gt;`__</span>
 
 <span class="sd">    Example:</span>
+
 <span class="sd">        .. code-block:: python</span>
 <span class="sd">            response = fireworks.generate(["Tell me a joke."])</span>
+
 <span class="sd">    """</span>
 
     <span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"https://api.fireworks.ai/inference/v1/completions"</span>
@@ -272,40 +274,40 @@
     <span class="p">)</span>
 <span class="w">    </span><span class="sd">"""Fireworks API key.</span>
 <span class="sd">    </span>
-<span class="sd">    Automatically read from env variable `FIREWORKS_API_KEY` if not provided.</span>
+<span class="sd">    Automatically read from env variable ``FIREWORKS_API_KEY`` if not provided.</span>
 <span class="sd">    """</span>
     <span class="n">model</span><span class="p">:</span> <span class="nb">str</span>
-<span class="w">    </span><span class="sd">"""Model name. Available models listed here: </span>
-<span class="sd">        https://readme.fireworks.ai/</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""Model name. `(Available models) &lt;https://readme.fireworks.ai/&gt;`__"""</span>
     <span class="n">temperature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Model temperature."""</span>
     <span class="n">top_p</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">"""Used to dynamically adjust the number of choices for each predicted token based </span>
-<span class="sd">        on the cumulative probabilities. A value of 1 will always yield the same </span>
-<span class="sd">        output. A temperature less than 1 favors more correctness and is appropriate </span>
-<span class="sd">        for question answering or summarization. A value greater than 1 introduces more </span>
-<span class="sd">        randomness in the output.</span>
+<span class="w">    </span><span class="sd">"""Used to dynamically adjust the number of choices for each predicted token based</span>
+<span class="sd">    on the cumulative probabilities. A value of ``1`` will always yield the same output.</span>
+<span class="sd">    A temperature less than ``1`` favors more correctness and is appropriate for</span>
+<span class="sd">    question answering or summarization. A value greater than ``1`` introduces more </span>
+<span class="sd">    randomness in the output.</span>
 <span class="sd">    """</span>
     <span class="n">model_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
-<span class="w">    </span><span class="sd">"""Holds any model parameters valid for `create` call not explicitly specified."""</span>
+<span class="w">    </span><span class="sd">"""Holds any model parameters valid for ``create`` call not explicitly specified."""</span>
     <span class="n">top_k</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Used to limit the number of choices for the next predicted word or token. It </span>
-<span class="sd">        specifies the maximum number of tokens to consider at each step, based on their </span>
-<span class="sd">        probability of occurrence. This technique helps to speed up the generation </span>
-<span class="sd">        process and can improve the quality of the generated text by focusing on the </span>
-<span class="sd">        most likely options.</span>
+<span class="sd">    specifies the maximum number of tokens to consider at each step, based on their </span>
+<span class="sd">    probability of occurrence. This technique helps to speed up the generation process</span>
+<span class="sd">    and can improve the quality of the generated text by focusing on the most likely</span>
+<span class="sd">    options.</span>
 <span class="sd">    """</span>
     <span class="n">max_tokens</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""The maximum number of tokens to generate."""</span>
     <span class="n">repetition_penalty</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">"""A number that controls the diversity of generated text by reducing the </span>
-<span class="sd">        likelihood of repeated sequences. Higher values decrease repetition.</span>
+<span class="w">    </span><span class="sd">"""A number that controls the diversity of generated text by reducing the likelihood</span>
+<span class="sd">    of repeated sequences. Higher values decrease repetition.</span>
 <span class="sd">    """</span>
     <span class="n">logprobs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""An integer that specifies how many top token log probabilities are included in </span>
-<span class="sd">        the response for each token generation step.</span>
+<span class="sd">    the response for each token generation step.</span>
 <span class="sd">    """</span>
+    <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="w">    </span><span class="sd">"""Timeout in seconds for requests to the Fireworks API."""</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span>
         <span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">,</span>
@@ -359,7 +361,7 @@
 <span class="sd">            prompt: The prompt to pass into the model.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            The string generated by the model..</span>
+<span class="sd">            The string generated by the model.</span>
 <span class="sd">        """</span>
         <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"Authorization"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"Bearer </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">fireworks_api_key</span><span class="o">.</span><span class="n">get_secret_value</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
@@ -375,7 +377,9 @@
 
         <span class="c1"># filter None values to not pass them to the http payload</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">payload</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span>
+        <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">&gt;=</span> <span class="mi">500</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Fireworks Server: Error </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -423,7 +427,10 @@
         <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">payload</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span>
         <span class="k">async</span> <span class="k">with</span> <span class="n">ClientSession</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
             <span class="k">async</span> <span class="k">with</span> <span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">,</span>
+                <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span>
+                <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+                <span class="n">timeout</span><span class="o">=</span><span class="n">ClientTimeout</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">),</span>
             <span class="p">)</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">&gt;=</span> <span class="mi">500</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Fireworks Server: Error </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
