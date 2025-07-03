@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 02, 2025" name="docbuild:last-update"/>
+<meta content="Jul 03, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -599,7 +599,7 @@
 </a>
 </li>
 <li class="breadcrumb-item"><a class="nav-link" href="../../reference.html">LangChain Python API Reference</a></li>
-<li class="breadcrumb-item"><a class="nav-link" href="../index.html">langchain-community: 0.3.26</a></li>
+<li class="breadcrumb-item"><a class="nav-link" href="../index.html">langchain-community: 0.3.27</a></li>
 <li class="breadcrumb-item"><a class="nav-link" href="../document_loaders.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">document_loaders</span></code></a></li>
 <li aria-current="page" class="breadcrumb-item active"><span class="ellipsis">EverNoteLoader</span></li>
 </ul>
@@ -620,30 +620,55 @@
 <dd><em class="sig-param"><span class="n"><span class="pre">load_single_document</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span><a class="reference internal" href="../../_modules/langchain_community/document_loaders/evernote.html#EverNoteLoader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_community.document_loaders.evernote.EverNoteLoader" title="Link to this definition">#</a></dt>
-<dd><p>Load from <cite>EverNote</cite>.</p>
-<p>Loads an EverNote notebook export file e.g. my_notebook.enex into Documents.
-Instructions on producing this file can be found at
-<a class="reference external" href="https://help.evernote.com/hc/en-us/articles/209005557-Export-notes-and-notebooks-as-ENEX-or-HTML">https://help.evernote.com/hc/en-us/articles/209005557-Export-notes-and-notebooks-as-ENEX-or-HTML</a></p>
-<p>Currently only the plain text in the note is extracted and stored as the contents
-of the Document, any non content metadata (e.g. ‘author’, ‘created’, ‘updated’ etc.
-but not ‘content-raw’ or ‘resource’) tags on the note will be extracted and stored
-as metadata on the Document.</p>
+<dd><p>Document loader for EverNote ENEX export files.</p>
+<p>Loads EverNote notebook export files (<code class="docutils literal notranslate"><span class="pre">.enex</span></code> format) into LangChain Documents.
+Extracts plain text content from HTML and preserves note metadata including
+titles, timestamps, and attachments. Uses secure XML parsing to prevent
+vulnerabilities.</p>
+<p>The loader supports two modes:
+- Single document: Concatenates all notes into one Document (default)
+- Multiple documents: Creates separate Documents for each note</p>
+<p><a class="reference external" href="https://help.evernote.com/hc/en-us/articles/209005557-Export-notes-and-notebooks-as-ENEX-or-HTML">Instructions for creating ENEX files</a></p>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.document_loaders</span><span class="w"> </span><span class="kn">import</span> <span class="n">EverNoteLoader</span>
+
+<span class="c1"># Load all notes as a single document</span>
+<span class="n">loader</span> <span class="o">=</span> <span class="n">EverNoteLoader</span><span class="p">(</span><span class="s2">"my_notebook.enex"</span><span class="p">)</span>
+<span class="n">documents</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+
+<span class="c1"># Load each note as a separate document:</span>
+<span class="c1"># documents = [ document1, document2, ... ]</span>
+<span class="n">loader</span> <span class="o">=</span> <span class="n">EverNoteLoader</span><span class="p">(</span><span class="s2">"my_notebook.enex"</span><span class="p">,</span> <span class="n">load_single_document</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">documents</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+
+<span class="c1"># Lazy loading for large files</span>
+<span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">loader</span><span class="o">.</span><span class="n">lazy_load</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Title: </span><span class="si">{</span><span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'title'</span><span class="p">,</span><span class="w"> </span><span class="s1">'Untitled'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Content: </span><span class="si">{</span><span class="n">doc</span><span class="o">.</span><span class="n">page_content</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Requires the <code class="docutils literal notranslate"><span class="pre">lxml</span></code> and <code class="docutils literal notranslate"><span class="pre">html2text</span></code> packages to be installed.
+Install with: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">lxml</span> <span class="pre">html2text</span></code></p>
+</div>
+<p>Initialize the EverNote loader.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>file_path</strong> (<em>str</em>) – The path to the notebook export with a .enex extension</p></li>
-<li><p><strong>load_single_document</strong> (<em>bool</em>) – Whether or not to concatenate the content of all
-notes into a single long Document.</p></li>
-<li><p><strong>True</strong> (<em>If this is set to</em>) – the ‘source’ which contains the file name of the export.</p></li>
+<li><p><strong>file_path</strong> (<em>str</em><em> | </em><em>Path</em>) – Path to the EverNote export file (<code class="docutils literal notranslate"><span class="pre">.enex</span></code> extension).</p></li>
+<li><p><strong>load_single_document</strong> (<em>bool</em>) – Whether to concatenate all notes into a single
+Document. If <code class="docutils literal notranslate"><span class="pre">True</span></code>, only the <code class="docutils literal notranslate"><span class="pre">source</span></code> metadata is preserved.
+If <code class="docutils literal notranslate"><span class="pre">False</span></code>, each note becomes a separate Document with its own
+metadata.</p></li>
 </ul>
 </dd>
 </dl>
-<p>Initialize with file path.</p>
 <p class="rubric">Methods</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_community.document_loaders.evernote.EverNoteLoader.__init__" title="langchain_community.document_loaders.evernote.EverNoteLoader.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(file_path[, load_single_document])</p></td>
-<td><p>Initialize with file path.</p></td>
+<td><p>Initialize the EverNote loader.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#langchain_community.document_loaders.evernote.EverNoteLoader.alazy_load" title="langchain_community.document_loaders.evernote.EverNoteLoader.alazy_load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">alazy_load</span></code></a>()</p></td>
 <td><p>A lazy loader for Documents.</p></td>
@@ -671,12 +696,15 @@ notes into a single long Document.</p></li>
 <dd><em class="sig-param"><span class="n"><span class="pre">load_single_document</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span><a class="reference internal" href="../../_modules/langchain_community/document_loaders/evernote.html#EverNoteLoader.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_community.document_loaders.evernote.EverNoteLoader.__init__" title="Link to this definition">#</a></dt>
-<dd><p>Initialize with file path.</p>
+<dd><p>Initialize the EverNote loader.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>file_path</strong> (<em>str</em><em> | </em><em>Path</em>)</p></li>
-<li><p><strong>load_single_document</strong> (<em>bool</em>)</p></li>
+<li><p><strong>file_path</strong> (<em>str</em><em> | </em><em>Path</em>) – Path to the EverNote export file (<code class="docutils literal notranslate"><span class="pre">.enex</span></code> extension).</p></li>
+<li><p><strong>load_single_document</strong> (<em>bool</em>) – Whether to concatenate all notes into a single
+Document. If <code class="docutils literal notranslate"><span class="pre">True</span></code>, only the <code class="docutils literal notranslate"><span class="pre">source</span></code> metadata is preserved.
+If <code class="docutils literal notranslate"><span class="pre">False</span></code>, each note becomes a separate Document with its own
+metadata.</p></li>
 </ul>
 </dd>
 </dl>
@@ -705,9 +733,14 @@ notes into a single long Document.</p></li>
 <dt class="sig sig-object py" id="langchain_community.document_loaders.evernote.EverNoteLoader.lazy_load">
 <span class="sig-name descname"><span class="pre">lazy_load</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../core/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document" title="langchain_core.documents.base.Document"><span class="pre">Document</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/langchain_community/document_loaders/evernote.html#EverNoteLoader.lazy_load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_community.document_loaders.evernote.EverNoteLoader.lazy_load" title="Link to this definition">#</a></dt>
 <dd><p>Load documents from EverNote export file.</p>
+<p>Depending on the <code class="docutils literal notranslate"><span class="pre">load_single_document</span></code> setting, either yields individual
+Documents for each note or a single Document containing all notes.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Iterator</em>[<a class="reference internal" href="../../core/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document" title="langchain_core.documents.base.Document"><em>Document</em></a>]</p>
+<dt class="field-odd">Yields<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Document</em> – Either individual note Documents or a single combined Document.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Iterator</em>[<a class="reference internal" href="../../core/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document" title="langchain_core.documents.base.Document"><em>Document</em></a>]</p>
 </dd>
 </dl>
 </dd></dl>

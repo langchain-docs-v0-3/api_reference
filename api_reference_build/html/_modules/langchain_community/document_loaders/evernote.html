@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 02, 2025" name="docbuild:last-update"/>
+<meta content="Jul 03, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,9 +220,10 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_community.document_loaders.evernote</h1><div class="highlight"><pre>
-<span></span><span class="sd">"""Load documents from Evernote.</span>
+<span></span><span class="sd">"""Document loader for EverNote ENEX export files.</span>
 
-<span class="sd">https://gist.github.com/foxmask/7b29c43a161e001ff04afdb2f181e31c</span>
+<span class="sd">This module provides functionality to securely load and parse EverNote notebook</span>
+<span class="sd">export files (``.enex`` format) into LangChain Document objects.</span>
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
@@ -242,34 +243,72 @@
 <div class="viewcode-block" id="EverNoteLoader">
 <a class="viewcode-back" href="../../../community/document_loaders/langchain_community.document_loaders.evernote.EverNoteLoader.html#langchain_community.document_loaders.evernote.EverNoteLoader">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">EverNoteLoader</span><span class="p">(</span><span class="n">BaseLoader</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Load from `EverNote`.</span>
+<span class="w">    </span><span class="sd">"""Document loader for EverNote ENEX export files.</span>
 
-<span class="sd">    Loads an EverNote notebook export file e.g. my_notebook.enex into Documents.</span>
-<span class="sd">    Instructions on producing this file can be found at</span>
-<span class="sd">    https://help.evernote.com/hc/en-us/articles/209005557-Export-notes-and-notebooks-as-ENEX-or-HTML</span>
+<span class="sd">    Loads EverNote notebook export files (``.enex`` format) into LangChain Documents.</span>
+<span class="sd">    Extracts plain text content from HTML and preserves note metadata including</span>
+<span class="sd">    titles, timestamps, and attachments. Uses secure XML parsing to prevent</span>
+<span class="sd">    vulnerabilities.</span>
 
-<span class="sd">    Currently only the plain text in the note is extracted and stored as the contents</span>
-<span class="sd">    of the Document, any non content metadata (e.g. 'author', 'created', 'updated' etc.</span>
-<span class="sd">    but not 'content-raw' or 'resource') tags on the note will be extracted and stored</span>
-<span class="sd">    as metadata on the Document.</span>
+<span class="sd">    The loader supports two modes:</span>
+<span class="sd">    - Single document: Concatenates all notes into one Document (default)</span>
+<span class="sd">    - Multiple documents: Creates separate Documents for each note</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        file_path (str): The path to the notebook export with a .enex extension</span>
-<span class="sd">        load_single_document (bool): Whether or not to concatenate the content of all</span>
-<span class="sd">            notes into a single long Document.</span>
-<span class="sd">        If this is set to True (default) then the only metadata on the document will be</span>
-<span class="sd">            the 'source' which contains the file name of the export.</span>
+<span class="sd">    `Instructions for creating ENEX files &lt;https://help.evernote.com/hc/en-us/articles/209005557-Export-notes-and-notebooks-as-ENEX-or-HTML&gt;`__</span>
+
+<span class="sd">    Example:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        from langchain_community.document_loaders import EverNoteLoader</span>
+
+<span class="sd">        # Load all notes as a single document</span>
+<span class="sd">        loader = EverNoteLoader("my_notebook.enex")</span>
+<span class="sd">        documents = loader.load()</span>
+
+<span class="sd">        # Load each note as a separate document:</span>
+<span class="sd">        # documents = [ document1, document2, ... ]</span>
+<span class="sd">        loader = EverNoteLoader("my_notebook.enex", load_single_document=False)</span>
+<span class="sd">        documents = loader.load()</span>
+
+<span class="sd">        # Lazy loading for large files</span>
+<span class="sd">        for doc in loader.lazy_load():</span>
+<span class="sd">            print(f"Title: {doc.metadata.get('title', 'Untitled')}")</span>
+<span class="sd">            print(f"Content: {doc.page_content[:100]}...")</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        Requires the ``lxml`` and ``html2text`` packages to be installed.</span>
+<span class="sd">        Install with: ``pip install lxml html2text``</span>
 <span class="sd">    """</span>
 
 <div class="viewcode-block" id="EverNoteLoader.__init__">
 <a class="viewcode-back" href="../../../community/document_loaders/langchain_community.document_loaders.evernote.EverNoteLoader.html#langchain_community.document_loaders.evernote.EverNoteLoader.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">load_single_document</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Initialize with file path."""</span>
+<span class="w">        </span><span class="sd">"""Initialize the EverNote loader.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            file_path: Path to the EverNote export file (``.enex`` extension).</span>
+<span class="sd">            load_single_document: Whether to concatenate all notes into a single</span>
+<span class="sd">                Document. If ``True``, only the ``source`` metadata is preserved.</span>
+<span class="sd">                If ``False``, each note becomes a separate Document with its own</span>
+<span class="sd">                metadata.</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">file_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">load_single_document</span> <span class="o">=</span> <span class="n">load_single_document</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_lazy_load</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Lazily load documents from the EverNote export file.</span>
+
+<span class="sd">        Lazy loading allows processing large EverNote files without</span>
+<span class="sd">        loading everything into memory at once. This method yields Documents</span>
+<span class="sd">        one by one by parsning the XML. Each document represents a note in the EverNote</span>
+<span class="sd">        export, containing the note's content as ``page_content`` and metadata including</span>
+<span class="sd">        ``title``, ``created/updated`` ``timestamps``, and other note attributes.</span>
+
+<span class="sd">        Yields:</span>
+<span class="sd">            Document: A Document object for each note in the export file.</span>
+<span class="sd">        """</span>
         <span class="k">for</span> <span class="n">note</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_note_xml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">note</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"content"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">yield</span> <span class="n">Document</span><span class="p">(</span>
@@ -287,7 +326,14 @@
 <div class="viewcode-block" id="EverNoteLoader.lazy_load">
 <a class="viewcode-back" href="../../../community/document_loaders/langchain_community.document_loaders.evernote.EverNoteLoader.html#langchain_community.document_loaders.evernote.EverNoteLoader.lazy_load">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">lazy_load</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Load documents from EverNote export file."""</span>
+<span class="w">        </span><span class="sd">"""Load documents from EverNote export file.</span>
+
+<span class="sd">        Depending on the ``load_single_document`` setting, either yields individual</span>
+<span class="sd">        Documents for each note or a single Document containing all notes.</span>
+
+<span class="sd">        Yields:</span>
+<span class="sd">            Document: Either individual note Documents or a single combined Document.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_single_document</span><span class="p">:</span>
             <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lazy_load</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
@@ -301,6 +347,20 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_content</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Parse HTML content from EverNote into plain text.</span>
+
+<span class="sd">        Converts HTML content to plain text using the ``html2text`` library.</span>
+<span class="sd">        Strips whitespace from the result.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            content: HTML content string from EverNote.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Plain text version of the content.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ImportError: If ``html2text`` is not installed.</span>
+<span class="sd">        """</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">import</span><span class="w"> </span><span class="nn">html2text</span>
 
@@ -308,12 +368,23 @@
         <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
                 <span class="s2">"Could not import `html2text`. Although it is not a required package "</span>
-                <span class="s2">"to use Langchain, using the EverNote loader requires `html2text`. "</span>
+                <span class="s2">"to use LangChain, using the EverNote loader requires `html2text`. "</span>
                 <span class="s2">"Please install `html2text` via `pip install html2text` and try again."</span>
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_resource</span><span class="p">(</span><span class="n">resource</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Parse resource elements from EverNote XML.</span>
+
+<span class="sd">        Extracts resource information like attachments, images, etc.</span>
+<span class="sd">        Base64 decodes data elements and generates MD5 hashes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            resource: List of XML elements representing a resource.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary containing resource metadata and decoded data.</span>
+<span class="sd">        """</span>
         <span class="n">rsc_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">resource</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">elem</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s2">"data"</span><span class="p">:</span>
@@ -327,6 +398,18 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_note</span><span class="p">(</span><span class="n">note</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Parse a note element from EverNote XML.</span>
+
+<span class="sd">        Extracts note content, metadata, resources, and attributes.</span>
+<span class="sd">        Handles nested note-attributes recursively with prefixes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            note: List of XML elements representing a note.</span>
+<span class="sd">            prefix: Optional prefix for nested attribute names.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary containing note content and metadata.</span>
+<span class="sd">        """</span>
         <span class="n">note_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">resources</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -359,22 +442,37 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_note_xml</span><span class="p">(</span><span class="n">xml_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">"""Parse Evernote xml."""</span>
-        <span class="c1"># Without huge_tree set to True, parser may complain about huge text node</span>
-        <span class="c1"># Try to recover, because there may be "&amp;nbsp;", which will cause</span>
-        <span class="c1"># "XMLSyntaxError: Entity 'nbsp' not defined"</span>
+<span class="w">        </span><span class="sd">"""Parse EverNote XML file securely.</span>
+
+<span class="sd">        Uses ``lxml`` with secure parsing configuration to prevent XML vulnerabilities</span>
+<span class="sd">        including XXE attacks, XML bombs, and malformed XML exploitation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            xml_file: Path to the EverNote export XML file.</span>
+
+<span class="sd">        Yields:</span>
+<span class="sd">            Dictionary containing parsed note data for each note in the file.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ImportError: If ``lxml`` is not installed.</span>
+<span class="sd">        """</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">lxml</span><span class="w"> </span><span class="kn">import</span> <span class="n">etree</span>
         <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
                 <span class="s2">"Could not import `lxml`. Although it is not a required package to use "</span>
-                <span class="s2">"Langchain, using the EverNote loader requires `lxml`. Please install "</span>
+                <span class="s2">"LangChain, using the EverNote loader requires `lxml`. Please install "</span>
                 <span class="s2">"`lxml` via `pip install lxml` and try again."</span>
             <span class="p">)</span>
             <span class="k">raise</span> <span class="n">e</span>
 
         <span class="n">context</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">iterparse</span><span class="p">(</span>
-            <span class="n">xml_file</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">strip_cdata</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">huge_tree</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">recover</span><span class="o">=</span><span class="kc">True</span>
+            <span class="n">xml_file</span><span class="p">,</span>
+            <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span>
+            <span class="n">resolve_entities</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Prevents XXE attacks</span>
+            <span class="n">no_network</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Blocks network-based external entities</span>
+            <span class="n">recover</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Avoid parsing invalid/malformed XML</span>
+            <span class="n">huge_tree</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Protect against XML Bomb DoS attacks</span>
         <span class="p">)</span>
 
         <span class="k">for</span> <span class="n">action</span><span class="p">,</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">context</span><span class="p">:</span>

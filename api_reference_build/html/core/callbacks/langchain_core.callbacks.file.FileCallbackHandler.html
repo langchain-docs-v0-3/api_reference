@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 02, 2025" name="docbuild:last-update"/>
+<meta content="Jul 03, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -373,22 +373,46 @@
 </dl>
 <span class="sig-paren">)</span><a class="reference internal" href="../../_modules/langchain_core/callbacks/file.html#FileCallbackHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.callbacks.file.FileCallbackHandler" title="Link to this definition">#</a></dt>
 <dd><p>Callback Handler that writes to a file.</p>
+<p>This handler supports both context manager usage (recommended) and direct
+instantiation (deprecated) for backwards compatibility.</p>
+<p class="rubric">Examples</p>
+<p>Using as a context manager (recommended):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">FileCallbackHandler</span><span class="p">(</span><span class="s2">"output.txt"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handler</span><span class="p">:</span>
+    <span class="c1"># Use handler with your chain/agent</span>
+    <span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">"callbacks"</span><span class="p">:</span> <span class="p">[</span><span class="n">handler</span><span class="p">]})</span>
+</pre></div>
+</div>
+<p>Direct instantiation (deprecated):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">handler</span> <span class="o">=</span> <span class="n">FileCallbackHandler</span><span class="p">(</span><span class="s2">"output.txt"</span><span class="p">)</span>
+<span class="c1"># File remains open until handler is garbage collected</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">"callbacks"</span><span class="p">:</span> <span class="p">[</span><span class="n">handler</span><span class="p">]})</span>
+<span class="k">finally</span><span class="p">:</span>
+    <span class="n">handler</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>  <span class="c1"># Explicit cleanup recommended</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<em>str</em>) – The file to write to.</p></li>
-<li><p><strong>mode</strong> (<em>str</em>) – The mode to open the file in. Defaults to “a”.</p></li>
-<li><p><strong>color</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – The color to use for the text.</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) – The file path to write to.</p></li>
+<li><p><strong>mode</strong> (<em>str</em>) – The file open mode. Defaults to <code class="docutils literal notranslate"><span class="pre">'a'</span></code> (append).</p></li>
+<li><p><strong>color</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Default color for text output. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
-<p>Initialize callback handler.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When not used as a context manager, a deprecation warning will be issued
+on first use. The file will be opened immediately in <code class="docutils literal notranslate"><span class="pre">__init__</span></code> and closed
+in <code class="docutils literal notranslate"><span class="pre">__del__</span></code> or when <code class="docutils literal notranslate"><span class="pre">close()</span></code> is called explicitly.</p>
+</div>
+<p>Initialize the file callback handler.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<em>str</em>) – The filename to write to.</p></li>
-<li><p><strong>mode</strong> (<em>str</em>) – The mode to open the file in. Defaults to “a”.</p></li>
-<li><p><strong>color</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – The color to use for the text. Defaults to None.</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) – Path to the output file.</p></li>
+<li><p><strong>mode</strong> (<em>str</em>) – File open mode (e.g., <code class="docutils literal notranslate"><span class="pre">'w'</span></code>, <code class="docutils literal notranslate"><span class="pre">'a'</span></code>, <code class="docutils literal notranslate"><span class="pre">'x'</span></code>). Defaults to <code class="docutils literal notranslate"><span class="pre">'a'</span></code>.</p></li>
+<li><p><strong>color</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Default text color for output. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -429,63 +453,66 @@
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.__init__" title="langchain_core.callbacks.file.FileCallbackHandler.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(filename[, mode, color])</p></td>
-<td><p>Initialize callback handler.</p></td>
+<td><p>Initialize the file callback handler.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_agent_action" title="langchain_core.callbacks.file.FileCallbackHandler.on_agent_action"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_agent_action</span></code></a>(action[, color])</p></td>
-<td><p>Run on agent action.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.close" title="langchain_core.callbacks.file.FileCallbackHandler.close"><code class="xref py py-obj docutils literal notranslate"><span class="pre">close</span></code></a>()</p></td>
+<td><p>Close the file if it's open.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_agent_finish" title="langchain_core.callbacks.file.FileCallbackHandler.on_agent_finish"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_agent_finish</span></code></a>(finish[, color])</p></td>
-<td><p>Run on the agent end.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_agent_action" title="langchain_core.callbacks.file.FileCallbackHandler.on_agent_action"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_agent_action</span></code></a>(action[, color])</p></td>
+<td><p>Handle agent action by writing the action log.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_chain_end" title="langchain_core.callbacks.file.FileCallbackHandler.on_chain_end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_chain_end</span></code></a>(outputs, **kwargs)</p></td>
-<td><p>Print out that we finished a chain.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_agent_finish" title="langchain_core.callbacks.file.FileCallbackHandler.on_agent_finish"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_agent_finish</span></code></a>(finish[, color])</p></td>
+<td><p>Handle agent finish by writing the finish log.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_chain_error" title="langchain_core.callbacks.file.FileCallbackHandler.on_chain_error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_chain_error</span></code></a>(error, *, run_id[, parent_run_id])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_chain_end" title="langchain_core.callbacks.file.FileCallbackHandler.on_chain_end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_chain_end</span></code></a>(outputs, **kwargs)</p></td>
+<td><p>Print that we finished a chain.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_chain_error" title="langchain_core.callbacks.file.FileCallbackHandler.on_chain_error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_chain_error</span></code></a>(error, *, run_id[, parent_run_id])</p></td>
 <td><p>Run when chain errors.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_chain_start" title="langchain_core.callbacks.file.FileCallbackHandler.on_chain_start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_chain_start</span></code></a>(serialized, inputs, **kwargs)</p></td>
-<td><p>Print out that we are entering a chain.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_chain_start" title="langchain_core.callbacks.file.FileCallbackHandler.on_chain_start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_chain_start</span></code></a>(serialized, inputs, **kwargs)</p></td>
+<td><p>Print that we are entering a chain.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_chat_model_start" title="langchain_core.callbacks.file.FileCallbackHandler.on_chat_model_start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_chat_model_start</span></code></a>(serialized, messages, *, ...)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_chat_model_start" title="langchain_core.callbacks.file.FileCallbackHandler.on_chat_model_start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_chat_model_start</span></code></a>(serialized, messages, *, ...)</p></td>
 <td><p>Run when a chat model starts running.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_custom_event" title="langchain_core.callbacks.file.FileCallbackHandler.on_custom_event"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_custom_event</span></code></a>(name, data, *, run_id[, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_custom_event" title="langchain_core.callbacks.file.FileCallbackHandler.on_custom_event"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_custom_event</span></code></a>(name, data, *, run_id[, ...])</p></td>
 <td><p>Override to define a handler for a custom event.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_llm_end" title="langchain_core.callbacks.file.FileCallbackHandler.on_llm_end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_llm_end</span></code></a>(response, *, run_id[, parent_run_id])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_llm_end" title="langchain_core.callbacks.file.FileCallbackHandler.on_llm_end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_llm_end</span></code></a>(response, *, run_id[, parent_run_id])</p></td>
 <td><p>Run when LLM ends running.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_llm_error" title="langchain_core.callbacks.file.FileCallbackHandler.on_llm_error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_llm_error</span></code></a>(error, *, run_id[, parent_run_id])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_llm_error" title="langchain_core.callbacks.file.FileCallbackHandler.on_llm_error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_llm_error</span></code></a>(error, *, run_id[, parent_run_id])</p></td>
 <td><p>Run when LLM errors.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_llm_new_token" title="langchain_core.callbacks.file.FileCallbackHandler.on_llm_new_token"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_llm_new_token</span></code></a>(token, *[, chunk, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_llm_new_token" title="langchain_core.callbacks.file.FileCallbackHandler.on_llm_new_token"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_llm_new_token</span></code></a>(token, *[, chunk, ...])</p></td>
 <td><p>Run on new LLM token.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_llm_start" title="langchain_core.callbacks.file.FileCallbackHandler.on_llm_start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_llm_start</span></code></a>(serialized, prompts, *, run_id)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_llm_start" title="langchain_core.callbacks.file.FileCallbackHandler.on_llm_start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_llm_start</span></code></a>(serialized, prompts, *, run_id)</p></td>
 <td><p>Run when LLM starts running.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_retriever_end" title="langchain_core.callbacks.file.FileCallbackHandler.on_retriever_end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_retriever_end</span></code></a>(documents, *, run_id[, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_retriever_end" title="langchain_core.callbacks.file.FileCallbackHandler.on_retriever_end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_retriever_end</span></code></a>(documents, *, run_id[, ...])</p></td>
 <td><p>Run when Retriever ends running.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_retriever_error" title="langchain_core.callbacks.file.FileCallbackHandler.on_retriever_error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_retriever_error</span></code></a>(error, *, run_id[, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_retriever_error" title="langchain_core.callbacks.file.FileCallbackHandler.on_retriever_error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_retriever_error</span></code></a>(error, *, run_id[, ...])</p></td>
 <td><p>Run when Retriever errors.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_retriever_start" title="langchain_core.callbacks.file.FileCallbackHandler.on_retriever_start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_retriever_start</span></code></a>(serialized, query, *, run_id)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_retriever_start" title="langchain_core.callbacks.file.FileCallbackHandler.on_retriever_start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_retriever_start</span></code></a>(serialized, query, *, run_id)</p></td>
 <td><p>Run when the Retriever starts running.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_retry" title="langchain_core.callbacks.file.FileCallbackHandler.on_retry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_retry</span></code></a>(retry_state, *, run_id[, parent_run_id])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_retry" title="langchain_core.callbacks.file.FileCallbackHandler.on_retry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_retry</span></code></a>(retry_state, *, run_id[, parent_run_id])</p></td>
 <td><p>Run on a retry event.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_text" title="langchain_core.callbacks.file.FileCallbackHandler.on_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_text</span></code></a>(text[, color, end])</p></td>
-<td><p>Run when the agent ends.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_text" title="langchain_core.callbacks.file.FileCallbackHandler.on_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_text</span></code></a>(text[, color, end])</p></td>
+<td><p>Handle text output.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_tool_end" title="langchain_core.callbacks.file.FileCallbackHandler.on_tool_end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_tool_end</span></code></a>(output[, color, ...])</p></td>
-<td><p>If not the final action, print out observation.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_tool_end" title="langchain_core.callbacks.file.FileCallbackHandler.on_tool_end"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_tool_end</span></code></a>(output[, color, ...])</p></td>
+<td><p>Handle tool end by writing the output with optional prefixes.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_tool_error" title="langchain_core.callbacks.file.FileCallbackHandler.on_tool_error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_tool_error</span></code></a>(error, *, run_id[, parent_run_id])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_tool_error" title="langchain_core.callbacks.file.FileCallbackHandler.on_tool_error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_tool_error</span></code></a>(error, *, run_id[, parent_run_id])</p></td>
 <td><p>Run when tool errors.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_tool_start" title="langchain_core.callbacks.file.FileCallbackHandler.on_tool_start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_tool_start</span></code></a>(serialized, input_str, *, run_id)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.callbacks.file.FileCallbackHandler.on_tool_start" title="langchain_core.callbacks.file.FileCallbackHandler.on_tool_start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_tool_start</span></code></a>(serialized, input_str, *, run_id)</p></td>
 <td><p>Run when the tool starts running.</p></td>
 </tr>
 </tbody>
@@ -500,17 +527,29 @@
 <dd><em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_core/callbacks/file.html#FileCallbackHandler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.callbacks.file.FileCallbackHandler.__init__" title="Link to this definition">#</a></dt>
-<dd><p>Initialize callback handler.</p>
+<dd><p>Initialize the file callback handler.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<em>str</em>) – The filename to write to.</p></li>
-<li><p><strong>mode</strong> (<em>str</em>) – The mode to open the file in. Defaults to “a”.</p></li>
-<li><p><strong>color</strong> (<em>str</em><em> | </em><em>None</em>) – The color to use for the text. Defaults to None.</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) – Path to the output file.</p></li>
+<li><p><strong>mode</strong> (<em>str</em>) – File open mode (e.g., <code class="docutils literal notranslate"><span class="pre">'w'</span></code>, <code class="docutils literal notranslate"><span class="pre">'a'</span></code>, <code class="docutils literal notranslate"><span class="pre">'x'</span></code>). Defaults to <code class="docutils literal notranslate"><span class="pre">'a'</span></code>.</p></li>
+<li><p><strong>color</strong> (<em>str</em><em> | </em><em>None</em>) – Default text color for output. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="langchain_core.callbacks.file.FileCallbackHandler.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_core/callbacks/file.html#FileCallbackHandler.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.callbacks.file.FileCallbackHandler.close" title="Link to this definition">#</a></dt>
+<dd><p>Close the file if it’s open.</p>
+<p>This method is safe to call multiple times and will only close
+the file if it’s currently open.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -523,13 +562,13 @@
 <dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/langchain_core/callbacks/file.html#FileCallbackHandler.on_agent_action"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.callbacks.file.FileCallbackHandler.on_agent_action" title="Link to this definition">#</a></dt>
-<dd><p>Run on agent action.</p>
+<dd><p>Handle agent action by writing the action log.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>action</strong> (<a class="reference internal" href="../agents/langchain_core.agents.AgentAction.html#langchain_core.agents.AgentAction" title="langchain_core.agents.AgentAction"><em>AgentAction</em></a>) – The agent action.</p></li>
-<li><p><strong>color</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The color to use for the text.
-Defaults to None.</p></li>
+<li><p><strong>action</strong> (<a class="reference internal" href="../agents/langchain_core.agents.AgentAction.html#langchain_core.agents.AgentAction" title="langchain_core.agents.AgentAction"><em>AgentAction</em></a>) – The agent action containing the log to write.</p></li>
+<li><p><strong>color</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Color override for this specific output. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, uses
+<code class="docutils literal notranslate"><span class="pre">self.color</span></code>.</p></li>
 <li><p><strong>**kwargs</strong> (<em>Any</em>) – Additional keyword arguments.</p></li>
 </ul>
 </dd>
@@ -547,13 +586,13 @@ Defaults to None.</p></li>
 <dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_core/callbacks/file.html#FileCallbackHandler.on_agent_finish"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.callbacks.file.FileCallbackHandler.on_agent_finish" title="Link to this definition">#</a></dt>
-<dd><p>Run on the agent end.</p>
+<dd><p>Handle agent finish by writing the finish log.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>finish</strong> (<a class="reference internal" href="../agents/langchain_core.agents.AgentFinish.html#langchain_core.agents.AgentFinish" title="langchain_core.agents.AgentFinish"><em>AgentFinish</em></a>) – The agent finish.</p></li>
-<li><p><strong>color</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The color to use for the text.
-Defaults to None.</p></li>
+<li><p><strong>finish</strong> (<a class="reference internal" href="../agents/langchain_core.agents.AgentFinish.html#langchain_core.agents.AgentFinish" title="langchain_core.agents.AgentFinish"><em>AgentFinish</em></a>) – The agent finish object containing the log to write.</p></li>
+<li><p><strong>color</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Color override for this specific output. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, uses
+<code class="docutils literal notranslate"><span class="pre">self.color</span></code>.</p></li>
 <li><p><strong>**kwargs</strong> (<em>Any</em>) – Additional keyword arguments.</p></li>
 </ul>
 </dd>
@@ -570,7 +609,7 @@ Defaults to None.</p></li>
 <dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_core/callbacks/file.html#FileCallbackHandler.on_chain_end"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.callbacks.file.FileCallbackHandler.on_chain_end" title="Link to this definition">#</a></dt>
-<dd><p>Print out that we finished a chain.</p>
+<dd><p>Print that we finished a chain.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -618,13 +657,13 @@ Defaults to None.</p></li>
 <dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_core/callbacks/file.html#FileCallbackHandler.on_chain_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.callbacks.file.FileCallbackHandler.on_chain_start" title="Link to this definition">#</a></dt>
-<dd><p>Print out that we are entering a chain.</p>
+<dd><p>Print that we are entering a chain.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>serialized</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – The serialized chain.</p></li>
+<li><p><strong>serialized</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – The serialized chain information.</p></li>
 <li><p><strong>inputs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – The inputs to the chain.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Additional keyword arguments.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Additional keyword arguments that may contain <code class="docutils literal notranslate"><span class="pre">'name'</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -647,10 +686,8 @@ Defaults to None.</p></li>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="headerlink" href="#langchain_core.callbacks.file.FileCallbackHandler.on_chat_model_start" title="Link to this definition">#</a></dt>
 <dd><p>Run when a chat model starts running.</p>
-<dl class="simple">
-<dt><strong>ATTENTION</strong>: This method is called for chat models. If you’re implementing</dt><dd><p>a handler for a non-chat model, you should use on_llm_start instead.</p>
-</dd>
-</dl>
+<p><strong>ATTENTION</strong>: This method is called for chat models. If you’re implementing
+a handler for a non-chat model, you should use <code class="docutils literal notranslate"><span class="pre">on_llm_start</span></code> instead.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -800,11 +837,12 @@ containing content and other information.</p></li>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="headerlink" href="#langchain_core.callbacks.file.FileCallbackHandler.on_llm_start" title="Link to this definition">#</a></dt>
 <dd><p>Run when LLM starts running.</p>
-<dl class="simple">
-<dt><strong>ATTENTION</strong>: This method is called for non-chat models (regular LLMs). If</dt><dd><p>you’re implementing a handler for a chat model,
-you should use on_chat_model_start instead.</p>
-</dd>
-</dl>
+<div class="admonition attention">
+<p class="admonition-title">Attention</p>
+<p>This method is called for non-chat models (regular LLMs). If you’re
+implementing a handler for a chat model, you should use
+<code class="docutils literal notranslate"><span class="pre">on_chat_model_start</span></code> instead.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -942,14 +980,14 @@ you should use on_chat_model_start instead.</p>
 <dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_core/callbacks/file.html#FileCallbackHandler.on_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.callbacks.file.FileCallbackHandler.on_text" title="Link to this definition">#</a></dt>
-<dd><p>Run when the agent ends.</p>
+<dd><p>Handle text output.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>text</strong> (<em>str</em>) – The text to print.</p></li>
-<li><p><strong>color</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The color to use for the text.
-Defaults to None.</p></li>
-<li><p><strong>end</strong> (<em>str</em><em>, </em><em>optional</em>) – The end character. Defaults to “”.</p></li>
+<li><p><strong>text</strong> (<em>str</em>) – The text to write.</p></li>
+<li><p><strong>color</strong> (<em>str</em><em> | </em><em>None</em>) – Color override for this specific output. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, uses
+<code class="docutils literal notranslate"><span class="pre">self.color</span></code>.</p></li>
+<li><p><strong>end</strong> (<em>str</em>) – String appended after the text. Defaults to <code class="docutils literal notranslate"><span class="pre">""</span></code>.</p></li>
 <li><p><strong>**kwargs</strong> (<em>Any</em>) – Additional keyword arguments.</p></li>
 </ul>
 </dd>
@@ -969,17 +1007,15 @@ Defaults to None.</p></li>
 <dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/langchain_core/callbacks/file.html#FileCallbackHandler.on_tool_end"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.callbacks.file.FileCallbackHandler.on_tool_end" title="Link to this definition">#</a></dt>
-<dd><p>If not the final action, print out observation.</p>
+<dd><p>Handle tool end by writing the output with optional prefixes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>output</strong> (<em>str</em>) – The output to print.</p></li>
-<li><p><strong>color</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The color to use for the text.
-Defaults to None.</p></li>
-<li><p><strong>observation_prefix</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The observation prefix.
-Defaults to None.</p></li>
-<li><p><strong>llm_prefix</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The LLM prefix.
-Defaults to None.</p></li>
+<li><p><strong>output</strong> (<em>str</em>) – The tool output to write.</p></li>
+<li><p><strong>color</strong> (<em>str</em><em> | </em><em>None</em>) – Color override for this specific output. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, uses
+<code class="docutils literal notranslate"><span class="pre">self.color</span></code>.</p></li>
+<li><p><strong>observation_prefix</strong> (<em>str</em><em> | </em><em>None</em>) – Optional prefix to write before the output.</p></li>
+<li><p><strong>llm_prefix</strong> (<em>str</em><em> | </em><em>None</em>) – Optional prefix to write after the output.</p></li>
 <li><p><strong>**kwargs</strong> (<em>Any</em>) – Additional keyword arguments.</p></li>
 </ul>
 </dd>
@@ -1064,6 +1100,7 @@ Defaults to None.</p></li>
 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_core.callbacks.file.FileCallbackHandler"><code class="docutils literal notranslate"><span class="pre">FileCallbackHandler</span></code></a><ul class="visible nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_core.callbacks.file.FileCallbackHandler.__init__"><code class="docutils literal notranslate"><span class="pre">__init__()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_core.callbacks.file.FileCallbackHandler.close"><code class="docutils literal notranslate"><span class="pre">close()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_core.callbacks.file.FileCallbackHandler.on_agent_action"><code class="docutils literal notranslate"><span class="pre">on_agent_action()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_core.callbacks.file.FileCallbackHandler.on_agent_finish"><code class="docutils literal notranslate"><span class="pre">on_agent_finish()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#langchain_core.callbacks.file.FileCallbackHandler.on_chain_end"><code class="docutils literal notranslate"><span class="pre">on_chain_end()</span></code></a></li>
