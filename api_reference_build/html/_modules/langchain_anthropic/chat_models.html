@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,9 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_anthropic.chat_models</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
@@ -336,18 +338,19 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_image</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Converts part["image_url"]["url"] strings (OpenAI format)</span>
-<span class="sd">    to the correct Anthropic format:</span>
+<span class="w">    </span><span class="sd">"""Convert part["image_url"]["url"] strings (OpenAI format) to Anthropic format.</span>
+
 <span class="sd">    {</span>
-<span class="sd">      "type": "base64",</span>
-<span class="sd">      "media_type": "image/jpeg",</span>
-<span class="sd">      "data": "/9j/4AAQSkZJRg...",</span>
+<span class="sd">        "type": "base64",</span>
+<span class="sd">        "media_type": "image/jpeg",</span>
+<span class="sd">        "data": "/9j/4AAQSkZJRg...",</span>
 <span class="sd">    }</span>
+
 <span class="sd">    Or</span>
+
 <span class="sd">    {</span>
-<span class="sd">      "type": "url",</span>
-<span class="sd">      "url": "https://example.com/image.jpg",</span>
+<span class="sd">        "type": "url",</span>
+<span class="sd">        "url": "https://example.com/image.jpg",</span>
 <span class="sd">    }</span>
 <span class="sd">    """</span>
     <span class="c1"># Base64 encoded image</span>
@@ -371,10 +374,13 @@
             <span class="s2">"url"</span><span class="p">:</span> <span class="n">url</span><span class="p">,</span>
         <span class="p">}</span>
 
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">"Malformed url parameter."</span>
         <span class="s2">" Must be either an image URL (https://example.com/image.jpg)"</span>
         <span class="s2">" or base64 encoded string (data:image/png;base64,'/9j/4AAQSk'...)"</span>
+    <span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="n">msg</span><span class="p">,</span>
     <span class="p">)</span>
 
 
@@ -402,8 +408,8 @@
                             <span class="s2">"content"</span><span class="p">:</span> <span class="n">curr</span><span class="o">.</span><span class="n">content</span><span class="p">,</span>
                             <span class="s2">"tool_use_id"</span><span class="p">:</span> <span class="n">curr</span><span class="o">.</span><span class="n">tool_call_id</span><span class="p">,</span>
                             <span class="s2">"is_error"</span><span class="p">:</span> <span class="n">curr</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"error"</span><span class="p">,</span>
-                        <span class="p">}</span>
-                    <span class="p">]</span>
+                        <span class="p">},</span>
+                    <span class="p">],</span>
                 <span class="p">)</span>
         <span class="n">last</span> <span class="o">=</span> <span class="n">merged</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">merged</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
@@ -412,7 +418,7 @@
         <span class="p">):</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">BaseMessage</span><span class="p">,</span> <span class="n">last</span><span class="p">)</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
                 <span class="n">new_content</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="n">cast</span><span class="p">(</span><span class="n">BaseMessage</span><span class="p">,</span> <span class="n">last</span><span class="p">)</span><span class="o">.</span><span class="n">content</span><span class="p">}</span>
+                    <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="n">cast</span><span class="p">(</span><span class="n">BaseMessage</span><span class="p">,</span> <span class="n">last</span><span class="p">)</span><span class="o">.</span><span class="n">content</span><span class="p">},</span>
                 <span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">new_content</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">cast</span><span class="p">(</span><span class="n">BaseMessage</span><span class="p">,</span> <span class="n">last</span><span class="p">)</span><span class="o">.</span><span class="n">content</span><span class="p">))</span>
@@ -459,9 +465,12 @@
                 <span class="p">},</span>
             <span class="p">}</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Anthropic only supports 'url' and 'base64' source_type for image "</span>
                 <span class="s2">"content blocks."</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">msg</span><span class="p">,</span>
             <span class="p">)</span>
 
     <span class="k">elif</span> <span class="n">block</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"file"</span><span class="p">:</span>
@@ -501,7 +510,8 @@
             <span class="p">}</span>
 
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Block of type </span><span class="si">{</span><span class="n">block</span><span class="p">[</span><span class="s1">'type'</span><span class="p">]</span><span class="si">}</span><span class="s2"> is not supported."</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Block of type </span><span class="si">{</span><span class="n">block</span><span class="p">[</span><span class="s1">'type'</span><span class="p">]</span><span class="si">}</span><span class="s2"> is not supported."</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">formatted_block</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"cache_control"</span><span class="p">,</span> <span class="s2">"citations"</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">,</span> <span class="s2">"context"</span><span class="p">]:</span>
@@ -517,7 +527,6 @@
     <span class="n">messages</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="kc">None</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""Format messages for anthropic."""</span>
-
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    [</span>
 <span class="sd">                {</span>
@@ -533,8 +542,9 @@
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">message</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">merged_messages</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">message</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"system"</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">system</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Received multiple non-consecutive system messages."</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Received multiple non-consecutive system messages."</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
                 <span class="n">system</span> <span class="o">=</span> <span class="p">[</span>
                     <span class="p">(</span>
                         <span class="n">block</span>
@@ -553,8 +563,9 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="c1"># parse as dict</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Anthropic message content must be str or list of dicts"</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">"Anthropic message content must be str or list of dicts"</span>
+                    <span class="n">msg</span><span class="p">,</span>
                 <span class="p">)</span>
 
             <span class="c1"># populate content</span>
@@ -564,8 +575,9 @@
                     <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="n">block</span><span class="p">})</span>
                 <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
                     <span class="k">if</span> <span class="s2">"type"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">block</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Dict content block must have a type key"</span><span class="p">)</span>
-                    <span class="k">elif</span> <span class="n">block</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"image_url"</span><span class="p">:</span>
+                        <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Dict content block must have a type key"</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">block</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"image_url"</span><span class="p">:</span>
                         <span class="c1"># convert format</span>
                         <span class="n">source</span> <span class="o">=</span> <span class="n">_format_image</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"image_url"</span><span class="p">][</span><span class="s2">"url"</span><span class="p">])</span>
                         <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"image"</span><span class="p">,</span> <span class="s2">"source"</span><span class="p">:</span> <span class="n">source</span><span class="p">})</span>
@@ -583,7 +595,9 @@
                                 <span class="k">if</span> <span class="n">tc</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span> <span class="o">==</span> <span class="n">block</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span>
                             <span class="p">]</span>
                             <span class="n">content</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-                                <span class="n">_lc_tool_calls_to_anthropic_tool_use_blocks</span><span class="p">(</span><span class="n">overlapping</span><span class="p">)</span>
+                                <span class="n">_lc_tool_calls_to_anthropic_tool_use_blocks</span><span class="p">(</span>
+                                    <span class="n">overlapping</span><span class="p">,</span>
+                                <span class="p">),</span>
                             <span class="p">)</span>
                         <span class="k">else</span><span class="p">:</span>
                             <span class="n">block</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"text"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -623,7 +637,7 @@
                                     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
                                     <span class="k">if</span> <span class="n">k</span>
                                     <span class="ow">in</span> <span class="p">(</span><span class="s2">"type"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"cache_control"</span><span class="p">,</span> <span class="s2">"citations"</span><span class="p">)</span>
-                                <span class="p">}</span>
+                                <span class="p">},</span>
                             <span class="p">)</span>
                     <span class="k">elif</span> <span class="n">block</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"thinking"</span><span class="p">:</span>
                         <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -632,7 +646,7 @@
                                 <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
                                 <span class="k">if</span> <span class="n">k</span>
                                 <span class="ow">in</span> <span class="p">(</span><span class="s2">"type"</span><span class="p">,</span> <span class="s2">"thinking"</span><span class="p">,</span> <span class="s2">"cache_control"</span><span class="p">,</span> <span class="s2">"signature"</span><span class="p">)</span>
-                            <span class="p">}</span>
+                            <span class="p">},</span>
                         <span class="p">)</span>
                     <span class="k">elif</span> <span class="n">block</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"redacted_thinking"</span><span class="p">:</span>
                         <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -640,13 +654,13 @@
                                 <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
                                 <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
                                 <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"type"</span><span class="p">,</span> <span class="s2">"cache_control"</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">)</span>
-                            <span class="p">}</span>
+                            <span class="p">},</span>
                         <span class="p">)</span>
                     <span class="k">elif</span> <span class="n">block</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"tool_result"</span><span class="p">:</span>
                         <span class="n">tool_content</span> <span class="o">=</span> <span class="n">_format_messages</span><span class="p">(</span>
-                            <span class="p">[</span><span class="n">HumanMessage</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"content"</span><span class="p">])]</span>
+                            <span class="p">[</span><span class="n">HumanMessage</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"content"</span><span class="p">])],</span>
                         <span class="p">)[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">"content"</span><span class="p">]</span>
-                        <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="o">**</span><span class="n">block</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s2">"content"</span><span class="p">:</span> <span class="n">tool_content</span><span class="p">}})</span>
+                        <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="o">**</span><span class="n">block</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">tool_content</span><span class="p">})</span>
                     <span class="k">elif</span> <span class="n">block</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span>
                         <span class="s2">"code_execution_tool_result"</span><span class="p">,</span>
                         <span class="s2">"mcp_tool_result"</span><span class="p">,</span>
@@ -664,14 +678,17 @@
                                     <span class="s2">"is_error"</span><span class="p">,</span>  <span class="c1"># for mcp_tool_result</span>
                                     <span class="s2">"cache_control"</span><span class="p">,</span>
                                 <span class="p">)</span>
-                            <span class="p">}</span>
+                            <span class="p">},</span>
                         <span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                         <span class="sa">f</span><span class="s2">"Content blocks must be str or dict, instead was: "</span>
                         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">block</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="n">msg</span><span class="p">,</span>
                     <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">content</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">content</span>
@@ -693,7 +710,7 @@
                 <span class="n">tc</span> <span class="k">for</span> <span class="n">tc</span> <span class="ow">in</span> <span class="n">message</span><span class="o">.</span><span class="n">tool_calls</span> <span class="k">if</span> <span class="n">tc</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tool_use_ids</span>
             <span class="p">]</span>
             <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-                <span class="n">_lc_tool_calls_to_anthropic_tool_use_blocks</span><span class="p">(</span><span class="n">missing_tool_calls</span><span class="p">)</span>
+                <span class="n">_lc_tool_calls_to_anthropic_tool_use_blocks</span><span class="p">(</span><span class="n">missing_tool_calls</span><span class="p">),</span>
             <span class="p">)</span>
 
         <span class="n">formatted_messages</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"role"</span><span class="p">:</span> <span class="n">role</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">content</span><span class="p">})</span>
@@ -706,8 +723,7 @@
         <span class="n">message</span> <span class="o">=</span> <span class="s2">"Received only system message(s). "</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
         <span class="k">raise</span> <span class="n">e</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span>
+    <span class="k">raise</span>
 
 
 <div class="viewcode-block" id="ChatAnthropic">
@@ -862,17 +878,17 @@
 <span class="sd">        .. code-block:: python</span>
 
 <span class="sd">            [{'name': 'GetWeather',</span>
-<span class="sd">              'args': {'location': 'Los Angeles, CA'},</span>
-<span class="sd">              'id': 'toolu_01KzpPEAgzura7hpBqwHbWdo'},</span>
+<span class="sd">                'args': {'location': 'Los Angeles, CA'},</span>
+<span class="sd">                'id': 'toolu_01KzpPEAgzura7hpBqwHbWdo'},</span>
 <span class="sd">             {'name': 'GetWeather',</span>
-<span class="sd">              'args': {'location': 'New York, NY'},</span>
-<span class="sd">              'id': 'toolu_01JtgbVGVJbiSwtZk3Uycezx'},</span>
+<span class="sd">                 'args': {'location': 'New York, NY'},</span>
+<span class="sd">                 'id': 'toolu_01JtgbVGVJbiSwtZk3Uycezx'},</span>
 <span class="sd">             {'name': 'GetPopulation',</span>
-<span class="sd">              'args': {'location': 'Los Angeles, CA'},</span>
-<span class="sd">              'id': 'toolu_01429aygngesudV9nTbCKGuw'},</span>
+<span class="sd">                'args': {'location': 'Los Angeles, CA'},</span>
+<span class="sd">                'id': 'toolu_01429aygngesudV9nTbCKGuw'},</span>
 <span class="sd">             {'name': 'GetPopulation',</span>
-<span class="sd">              'args': {'location': 'New York, NY'},</span>
-<span class="sd">              'id': 'toolu_01JPktyd44tVMeBcPPnFSEJG'}]</span>
+<span class="sd">                'args': {'location': 'New York, NY'},</span>
+<span class="sd">                'id': 'toolu_01JPktyd44tVMeBcPPnFSEJG'}]</span>
 
 <span class="sd">        See ``ChatAnthropic.bind_tools()`` method for more.</span>
 
@@ -900,7 +916,7 @@
 <span class="sd">        See ``ChatAnthropic.with_structured_output()`` for more.</span>
 
 <span class="sd">    Image input:</span>
-<span class="sd">        See `multimodal guides &lt;https://python.langchain.com/docs/how_to/multimodal_inputs/&gt;`_</span>
+<span class="sd">        See `multimodal guides &lt;https://python.langchain.com/docs/how_to/multimodal_inputs/&gt;`__</span>
 <span class="sd">        for more detail.</span>
 
 <span class="sd">        .. code-block:: python</span>
@@ -944,7 +960,7 @@
 <span class="sd">        .. dropdown:: Files API</span>
 
 <span class="sd">            You can also pass in files that are managed through Anthropic's</span>
-<span class="sd">            `Files API &lt;https://docs.anthropic.com/en/docs/build-with-claude/files&gt;`_:</span>
+<span class="sd">            `Files API &lt;https://docs.anthropic.com/en/docs/build-with-claude/files&gt;`__:</span>
 
 <span class="sd">            .. code-block:: python</span>
 
@@ -971,7 +987,7 @@
 <span class="sd">                llm.invoke([input_message])</span>
 
 <span class="sd">    PDF input:</span>
-<span class="sd">        See `multimodal guides &lt;https://python.langchain.com/docs/how_to/multimodal_inputs/&gt;`_</span>
+<span class="sd">        See `multimodal guides &lt;https://python.langchain.com/docs/how_to/multimodal_inputs/&gt;`__</span>
 <span class="sd">        for more detail.</span>
 
 <span class="sd">        .. code-block:: python</span>
@@ -1009,7 +1025,7 @@
 <span class="sd">        .. dropdown:: Files API</span>
 
 <span class="sd">            You can also pass in files that are managed through Anthropic's</span>
-<span class="sd">            `Files API &lt;https://docs.anthropic.com/en/docs/build-with-claude/files&gt;`_:</span>
+<span class="sd">            `Files API &lt;https://docs.anthropic.com/en/docs/build-with-claude/files&gt;`__:</span>
 
 <span class="sd">            .. code-block:: python</span>
 
@@ -1037,7 +1053,7 @@
 
 <span class="sd">    Extended thinking:</span>
 <span class="sd">        Claude 3.7 Sonnet supports an</span>
-<span class="sd">        `extended thinking &lt;https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking&gt;`_</span>
+<span class="sd">        `extended thinking &lt;https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking&gt;`__</span>
 <span class="sd">        feature, which will output the step-by-step reasoning process that led to its</span>
 <span class="sd">        final answer.</span>
 
@@ -1065,10 +1081,10 @@
 
 <span class="sd">    Citations:</span>
 <span class="sd">        Anthropic supports a</span>
-<span class="sd">        `citations &lt;https://docs.anthropic.com/en/docs/build-with-claude/citations&gt;`_</span>
+<span class="sd">        `citations &lt;https://docs.anthropic.com/en/docs/build-with-claude/citations&gt;`__</span>
 <span class="sd">        feature that lets Claude attach context to its answers based on source</span>
 <span class="sd">        documents supplied by the user. When</span>
-<span class="sd">        `document content blocks &lt;https://docs.anthropic.com/en/docs/build-with-claude/citations#document-types&gt;`_</span>
+<span class="sd">        `document content blocks &lt;https://docs.anthropic.com/en/docs/build-with-claude/citations#document-types&gt;`__</span>
 <span class="sd">        with ``"citations": {"enabled": True}`` are included in a query, Claude may</span>
 <span class="sd">        generate citations in its response.</span>
 
@@ -1151,7 +1167,7 @@
 <span class="sd">        or by setting ``stream_usage=False`` when initializing ChatAnthropic.</span>
 
 <span class="sd">    Prompt caching:</span>
-<span class="sd">        See LangChain `docs &lt;https://python.langchain.com/docs/integrations/chat/anthropic/#built-in-tools&gt;`_</span>
+<span class="sd">        See LangChain `docs &lt;https://python.langchain.com/docs/integrations/chat/anthropic/#built-in-tools&gt;`__</span>
 <span class="sd">        for more detail.</span>
 
 <span class="sd">        .. code-block:: python</span>
@@ -1227,11 +1243,11 @@
 <span class="sd">                    }</span>
 <span class="sd">                }</span>
 
-<span class="sd">            See `Claude documentation &lt;https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching#1-hour-cache-duration-beta&gt;`_</span>
+<span class="sd">            See `Claude documentation &lt;https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching#1-hour-cache-duration-beta&gt;`__</span>
 <span class="sd">            for detail.</span>
 
 <span class="sd">    Token-efficient tool use (beta):</span>
-<span class="sd">        See LangChain `docs &lt;https://python.langchain.com/docs/integrations/chat/anthropic/&gt;`_</span>
+<span class="sd">        See LangChain `docs &lt;https://python.langchain.com/docs/integrations/chat/anthropic/&gt;`__</span>
 <span class="sd">        for more detail.</span>
 
 <span class="sd">        .. code-block:: python</span>
@@ -1268,7 +1284,7 @@
 <span class="sd">            Total tokens: 408</span>
 
 <span class="sd">    Built-in tools:</span>
-<span class="sd">        See LangChain `docs &lt;https://python.langchain.com/docs/integrations/chat/anthropic/&gt;`_</span>
+<span class="sd">        See LangChain `docs &lt;https://python.langchain.com/docs/integrations/chat/anthropic/&gt;`__</span>
 <span class="sd">        for more detail.</span>
 
 <span class="sd">        .. dropdown::  Web search</span>
@@ -1493,7 +1509,9 @@
         <span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_ls_params</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">stop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">stop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LangSmithParams</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Get standard params for tracing."""</span>
         <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_invocation_params</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -1513,8 +1531,7 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">build_extra</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">all_required_field_names</span> <span class="o">=</span> <span class="n">get_pydantic_field_names</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-        <span class="n">values</span> <span class="o">=</span> <span class="n">_build_model_kwargs</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">all_required_field_names</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">values</span>
+        <span class="k">return</span> <span class="n">_build_model_kwargs</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">all_required_field_names</span><span class="p">)</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_client_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -1588,14 +1605,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">if</span> <span class="s2">"betas"</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_acreate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">if</span> <span class="s2">"betas"</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">:</span>
             <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_client</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_client</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_client</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -1723,7 +1738,10 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChatResult</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">streaming</span><span class="p">:</span>
             <span class="n">stream_iter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span><span class="p">(</span>
-                <span class="n">messages</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="n">run_manager</span><span class="o">=</span><span class="n">run_manager</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+                <span class="n">messages</span><span class="p">,</span>
+                <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span>
+                <span class="n">run_manager</span><span class="o">=</span><span class="n">run_manager</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">return</span> <span class="n">generate_from_stream</span><span class="p">(</span><span class="n">stream_iter</span><span class="p">)</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_request_payload</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -1742,7 +1760,10 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChatResult</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">streaming</span><span class="p">:</span>
             <span class="n">stream_iter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_astream</span><span class="p">(</span>
-                <span class="n">messages</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="n">run_manager</span><span class="o">=</span><span class="n">run_manager</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+                <span class="n">messages</span><span class="p">,</span>
+                <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span>
+                <span class="n">run_manager</span><span class="o">=</span><span class="n">run_manager</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">return</span> <span class="k">await</span> <span class="n">agenerate_from_stream</span><span class="p">(</span><span class="n">stream_iter</span><span class="p">)</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_request_payload</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -1787,7 +1808,7 @@
         <span class="n">tools</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">type</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">BaseTool</span><span class="p">]],</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">tool_choice</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
-            <span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"any"</span><span class="p">,</span> <span class="s2">"auto"</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span>
+            <span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"any"</span><span class="p">,</span> <span class="s2">"auto"</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span>  <span class="c1"># noqa: PYI051</span>
         <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">parallel_tool_calls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -1945,9 +1966,12 @@
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool_choice</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s2">"tool_choice"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"tool"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="n">tool_choice</span><span class="p">}</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Unrecognized 'tool_choice' type </span><span class="si">{</span><span class="n">tool_choice</span><span class="si">=}</span><span class="s2">. Expected dict, "</span>
                 <span class="sa">f</span><span class="s2">"str, or None."</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">msg</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">parallel_tool_calls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -2093,7 +2117,8 @@
         <span class="n">tool_name</span> <span class="o">=</span> <span class="n">formatted_tool</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"enabled"</span><span class="p">:</span>
             <span class="n">llm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_llm_for_structured_output_when_thinking_is_enabled</span><span class="p">(</span>
-                <span class="n">schema</span><span class="p">,</span> <span class="n">formatted_tool</span>
+                <span class="n">schema</span><span class="p">,</span>
+                <span class="n">formatted_tool</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">llm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bind_tools</span><span class="p">(</span>
@@ -2107,24 +2132,27 @@
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_basemodel_subclass</span><span class="p">(</span><span class="n">schema</span><span class="p">):</span>
             <span class="n">output_parser</span><span class="p">:</span> <span class="n">OutputParserLike</span> <span class="o">=</span> <span class="n">PydanticToolsParser</span><span class="p">(</span>
-                <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">schema</span><span class="p">],</span> <span class="n">first_tool_only</span><span class="o">=</span><span class="kc">True</span>
+                <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">schema</span><span class="p">],</span>
+                <span class="n">first_tool_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">output_parser</span> <span class="o">=</span> <span class="n">JsonOutputKeyToolsParser</span><span class="p">(</span>
-                <span class="n">key_name</span><span class="o">=</span><span class="n">tool_name</span><span class="p">,</span> <span class="n">first_tool_only</span><span class="o">=</span><span class="kc">True</span>
+                <span class="n">key_name</span><span class="o">=</span><span class="n">tool_name</span><span class="p">,</span>
+                <span class="n">first_tool_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">include_raw</span><span class="p">:</span>
             <span class="n">parser_assign</span> <span class="o">=</span> <span class="n">RunnablePassthrough</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span>
-                <span class="n">parsed</span><span class="o">=</span><span class="n">itemgetter</span><span class="p">(</span><span class="s2">"raw"</span><span class="p">)</span> <span class="o">|</span> <span class="n">output_parser</span><span class="p">,</span> <span class="n">parsing_error</span><span class="o">=</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="kc">None</span>
+                <span class="n">parsed</span><span class="o">=</span><span class="n">itemgetter</span><span class="p">(</span><span class="s2">"raw"</span><span class="p">)</span> <span class="o">|</span> <span class="n">output_parser</span><span class="p">,</span>
+                <span class="n">parsing_error</span><span class="o">=</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">parser_none</span> <span class="o">=</span> <span class="n">RunnablePassthrough</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">parsed</span><span class="o">=</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
             <span class="n">parser_with_fallback</span> <span class="o">=</span> <span class="n">parser_assign</span><span class="o">.</span><span class="n">with_fallbacks</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">parser_none</span><span class="p">],</span> <span class="n">exception_key</span><span class="o">=</span><span class="s2">"parsing_error"</span>
+                <span class="p">[</span><span class="n">parser_none</span><span class="p">],</span>
+                <span class="n">exception_key</span><span class="o">=</span><span class="s2">"parsing_error"</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">return</span> <span class="n">RunnableMap</span><span class="p">(</span><span class="n">raw</span><span class="o">=</span><span class="n">llm</span><span class="p">)</span> <span class="o">|</span> <span class="n">parser_with_fallback</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">llm</span> <span class="o">|</span> <span class="n">output_parser</span></div>
+        <span class="k">return</span> <span class="n">llm</span> <span class="o">|</span> <span class="n">output_parser</span></div>
 
 
 <div class="viewcode-block" id="ChatAnthropic.get_num_tokens_from_messages">
@@ -2144,6 +2172,8 @@
 <span class="sd">            messages: The message inputs to tokenize.</span>
 <span class="sd">            tools: If provided, sequence of dict, BaseModel, function, or BaseTools</span>
 <span class="sd">                to be converted to tool schemas.</span>
+<span class="sd">            kwargs: Additional keyword arguments are passed to the</span>
+<span class="sd">                :meth:`~langchain_anthropic.chat_models.ChatAnthropic.bind` method.</span>
 
 <span class="sd">        Basic usage:</span>
 
@@ -2224,7 +2254,7 @@
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
         <span class="n">k</span> <span class="ow">in</span> <span class="n">tool</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">,</span> <span class="s2">"input_schema"</span><span class="p">)</span>
     <span class="p">):</span>
-        <span class="n">anthropic_formatted</span> <span class="o">=</span> <span class="n">AnthropicTool</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="n">anthropic_formatted</span> <span class="o">=</span> <span class="n">AnthropicTool</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span>  <span class="c1"># type: ignore[misc]</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">oai_formatted</span> <span class="o">=</span> <span class="n">convert_to_openai_tool</span><span class="p">(</span><span class="n">tool</span><span class="p">)[</span><span class="s2">"function"</span><span class="p">]</span>
         <span class="n">anthropic_formatted</span> <span class="o">=</span> <span class="n">AnthropicTool</span><span class="p">(</span>
@@ -2272,17 +2302,15 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_lc_tool_calls_to_anthropic_tool_use_blocks</span><span class="p">(</span>
     <span class="n">tool_calls</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ToolCall</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">_AnthropicToolUse</span><span class="p">]:</span>
-    <span class="n">blocks</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">tool_call</span> <span class="ow">in</span> <span class="n">tool_calls</span><span class="p">:</span>
-        <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">_AnthropicToolUse</span><span class="p">(</span>
-                <span class="nb">type</span><span class="o">=</span><span class="s2">"tool_use"</span><span class="p">,</span>
-                <span class="n">name</span><span class="o">=</span><span class="n">tool_call</span><span class="p">[</span><span class="s2">"name"</span><span class="p">],</span>
-                <span class="nb">input</span><span class="o">=</span><span class="n">tool_call</span><span class="p">[</span><span class="s2">"args"</span><span class="p">],</span>
-                <span class="nb">id</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">tool_call</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]),</span>
-            <span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">_AnthropicToolUse</span><span class="p">(</span>
+            <span class="nb">type</span><span class="o">=</span><span class="s2">"tool_use"</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">tool_call</span><span class="p">[</span><span class="s2">"name"</span><span class="p">],</span>
+            <span class="nb">input</span><span class="o">=</span><span class="n">tool_call</span><span class="p">[</span><span class="s2">"args"</span><span class="p">],</span>
+            <span class="nb">id</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">tool_call</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]),</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="n">blocks</span>
+        <span class="k">for</span> <span class="n">tool_call</span> <span class="ow">in</span> <span class="n">tool_calls</span>
+    <span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_make_message_chunk_from_anthropic_event</span><span class="p">(</span>
@@ -2347,7 +2375,7 @@
             <span class="n">tool_call_chunks</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">message_chunk</span> <span class="o">=</span> <span class="n">AIMessageChunk</span><span class="p">(</span>
             <span class="n">content</span><span class="o">=</span><span class="p">[</span><span class="n">content_block</span><span class="p">],</span>
-            <span class="n">tool_call_chunks</span><span class="o">=</span><span class="n">tool_call_chunks</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+            <span class="n">tool_call_chunks</span><span class="o">=</span><span class="n">tool_call_chunks</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">block_start_event</span> <span class="o">=</span> <span class="n">event</span>
     <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"content_block_delta"</span><span class="p">:</span>
@@ -2362,14 +2390,10 @@
                 <span class="k">if</span> <span class="s2">"citation"</span> <span class="ow">in</span> <span class="n">content_block</span><span class="p">:</span>
                     <span class="n">content_block</span><span class="p">[</span><span class="s2">"citations"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">content_block</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"citation"</span><span class="p">)]</span>
                 <span class="n">message_chunk</span> <span class="o">=</span> <span class="n">AIMessageChunk</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="p">[</span><span class="n">content_block</span><span class="p">])</span>
-        <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"thinking_delta"</span><span class="p">:</span>
-            <span class="n">content_block</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
-            <span class="k">if</span> <span class="s2">"text"</span> <span class="ow">in</span> <span class="n">content_block</span> <span class="ow">and</span> <span class="n">content_block</span><span class="p">[</span><span class="s2">"text"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">content_block</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"text"</span><span class="p">)</span>
-            <span class="n">content_block</span><span class="p">[</span><span class="s2">"index"</span><span class="p">]</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">index</span>
-            <span class="n">content_block</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"thinking"</span>
-            <span class="n">message_chunk</span> <span class="o">=</span> <span class="n">AIMessageChunk</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="p">[</span><span class="n">content_block</span><span class="p">])</span>
-        <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"signature_delta"</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"thinking_delta"</span>
+            <span class="ow">or</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"signature_delta"</span>
+        <span class="p">):</span>
             <span class="n">content_block</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
             <span class="k">if</span> <span class="s2">"text"</span> <span class="ow">in</span> <span class="n">content_block</span> <span class="ow">and</span> <span class="n">content_block</span><span class="p">[</span><span class="s2">"text"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">content_block</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"text"</span><span class="p">)</span>
@@ -2395,7 +2419,7 @@
                 <span class="n">tool_call_chunks</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="n">message_chunk</span> <span class="o">=</span> <span class="n">AIMessageChunk</span><span class="p">(</span>
                 <span class="n">content</span><span class="o">=</span><span class="p">[</span><span class="n">content_block</span><span class="p">],</span>
-                <span class="n">tool_call_chunks</span><span class="o">=</span><span class="n">tool_call_chunks</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                <span class="n">tool_call_chunks</span><span class="o">=</span><span class="n">tool_call_chunks</span><span class="p">,</span>
             <span class="p">)</span>
     <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"message_delta"</span> <span class="ow">and</span> <span class="n">stream_usage</span><span class="p">:</span>
         <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">UsageMetadata</span><span class="p">(</span>

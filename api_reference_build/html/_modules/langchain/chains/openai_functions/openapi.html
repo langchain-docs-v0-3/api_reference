@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -245,14 +245,6 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">openapi_pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_get_description</span><span class="p">(</span><span class="n">o</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">prefer_short</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-    <span class="n">summary</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s2">"summary"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="n">description</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">prefer_short</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">summary</span> <span class="ow">or</span> <span class="n">description</span>
-    <span class="k">return</span> <span class="n">description</span> <span class="ow">or</span> <span class="n">summary</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_url</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path_params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="n">expected_path_param</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s2">"{(.*?)}"</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
     <span class="n">new_params</span> <span class="o">=</span> <span class="p">{}</span>
@@ -299,7 +291,7 @@
         <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">param_schema</span><span class="p">:</span>
             <span class="n">schema</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">get_schema</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">param_schema</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">media_type_schema</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">media_type_schema</span>
+            <span class="n">media_type_schema</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span><span class="o">.</span><span class="n">media_type_schema</span>
             <span class="n">schema</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">get_schema</span><span class="p">(</span><span class="n">media_type_schema</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">description</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">schema</span><span class="o">.</span><span class="n">description</span><span class="p">:</span>
             <span class="n">schema</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">description</span>
@@ -327,10 +319,11 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIOperation</span>
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">"Could not import langchain_community.tools. "</span>
             <span class="s2">"Please install it with `pip install langchain-community`."</span>
         <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">spec</span><span class="o">.</span><span class="n">paths</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[],</span> <span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span>
@@ -358,7 +351,8 @@
             <span class="k">for</span> <span class="n">param_loc</span><span class="p">,</span> <span class="n">arg_name</span> <span class="ow">in</span> <span class="n">param_loc_to_arg_name</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">params_by_type</span><span class="p">[</span><span class="n">param_loc</span><span class="p">]:</span>
                     <span class="n">request_args</span><span class="p">[</span><span class="n">arg_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">_openapi_params_to_json_schema</span><span class="p">(</span>
-                        <span class="n">params_by_type</span><span class="p">[</span><span class="n">param_loc</span><span class="p">],</span> <span class="n">spec</span>
+                        <span class="n">params_by_type</span><span class="p">[</span><span class="n">param_loc</span><span class="p">],</span>
+                        <span class="n">spec</span><span class="p">,</span>
                     <span class="p">)</span>
             <span class="n">request_body</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">get_request_body_for_operation</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
             <span class="c1"># TODO: Support more MIME types.</span>
@@ -368,10 +362,10 @@
                     <span class="k">if</span> <span class="n">media_type_object</span><span class="o">.</span><span class="n">media_type_schema</span><span class="p">:</span>
                         <span class="n">schema</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">get_schema</span><span class="p">(</span><span class="n">media_type_object</span><span class="o">.</span><span class="n">media_type_schema</span><span class="p">)</span>
                         <span class="n">media_types</span><span class="p">[</span><span class="n">media_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span>
-                            <span class="n">schema</span><span class="o">.</span><span class="n">json</span><span class="p">(</span><span class="n">exclude_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                            <span class="n">schema</span><span class="o">.</span><span class="n">json</span><span class="p">(</span><span class="n">exclude_none</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
                         <span class="p">)</span>
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">media_types</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="n">media_type</span><span class="p">,</span> <span class="n">schema_dict</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">media_types</span><span class="o">.</span><span class="n">items</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">media_type</span><span class="p">,</span> <span class="n">schema_dict</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">media_types</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
                     <span class="n">key</span> <span class="o">=</span> <span class="s2">"json"</span> <span class="k">if</span> <span class="n">media_type</span> <span class="o">==</span> <span class="s2">"application/json"</span> <span class="k">else</span> <span class="s2">"data"</span>
                     <span class="n">request_args</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">schema_dict</span>
                 <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">media_types</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
@@ -460,8 +454,8 @@
         <span class="k">if</span> <span class="n">api_response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
             <span class="n">response</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">api_response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">api_response</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">"</span>
-                <span class="o">+</span> <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">For </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> "</span>
-                <span class="o">+</span> <span class="sa">f</span><span class="s2">"Called with args: </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'params'</span><span class="p">,</span><span class="w"> </span><span class="s1">''</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">For </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"Called with args: </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'params'</span><span class="p">,</span><span class="w"> </span><span class="s1">''</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -479,7 +473,7 @@
     <span class="n">message</span><span class="o">=</span><span class="p">(</span>
         <span class="s2">"This function is deprecated and will be removed in langchain 1.0. "</span>
         <span class="s2">"See API reference for replacement: "</span>
-        <span class="s2">"https://api.python.langchain.com/en/latest/chains/langchain.chains.openai_functions.openapi.get_openapi_chain.html"</span>  <span class="c1"># noqa: E501</span>
+        <span class="s2">"https://api.python.langchain.com/en/latest/chains/langchain.chains.openai_functions.openapi.get_openapi_chain.html"</span>
     <span class="p">),</span>
     <span class="n">removal</span><span class="o">=</span><span class="s2">"1.0"</span><span class="p">,</span>
 <span class="p">)</span>
@@ -489,7 +483,7 @@
     <span class="n">prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BasePromptTemplate</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">request_chain</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Chain</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">llm_chain_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001,FBT002</span>
     <span class="n">headers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -583,10 +577,11 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.utilities.openapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAPISpec</span>
     <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">"Could not import langchain_community.utilities.openapi. "</span>
             <span class="s2">"Please install it with `pip install langchain-community`."</span>
-        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">conversion</span> <span class="ow">in</span> <span class="p">(</span>
             <span class="n">OpenAPISpec</span><span class="o">.</span><span class="n">from_url</span><span class="p">,</span>
@@ -601,16 +596,18 @@
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: S110</span>
                 <span class="k">pass</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unable to parse spec from source </span><span class="si">{</span><span class="n">spec</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Unable to parse spec from source </span><span class="si">{</span><span class="n">spec</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="n">openai_fns</span><span class="p">,</span> <span class="n">call_api_fn</span> <span class="o">=</span> <span class="n">openapi_spec_to_openai_fn</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">llm</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">"Must provide an LLM for this chain.For example,</span><span class="se">\n</span><span class="s2">"</span>
             <span class="s2">"from langchain_openai import ChatOpenAI</span><span class="se">\n</span><span class="s2">"</span>
             <span class="s2">"llm = ChatOpenAI()</span><span class="se">\n</span><span class="s2">"</span>
         <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt</span> <span class="ow">or</span> <span class="n">ChatPromptTemplate</span><span class="o">.</span><span class="n">from_template</span><span class="p">(</span>
-        <span class="s2">"Use the provided API's to respond to this user query:</span><span class="se">\n\n</span><span class="si">{query}</span><span class="s2">"</span>
+        <span class="s2">"Use the provided API's to respond to this user query:</span><span class="se">\n\n</span><span class="si">{query}</span><span class="s2">"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">llm_chain</span> <span class="o">=</span> <span class="n">LLMChain</span><span class="p">(</span>
         <span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
@@ -623,7 +620,10 @@
     <span class="p">)</span>
     <span class="n">request_chain</span> <span class="o">=</span> <span class="n">request_chain</span> <span class="ow">or</span> <span class="n">SimpleRequestChain</span><span class="p">(</span>
         <span class="n">request_method</span><span class="o">=</span><span class="k">lambda</span> <span class="n">name</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">call_api_fn</span><span class="p">(</span>
-            <span class="n">name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span>
+            <span class="n">name</span><span class="p">,</span>
+            <span class="n">args</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
     <span class="p">)</span>

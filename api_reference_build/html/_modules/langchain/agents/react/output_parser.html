@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -239,21 +239,20 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">AgentAction</span><span class="p">,</span> <span class="n">AgentFinish</span><span class="p">]:</span>
         <span class="n">action_prefix</span> <span class="o">=</span> <span class="s2">"Action: "</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">action_prefix</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">OutputParserException</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not parse LLM Output: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Could not parse LLM Output: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">raise</span> <span class="n">OutputParserException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">action_block</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
         <span class="n">action_str</span> <span class="o">=</span> <span class="n">action_block</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">action_prefix</span><span class="p">)</span> <span class="p">:]</span>
         <span class="c1"># Parse out the action and the directive.</span>
         <span class="n">re_matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(.*?)\[(.*?)\]"</span><span class="p">,</span> <span class="n">action_str</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">re_matches</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">OutputParserException</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Could not parse action directive: </span><span class="si">{</span><span class="n">action_str</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Could not parse action directive: </span><span class="si">{</span><span class="n">action_str</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">raise</span> <span class="n">OutputParserException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">action</span><span class="p">,</span> <span class="n">action_input</span> <span class="o">=</span> <span class="n">re_matches</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">re_matches</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">action</span> <span class="o">==</span> <span class="s2">"Finish"</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">AgentFinish</span><span class="p">({</span><span class="s2">"output"</span><span class="p">:</span> <span class="n">action_input</span><span class="p">},</span> <span class="n">text</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">AgentAction</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">action_input</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">AgentAction</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">action_input</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
 
 
     <span class="nd">@property</span>

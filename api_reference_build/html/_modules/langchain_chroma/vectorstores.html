@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -303,10 +303,13 @@
     <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
     <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">"Number of columns in X and Y must be the same. X has shape"</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> "</span>
             <span class="sa">f</span><span class="s2">"and Y has shape </span><span class="si">{</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">."</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="n">X_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -517,7 +520,7 @@
         <span class="n">collection_metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">chromadb</span><span class="o">.</span><span class="n">ClientAPI</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">relevance_score_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">create_collection_if_not_exists</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">create_collection_if_not_exists</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># noqa: FBT002</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Initialize with a Chroma client.</span>
 
@@ -584,9 +587,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_collection</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">chromadb</span><span class="o">.</span><span class="n">Collection</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Returns the underlying Chroma collection or throws an exception."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chroma_collection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Chroma collection not initialized. "</span>
                 <span class="s2">"Use `reset_collection` to re-create and initialize the collection. "</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">msg</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chroma_collection</span>
 
@@ -625,10 +631,10 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
             <span class="n">query_texts</span><span class="o">=</span><span class="n">query_texts</span><span class="p">,</span>
-            <span class="n">query_embeddings</span><span class="o">=</span><span class="n">query_embeddings</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+            <span class="n">query_embeddings</span><span class="o">=</span><span class="n">query_embeddings</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
             <span class="n">n_results</span><span class="o">=</span><span class="n">n_results</span><span class="p">,</span>
-            <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
-            <span class="n">where_document</span><span class="o">=</span><span class="n">where_document</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+            <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
+            <span class="n">where_document</span><span class="o">=</span><span class="n">where_document</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -670,11 +676,12 @@
         <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">uris</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="nb">id</span> <span class="k">if</span> <span class="nb">id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
+            <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">id_</span> <span class="k">if</span> <span class="n">id_</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span> <span class="k">for</span> <span class="n">id_</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="c1"># Set embeddings</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="p">,</span> <span class="s2">"embed_image"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="p">,</span>
+            <span class="s2">"embed_image"</span><span class="p">,</span>
         <span class="p">):</span>
             <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="o">.</span><span class="n">embed_image</span><span class="p">(</span><span class="n">uris</span><span class="o">=</span><span class="n">uris</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">metadatas</span><span class="p">:</span>
@@ -699,8 +706,8 @@
                 <span class="n">ids_with_metadata</span> <span class="o">=</span> <span class="p">[</span><span class="n">ids</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">non_empty_ids</span><span class="p">]</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">upsert</span><span class="p">(</span>
-                        <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
-                        <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings_with_metadatas</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                        <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
+                        <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings_with_metadatas</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
                         <span class="n">documents</span><span class="o">=</span><span class="n">images_with_metadatas</span><span class="p">,</span>
                         <span class="n">ids</span><span class="o">=</span><span class="n">ids_with_metadata</span><span class="p">,</span>
                     <span class="p">)</span>
@@ -711,8 +718,7 @@
                             <span class="s2">"langchain_community.vectorstores.utils.filter_complex_metadata."</span>
                         <span class="p">)</span>
                         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span> <span class="o">+</span> <span class="n">msg</span><span class="p">)</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="n">e</span>
+                    <span class="k">raise</span> <span class="n">e</span>
             <span class="k">if</span> <span class="n">empty_ids</span><span class="p">:</span>
                 <span class="n">images_without_metadatas</span> <span class="o">=</span> <span class="p">[</span><span class="n">b64_texts</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">empty_ids</span><span class="p">]</span>
                 <span class="n">embeddings_without_metadatas</span> <span class="o">=</span> <span class="p">(</span>
@@ -760,7 +766,7 @@
         <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">texts</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="nb">id</span> <span class="k">if</span> <span class="nb">id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
+            <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">id_</span> <span class="k">if</span> <span class="n">id_</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span> <span class="k">for</span> <span class="n">id_</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
 
         <span class="n">embeddings</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">texts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span>
@@ -790,8 +796,8 @@
                 <span class="n">ids_with_metadata</span> <span class="o">=</span> <span class="p">[</span><span class="n">ids</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">non_empty_ids</span><span class="p">]</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">upsert</span><span class="p">(</span>
-                        <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
-                        <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings_with_metadatas</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                        <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
+                        <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings_with_metadatas</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
                         <span class="n">documents</span><span class="o">=</span><span class="n">texts_with_metadatas</span><span class="p">,</span>
                         <span class="n">ids</span><span class="o">=</span><span class="n">ids_with_metadata</span><span class="p">,</span>
                     <span class="p">)</span>
@@ -802,8 +808,7 @@
                             <span class="s2">"langchain_community.vectorstores.utils.filter_complex_metadata."</span>
                         <span class="p">)</span>
                         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span> <span class="o">+</span> <span class="n">msg</span><span class="p">)</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="n">e</span>
+                    <span class="k">raise</span> <span class="n">e</span>
             <span class="k">if</span> <span class="n">empty_ids</span><span class="p">:</span>
                 <span class="n">texts_without_metadatas</span> <span class="o">=</span> <span class="p">[</span><span class="n">texts</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">empty_ids</span><span class="p">]</span>
                 <span class="n">embeddings_without_metadatas</span> <span class="o">=</span> <span class="p">(</span>
@@ -811,13 +816,13 @@
                 <span class="p">)</span>
                 <span class="n">ids_without_metadatas</span> <span class="o">=</span> <span class="p">[</span><span class="n">ids</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">empty_ids</span><span class="p">]</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">upsert</span><span class="p">(</span>
-                    <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings_without_metadatas</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                    <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings_without_metadatas</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
                     <span class="n">documents</span><span class="o">=</span><span class="n">texts_without_metadatas</span><span class="p">,</span>
                     <span class="n">ids</span><span class="o">=</span><span class="n">ids_without_metadatas</span><span class="p">,</span>
                 <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">upsert</span><span class="p">(</span>
-                <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
                 <span class="n">documents</span><span class="o">=</span><span class="n">texts</span><span class="p">,</span>
                 <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span>
             <span class="p">)</span>
@@ -830,7 +835,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_K</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Run similarity search with Chroma.</span>
@@ -845,7 +850,10 @@
 <span class="sd">            List of documents most similar to the query text.</span>
 <span class="sd">        """</span>
         <span class="n">docs_and_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_with_score</span><span class="p">(</span>
-            <span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+            <span class="n">query</span><span class="p">,</span>
+            <span class="n">k</span><span class="p">,</span>
+            <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">doc</span> <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">docs_and_scores</span><span class="p">]</span></div>
 
@@ -856,7 +864,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">embedding</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_K</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">where_document</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
@@ -889,7 +897,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">embedding</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_K</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">where_document</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
@@ -923,7 +931,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_K</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">where_document</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
@@ -968,7 +976,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_K</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">where_document</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
@@ -1037,16 +1045,18 @@
 
         <span class="k">if</span> <span class="n">distance</span> <span class="o">==</span> <span class="s2">"cosine"</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cosine_relevance_score_fn</span>
-        <span class="k">elif</span> <span class="n">distance</span> <span class="o">==</span> <span class="s2">"l2"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">distance</span> <span class="o">==</span> <span class="s2">"l2"</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_euclidean_relevance_score_fn</span>
-        <span class="k">elif</span> <span class="n">distance</span> <span class="o">==</span> <span class="s2">"ip"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">distance</span> <span class="o">==</span> <span class="s2">"ip"</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_inner_product_relevance_score_fn</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"No supported normalization function"</span>
-                <span class="sa">f</span><span class="s2">" for distance metric of type: </span><span class="si">{</span><span class="n">distance</span><span class="si">}</span><span class="s2">."</span>
-                <span class="s2">"Consider providing relevance_score_fn to Chroma constructor."</span>
-            <span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"No supported normalization function"</span>
+            <span class="sa">f</span><span class="s2">" for distance metric of type: </span><span class="si">{</span><span class="n">distance</span><span class="si">}</span><span class="s2">."</span>
+            <span class="s2">"Consider providing relevance_score_fn to Chroma constructor."</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span><span class="p">,</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="Chroma.similarity_search_by_image">
 <a class="viewcode-back" href="../../chroma/vectorstores/langchain_chroma.vectorstores.Chroma.html#langchain_chroma.vectorstores.Chroma.similarity_search_by_image">[docs]</a>
@@ -1054,7 +1064,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_K</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Search for similar images based on the given image URI.</span>
@@ -1076,23 +1086,23 @@
 <span class="sd">            ValueError: If the embedding function does not support image embeddings.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="p">,</span> <span class="s2">"embed_image"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="p">,</span>
+            <span class="s2">"embed_image"</span><span class="p">,</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"The embedding function must support image embedding."</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"The embedding function must support image embedding."</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="c1"># Obtain image embedding</span>
         <span class="c1"># Assuming embed_image returns a single embedding</span>
         <span class="n">image_embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="o">.</span><span class="n">embed_image</span><span class="p">(</span><span class="n">uris</span><span class="o">=</span><span class="p">[</span><span class="n">uri</span><span class="p">])</span>
 
         <span class="c1"># Perform similarity search based on the obtained embedding</span>
-        <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_by_vector</span><span class="p">(</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_by_vector</span><span class="p">(</span>
             <span class="n">embedding</span><span class="o">=</span><span class="n">image_embedding</span><span class="p">,</span>
             <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
             <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">results</span></div>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Chroma.similarity_search_by_image_with_relevance_score">
@@ -1101,7 +1111,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_K</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Search for similar images based on the given image URI.</span>
@@ -1123,23 +1133,23 @@
 <span class="sd">            ValueError: If the embedding function does not support image embeddings.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="p">,</span> <span class="s2">"embed_image"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="p">,</span>
+            <span class="s2">"embed_image"</span><span class="p">,</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"The embedding function must support image embedding."</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"The embedding function must support image embedding."</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="c1"># Obtain image embedding</span>
         <span class="c1"># Assuming embed_image returns a single embedding</span>
         <span class="n">image_embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="o">.</span><span class="n">embed_image</span><span class="p">(</span><span class="n">uris</span><span class="o">=</span><span class="p">[</span><span class="n">uri</span><span class="p">])</span>
 
         <span class="c1"># Perform similarity search based on the obtained embedding</span>
-        <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_by_vector_with_relevance_scores</span><span class="p">(</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_by_vector_with_relevance_scores</span><span class="p">(</span>
             <span class="n">embedding</span><span class="o">=</span><span class="n">image_embedding</span><span class="p">,</span>
             <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
             <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">results</span></div>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Chroma.max_marginal_relevance_search_by_vector">
@@ -1150,7 +1160,7 @@
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_K</span><span class="p">,</span>
         <span class="n">fetch_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">lambda_mult</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">where_document</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
@@ -1193,8 +1203,7 @@
 
         <span class="n">candidates</span> <span class="o">=</span> <span class="n">_results_to_docs</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
 
-        <span class="n">selected_results</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">mmr_selected</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">selected_results</span></div>
+        <span class="k">return</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">mmr_selected</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="Chroma.max_marginal_relevance_search">
@@ -1205,7 +1214,7 @@
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_K</span><span class="p">,</span>
         <span class="n">fetch_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">lambda_mult</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">where_document</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
@@ -1234,8 +1243,9 @@
 <span class="sd">            ValueError: If the embedding function is not provided.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"For MMR search, you must specify an embedding function on creation."</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"For MMR search, you must specify an embedding function on creation."</span>
+                <span class="n">msg</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="n">embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
@@ -1309,7 +1319,7 @@
         <span class="k">if</span> <span class="n">include</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s2">"include"</span><span class="p">]</span> <span class="o">=</span> <span class="n">include</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type, return-value]</span></div>
 
 
 <div class="viewcode-block" id="Chroma.get_by_ids">
@@ -1342,7 +1352,9 @@
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="n">doc</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">meta</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">doc_id</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">doc_id</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
-                <span class="n">results</span><span class="p">[</span><span class="s2">"documents"</span><span class="p">],</span> <span class="n">results</span><span class="p">[</span><span class="s2">"metadatas"</span><span class="p">],</span> <span class="n">results</span><span class="p">[</span><span class="s2">"ids"</span><span class="p">]</span>
+                <span class="n">results</span><span class="p">[</span><span class="s2">"documents"</span><span class="p">],</span>
+                <span class="n">results</span><span class="p">[</span><span class="s2">"metadatas"</span><span class="p">],</span>
+                <span class="n">results</span><span class="p">[</span><span class="s2">"ids"</span><span class="p">],</span>
             <span class="p">)</span>
         <span class="p">]</span></div>
 
@@ -1359,7 +1371,6 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_documents</span><span class="p">([</span><span class="n">document_id</span><span class="p">],</span> <span class="p">[</span><span class="n">document</span><span class="p">])</span></div>
 
 
-    <span class="c1"># type: ignore</span>
 <div class="viewcode-block" id="Chroma.update_documents">
 <a class="viewcode-back" href="../../chroma/vectorstores/langchain_chroma.vectorstores.Chroma.html#langchain_chroma.vectorstores.Chroma.update_documents">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">update_documents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">documents</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1375,24 +1386,27 @@
         <span class="n">text</span> <span class="o">=</span> <span class="p">[</span><span class="n">document</span><span class="o">.</span><span class="n">page_content</span> <span class="k">for</span> <span class="n">document</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
         <span class="n">metadata</span> <span class="o">=</span> <span class="p">[</span><span class="n">document</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">document</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"For update, you must specify an embedding function on creation."</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"For update, you must specify an embedding function on creation."</span>
+                <span class="n">msg</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="o">.</span><span class="n">embed_documents</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span> <span class="s2">"get_max_batch_size"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span>  <span class="c1"># noqa: SLF001</span>
+            <span class="s2">"get_max_batch_size"</span><span class="p">,</span>
         <span class="p">)</span> <span class="ow">or</span> <span class="nb">hasattr</span><span class="p">(</span>  <span class="c1"># for Chroma 0.5.1 and above</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span> <span class="s2">"max_batch_size"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span>  <span class="c1"># noqa: SLF001</span>
+            <span class="s2">"max_batch_size"</span><span class="p">,</span>
         <span class="p">):</span>  <span class="c1"># for Chroma 0.4.10 and above</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">chromadb.utils.batch_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_batches</span>
 
             <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">create_batches</span><span class="p">(</span>
-                <span class="n">api</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span>
+                <span class="n">api</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span>  <span class="c1"># noqa: SLF001</span>
                 <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span>
-                <span class="n">metadatas</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                <span class="n">metadatas</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
                 <span class="n">documents</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
-                <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
             <span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
                     <span class="n">ids</span><span class="o">=</span><span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
@@ -1403,9 +1417,9 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
                 <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span>
-                <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                <span class="n">embeddings</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
                 <span class="n">documents</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
-                <span class="n">metadatas</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                <span class="n">metadatas</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
             <span class="p">)</span></div>
 
 
@@ -1459,23 +1473,25 @@
         <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">texts</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="nb">id</span> <span class="k">if</span> <span class="nb">id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
+            <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">id_</span> <span class="k">if</span> <span class="n">id_</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span> <span class="k">for</span> <span class="n">id_</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span>
-            <span class="n">chroma_collection</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span> <span class="s2">"get_max_batch_size"</span>
+            <span class="n">chroma_collection</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span>  <span class="c1"># noqa: SLF001</span>
+            <span class="s2">"get_max_batch_size"</span><span class="p">,</span>
         <span class="p">)</span> <span class="ow">or</span> <span class="nb">hasattr</span><span class="p">(</span>  <span class="c1"># for Chroma 0.5.1 and above</span>
-            <span class="n">chroma_collection</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span> <span class="s2">"max_batch_size"</span>
+            <span class="n">chroma_collection</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span>  <span class="c1"># noqa: SLF001</span>
+            <span class="s2">"max_batch_size"</span><span class="p">,</span>
         <span class="p">):</span>  <span class="c1"># for Chroma 0.4.10 and above</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">chromadb.utils.batch_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_batches</span>
 
             <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">create_batches</span><span class="p">(</span>
-                <span class="n">api</span><span class="o">=</span><span class="n">chroma_collection</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span>
+                <span class="n">api</span><span class="o">=</span><span class="n">chroma_collection</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span>  <span class="c1"># noqa: SLF001</span>
                 <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span>
-                <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
                 <span class="n">documents</span><span class="o">=</span><span class="n">texts</span><span class="p">,</span>
             <span class="p">):</span>
                 <span class="n">chroma_collection</span><span class="o">.</span><span class="n">add_texts</span><span class="p">(</span>
                     <span class="n">texts</span><span class="o">=</span><span class="n">batch</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">if</span> <span class="n">batch</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">else</span> <span class="p">[],</span>
-                    <span class="n">metadatas</span><span class="o">=</span><span class="n">batch</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="n">batch</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                    <span class="n">metadatas</span><span class="o">=</span><span class="n">batch</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="n">batch</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
                     <span class="n">ids</span><span class="o">=</span><span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
                 <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>

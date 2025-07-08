@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -306,7 +306,8 @@
     <span class="n">prompt</span><span class="p">:</span> <span class="n">BasePromptTemplate</span>
 <span class="w">    </span><span class="sd">"""Prompt object to use."""</span>
     <span class="n">llm</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
-        <span class="n">Runnable</span><span class="p">[</span><span class="n">LanguageModelInput</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Runnable</span><span class="p">[</span><span class="n">LanguageModelInput</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">]</span>
+        <span class="n">Runnable</span><span class="p">[</span><span class="n">LanguageModelInput</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+        <span class="n">Runnable</span><span class="p">[</span><span class="n">LanguageModelInput</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">],</span>
     <span class="p">]</span>
 <span class="w">    </span><span class="sd">"""Language model to call."""</span>
     <span class="n">output_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"text"</span>  <span class="c1">#: :meta private:</span>
@@ -340,8 +341,7 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_final_only</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">output_key</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">output_key</span><span class="p">,</span> <span class="s2">"full_generation"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">output_key</span><span class="p">,</span> <span class="s2">"full_generation"</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_call</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -366,17 +366,17 @@
                 <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
                 <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">llm_kwargs</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">llm_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span>
-                <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">prompts</span><span class="p">),</span> <span class="p">{</span><span class="s2">"callbacks"</span><span class="p">:</span> <span class="n">callbacks</span><span class="p">}</span>
-            <span class="p">)</span>
-            <span class="n">generations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Generation</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">):</span>
-                    <span class="n">generations</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">ChatGeneration</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">res</span><span class="p">)])</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">generations</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">Generation</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">res</span><span class="p">)])</span>
-            <span class="k">return</span> <span class="n">LLMResult</span><span class="p">(</span><span class="n">generations</span><span class="o">=</span><span class="n">generations</span><span class="p">)</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">llm_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span>
+            <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">prompts</span><span class="p">),</span>
+            <span class="p">{</span><span class="s2">"callbacks"</span><span class="p">:</span> <span class="n">callbacks</span><span class="p">},</span>
+        <span class="p">)</span>
+        <span class="n">generations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Generation</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">):</span>
+                <span class="n">generations</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">ChatGeneration</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">res</span><span class="p">)])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">generations</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">Generation</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">res</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="n">LLMResult</span><span class="p">(</span><span class="n">generations</span><span class="o">=</span><span class="n">generations</span><span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">agenerate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -393,17 +393,17 @@
                 <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
                 <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">llm_kwargs</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">llm_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">abatch</span><span class="p">(</span>
-                <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">prompts</span><span class="p">),</span> <span class="p">{</span><span class="s2">"callbacks"</span><span class="p">:</span> <span class="n">callbacks</span><span class="p">}</span>
-            <span class="p">)</span>
-            <span class="n">generations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Generation</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">):</span>
-                    <span class="n">generations</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">ChatGeneration</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">res</span><span class="p">)])</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">generations</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">Generation</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">res</span><span class="p">)])</span>
-            <span class="k">return</span> <span class="n">LLMResult</span><span class="p">(</span><span class="n">generations</span><span class="o">=</span><span class="n">generations</span><span class="p">)</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">llm_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">abatch</span><span class="p">(</span>
+            <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">prompts</span><span class="p">),</span>
+            <span class="p">{</span><span class="s2">"callbacks"</span><span class="p">:</span> <span class="n">callbacks</span><span class="p">},</span>
+        <span class="p">)</span>
+        <span class="n">generations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Generation</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">):</span>
+                <span class="n">generations</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">ChatGeneration</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">res</span><span class="p">)])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">generations</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">Generation</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">res</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="n">LLMResult</span><span class="p">(</span><span class="n">generations</span><span class="o">=</span><span class="n">generations</span><span class="p">)</span>
 
 <div class="viewcode-block" id="LLMChain.prep_prompts">
 <a class="viewcode-back" href="../../../langchain/chains/langchain.chains.llm.LLMChain.html#langchain.evaluation.scoring.eval_chain.LLMChain.prep_prompts">[docs]</a>
@@ -427,9 +427,8 @@
             <span class="k">if</span> <span class="n">run_manager</span><span class="p">:</span>
                 <span class="n">run_manager</span><span class="o">.</span><span class="n">on_text</span><span class="p">(</span><span class="n">_text</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
             <span class="k">if</span> <span class="s2">"stop"</span> <span class="ow">in</span> <span class="n">inputs</span> <span class="ow">and</span> <span class="n">inputs</span><span class="p">[</span><span class="s2">"stop"</span><span class="p">]</span> <span class="o">!=</span> <span class="n">stop</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">"If `stop` is present in any inputs, should be present in all."</span>
-                <span class="p">)</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"If `stop` is present in any inputs, should be present in all."</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="n">prompts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">prompts</span><span class="p">,</span> <span class="n">stop</span></div>
 
@@ -456,9 +455,8 @@
             <span class="k">if</span> <span class="n">run_manager</span><span class="p">:</span>
                 <span class="k">await</span> <span class="n">run_manager</span><span class="o">.</span><span class="n">on_text</span><span class="p">(</span><span class="n">_text</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
             <span class="k">if</span> <span class="s2">"stop"</span> <span class="ow">in</span> <span class="n">inputs</span> <span class="ow">and</span> <span class="n">inputs</span><span class="p">[</span><span class="s2">"stop"</span><span class="p">]</span> <span class="o">!=</span> <span class="n">stop</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">"If `stop` is present in any inputs, should be present in all."</span>
-                <span class="p">)</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"If `stop` is present in any inputs, should be present in all."</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="n">prompts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">prompts</span><span class="p">,</span> <span class="n">stop</span></div>
 
@@ -466,11 +464,15 @@
 <div class="viewcode-block" id="LLMChain.apply">
 <a class="viewcode-back" href="../../../langchain/chains/langchain.chains.llm.LLMChain.html#langchain.evaluation.scoring.eval_chain.LLMChain.apply">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">input_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Utilize the LLM generate method for speed gains."""</span>
         <span class="n">callback_manager</span> <span class="o">=</span> <span class="n">CallbackManager</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span>
-            <span class="n">callbacks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span>
+            <span class="n">callbacks</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">run_manager</span> <span class="o">=</span> <span class="n">callback_manager</span><span class="o">.</span><span class="n">on_chain_start</span><span class="p">(</span>
             <span class="kc">None</span><span class="p">,</span>
@@ -490,11 +492,15 @@
 <div class="viewcode-block" id="LLMChain.aapply">
 <a class="viewcode-back" href="../../../langchain/chains/langchain.chains.llm.LLMChain.html#langchain.evaluation.scoring.eval_chain.LLMChain.aapply">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">aapply</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">input_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Utilize the LLM generate method for speed gains."""</span>
         <span class="n">callback_manager</span> <span class="o">=</span> <span class="n">AsyncCallbackManager</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span>
-            <span class="n">callbacks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span>
+            <span class="n">callbacks</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">run_manager</span> <span class="o">=</span> <span class="k">await</span> <span class="n">callback_manager</span><span class="o">.</span><span class="n">on_chain_start</span><span class="p">(</span>
             <span class="kc">None</span><span class="p">,</span>
@@ -577,71 +583,77 @@
 <div class="viewcode-block" id="LLMChain.predict_and_parse">
 <a class="viewcode-back" href="../../../langchain/chains/langchain.chains.llm.LLMChain.html#langchain.evaluation.scoring.eval_chain.LLMChain.predict_and_parse">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">predict_and_parse</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Call predict and then parse the results."""</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="s2">"The predict_and_parse method is deprecated, "</span>
-            <span class="s2">"instead pass an output parser directly to LLMChain."</span>
+            <span class="s2">"instead pass an output parser directly to LLMChain."</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prompt</span><span class="o">.</span><span class="n">output_parser</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prompt</span><span class="o">.</span><span class="n">output_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">result</span></div>
+        <span class="k">return</span> <span class="n">result</span></div>
 
 
 <div class="viewcode-block" id="LLMChain.apredict_and_parse">
 <a class="viewcode-back" href="../../../langchain/chains/langchain.chains.llm.LLMChain.html#langchain.evaluation.scoring.eval_chain.LLMChain.apredict_and_parse">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">apredict_and_parse</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Call apredict and then parse the results."""</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="s2">"The apredict_and_parse method is deprecated, "</span>
-            <span class="s2">"instead pass an output parser directly to LLMChain."</span>
+            <span class="s2">"instead pass an output parser directly to LLMChain."</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">apredict</span><span class="p">(</span><span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prompt</span><span class="o">.</span><span class="n">output_parser</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prompt</span><span class="o">.</span><span class="n">output_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">result</span></div>
+        <span class="k">return</span> <span class="n">result</span></div>
 
 
 <div class="viewcode-block" id="LLMChain.apply_and_parse">
 <a class="viewcode-back" href="../../../langchain/chains/langchain.chains.llm.LLMChain.html#langchain.evaluation.scoring.eval_chain.LLMChain.apply_and_parse">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">apply_and_parse</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">input_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]:</span>
 <span class="w">        </span><span class="sd">"""Call apply and then parse the results."""</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="s2">"The apply_and_parse method is deprecated, "</span>
-            <span class="s2">"instead pass an output parser directly to LLMChain."</span>
+            <span class="s2">"instead pass an output parser directly to LLMChain."</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">input_list</span><span class="p">,</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_generation</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_generation</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">generation</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">generation</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prompt</span><span class="o">.</span><span class="n">output_parser</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">prompt</span><span class="o">.</span><span class="n">output_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">output_key</span><span class="p">])</span>
                 <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">generation</span>
             <span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">generation</span>
+        <span class="k">return</span> <span class="n">generation</span>
 
 <div class="viewcode-block" id="LLMChain.aapply_and_parse">
 <a class="viewcode-back" href="../../../langchain/chains/langchain.chains.llm.LLMChain.html#langchain.evaluation.scoring.eval_chain.LLMChain.aapply_and_parse">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">aapply_and_parse</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">input_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]:</span>
 <span class="w">        </span><span class="sd">"""Call apply and then parse the results."""</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="s2">"The aapply_and_parse method is deprecated, "</span>
-            <span class="s2">"instead pass an output parser directly to LLMChain."</span>
+            <span class="s2">"instead pass an output parser directly to LLMChain."</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">aapply</span><span class="p">(</span><span class="n">input_list</span><span class="p">,</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_generation</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
@@ -668,17 +680,17 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_language_model</span><span class="p">(</span><span class="n">llm_like</span><span class="p">:</span> <span class="n">Runnable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseLanguageModel</span><span class="p">:</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">llm_like</span><span class="p">,</span> <span class="n">BaseLanguageModel</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">llm_like</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">llm_like</span><span class="p">,</span> <span class="n">RunnableBinding</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">llm_like</span><span class="p">,</span> <span class="n">RunnableBinding</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">_get_language_model</span><span class="p">(</span><span class="n">llm_like</span><span class="o">.</span><span class="n">bound</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">llm_like</span><span class="p">,</span> <span class="n">RunnableWithFallbacks</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">llm_like</span><span class="p">,</span> <span class="n">RunnableWithFallbacks</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">_get_language_model</span><span class="p">(</span><span class="n">llm_like</span><span class="o">.</span><span class="n">runnable</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">llm_like</span><span class="p">,</span> <span class="p">(</span><span class="n">RunnableBranch</span><span class="p">,</span> <span class="n">DynamicRunnable</span><span class="p">)):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">llm_like</span><span class="p">,</span> <span class="p">(</span><span class="n">RunnableBranch</span><span class="p">,</span> <span class="n">DynamicRunnable</span><span class="p">)):</span>
         <span class="k">return</span> <span class="n">_get_language_model</span><span class="p">(</span><span class="n">llm_like</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Unable to extract BaseLanguageModel from llm_like object of type "</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">llm_like</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
-        <span class="p">)</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Unable to extract BaseLanguageModel from llm_like object of type "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">llm_like</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 </pre></div>
 </article>
 </div>

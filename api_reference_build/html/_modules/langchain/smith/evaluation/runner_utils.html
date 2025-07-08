@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -327,10 +327,8 @@
         <span class="n">to_drop</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">col</span>
             <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span>
-            <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"inputs."</span><span class="p">)</span>
-            <span class="ow">or</span> <span class="n">col</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"outputs."</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">"inputs."</span><span class="p">,</span> <span class="s2">"outputs."</span><span class="p">,</span> <span class="s2">"reference"</span><span class="p">))</span>
             <span class="ow">or</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"input"</span><span class="p">,</span> <span class="s2">"output"</span><span class="p">}</span>
-            <span class="ow">or</span> <span class="n">col</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"reference"</span><span class="p">)</span>
         <span class="p">]</span>
         <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="s2">"all"</span><span class="p">)</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">to_drop</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
 
@@ -342,10 +340,11 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
         <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Pandas is required to convert the results to a dataframe."</span>
                 <span class="s2">" to install pandas, run `pip install pandas`."</span>
-            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
         <span class="n">indices</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>
@@ -366,7 +365,7 @@
             <span class="k">if</span> <span class="s2">"reference"</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">],</span> <span class="nb">dict</span><span class="p">):</span>
                     <span class="n">r</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-                        <span class="p">{</span><span class="sa">f</span><span class="s2">"reference.</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+                        <span class="p">{</span><span class="sa">f</span><span class="s2">"reference.</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
                     <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">r</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span>
@@ -376,7 +375,7 @@
                     <span class="s2">"error"</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">),</span>
                     <span class="s2">"execution_time"</span><span class="p">:</span> <span class="n">result</span><span class="p">[</span><span class="s2">"execution_time"</span><span class="p">],</span>
                     <span class="s2">"run_id"</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"run_id"</span><span class="p">),</span>
-                <span class="p">}</span>
+                <span class="p">},</span>
             <span class="p">)</span>
             <span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
             <span class="n">indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">example_id</span><span class="p">)</span>
@@ -401,7 +400,8 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"'EvalError' object has no attribute '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span></div>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'EvalError' object has no attribute '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'"</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
 
 
 
@@ -416,7 +416,7 @@
         <span class="n">chain_class</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="k">if</span> <span class="n">llm_or_chain_factory</span><span class="o">.</span><span class="n">memory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">memory_class</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">memory</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Cannot directly evaluate a chain with stateful memory."</span>
                 <span class="s2">" To evaluate this chain, pass in a chain constructor"</span>
                 <span class="s2">" that initializes fresh memory each time it is called."</span>
@@ -429,14 +429,15 @@
                 <span class="s2">"(memory=new_memory, ...)</span><span class="se">\n\n</span><span class="s2">"</span>
                 <span class="sa">f</span><span class="s1">'run_on_dataset("</span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s1">", chain_constructor, ...)'</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">chain</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">llm_or_chain_factory</span><span class="p">,</span> <span class="n">BaseLanguageModel</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">llm_or_chain_factory</span><span class="p">,</span> <span class="n">BaseLanguageModel</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">llm_or_chain_factory</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">llm_or_chain_factory</span><span class="p">,</span> <span class="n">Runnable</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">llm_or_chain_factory</span><span class="p">,</span> <span class="n">Runnable</span><span class="p">):</span>
         <span class="c1"># Memory may exist here, but it's not elegant to check all those cases.</span>
         <span class="n">lcf</span> <span class="o">=</span> <span class="n">llm_or_chain_factory</span>
         <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">lcf</span>
-    <span class="k">elif</span> <span class="nb">callable</span><span class="p">(</span><span class="n">llm_or_chain_factory</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">llm_or_chain_factory</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">is_traceable_function</span><span class="p">(</span><span class="n">llm_or_chain_factory</span><span class="p">):</span>
             <span class="n">runnable_</span> <span class="o">=</span> <span class="n">as_runnable</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">Callable</span><span class="p">,</span> <span class="n">llm_or_chain_factory</span><span class="p">))</span>
             <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">runnable_</span>
@@ -454,15 +455,14 @@
             <span class="c1"># It's not uncommon to do an LLM constructor instead of raw LLM,</span>
             <span class="c1"># so we'll unpack it for the user.</span>
             <span class="k">return</span> <span class="n">_model</span>
-        <span class="k">elif</span> <span class="n">is_traceable_function</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">Callable</span><span class="p">,</span> <span class="n">_model</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">is_traceable_function</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">Callable</span><span class="p">,</span> <span class="n">_model</span><span class="p">)):</span>
             <span class="n">runnable_</span> <span class="o">=</span> <span class="n">as_runnable</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">Callable</span><span class="p">,</span> <span class="n">_model</span><span class="p">))</span>
             <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">runnable_</span>
-        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_model</span><span class="p">,</span> <span class="n">Runnable</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_model</span><span class="p">,</span> <span class="n">Runnable</span><span class="p">):</span>
             <span class="c1"># This is unlikely to happen - a constructor for a model function</span>
             <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="n">constructor</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Typical correct case</span>
-            <span class="k">return</span> <span class="n">constructor</span>
+        <span class="c1"># Typical correct case</span>
+        <span class="k">return</span> <span class="n">constructor</span>
     <span class="k">return</span> <span class="n">llm_or_chain_factory</span>
 
 
@@ -478,23 +478,24 @@
 <span class="sd">        InputFormatError: If the input format is invalid.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">inputs</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="s2">"Inputs should not be empty."</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Inputs should not be empty."</span>
+        <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="n">prompts</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="s2">"prompt"</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="s2">"prompt"</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Expected string for 'prompt', got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="s1">'prompt'</span><span class="p">])</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Expected string for 'prompt', got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="s1">'prompt'</span><span class="p">])</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">prompts</span> <span class="o">=</span> <span class="p">[</span><span class="n">inputs</span><span class="p">[</span><span class="s2">"prompt"</span><span class="p">]]</span>
     <span class="k">elif</span> <span class="s2">"prompts"</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="s2">"prompts"</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
             <span class="nb">isinstance</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">[</span><span class="s2">"prompts"</span><span class="p">]</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Expected list of strings for 'prompts',"</span>
                 <span class="sa">f</span><span class="s2">" got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="s1">'prompts'</span><span class="p">])</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">prompts</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s2">"prompts"</span><span class="p">]</span>
     <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">prompt_</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">inputs</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
@@ -503,17 +504,15 @@
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt_</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">prompt_</span><span class="p">):</span>
             <span class="n">prompts</span> <span class="o">=</span> <span class="n">prompt_</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"LLM Run expects string prompt input. Got </span><span class="si">{</span><span class="n">inputs</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"LLM Run expects string prompt input. Got </span><span class="si">{</span><span class="n">inputs</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"LLM Run expects 'prompt' or 'prompts' in inputs. Got </span><span class="si">{</span><span class="n">inputs</span><span class="si">}</span><span class="s2">"</span>
-        <span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"LLM Run expects 'prompt' or 'prompts' in inputs. Got </span><span class="si">{</span><span class="n">inputs</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">prompts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">prompts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"LLM Run expects single prompt input. Got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">prompts</span><span class="p">)</span><span class="si">}</span><span class="s2"> prompts."</span>
-        <span class="p">)</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"LLM Run expects single prompt input. Got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">prompts</span><span class="p">)</span><span class="si">}</span><span class="s2"> prompts."</span>
+    <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ChatModelInput">
@@ -541,7 +540,8 @@
 <span class="sd">        InputFormatError: If the input format is invalid.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">inputs</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="s2">"Inputs should not be empty."</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Inputs should not be empty."</span>
+        <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="n">input_copy</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="k">if</span> <span class="s2">"messages"</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
         <span class="n">input_copy</span><span class="p">[</span><span class="s2">"input"</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"messages"</span><span class="p">)</span>
@@ -556,16 +556,17 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw_messages</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">input_copy</span><span class="p">[</span><span class="s2">"input"</span><span class="p">]</span> <span class="o">=</span> <span class="n">messages_from_dict</span><span class="p">(</span><span class="n">raw_messages</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Batch messages not supported. Please provide a"</span>
                 <span class="s2">" single list of messages."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">input_copy</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Chat Run expects single List[dict] or List[List[dict]] 'messages'"</span>
-            <span class="sa">f</span><span class="s2">" input. Got </span><span class="si">{</span><span class="n">inputs</span><span class="si">}</span><span class="s2">"</span>
-        <span class="p">)</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Chat Run expects single List[dict] or List[List[dict]] 'messages'"</span>
+        <span class="sa">f</span><span class="s2">" input. Got </span><span class="si">{</span><span class="n">inputs</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+    <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
 
 <span class="c1">## Shared data validation utilities</span>
@@ -579,12 +580,13 @@
             <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt_input</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
             <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">)</span> <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">prompt_input</span><span class="p">)</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"When using an input_mapper to prepare dataset example inputs"</span>
                 <span class="s2">" for an LLM or chat model, the output must a single string or"</span>
                 <span class="s2">" a list of chat messages."</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Got: </span><span class="si">{</span><span class="n">prompt_input</span><span class="si">}</span><span class="s2"> of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">prompt_input</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">_get_prompt</span><span class="p">(</span><span class="n">first_example</span><span class="o">.</span><span class="n">inputs</span> <span class="ow">or</span> <span class="p">{})</span>
@@ -592,7 +594,7 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">_get_messages</span><span class="p">(</span><span class="n">first_example</span><span class="o">.</span><span class="n">inputs</span> <span class="ow">or</span> <span class="p">{})</span>
             <span class="k">except</span> <span class="n">InputFormatError</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="s2">"Example inputs do not match language model input format. "</span>
                     <span class="s2">"Expected a dictionary with messages or a single prompt."</span>
                     <span class="sa">f</span><span class="s2">" Got: </span><span class="si">{</span><span class="n">first_example</span><span class="o">.</span><span class="n">inputs</span><span class="si">}</span><span class="s2">"</span>
@@ -600,6 +602,7 @@
                     <span class="s2">" to convert the example.inputs to a compatible format"</span>
                     <span class="s2">" for the llm or chat model you wish to evaluate."</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_validate_example_inputs_for_chain</span><span class="p">(</span>
@@ -612,16 +615,18 @@
         <span class="n">first_inputs</span> <span class="o">=</span> <span class="n">input_mapper</span><span class="p">(</span><span class="n">first_example</span><span class="o">.</span><span class="n">inputs</span> <span class="ow">or</span> <span class="p">{})</span>
         <span class="n">missing_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">input_keys</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">first_inputs</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first_inputs</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"When using an input_mapper to prepare dataset example"</span>
                 <span class="s2">" inputs for a chain, the mapped value must be a dictionary."</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Got: </span><span class="si">{</span><span class="n">first_inputs</span><span class="si">}</span><span class="s2"> of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">first_inputs</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">missing_keys</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Missing keys after loading example using input_mapper."</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Expected: </span><span class="si">{</span><span class="n">chain</span><span class="o">.</span><span class="n">input_keys</span><span class="si">}</span><span class="s2">. Got: </span><span class="si">{</span><span class="n">first_inputs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">first_inputs</span> <span class="o">=</span> <span class="n">first_example</span><span class="o">.</span><span class="n">inputs</span>
         <span class="n">missing_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">input_keys</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">first_inputs</span><span class="p">)</span>
@@ -630,13 +635,14 @@
             <span class="c1"># Refrain from calling to validate.</span>
             <span class="k">pass</span>
         <span class="k">elif</span> <span class="n">missing_keys</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Example inputs missing expected chain input keys."</span>
                 <span class="s2">" Please provide an input_mapper to convert the example.inputs"</span>
                 <span class="s2">" to a compatible format for the chain you wish to evaluate."</span>
                 <span class="sa">f</span><span class="s2">"Expected: </span><span class="si">{</span><span class="n">chain</span><span class="o">.</span><span class="n">input_keys</span><span class="si">}</span><span class="s2">. "</span>
                 <span class="sa">f</span><span class="s2">"Got: </span><span class="si">{</span><span class="n">first_inputs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_validate_example_inputs</span><span class="p">(</span>
@@ -699,7 +705,7 @@
         <span class="k">if</span> <span class="n">run_inputs</span> <span class="ow">and</span> <span class="n">input_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">run_inputs</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Input key </span><span class="si">{</span><span class="n">input_key</span><span class="si">}</span><span class="s2"> not in chain's specified"</span>
-                <span class="sa">f</span><span class="s2">" input keys </span><span class="si">{</span><span class="n">run_inputs</span><span class="si">}</span><span class="s2">. Evaluation behavior may be undefined."</span>
+                <span class="sa">f</span><span class="s2">" input keys </span><span class="si">{</span><span class="n">run_inputs</span><span class="si">}</span><span class="s2">. Evaluation behavior may be undefined."</span><span class="p">,</span>
             <span class="p">)</span>
     <span class="k">elif</span> <span class="n">run_inputs</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">run_inputs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">input_key</span> <span class="o">=</span> <span class="n">run_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -707,7 +713,7 @@
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Chain expects multiple input keys: </span><span class="si">{</span><span class="n">run_inputs</span><span class="si">}</span><span class="s2">,"</span>
             <span class="sa">f</span><span class="s2">" Evaluator is likely to fail. Evaluation behavior may be undefined."</span>
-            <span class="s2">" Specify an input_key in the RunEvalConfig to avoid this warning."</span>
+            <span class="s2">" Specify an input_key in the RunEvalConfig to avoid this warning."</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">input_key</span>
@@ -723,7 +729,7 @@
         <span class="k">if</span> <span class="n">run_outputs</span> <span class="ow">and</span> <span class="n">prediction_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">run_outputs</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Prediction key </span><span class="si">{</span><span class="n">prediction_key</span><span class="si">}</span><span class="s2"> not in chain's specified"</span>
-                <span class="sa">f</span><span class="s2">" output keys </span><span class="si">{</span><span class="n">run_outputs</span><span class="si">}</span><span class="s2">. Evaluation behavior may be undefined."</span>
+                <span class="sa">f</span><span class="s2">" output keys </span><span class="si">{</span><span class="n">run_outputs</span><span class="si">}</span><span class="s2">. Evaluation behavior may be undefined."</span><span class="p">,</span>
             <span class="p">)</span>
     <span class="k">elif</span> <span class="n">run_outputs</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">run_outputs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">prediction_key</span> <span class="o">=</span> <span class="n">run_outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -731,7 +737,7 @@
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Chain expects multiple output keys: </span><span class="si">{</span><span class="n">run_outputs</span><span class="si">}</span><span class="s2">,"</span>
             <span class="sa">f</span><span class="s2">" Evaluation behavior may be undefined. Specify a prediction_key"</span>
-            <span class="s2">" in the RunEvalConfig to avoid this warning."</span>
+            <span class="s2">" in the RunEvalConfig to avoid this warning."</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">prediction_key</span>
 
@@ -743,12 +749,13 @@
     <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">reference_key</span><span class="p">:</span>
         <span class="n">reference_key</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">reference_key</span>
         <span class="k">if</span> <span class="n">example_outputs</span> <span class="ow">and</span> <span class="n">reference_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">example_outputs</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Reference key </span><span class="si">{</span><span class="n">reference_key</span><span class="si">}</span><span class="s2"> not in Dataset"</span>
                 <span class="sa">f</span><span class="s2">" example outputs: </span><span class="si">{</span><span class="n">example_outputs</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">example_outputs</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">example_outputs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">reference_key</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">example_outputs</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">reference_key</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">example_outputs</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">reference_key</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="n">reference_key</span>
@@ -787,15 +794,17 @@
         <span class="c1"># Assume we can decorate</span>
         <span class="k">return</span> <span class="n">run_evaluator_dec</span><span class="p">(</span><span class="n">eval_config</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown evaluator type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">eval_config</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Unknown evaluator type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">eval_config</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">evaluator_</span><span class="p">,</span> <span class="n">StringEvaluator</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">evaluator_</span><span class="o">.</span><span class="n">requires_reference</span> <span class="ow">and</span> <span class="n">reference_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Must specify reference_key in smith_eval.RunEvalConfig to use"</span>
                 <span class="sa">f</span><span class="s2">" evaluator of type </span><span class="si">{</span><span class="n">eval_type_tag</span><span class="si">}</span><span class="s2"> with"</span>
                 <span class="sa">f</span><span class="s2">" dataset with multiple output keys: </span><span class="si">{</span><span class="n">example_outputs</span><span class="si">}</span><span class="s2">."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">run_evaluator</span> <span class="o">=</span> <span class="n">smith_eval</span><span class="o">.</span><span class="n">StringRunEvaluatorChain</span><span class="o">.</span><span class="n">from_run_and_data_type</span><span class="p">(</span>
             <span class="n">evaluator_</span><span class="p">,</span>
             <span class="n">run_type</span><span class="p">,</span>
@@ -806,18 +815,18 @@
             <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="n">eval_type_tag</span><span class="p">],</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">evaluator_</span><span class="p">,</span> <span class="n">PairwiseStringEvaluator</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Run evaluator for </span><span class="si">{</span><span class="n">eval_type_tag</span><span class="si">}</span><span class="s2"> is not implemented."</span>
             <span class="s2">" PairwiseStringEvaluators compare the outputs of two different models"</span>
             <span class="s2">" rather than the output of a single model."</span>
             <span class="s2">" Did you mean to use a StringEvaluator instead?"</span>
             <span class="s2">"</span><span class="se">\n</span><span class="s2">See: https://python.langchain.com/docs/guides/evaluation/string/"</span>
         <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Run evaluator for </span><span class="si">{</span><span class="n">eval_type_tag</span><span class="si">}</span><span class="s2"> is not implemented"</span>
-        <span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Run evaluator for </span><span class="si">{</span><span class="n">eval_type_tag</span><span class="si">}</span><span class="s2"> is not implemented"</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">run_evaluator</span>
 
 
@@ -854,10 +863,13 @@
     <span class="n">input_key</span><span class="p">,</span> <span class="n">prediction_key</span><span class="p">,</span> <span class="n">reference_key</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">evaluators</span> <span class="ow">or</span> <span class="p">(</span>
         <span class="n">config</span><span class="o">.</span><span class="n">custom_evaluators</span>
-        <span class="ow">and</span> <span class="nb">any</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">StringEvaluator</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">custom_evaluators</span><span class="p">])</span>
+        <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">StringEvaluator</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">custom_evaluators</span><span class="p">)</span>
     <span class="p">):</span>
         <span class="n">input_key</span><span class="p">,</span> <span class="n">prediction_key</span><span class="p">,</span> <span class="n">reference_key</span> <span class="o">=</span> <span class="n">_get_keys</span><span class="p">(</span>
-            <span class="n">config</span><span class="p">,</span> <span class="n">run_inputs</span><span class="p">,</span> <span class="n">run_outputs</span><span class="p">,</span> <span class="n">example_outputs</span>
+            <span class="n">config</span><span class="p">,</span>
+            <span class="n">run_inputs</span><span class="p">,</span>
+            <span class="n">run_outputs</span><span class="p">,</span>
+            <span class="n">example_outputs</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">for</span> <span class="n">eval_config</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">evaluators</span><span class="p">:</span>
         <span class="n">run_evaluator</span> <span class="o">=</span> <span class="n">_construct_run_evaluator</span><span class="p">(</span>
@@ -884,15 +896,16 @@
                     <span class="n">input_key</span><span class="o">=</span><span class="n">input_key</span><span class="p">,</span>
                     <span class="n">prediction_key</span><span class="o">=</span><span class="n">prediction_key</span><span class="p">,</span>
                     <span class="n">reference_key</span><span class="o">=</span><span class="n">reference_key</span><span class="p">,</span>
-                <span class="p">)</span>
+                <span class="p">),</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="nb">callable</span><span class="p">(</span><span class="n">custom_evaluator</span><span class="p">):</span>
             <span class="n">run_evaluators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">run_evaluator_dec</span><span class="p">(</span><span class="n">custom_evaluator</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Unsupported custom evaluator: </span><span class="si">{</span><span class="n">custom_evaluator</span><span class="si">}</span><span class="s2">."</span>
                 <span class="sa">f</span><span class="s2">" Expected RunEvaluator or StringEvaluator."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">run_evaluators</span>
 
@@ -926,41 +939,45 @@
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">input_mapper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">prompt_or_messages</span> <span class="o">=</span> <span class="n">input_mapper</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt_or_messages</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-            <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt_or_messages</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt_or_messages</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt_or_messages</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
             <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">)</span> <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">prompt_or_messages</span><span class="p">)</span>
         <span class="p">):</span>
             <span class="k">return</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span>
                 <span class="n">prompt_or_messages</span><span class="p">,</span>
                 <span class="n">config</span><span class="o">=</span><span class="n">RunnableConfig</span><span class="p">(</span>
-                    <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}</span>
+                    <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
+                    <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span>
+                    <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{},</span>
                 <span class="p">),</span>
             <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span>
-                <span class="s2">"Input mapper returned invalid format"</span>
-                <span class="sa">f</span><span class="s2">" </span><span class="si">{</span><span class="n">prompt_or_messages</span><span class="si">}</span><span class="s2">"</span>
-                <span class="s2">"</span><span class="se">\n</span><span class="s2">Expected a single string or list of chat messages."</span>
-            <span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"Input mapper returned invalid format"</span>
+            <span class="sa">f</span><span class="s2">" </span><span class="si">{</span><span class="n">prompt_or_messages</span><span class="si">}</span><span class="s2">"</span>
+            <span class="s2">"</span><span class="se">\n</span><span class="s2">Expected a single string or list of chat messages."</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">prompt</span> <span class="o">=</span> <span class="n">_get_prompt</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
-            <span class="n">llm_output</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">]</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span>
-                <span class="n">prompt</span><span class="p">,</span>
-                <span class="n">config</span><span class="o">=</span><span class="n">RunnableConfig</span><span class="p">(</span>
-                    <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}</span>
-                <span class="p">),</span>
-            <span class="p">)</span>
-        <span class="k">except</span> <span class="n">InputFormatError</span><span class="p">:</span>
-            <span class="n">llm_inputs</span> <span class="o">=</span> <span class="n">_get_messages</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
-            <span class="n">llm_output</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span>
-                <span class="o">**</span><span class="n">llm_inputs</span><span class="p">,</span>
-                <span class="n">config</span><span class="o">=</span><span class="n">RunnableConfig</span><span class="p">(</span>
-                    <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}</span>
-                <span class="p">),</span>
-            <span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">prompt</span> <span class="o">=</span> <span class="n">_get_prompt</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="n">llm_output</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">]</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span>
+            <span class="n">prompt</span><span class="p">,</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">RunnableConfig</span><span class="p">(</span>
+                <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
+                <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{},</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="n">InputFormatError</span><span class="p">:</span>
+        <span class="n">llm_inputs</span> <span class="o">=</span> <span class="n">_get_messages</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="n">llm_output</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">llm_inputs</span><span class="p">,</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">RunnableConfig</span><span class="p">(</span>
+                <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
+                <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{},</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
     <span class="k">return</span> <span class="n">llm_output</span>
 
 
@@ -985,12 +1002,16 @@
         <span class="n">output</span> <span class="o">=</span> <span class="k">await</span> <span class="n">chain</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span>
             <span class="n">val</span><span class="p">,</span>
             <span class="n">config</span><span class="o">=</span><span class="n">RunnableConfig</span><span class="p">(</span>
-                <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}</span>
+                <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
+                <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{},</span>
             <span class="p">),</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">runnable_config</span> <span class="o">=</span> <span class="n">RunnableConfig</span><span class="p">(</span>
-            <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span>
+            <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{},</span>
         <span class="p">)</span>
         <span class="n">output</span> <span class="o">=</span> <span class="k">await</span> <span class="n">chain</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span><span class="n">inputs_</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">runnable_config</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">output</span>
@@ -1044,7 +1065,7 @@
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">chain_or_llm</span><span class="si">}</span><span class="s2"> failed for example </span><span class="si">{</span><span class="n">example</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> "</span>
             <span class="sa">f</span><span class="s2">"with inputs </span><span class="si">{</span><span class="n">example</span><span class="o">.</span><span class="n">inputs</span><span class="si">}</span><span class="s2">"</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="nb">repr</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">!r}</span><span class="s2">"</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">EvalError</span><span class="p">(</span><span class="n">Error</span><span class="o">=</span><span class="n">e</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">result</span>
@@ -1080,30 +1101,34 @@
     <span class="c1"># Most of this is legacy code; we could probably remove a lot of it.</span>
     <span class="k">if</span> <span class="n">input_mapper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">prompt_or_messages</span> <span class="o">=</span> <span class="n">input_mapper</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt_or_messages</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-            <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt_or_messages</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt_or_messages</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">prompt_or_messages</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
             <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">)</span> <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">prompt_or_messages</span><span class="p">)</span>
         <span class="p">):</span>
             <span class="n">llm_output</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">]</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
                 <span class="n">prompt_or_messages</span><span class="p">,</span>
                 <span class="n">config</span><span class="o">=</span><span class="n">RunnableConfig</span><span class="p">(</span>
-                    <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}</span>
+                    <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
+                    <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span>
+                    <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{},</span>
                 <span class="p">),</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Input mapper returned invalid format: "</span>
                 <span class="sa">f</span><span class="s2">" </span><span class="si">{</span><span class="n">prompt_or_messages</span><span class="si">}</span><span class="s2">"</span>
                 <span class="s2">"</span><span class="se">\n</span><span class="s2">Expected a single string or list of chat messages."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">InputFormatError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">llm_prompts</span> <span class="o">=</span> <span class="n">_get_prompt</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
             <span class="n">llm_output</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
                 <span class="n">llm_prompts</span><span class="p">,</span>
                 <span class="n">config</span><span class="o">=</span><span class="n">RunnableConfig</span><span class="p">(</span>
-                    <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}</span>
+                    <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
+                    <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span>
+                    <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{},</span>
                 <span class="p">),</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="n">InputFormatError</span><span class="p">:</span>
@@ -1136,12 +1161,16 @@
         <span class="n">output</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
             <span class="n">val</span><span class="p">,</span>
             <span class="n">config</span><span class="o">=</span><span class="n">RunnableConfig</span><span class="p">(</span>
-                <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}</span>
+                <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
+                <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{},</span>
             <span class="p">),</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">runnable_config</span> <span class="o">=</span> <span class="n">RunnableConfig</span><span class="p">(</span>
-            <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="n">tags</span><span class="o">=</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">[],</span>
+            <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{},</span>
         <span class="p">)</span>
         <span class="n">output</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">inputs_</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">runnable_config</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">output</span>
@@ -1197,7 +1226,7 @@
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">chain_or_llm</span><span class="si">}</span><span class="s2"> failed for example </span><span class="si">{</span><span class="n">example</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> "</span>
             <span class="sa">f</span><span class="s2">"with inputs </span><span class="si">{</span><span class="n">example</span><span class="o">.</span><span class="n">inputs</span><span class="si">}</span><span class="s2">"</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Error Type: </span><span class="si">{</span><span class="n">error_type</span><span class="si">}</span><span class="s2">, Message: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Error Type: </span><span class="si">{</span><span class="n">error_type</span><span class="si">}</span><span class="s2">, Message: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">EvalError</span><span class="p">(</span><span class="n">Error</span><span class="o">=</span><span class="n">e</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">result</span>
@@ -1217,7 +1246,8 @@
 
     <span class="n">examples</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">list_examples</span><span class="p">(</span><span class="n">dataset_id</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">as_of</span><span class="o">=</span><span class="n">dataset_version</span><span class="p">))</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">examples</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Dataset </span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2"> has no example rows."</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Dataset </span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2"> has no example rows."</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="n">modified_at</span> <span class="o">=</span> <span class="p">[</span><span class="n">ex</span><span class="o">.</span><span class="n">modified_at</span> <span class="k">for</span> <span class="n">ex</span> <span class="ow">in</span> <span class="n">examples</span> <span class="k">if</span> <span class="n">ex</span><span class="o">.</span><span class="n">modified_at</span><span class="p">]</span>
     <span class="c1"># Should always be defined in practice when fetched,</span>
     <span class="c1"># but the typing permits None</span>
@@ -1250,10 +1280,11 @@
 <span class="s2">    project_name="</span><span class="si">{</span><span class="n">project_name</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">uid</span><span class="si">}</span><span class="s2">", # Update since </span><span class="si">{</span><span class="n">project_name</span><span class="si">}</span><span class="s2"> already exists</span>
 <span class="s2">)</span>
 <span class="s2">"""</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Test project </span><span class="si">{</span><span class="n">project_name</span><span class="si">}</span><span class="s2"> already exists. Please use a different name:"</span>
             <span class="sa">f</span><span class="s2">"</span><span class="se">\n\n</span><span class="si">{</span><span class="n">example_msg</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="n">comparison_url</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">url</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">"/compare?selectedSessions=</span><span class="si">{</span><span class="n">project</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">"</span>
     <span class="nb">print</span><span class="p">(</span>  <span class="c1"># noqa: T201</span>
         <span class="sa">f</span><span class="s2">"View the evaluation results for project '</span><span class="si">{</span><span class="n">project_name</span><span class="si">}</span><span class="s2">'"</span>
@@ -1325,9 +1356,7 @@
                         <span class="n">project_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">"Error running batch evaluator </span><span class="si">{</span><span class="nb">repr</span><span class="p">(</span><span class="n">evaluator</span><span class="p">)</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
-                    <span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error running batch evaluator </span><span class="si">{</span><span class="n">evaluator</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">aggregate_feedback</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_collect_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_RowResult</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Run</span><span class="p">]]:</span>
@@ -1339,7 +1368,7 @@
                     <span class="n">eval_results</span> <span class="o">=</span> <span class="n">callback</span><span class="o">.</span><span class="n">logged_eval_results</span>
                     <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">example_id</span><span class="p">),</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">eval_results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                         <span class="n">all_eval_results</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">example_id</span><span class="p">),</span> <span class="p">{})</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-                            <span class="p">{</span><span class="s2">"feedback"</span><span class="p">:</span> <span class="n">v</span><span class="p">}</span>
+                            <span class="p">{</span><span class="s2">"feedback"</span><span class="p">:</span> <span class="n">v</span><span class="p">},</span>
                         <span class="p">)</span>
                 <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">callback</span><span class="p">,</span> <span class="n">LangChainTracer</span><span class="p">):</span>
                     <span class="n">run</span> <span class="o">=</span> <span class="n">callback</span><span class="o">.</span><span class="n">latest_run</span>
@@ -1354,7 +1383,7 @@
                             <span class="s2">"execution_time"</span><span class="p">:</span> <span class="n">execution_time</span><span class="p">,</span>
                             <span class="s2">"run_id"</span><span class="p">:</span> <span class="n">run_id</span><span class="p">,</span>
                             <span class="s2">"run"</span><span class="p">:</span> <span class="n">run</span><span class="p">,</span>
-                        <span class="p">}</span>
+                        <span class="p">},</span>
                     <span class="p">)</span>
                     <span class="n">all_runs</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">callback</span><span class="o">.</span><span class="n">example_id</span><span class="p">)]</span> <span class="o">=</span> <span class="n">run</span>
         <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_RowResult</span><span class="p">],</span> <span class="n">all_eval_results</span><span class="p">),</span> <span class="n">all_runs</span>
@@ -1377,21 +1406,26 @@
             <span class="n">aggregate_metrics</span><span class="o">=</span><span class="n">aggregate_feedback</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TestResult</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">finish</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">batch_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001,FBT002</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TestResult</span><span class="p">:</span>
         <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collect_test_results</span><span class="p">(</span><span class="n">batch_results</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">agg_feedback</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">get_aggregate_feedback</span><span class="p">()</span>
                 <span class="n">_display_aggregate_results</span><span class="p">(</span><span class="n">agg_feedback</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to print aggregate feedback: </span><span class="si">{</span><span class="nb">repr</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to print aggregate feedback: </span><span class="si">{</span><span class="n">e</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Closing the project permits name changing and metric optimizations</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">update_project</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">end_time</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                <span class="n">end_time</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to close project: </span><span class="si">{</span><span class="nb">repr</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to close project: </span><span class="si">{</span><span class="n">e</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">results</span>
 
     <span class="nd">@classmethod</span>
@@ -1431,7 +1465,10 @@
             <span class="n">run_metadata</span><span class="p">[</span><span class="s2">"revision_id"</span><span class="p">]</span> <span class="o">=</span> <span class="n">revision_id</span>
         <span class="n">wrapped_model</span> <span class="o">=</span> <span class="n">_wrap_in_chain_factory</span><span class="p">(</span><span class="n">llm_or_chain_factory</span><span class="p">)</span>
         <span class="n">run_evaluators</span> <span class="o">=</span> <span class="n">_setup_evaluation</span><span class="p">(</span>
-            <span class="n">wrapped_model</span><span class="p">,</span> <span class="n">examples</span><span class="p">,</span> <span class="n">evaluation</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">data_type</span> <span class="ow">or</span> <span class="n">DataType</span><span class="o">.</span><span class="n">kv</span>
+            <span class="n">wrapped_model</span><span class="p">,</span>
+            <span class="n">examples</span><span class="p">,</span>
+            <span class="n">evaluation</span><span class="p">,</span>
+            <span class="n">dataset</span><span class="o">.</span><span class="n">data_type</span> <span class="ow">or</span> <span class="n">DataType</span><span class="o">.</span><span class="n">kv</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">_validate_example_inputs</span><span class="p">(</span><span class="n">examples</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">wrapped_model</span><span class="p">,</span> <span class="n">input_mapper</span><span class="p">)</span>
         <span class="n">progress_bar</span> <span class="o">=</span> <span class="n">progress</span><span class="o">.</span><span class="n">ProgressBarCallback</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">examples</span><span class="p">))</span>
@@ -1485,7 +1522,8 @@
         <span class="n">display</span><span class="p">(</span><span class="n">aggregate_results</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">formatted_string</span> <span class="o">=</span> <span class="n">aggregate_results</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span>
-            <span class="n">float_format</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">x</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="s2">"right"</span>
+            <span class="n">float_format</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">x</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">justify</span><span class="o">=</span><span class="s2">"right"</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2"> Experiment Results:"</span><span class="p">)</span>  <span class="c1"># noqa: T201</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">formatted_string</span><span class="p">)</span>  <span class="c1"># noqa: T201</span>
@@ -1649,7 +1687,7 @@
                     <span class="p">),</span>
                     <span class="n">container</span><span class="o">.</span><span class="n">examples</span><span class="p">,</span>
                     <span class="n">container</span><span class="o">.</span><span class="n">configs</span><span class="p">,</span>
-                <span class="p">)</span>
+                <span class="p">),</span>
             <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">container</span><span class="o">.</span><span class="n">finish</span><span class="p">(</span><span class="n">batch_results</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span></div>
@@ -1765,7 +1803,8 @@
 <span class="s2">"""</span>  <span class="c1"># noqa: E501</span>
 <span class="n">run_on_dataset</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">_RUN_ON_DATASET_DOCSTRING</span>
 <span class="n">arun_on_dataset</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">_RUN_ON_DATASET_DOCSTRING</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
-    <span class="s2">"run_on_dataset("</span><span class="p">,</span> <span class="s2">"await arun_on_dataset("</span>
+    <span class="s2">"run_on_dataset("</span><span class="p">,</span>
+    <span class="s2">"await arun_on_dataset("</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </article>

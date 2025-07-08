@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -269,7 +269,9 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_environment</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validate that api key and python package exists in environment."""</span>
         <span class="n">openai_api_key</span> <span class="o">=</span> <span class="n">get_from_dict_or_env</span><span class="p">(</span>
-            <span class="n">values</span><span class="p">,</span> <span class="s2">"openai_api_key"</span><span class="p">,</span> <span class="s2">"OPENAI_API_KEY"</span>
+            <span class="n">values</span><span class="p">,</span>
+            <span class="s2">"openai_api_key"</span><span class="p">,</span>
+            <span class="s2">"OPENAI_API_KEY"</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">openai_organization</span> <span class="o">=</span> <span class="n">get_from_dict_or_env</span><span class="p">(</span>
             <span class="n">values</span><span class="p">,</span>
@@ -295,10 +297,11 @@
                 <span class="n">values</span><span class="p">[</span><span class="s2">"async_client"</span><span class="p">]</span> <span class="o">=</span> <span class="n">openai</span><span class="o">.</span><span class="n">AsyncOpenAI</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">openai_api_key</span><span class="p">)</span>
 
         <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Could not import openai python package. "</span>
                 <span class="s2">"Please install it with `pip install openai`."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">values</span>
 
     <span class="nd">@property</span>
@@ -318,16 +321,12 @@
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">output_key</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_moderate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">openai_pre_1_0</span><span class="p">:</span>
-            <span class="n">condition</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">"flagged"</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">condition</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">flagged</span>
+        <span class="n">condition</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">"flagged"</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">openai_pre_1_0</span> <span class="k">else</span> <span class="n">results</span><span class="o">.</span><span class="n">flagged</span>
         <span class="k">if</span> <span class="n">condition</span><span class="p">:</span>
             <span class="n">error_str</span> <span class="o">=</span> <span class="s2">"Text was found that violates OpenAI's content policy."</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error_str</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">error_str</span>
+            <span class="k">return</span> <span class="n">error_str</span>
         <span class="k">return</span> <span class="n">text</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_call</span><span class="p">(</span>

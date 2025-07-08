@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -246,7 +246,8 @@
 
     <span class="n">answer</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Answer to the question that was asked"</span><span class="p">)</span>
     <span class="n">sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"List of sources used to answer the question"</span>
+        <span class="o">...</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"List of sources used to answer the question"</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -259,7 +260,7 @@
     <span class="n">message</span><span class="o">=</span><span class="p">(</span>
         <span class="s2">"This function is deprecated. Refer to this guide on retrieval and question "</span>
         <span class="s2">"answering with structured responses: "</span>
-        <span class="s2">"https://python.langchain.com/docs/how_to/qa_sources/#structure-sources-in-model-response"</span>  <span class="c1"># noqa: E501</span>
+        <span class="s2">"https://python.langchain.com/docs/how_to/qa_sources/#structure-sources-in-model-response"</span>
     <span class="p">),</span>
 <span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_qa_with_structure_chain</span><span class="p">(</span>
@@ -267,7 +268,7 @@
     <span class="n">schema</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]],</span>
     <span class="n">output_parser</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"base"</span><span class="p">,</span>
     <span class="n">prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">PromptTemplate</span><span class="p">,</span> <span class="n">ChatPromptTemplate</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001,FBT002</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LLMChain</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Create a question answering chain that returns an answer with sources</span>
 <span class="sd">     based on schema.</span>
@@ -284,20 +285,22 @@
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">output_parser</span> <span class="o">==</span> <span class="s2">"pydantic"</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_basemodel_subclass</span><span class="p">(</span><span class="n">schema</span><span class="p">)):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Must provide a pydantic class for schema when output_parser is "</span>
                 <span class="s2">"'pydantic'."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">_output_parser</span><span class="p">:</span> <span class="n">BaseLLMOutputParser</span> <span class="o">=</span> <span class="n">PydanticOutputFunctionsParser</span><span class="p">(</span>
-            <span class="n">pydantic_schema</span><span class="o">=</span><span class="n">schema</span>
+            <span class="n">pydantic_schema</span><span class="o">=</span><span class="n">schema</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">output_parser</span> <span class="o">==</span> <span class="s2">"base"</span><span class="p">:</span>
         <span class="n">_output_parser</span> <span class="o">=</span> <span class="n">OutputFunctionsParser</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Got unexpected output_parser: </span><span class="si">{</span><span class="n">output_parser</span><span class="si">}</span><span class="s2">. "</span>
             <span class="sa">f</span><span class="s2">"Should be one of `pydantic` or `base`."</span>
         <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_basemodel_subclass</span><span class="p">(</span><span class="n">schema</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="s2">"model_json_schema"</span><span class="p">):</span>
             <span class="n">schema_dict</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">schema</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">())</span>
@@ -316,7 +319,7 @@
             <span class="n">content</span><span class="o">=</span><span class="p">(</span>
                 <span class="s2">"You are a world class algorithm to answer "</span>
                 <span class="s2">"questions in a specific format."</span>
-            <span class="p">)</span>
+            <span class="p">),</span>
         <span class="p">),</span>
         <span class="n">HumanMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s2">"Answer question using the following context"</span><span class="p">),</span>
         <span class="n">HumanMessagePromptTemplate</span><span class="o">.</span><span class="n">from_template</span><span class="p">(</span><span class="s2">"</span><span class="si">{context}</span><span class="s2">"</span><span class="p">),</span>
@@ -325,14 +328,13 @@
     <span class="p">]</span>
     <span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt</span> <span class="ow">or</span> <span class="n">ChatPromptTemplate</span><span class="p">(</span><span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
 
-    <span class="n">chain</span> <span class="o">=</span> <span class="n">LLMChain</span><span class="p">(</span>
+    <span class="k">return</span> <span class="n">LLMChain</span><span class="p">(</span>
         <span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
         <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span>
         <span class="n">llm_kwargs</span><span class="o">=</span><span class="n">llm_kwargs</span><span class="p">,</span>
         <span class="n">output_parser</span><span class="o">=</span><span class="n">_output_parser</span><span class="p">,</span>
         <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">chain</span></div>
+    <span class="p">)</span></div>
 
 
 
@@ -344,11 +346,13 @@
     <span class="n">message</span><span class="o">=</span><span class="p">(</span>
         <span class="s2">"This function is deprecated. Refer to this guide on retrieval and question "</span>
         <span class="s2">"answering with sources: "</span>
-        <span class="s2">"https://python.langchain.com/docs/how_to/qa_sources/#structure-sources-in-model-response"</span>  <span class="c1"># noqa: E501</span>
+        <span class="s2">"https://python.langchain.com/docs/how_to/qa_sources/#structure-sources-in-model-response"</span>
     <span class="p">),</span>
 <span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_qa_with_sources_chain</span><span class="p">(</span>
-    <span class="n">llm</span><span class="p">:</span> <span class="n">BaseLanguageModel</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">llm</span><span class="p">:</span> <span class="n">BaseLanguageModel</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001,FBT002</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LLMChain</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Create a question answering chain that returns an answer with sources.</span>
 
@@ -361,7 +365,10 @@
 <span class="sd">        Chain (LLMChain) that can be used to answer questions with citations.</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">create_qa_with_structure_chain</span><span class="p">(</span>
-        <span class="n">llm</span><span class="p">,</span> <span class="n">AnswerWithSources</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="n">llm</span><span class="p">,</span>
+        <span class="n">AnswerWithSources</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 </pre></div>

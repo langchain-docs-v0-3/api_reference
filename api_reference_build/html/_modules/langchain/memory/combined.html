@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -240,16 +240,18 @@
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"memories"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">check_repeated_memory_variable</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMemory</span><span class="p">]</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">value</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMemory</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMemory</span><span class="p">]:</span>
         <span class="n">all_variables</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
             <span class="n">overlap</span> <span class="o">=</span> <span class="n">all_variables</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">memory_variables</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">overlap</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"The same variables </span><span class="si">{</span><span class="n">overlap</span><span class="si">}</span><span class="s2"> are found in multiple"</span>
                     <span class="s2">"memory object, which is not allowed by CombinedMemory."</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="n">all_variables</span> <span class="o">|=</span> <span class="nb">set</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">memory_variables</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">value</span>
@@ -259,13 +261,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">check_input_key</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMemory</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMemory</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Check that if memories are of type BaseChatMemory that input keys exist."""</span>
         <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">BaseChatMemory</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">input_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                        <span class="s2">"When using CombinedMemory, "</span>
-                        <span class="s2">"input keys should be so the input is known. "</span>
-                        <span class="sa">f</span><span class="s2">" Was not set on </span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">"</span>
-                    <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">BaseChatMemory</span><span class="p">)</span> <span class="ow">and</span> <span class="n">val</span><span class="o">.</span><span class="n">input_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s2">"When using CombinedMemory, "</span>
+                    <span class="s2">"input keys should be so the input is known. "</span>
+                    <span class="sa">f</span><span class="s2">" Was not set on </span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="p">)</span>
         <span class="k">return</span> <span class="n">value</span>
 
     <span class="nd">@property</span>
@@ -291,9 +292,8 @@
             <span class="n">data</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">load_memory_variables</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">memory_data</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">"The variable </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is repeated in the CombinedMemory."</span>
-                    <span class="p">)</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"The variable </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is repeated in the CombinedMemory."</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
                 <span class="n">memory_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
         <span class="k">return</span> <span class="n">memory_data</span></div>

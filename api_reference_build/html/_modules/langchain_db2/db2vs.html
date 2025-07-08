@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -419,19 +419,39 @@
 <a class="viewcode-back" href="../../db2/db2vs/langchain_db2.db2vs.DB2VS.html#langchain_db2.db2vs.DB2VS.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">client</span><span class="p">:</span> <span class="n">Connection</span><span class="p">,</span>
         <span class="n">embedding_function</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
             <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
             <span class="n">Embeddings</span><span class="p">,</span>
         <span class="p">],</span>
         <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Connection</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">distance_strategy</span><span class="p">:</span> <span class="n">DistanceStrategy</span> <span class="o">=</span> <span class="n">DistanceStrategy</span><span class="o">.</span><span class="n">EUCLIDEAN_DISTANCE</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"What is a Db2 database"</span><span class="p">,</span>
         <span class="n">params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">connection_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">connection_args</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">database</span> <span class="o">=</span> <span class="n">connection_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"database"</span><span class="p">)</span>
+                <span class="n">host</span> <span class="o">=</span> <span class="n">connection_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"host"</span><span class="p">)</span>
+                <span class="n">port</span> <span class="o">=</span> <span class="n">connection_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"port"</span><span class="p">)</span>
+                <span class="n">username</span> <span class="o">=</span> <span class="n">connection_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"username"</span><span class="p">)</span>
+                <span class="n">password</span> <span class="o">=</span> <span class="n">connection_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"password"</span><span class="p">)</span>
+
+                <span class="n">conn_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"DATABASE=</span><span class="si">{</span><span class="n">database</span><span class="si">}</span><span class="s2">;hostname=</span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">;port=</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">;"</span>
+                <span class="sa">f</span><span class="s2">"uid=</span><span class="si">{</span><span class="n">username</span><span class="si">}</span><span class="s2">;pwd=</span><span class="si">{</span><span class="n">password</span><span class="si">}</span><span class="s2">;"</span>
+
+                <span class="k">if</span> <span class="s2">"security"</span> <span class="ow">in</span> <span class="n">connection_args</span><span class="p">:</span>
+                    <span class="n">security</span> <span class="o">=</span> <span class="n">connection_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"security"</span><span class="p">)</span>
+                    <span class="n">conn_str</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">"security=</span><span class="si">{</span><span class="n">security</span><span class="si">}</span><span class="s2">;"</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">ibm_db_dbi</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">conn_str</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No valid connection or connection_args is passed"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
 <span class="w">            </span><span class="sd">"""Initialize with ibm_db_dbi client."""</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">client</span>
+        <span class="k">try</span><span class="p">:</span>
 <span class="w">            </span><span class="sd">"""Initialize with necessary components."""</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">embedding_function</span><span class="p">,</span> <span class="n">Embeddings</span><span class="p">):</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>

@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -234,10 +234,11 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.utils.math</span><span class="w"> </span><span class="kn">import</span> <span class="n">cosine_similarity</span>
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">"To use please install langchain-community "</span>
             <span class="s2">"with `pip install langchain-community`."</span>
         <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">cosine_similarity</span>
 
 
@@ -271,7 +272,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_params</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validate similarity parameters."""</span>
         <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="s2">"k"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">values</span><span class="p">[</span><span class="s2">"similarity_threshold"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Must specify one of `k` or `similarity_threshold`."</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Must specify one of `k` or `similarity_threshold`."</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">values</span></div>
 
 
@@ -290,20 +292,21 @@
                 <span class="n">get_stateful_documents</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"To use please install langchain-community "</span>
                 <span class="s2">"with `pip install langchain-community`."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
         <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-                <span class="s2">"Could not import numpy, please install with `pip install numpy`."</span>
-            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Could not import numpy, please install with `pip install numpy`."</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="n">stateful_documents</span> <span class="o">=</span> <span class="n">get_stateful_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
         <span class="n">embedded_documents</span> <span class="o">=</span> <span class="n">_get_embeddings_from_stateful_docs</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">stateful_documents</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="p">,</span>
+            <span class="n">stateful_documents</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">embedded_query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
         <span class="n">similarity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_fn</span><span class="p">([</span><span class="n">embedded_query</span><span class="p">],</span> <span class="n">embedded_documents</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
@@ -312,7 +315,7 @@
             <span class="n">included_idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">similarity</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">similar_enough</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
-                <span class="n">similarity</span><span class="p">[</span><span class="n">included_idxs</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_threshold</span>
+                <span class="n">similarity</span><span class="p">[</span><span class="n">included_idxs</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_threshold</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">included_idxs</span> <span class="o">=</span> <span class="n">included_idxs</span><span class="p">[</span><span class="n">similar_enough</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">included_idxs</span><span class="p">:</span>
@@ -335,20 +338,21 @@
                 <span class="n">get_stateful_documents</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"To use please install langchain-community "</span>
                 <span class="s2">"with `pip install langchain-community`."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
         <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-                <span class="s2">"Could not import numpy, please install with `pip install numpy`."</span>
-            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Could not import numpy, please install with `pip install numpy`."</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="n">stateful_documents</span> <span class="o">=</span> <span class="n">get_stateful_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
         <span class="n">embedded_documents</span> <span class="o">=</span> <span class="k">await</span> <span class="n">_aget_embeddings_from_stateful_docs</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">stateful_documents</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="p">,</span>
+            <span class="n">stateful_documents</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">embedded_query</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">aembed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
         <span class="n">similarity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_fn</span><span class="p">([</span><span class="n">embedded_query</span><span class="p">],</span> <span class="n">embedded_documents</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
@@ -357,7 +361,7 @@
             <span class="n">included_idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">similarity</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">similar_enough</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
-                <span class="n">similarity</span><span class="p">[</span><span class="n">included_idxs</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_threshold</span>
+                <span class="n">similarity</span><span class="p">[</span><span class="n">included_idxs</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_threshold</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">included_idxs</span> <span class="o">=</span> <span class="n">included_idxs</span><span class="p">[</span><span class="n">similar_enough</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">included_idxs</span><span class="p">:</span>

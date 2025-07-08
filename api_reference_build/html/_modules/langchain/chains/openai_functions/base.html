@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -253,13 +253,13 @@
 <span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">"get_openai_output_parser"</span><span class="p">,</span>
-    <span class="s2">"create_openai_fn_runnable"</span><span class="p">,</span>
-    <span class="s2">"create_structured_output_runnable"</span><span class="p">,</span>  <span class="c1"># deprecated</span>
-    <span class="s2">"create_openai_fn_chain"</span><span class="p">,</span>  <span class="c1"># deprecated</span>
-    <span class="s2">"create_structured_output_chain"</span><span class="p">,</span>  <span class="c1"># deprecated</span>
     <span class="s2">"PYTHON_TO_JSON_TYPES"</span><span class="p">,</span>  <span class="c1"># backwards compatibility</span>
     <span class="s2">"convert_to_openai_function"</span><span class="p">,</span>  <span class="c1"># backwards compatibility</span>
+    <span class="s2">"create_openai_fn_chain"</span><span class="p">,</span>  <span class="c1"># deprecated</span>
+    <span class="s2">"create_openai_fn_runnable"</span><span class="p">,</span>
+    <span class="s2">"create_structured_output_chain"</span><span class="p">,</span>  <span class="c1"># deprecated</span>
+    <span class="s2">"create_structured_output_runnable"</span><span class="p">,</span>  <span class="c1"># deprecated</span>
+    <span class="s2">"get_openai_output_parser"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -347,7 +347,8 @@
 <span class="sd">                # -&gt; RecordDog(name="Harry", color="brown", fav_food="chicken")</span>
 <span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">functions</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Need to pass in at least one function. Received zero."</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Need to pass in at least one function. Received zero."</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="n">openai_functions</span> <span class="o">=</span> <span class="p">[</span><span class="n">convert_to_openai_function</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">functions</span><span class="p">]</span>
     <span class="n">output_parser</span> <span class="o">=</span> <span class="n">output_parser</span> <span class="ow">or</span> <span class="n">get_openai_output_parser</span><span class="p">(</span><span class="n">functions</span><span class="p">)</span>
     <span class="n">llm_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
@@ -355,22 +356,23 @@
     <span class="p">}</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">openai_functions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">enforce_single_function_usage</span><span class="p">:</span>
         <span class="n">llm_kwargs</span><span class="p">[</span><span class="s2">"function_call"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">openai_functions</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"name"</span><span class="p">]}</span>
-    <span class="n">llm_chain</span> <span class="o">=</span> <span class="n">LLMChain</span><span class="p">(</span>
+    <span class="k">return</span> <span class="n">LLMChain</span><span class="p">(</span>
         <span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
         <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span>
         <span class="n">output_parser</span><span class="o">=</span><span class="n">output_parser</span><span class="p">,</span>
         <span class="n">llm_kwargs</span><span class="o">=</span><span class="n">llm_kwargs</span><span class="p">,</span>
         <span class="n">output_key</span><span class="o">=</span><span class="n">output_key</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">llm_chain</span></div>
+    <span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="create_structured_output_chain">
 <a class="viewcode-back" href="../../../../langchain/chains/langchain.chains.openai_functions.base.create_structured_output_chain.html#langchain.chains.openai_functions.base.create_structured_output_chain">[docs]</a>
 <span class="nd">@deprecated</span><span class="p">(</span>
-    <span class="n">since</span><span class="o">=</span><span class="s2">"0.1.1"</span><span class="p">,</span> <span class="n">removal</span><span class="o">=</span><span class="s2">"1.0"</span><span class="p">,</span> <span class="n">alternative</span><span class="o">=</span><span class="s2">"ChatOpenAI.with_structured_output"</span>
+    <span class="n">since</span><span class="o">=</span><span class="s2">"0.1.1"</span><span class="p">,</span>
+    <span class="n">removal</span><span class="o">=</span><span class="s2">"1.0"</span><span class="p">,</span>
+    <span class="n">alternative</span><span class="o">=</span><span class="s2">"ChatOpenAI.with_structured_output"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_structured_output_chain</span><span class="p">(</span>
     <span class="n">output_schema</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]],</span>
@@ -447,7 +449,8 @@
 
         <span class="n">function</span> <span class="o">=</span> <span class="n">_OutputFormatter</span>
         <span class="n">output_parser</span> <span class="o">=</span> <span class="n">output_parser</span> <span class="ow">or</span> <span class="n">PydanticAttrOutputFunctionsParser</span><span class="p">(</span>
-            <span class="n">pydantic_schema</span><span class="o">=</span><span class="n">_OutputFormatter</span><span class="p">,</span> <span class="n">attr_name</span><span class="o">=</span><span class="s2">"output"</span>
+            <span class="n">pydantic_schema</span><span class="o">=</span><span class="n">_OutputFormatter</span><span class="p">,</span>
+            <span class="n">attr_name</span><span class="o">=</span><span class="s2">"output"</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">create_openai_fn_chain</span><span class="p">(</span>
         <span class="p">[</span><span class="n">function</span><span class="p">],</span>

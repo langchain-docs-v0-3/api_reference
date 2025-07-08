@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,26 +220,20 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain.chains.natbot.crawler</h1><div class="highlight"><pre>
-<span></span><span class="c1"># flake8: noqa</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sys</span><span class="w"> </span><span class="kn">import</span> <span class="n">platform</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">TYPE_CHECKING</span><span class="p">,</span>
     <span class="n">Any</span><span class="p">,</span>
-    <span class="n">Dict</span><span class="p">,</span>
-    <span class="n">Iterable</span><span class="p">,</span>
-    <span class="n">List</span><span class="p">,</span>
     <span class="n">Optional</span><span class="p">,</span>
-    <span class="n">Set</span><span class="p">,</span>
-    <span class="n">Tuple</span><span class="p">,</span>
     <span class="n">TypedDict</span><span class="p">,</span>
     <span class="n">Union</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">playwright.sync_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Browser</span><span class="p">,</span> <span class="n">CDPSession</span><span class="p">,</span> <span class="n">Page</span><span class="p">,</span> <span class="n">sync_playwright</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">playwright.sync_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Browser</span><span class="p">,</span> <span class="n">CDPSession</span><span class="p">,</span> <span class="n">Page</span>
 
-<span class="n">black_listed_elements</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="n">black_listed_elements</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"html"</span><span class="p">,</span>
     <span class="s2">"head"</span><span class="p">,</span>
     <span class="s2">"title"</span><span class="p">,</span>
@@ -264,7 +258,7 @@
     <span class="n">backend_node_id</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">node_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">node_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">node_meta</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">node_meta</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">is_clickable</span><span class="p">:</span> <span class="nb">bool</span>
     <span class="n">origin_x</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">origin_y</span><span class="p">:</span> <span class="nb">int</span>
@@ -299,16 +293,17 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">playwright.sync_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">sync_playwright</span>
         <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Could not import playwright python package. "</span>
                 <span class="s2">"Please install it with `pip install playwright`."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">browser</span><span class="p">:</span> <span class="n">Browser</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">sync_playwright</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span><span class="o">.</span><span class="n">chromium</span><span class="o">.</span><span class="n">launch</span><span class="p">(</span><span class="n">headless</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">page</span><span class="p">:</span> <span class="n">Page</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">browser</span><span class="o">.</span><span class="n">new_page</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">page</span><span class="o">.</span><span class="n">set_viewport_size</span><span class="p">({</span><span class="s2">"width"</span><span class="p">:</span> <span class="mi">1280</span><span class="p">,</span> <span class="s2">"height"</span><span class="p">:</span> <span class="mi">1080</span><span class="p">})</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">page_element_buffer</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">ElementInViewPort</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">page_element_buffer</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">ElementInViewPort</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">:</span> <span class="n">CDPSession</span></div>
 
 
@@ -325,18 +320,18 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">scroll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">direction</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">"up"</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">page</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
-                <span class="s2">"(document.scrollingElement || document.body).scrollTop = (document.scrollingElement || document.body).scrollTop - window.innerHeight;"</span>
+                <span class="s2">"(document.scrollingElement || document.body).scrollTop = (document.scrollingElement || document.body).scrollTop - window.innerHeight;"</span>  <span class="c1"># noqa: E501</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">"down"</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">page</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
-                <span class="s2">"(document.scrollingElement || document.body).scrollTop = (document.scrollingElement || document.body).scrollTop + window.innerHeight;"</span>
+                <span class="s2">"(document.scrollingElement || document.body).scrollTop = (document.scrollingElement || document.body).scrollTop + window.innerHeight;"</span>  <span class="c1"># noqa: E501</span>
             <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Crawler.click">
 <a class="viewcode-back" href="../../../../langchain/chains/langchain.chains.natbot.crawler.Crawler.html#langchain.chains.natbot.crawler.Crawler.click">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">click</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># Inject javascript into the page which removes the target= attribute from all links</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">click</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id_</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Inject javascript into the page which removes the target= attribute from links</span>
         <span class="n">js</span> <span class="o">=</span> <span class="s2">"""</span>
 <span class="s2">		links = document.getElementsByTagName("a");</span>
 <span class="s2">		for (var i = 0; i &lt; links.length; i++) {</span>
@@ -345,7 +340,7 @@
 <span class="s2">		"""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">page</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">js</span><span class="p">)</span>
 
-        <span class="n">element</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">page_element_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">id</span><span class="p">))</span>
+        <span class="n">element</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">page_element_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">id_</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">element</span><span class="p">:</span>
             <span class="n">x</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">element</span><span class="p">[</span><span class="s2">"center_x"</span><span class="p">]</span>
             <span class="n">y</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">element</span><span class="p">[</span><span class="s2">"center_y"</span><span class="p">]</span>
@@ -357,8 +352,8 @@
 
 <div class="viewcode-block" id="Crawler.type">
 <a class="viewcode-back" href="../../../../langchain/chains/langchain.chains.natbot.crawler.Crawler.html#langchain.chains.natbot.crawler.Crawler.type">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">click</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id_</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">click</span><span class="p">(</span><span class="n">id_</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">page</span><span class="o">.</span><span class="n">keyboard</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></div>
 
 
@@ -370,7 +365,7 @@
 
 <div class="viewcode-block" id="Crawler.crawl">
 <a class="viewcode-back" href="../../../../langchain/chains/langchain.chains.natbot.crawler.Crawler.html#langchain.chains.natbot.crawler.Crawler.crawl">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">crawl</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">crawl</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="n">page</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">page</span>
         <span class="n">page_element_buffer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">page_element_buffer</span>
         <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -388,10 +383,10 @@
         <span class="n">win_right_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">win_left_bound</span> <span class="o">+</span> <span class="n">win_width</span>
         <span class="n">win_lower_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">win_upper_bound</span> <span class="o">+</span> <span class="n">win_height</span>
 
-        <span class="c1"># 		percentage_progress_start = (win_upper_bound / document_scroll_height) * 100</span>
-        <span class="c1"># 		percentage_progress_end = (</span>
-        <span class="c1"># 			(win_height + win_upper_bound) / document_scroll_height</span>
-        <span class="c1"># 		) * 100</span>
+        <span class="c1"># 	percentage_progress_start = (win_upper_bound / document_scroll_height) * 100</span>
+        <span class="c1"># 	percentage_progress_end = (</span>
+        <span class="c1"># 		(win_height + win_upper_bound) / document_scroll_height</span>
+        <span class="c1"># 	) * 100</span>
         <span class="n">percentage_progress_start</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="n">percentage_progress_end</span> <span class="o">=</span> <span class="mi">2</span>
 
@@ -399,9 +394,7 @@
             <span class="p">{</span>
                 <span class="s2">"x"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
                 <span class="s2">"y"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-                <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"[scrollbar </span><span class="si">{:0.2f}</span><span class="s2">-</span><span class="si">{:0.2f}</span><span class="s2">%]"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="nb">round</span><span class="p">(</span><span class="n">percentage_progress_start</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="n">percentage_progress_end</span><span class="p">)</span>
-                <span class="p">),</span>
+                <span class="s2">"text"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"[scrollbar </span><span class="si">{</span><span class="n">percentage_progress_start</span><span class="si">:</span><span class="s2">0.2f</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">percentage_progress_end</span><span class="si">:</span><span class="s2">0.2f</span><span class="si">}</span><span class="s2">%]"</span><span class="p">,</span>  <span class="c1"># noqa: E501</span>
             <span class="p">}</span>
         <span class="p">)</span>
 
@@ -409,34 +402,35 @@
             <span class="s2">"DOMSnapshot.captureSnapshot"</span><span class="p">,</span>
             <span class="p">{</span><span class="s2">"computedStyles"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"includeDOMRects"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"includePaintOrder"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
         <span class="p">)</span>
-        <span class="n">strings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">tree</span><span class="p">[</span><span class="s2">"strings"</span><span class="p">]</span>
-        <span class="n">document</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">tree</span><span class="p">[</span><span class="s2">"documents"</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">nodes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">document</span><span class="p">[</span><span class="s2">"nodes"</span><span class="p">]</span>
-        <span class="n">backend_node_id</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="s2">"backendNodeId"</span><span class="p">]</span>
-        <span class="n">attributes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="s2">"attributes"</span><span class="p">]</span>
-        <span class="n">node_value</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="s2">"nodeValue"</span><span class="p">]</span>
-        <span class="n">parent</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="s2">"parentIndex"</span><span class="p">]</span>
-        <span class="n">node_names</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="s2">"nodeName"</span><span class="p">]</span>
-        <span class="n">is_clickable</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">nodes</span><span class="p">[</span><span class="s2">"isClickable"</span><span class="p">][</span><span class="s2">"index"</span><span class="p">])</span>
+        <span class="n">strings</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">tree</span><span class="p">[</span><span class="s2">"strings"</span><span class="p">]</span>
+        <span class="n">document</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">tree</span><span class="p">[</span><span class="s2">"documents"</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">nodes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">document</span><span class="p">[</span><span class="s2">"nodes"</span><span class="p">]</span>
+        <span class="n">backend_node_id</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="s2">"backendNodeId"</span><span class="p">]</span>
+        <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="s2">"attributes"</span><span class="p">]</span>
+        <span class="n">node_value</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="s2">"nodeValue"</span><span class="p">]</span>
+        <span class="n">parent</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="s2">"parentIndex"</span><span class="p">]</span>
+        <span class="n">node_names</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="s2">"nodeName"</span><span class="p">]</span>
+        <span class="n">is_clickable</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">nodes</span><span class="p">[</span><span class="s2">"isClickable"</span><span class="p">][</span><span class="s2">"index"</span><span class="p">])</span>
 
-        <span class="n">input_value</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="s2">"inputValue"</span><span class="p">]</span>
-        <span class="n">input_value_index</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_value</span><span class="p">[</span><span class="s2">"index"</span><span class="p">]</span>
-        <span class="n">input_value_values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_value</span><span class="p">[</span><span class="s2">"value"</span><span class="p">]</span>
+        <span class="n">input_value</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="s2">"inputValue"</span><span class="p">]</span>
+        <span class="n">input_value_index</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_value</span><span class="p">[</span><span class="s2">"index"</span><span class="p">]</span>
+        <span class="n">input_value_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_value</span><span class="p">[</span><span class="s2">"value"</span><span class="p">]</span>
 
-        <span class="n">layout</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">document</span><span class="p">[</span><span class="s2">"layout"</span><span class="p">]</span>
-        <span class="n">layout_node_index</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">layout</span><span class="p">[</span><span class="s2">"nodeIndex"</span><span class="p">]</span>
-        <span class="n">bounds</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">layout</span><span class="p">[</span><span class="s2">"bounds"</span><span class="p">]</span>
+        <span class="n">layout</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">document</span><span class="p">[</span><span class="s2">"layout"</span><span class="p">]</span>
+        <span class="n">layout_node_index</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">layout</span><span class="p">[</span><span class="s2">"nodeIndex"</span><span class="p">]</span>
+        <span class="n">bounds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">layout</span><span class="p">[</span><span class="s2">"bounds"</span><span class="p">]</span>
 
         <span class="n">cursor</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
 
-        <span class="n">child_nodes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">elements_in_view_port</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ElementInViewPort</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">child_nodes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">elements_in_view_port</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ElementInViewPort</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="n">anchor_ancestry</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"-1"</span><span class="p">:</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">)}</span>
-        <span class="n">button_ancestry</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"-1"</span><span class="p">:</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">)}</span>
+        <span class="n">anchor_ancestry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"-1"</span><span class="p">:</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">)}</span>
+        <span class="n">button_ancestry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"-1"</span><span class="p">:</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">)}</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">convert_name</span><span class="p">(</span>
-            <span class="n">node_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">has_click_handler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span>
+            <span class="n">node_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+            <span class="n">has_click_handler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span>  <span class="c1"># noqa: FBT001</span>
         <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">node_name</span> <span class="o">==</span> <span class="s2">"a"</span><span class="p">:</span>
                 <span class="k">return</span> <span class="s2">"link"</span>
@@ -448,12 +442,11 @@
                 <span class="n">node_name</span> <span class="o">==</span> <span class="s2">"button"</span> <span class="ow">or</span> <span class="n">has_click_handler</span>
             <span class="p">):</span>  <span class="c1"># found pages that needed this quirk</span>
                 <span class="k">return</span> <span class="s2">"button"</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="s2">"text"</span>
+            <span class="k">return</span> <span class="s2">"text"</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">find_attributes</span><span class="p">(</span>
-            <span class="n">attributes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">keys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+            <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
             <span class="n">values</span> <span class="o">=</span> <span class="p">{}</span>
 
             <span class="k">for</span> <span class="p">[</span><span class="n">key_index</span><span class="p">,</span> <span class="n">value_index</span><span class="p">]</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">attributes</span><span class="p">),)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">):</span>
@@ -472,14 +465,14 @@
             <span class="k">return</span> <span class="n">values</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">add_to_hash_tree</span><span class="p">(</span>
-            <span class="n">hash_tree</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]],</span>
+            <span class="n">hash_tree</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]],</span>
             <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
             <span class="n">node_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
             <span class="n">node_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
             <span class="n">parent_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
             <span class="n">parent_id_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">parent_id</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">parent_id_str</span> <span class="ow">in</span> <span class="n">hash_tree</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">parent_id_str</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">hash_tree</span><span class="p">:</span>
                 <span class="n">parent_name</span> <span class="o">=</span> <span class="n">strings</span><span class="p">[</span><span class="n">node_names</span><span class="p">[</span><span class="n">parent_id</span><span class="p">]]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
                 <span class="n">grand_parent_id</span> <span class="o">=</span> <span class="n">parent</span><span class="p">[</span><span class="n">parent_id</span><span class="p">]</span>
 
@@ -489,9 +482,10 @@
 
             <span class="n">is_parent_desc_anchor</span><span class="p">,</span> <span class="n">anchor_id</span> <span class="o">=</span> <span class="n">hash_tree</span><span class="p">[</span><span class="n">parent_id_str</span><span class="p">]</span>
 
-            <span class="c1"># even if the anchor is nested in another anchor, we set the "root" for all descendants to be ::Self</span>
+            <span class="c1"># even if the anchor is nested in another anchor, we set the "root" for all</span>
+            <span class="c1"># descendants to be ::Self</span>
             <span class="k">if</span> <span class="n">node_name</span> <span class="o">==</span> <span class="n">tag</span><span class="p">:</span>
-                <span class="n">value</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">node_id</span><span class="p">)</span>
+                <span class="n">value</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">node_id</span><span class="p">)</span>
             <span class="k">elif</span> <span class="p">(</span>
                 <span class="n">is_parent_desc_anchor</span>
             <span class="p">):</span>  <span class="c1"># reuse the parent's anchor_id (which could be much higher in the tree)</span>
@@ -500,7 +494,9 @@
                 <span class="n">value</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="kc">False</span><span class="p">,</span>
                     <span class="kc">None</span><span class="p">,</span>
-                <span class="p">)</span>  <span class="c1"># not a descendant of an anchor, most likely it will become text, an interactive element or discarded</span>
+                <span class="p">)</span>
+                <span class="c1"># not a descendant of an anchor, most likely it will become text, an</span>
+                <span class="c1"># interactive element or discarded</span>
 
             <span class="n">hash_tree</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">node_id</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value</span>
 
@@ -519,10 +515,10 @@
             <span class="p">)</span>
 
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">cursor</span> <span class="o">=</span> <span class="n">layout_node_index</span><span class="o">.</span><span class="n">index</span><span class="p">(</span>
-                    <span class="n">index</span>
-                <span class="p">)</span>  <span class="c1"># todo replace this with proper cursoring, ignoring the fact this is O(n^2) for the moment</span>
-            <span class="k">except</span><span class="p">:</span>
+                <span class="n">cursor</span> <span class="o">=</span> <span class="n">layout_node_index</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+                <span class="c1"># TODO replace this with proper cursoring, ignoring the fact this is</span>
+                <span class="c1"># O(n^2) for the moment</span>
+            <span class="k">except</span><span class="p">:</span>  <span class="c1"># noqa: E722</span>
                 <span class="k">continue</span>
 
             <span class="k">if</span> <span class="n">node_name</span> <span class="ow">in</span> <span class="n">black_listed_elements</span><span class="p">:</span>
@@ -549,9 +545,10 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">partially_is_in_viewport</span><span class="p">:</span>
                 <span class="k">continue</span>
 
-            <span class="n">meta_data</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">meta_data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-            <span class="c1"># inefficient to grab the same set of keys for kinds of objects, but it's fine for now</span>
+            <span class="c1"># inefficient to grab the same set of keys for kinds of objects, but it's</span>
+            <span class="c1"># fine for now</span>
             <span class="n">element_attributes</span> <span class="o">=</span> <span class="n">find_attributes</span><span class="p">(</span>
                 <span class="n">attributes</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="p">[</span><span class="s2">"type"</span><span class="p">,</span> <span class="s2">"placeholder"</span><span class="p">,</span> <span class="s2">"aria-label"</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">,</span> <span class="s2">"alt"</span><span class="p">]</span>
             <span class="p">)</span>
@@ -602,7 +599,9 @@
                 <span class="n">element_node_value</span> <span class="o">=</span> <span class="n">strings</span><span class="p">[</span><span class="n">node_value</span><span class="p">[</span><span class="n">index</span><span class="p">]]</span>
                 <span class="k">if</span> <span class="p">(</span>
                     <span class="n">element_node_value</span> <span class="o">==</span> <span class="s2">"|"</span>
-                <span class="p">):</span>  <span class="c1"># commonly used as a separator, does not add much context - lets save ourselves some token space</span>
+                    <span class="c1"># commonly used as a separator, does not add much context - lets</span>
+                    <span class="c1"># save ourselves some token space</span>
+                <span class="p">):</span>
                     <span class="k">continue</span>
             <span class="k">elif</span> <span class="p">(</span>
                 <span class="n">node_name</span> <span class="o">==</span> <span class="s2">"input"</span>
@@ -633,7 +632,8 @@
                 <span class="p">}</span>
             <span class="p">)</span>
 
-        <span class="c1"># lets filter further to remove anything that does not hold any text nor has click handlers + merge text from leaf#text nodes with the parent</span>
+        <span class="c1"># lets filter further to remove anything that does not hold any text nor has</span>
+        <span class="c1"># click handlers + merge text from leaf#text nodes with the parent</span>
         <span class="n">elements_of_interest</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">id_counter</span> <span class="o">=</span> <span class="mi">0</span>
 
@@ -642,7 +642,7 @@
             <span class="n">node_name</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"node_name"</span><span class="p">)</span>
             <span class="n">element_node_value</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"node_value"</span><span class="p">)</span>
             <span class="n">node_is_clickable</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"is_clickable"</span><span class="p">)</span>
-            <span class="n">node_meta_data</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"node_meta"</span><span class="p">)</span>
+            <span class="n">node_meta_data</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"node_meta"</span><span class="p">)</span>
 
             <span class="n">inner_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">element_node_value</span><span class="si">}</span><span class="s2"> "</span> <span class="k">if</span> <span class="n">element_node_value</span> <span class="k">else</span> <span class="s2">""</span>
             <span class="n">meta</span> <span class="o">=</span> <span class="s2">""</span>
@@ -681,7 +681,7 @@
 
             <span class="k">if</span> <span class="n">inner_text</span> <span class="o">!=</span> <span class="s2">""</span><span class="p">:</span>
                 <span class="n">elements_of_interest</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"""&lt;</span><span class="si">{</span><span class="n">converted_node_name</span><span class="si">}</span><span class="s2"> id=</span><span class="si">{</span><span class="n">id_counter</span><span class="si">}{</span><span class="n">meta</span><span class="si">}</span><span class="s2">&gt;</span><span class="si">{</span><span class="n">inner_text</span><span class="si">}</span><span class="s2">&lt;/</span><span class="si">{</span><span class="n">converted_node_name</span><span class="si">}</span><span class="s2">&gt;"""</span>
+                    <span class="sa">f</span><span class="s2">"""&lt;</span><span class="si">{</span><span class="n">converted_node_name</span><span class="si">}</span><span class="s2"> id=</span><span class="si">{</span><span class="n">id_counter</span><span class="si">}{</span><span class="n">meta</span><span class="si">}</span><span class="s2">&gt;</span><span class="si">{</span><span class="n">inner_text</span><span class="si">}</span><span class="s2">&lt;/</span><span class="si">{</span><span class="n">converted_node_name</span><span class="si">}</span><span class="s2">&gt;"""</span>  <span class="c1"># noqa: E501</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">elements_of_interest</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -689,7 +689,7 @@
                 <span class="p">)</span>
             <span class="n">id_counter</span> <span class="o">+=</span> <span class="mi">1</span>
 
-        <span class="nb">print</span><span class="p">(</span><span class="s2">"Parsing time: </span><span class="si">{:0.2f}</span><span class="s2"> seconds"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">))</span>  <span class="c1"># noqa: T201</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Parsing time: </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start</span><span class="si">:</span><span class="s2">0.2f</span><span class="si">}</span><span class="s2"> seconds"</span><span class="p">)</span>  <span class="c1"># noqa: T201</span>
         <span class="k">return</span> <span class="n">elements_of_interest</span></div>
 </div>
 

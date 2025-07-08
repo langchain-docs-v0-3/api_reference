@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -336,7 +336,8 @@
 <span class="w">    </span><span class="sd">"""Return the results of the map steps in the output."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_output_schema</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_intermediate_steps</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">create_model</span><span class="p">(</span>
@@ -357,7 +358,7 @@
 <span class="sd">        """</span>
         <span class="n">_output_keys</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">output_keys</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_intermediate_steps</span><span class="p">:</span>
-            <span class="n">_output_keys</span> <span class="o">=</span> <span class="n">_output_keys</span> <span class="o">+</span> <span class="p">[</span><span class="s2">"intermediate_steps"</span><span class="p">]</span>
+            <span class="n">_output_keys</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">_output_keys</span><span class="p">,</span> <span class="s2">"intermediate_steps"</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">_output_keys</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span>
@@ -371,11 +372,12 @@
 <span class="w">        </span><span class="sd">"""For backwards compatibility."""</span>
         <span class="k">if</span> <span class="s2">"combine_document_chain"</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
             <span class="k">if</span> <span class="s2">"reduce_documents_chain"</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="s2">"Both `reduce_documents_chain` and `combine_document_chain` "</span>
                     <span class="s2">"cannot be provided at the same time. `combine_document_chain` "</span>
                     <span class="s2">"is deprecated, please only provide `reduce_documents_chain`"</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="n">combine_chain</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="s2">"combine_document_chain"</span><span class="p">]</span>
             <span class="n">collapse_chain</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"collapse_document_chain"</span><span class="p">)</span>
             <span class="n">reduce_chain</span> <span class="o">=</span> <span class="n">ReduceDocumentsChain</span><span class="p">(</span>
@@ -384,8 +386,7 @@
             <span class="p">)</span>
             <span class="n">values</span><span class="p">[</span><span class="s2">"reduce_documents_chain"</span><span class="p">]</span> <span class="o">=</span> <span class="n">reduce_chain</span>
             <span class="k">del</span> <span class="n">values</span><span class="p">[</span><span class="s2">"combine_document_chain"</span><span class="p">]</span>
-            <span class="k">if</span> <span class="s2">"collapse_document_chain"</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
-                <span class="k">del</span> <span class="n">values</span><span class="p">[</span><span class="s2">"collapse_document_chain"</span><span class="p">]</span>
+            <span class="n">values</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"collapse_document_chain"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">values</span>
 
@@ -403,23 +404,26 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_default_document_variable_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Get default document variable name, if not provided."""</span>
         <span class="k">if</span> <span class="s2">"llm_chain"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"llm_chain must be provided"</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"llm_chain must be provided"</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="n">llm_chain_variables</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="s2">"llm_chain"</span><span class="p">]</span><span class="o">.</span><span class="n">prompt</span><span class="o">.</span><span class="n">input_variables</span>
         <span class="k">if</span> <span class="s2">"document_variable_name"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">llm_chain_variables</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">values</span><span class="p">[</span><span class="s2">"document_variable_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">llm_chain_variables</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="s2">"document_variable_name must be provided if there are "</span>
                     <span class="s2">"multiple llm_chain input_variables"</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="s2">"document_variable_name"</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">llm_chain_variables</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"document_variable_name </span><span class="si">{</span><span class="n">values</span><span class="p">[</span><span class="s1">'document_variable_name'</span><span class="p">]</span><span class="si">}</span><span class="s2"> was "</span>
                     <span class="sa">f</span><span class="s2">"not found in llm_chain input_variables: </span><span class="si">{</span><span class="n">llm_chain_variables</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">values</span>
 
     <span class="nd">@property</span>
@@ -428,26 +432,25 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reduce_documents_chain</span><span class="p">,</span> <span class="n">ReduceDocumentsChain</span><span class="p">):</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduce_documents_chain</span><span class="o">.</span><span class="n">collapse_documents_chain</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduce_documents_chain</span><span class="o">.</span><span class="n">collapse_documents_chain</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduce_documents_chain</span><span class="o">.</span><span class="n">combine_documents_chain</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"`reduce_documents_chain` is of type "</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reduce_documents_chain</span><span class="p">)</span><span class="si">}</span><span class="s2"> so it does not have "</span>
-                <span class="sa">f</span><span class="s2">"this attribute."</span>
-            <span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduce_documents_chain</span><span class="o">.</span><span class="n">combine_documents_chain</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"`reduce_documents_chain` is of type "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reduce_documents_chain</span><span class="p">)</span><span class="si">}</span><span class="s2"> so it does not have "</span>
+            <span class="sa">f</span><span class="s2">"this attribute."</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">combine_document_chain</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseCombineDocumentsChain</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Kept for backward compatibility."""</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reduce_documents_chain</span><span class="p">,</span> <span class="n">ReduceDocumentsChain</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduce_documents_chain</span><span class="o">.</span><span class="n">combine_documents_chain</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"`reduce_documents_chain` is of type "</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reduce_documents_chain</span><span class="p">)</span><span class="si">}</span><span class="s2"> so it does not have "</span>
-                <span class="sa">f</span><span class="s2">"this attribute."</span>
-            <span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"`reduce_documents_chain` is of type "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reduce_documents_chain</span><span class="p">)</span><span class="si">}</span><span class="s2"> so it does not have "</span>
+            <span class="sa">f</span><span class="s2">"this attribute."</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
 <div class="viewcode-block" id="MapReduceDocumentsChain.combine_docs">
 <a class="viewcode-back" href="../../../../langchain/chains/langchain.chains.combine_documents.map_reduce.MapReduceDocumentsChain.html#langchain.chains.combine_documents.map_reduce.MapReduceDocumentsChain.combine_docs">[docs]</a>
@@ -475,7 +478,10 @@
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">map_results</span><span class="p">)</span>
         <span class="p">]</span>
         <span class="n">result</span><span class="p">,</span> <span class="n">extra_return_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduce_documents_chain</span><span class="o">.</span><span class="n">combine_docs</span><span class="p">(</span>
-            <span class="n">result_docs</span><span class="p">,</span> <span class="n">token_max</span><span class="o">=</span><span class="n">token_max</span><span class="p">,</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+            <span class="n">result_docs</span><span class="p">,</span>
+            <span class="n">token_max</span><span class="o">=</span><span class="n">token_max</span><span class="p">,</span>
+            <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_intermediate_steps</span><span class="p">:</span>
             <span class="n">intermediate_steps</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="n">question_result_key</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">map_results</span><span class="p">]</span>
@@ -499,7 +505,7 @@
 <span class="sd">        """</span>
         <span class="n">map_results</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm_chain</span><span class="o">.</span><span class="n">aapply</span><span class="p">(</span>
             <span class="c1"># FYI - this is parallelized and so it is fast.</span>
-            <span class="p">[{</span><span class="o">**</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">document_variable_name</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">page_content</span><span class="p">},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">}</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">],</span>
+            <span class="p">[{</span><span class="bp">self</span><span class="o">.</span><span class="n">document_variable_name</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">page_content</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">}</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">],</span>
             <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">question_result_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm_chain</span><span class="o">.</span><span class="n">output_key</span>
@@ -509,7 +515,10 @@
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">map_results</span><span class="p">)</span>
         <span class="p">]</span>
         <span class="n">result</span><span class="p">,</span> <span class="n">extra_return_dict</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduce_documents_chain</span><span class="o">.</span><span class="n">acombine_docs</span><span class="p">(</span>
-            <span class="n">result_docs</span><span class="p">,</span> <span class="n">token_max</span><span class="o">=</span><span class="n">token_max</span><span class="p">,</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+            <span class="n">result_docs</span><span class="p">,</span>
+            <span class="n">token_max</span><span class="o">=</span><span class="n">token_max</span><span class="p">,</span>
+            <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_intermediate_steps</span><span class="p">:</span>
             <span class="n">intermediate_steps</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="n">question_result_key</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">map_results</span><span class="p">]</span>

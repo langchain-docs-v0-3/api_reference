@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -232,6 +232,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.output_parsers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseOutputParser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompts</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasePromptTemplate</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain.chains.constitutional_ai.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConstitutionalPrinciple</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain.chains.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMChain</span>
@@ -389,11 +390,12 @@
         <span class="n">criteria_</span> <span class="o">=</span> <span class="p">{</span><span class="n">criteria</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">criteria</span><span class="o">.</span><span class="n">critique_request</span><span class="p">}</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">criteria</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Criteria cannot be empty. "</span>
                 <span class="s2">"Please provide a criterion name or a mapping of the criterion name"</span>
                 <span class="s2">" to its description."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">criteria_</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">criteria</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">criteria_</span></div>
 
@@ -507,15 +509,17 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_prompt</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BasePromptTemplate</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BasePromptTemplate</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BasePromptTemplate</span><span class="p">:</span>
         <span class="n">expected_input_vars</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"input"</span><span class="p">,</span> <span class="s2">"output"</span><span class="p">,</span> <span class="s2">"criteria"</span><span class="p">}</span>
         <span class="n">prompt_</span> <span class="o">=</span> <span class="n">prompt</span> <span class="ow">or</span> <span class="n">PROMPT</span>
         <span class="k">if</span> <span class="n">expected_input_vars</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">prompt_</span><span class="o">.</span><span class="n">input_variables</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Input variables should be </span><span class="si">{</span><span class="n">expected_input_vars</span><span class="si">}</span><span class="s2">, "</span>
                 <span class="sa">f</span><span class="s2">"but got </span><span class="si">{</span><span class="n">prompt_</span><span class="o">.</span><span class="n">input_variables</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">prompt_</span>
 
 <div class="viewcode-block" id="CriteriaEvalChain.resolve_criteria">
@@ -601,12 +605,13 @@
 <span class="sd">        """</span>
         <span class="n">prompt_</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_prompt</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">criteria</span> <span class="o">==</span> <span class="n">Criteria</span><span class="o">.</span><span class="n">CORRECTNESS</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Correctness should not be used in the reference-free"</span>
                 <span class="s2">" 'criteria' evaluator (CriteriaEvalChain)."</span>
                 <span class="s2">" Please use the  'labeled_criteria' evaluator"</span>
                 <span class="s2">" (LabeledCriteriaEvalChain) instead."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">criteria_</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">resolve_criteria</span><span class="p">(</span><span class="n">criteria</span><span class="p">)</span>
         <span class="n">criteria_str</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">criteria_</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
         <span class="n">prompt_</span> <span class="o">=</span> <span class="n">prompt_</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">criteria</span><span class="o">=</span><span class="n">criteria_str</span><span class="p">)</span>
@@ -622,16 +627,16 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">prediction</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-        <span class="nb">input</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">input_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Get the evaluation input."""</span>
-        <span class="n">input_</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">"input"</span><span class="p">:</span> <span class="nb">input</span><span class="p">,</span>
+        <span class="n">input_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"input"</span><span class="p">:</span> <span class="n">input_</span><span class="p">,</span>
             <span class="s2">"output"</span><span class="p">:</span> <span class="n">prediction</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_reference</span><span class="p">:</span>
-            <span class="n">input_</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span> <span class="o">=</span> <span class="n">reference</span>
-        <span class="k">return</span> <span class="n">input_</span>
+            <span class="n">input_dict</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span> <span class="o">=</span> <span class="n">reference</span>
+        <span class="k">return</span> <span class="n">input_dict</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Prepare the output."""</span>
@@ -640,6 +645,7 @@
             <span class="n">parsed</span><span class="p">[</span><span class="n">RUN_KEY</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">RUN_KEY</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">parsed</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_strings</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -695,6 +701,7 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_output</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_aevaluate_strings</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -768,15 +775,17 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_prompt</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BasePromptTemplate</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BasePromptTemplate</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BasePromptTemplate</span><span class="p">:</span>
         <span class="n">expected_input_vars</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"input"</span><span class="p">,</span> <span class="s2">"output"</span><span class="p">,</span> <span class="s2">"criteria"</span><span class="p">,</span> <span class="s2">"reference"</span><span class="p">}</span>
         <span class="n">prompt_</span> <span class="o">=</span> <span class="n">prompt</span> <span class="ow">or</span> <span class="n">PROMPT_WITH_REFERENCES</span>
         <span class="k">if</span> <span class="n">expected_input_vars</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">prompt_</span><span class="o">.</span><span class="n">input_variables</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Input variables should be </span><span class="si">{</span><span class="n">expected_input_vars</span><span class="si">}</span><span class="s2">, "</span>
                 <span class="sa">f</span><span class="s2">"but got </span><span class="si">{</span><span class="n">prompt_</span><span class="o">.</span><span class="n">input_variables</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">prompt_</span>
 
 <div class="viewcode-block" id="LabeledCriteriaEvalChain.from_llm">

@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,9 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_anthropic.llms</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncIterator</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -307,8 +309,7 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">build_extra</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">all_required_field_names</span> <span class="o">=</span> <span class="n">get_pydantic_field_names</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-        <span class="n">values</span> <span class="o">=</span> <span class="n">_build_model_kwargs</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">all_required_field_names</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">values</span>
+        <span class="k">return</span> <span class="n">_build_model_kwargs</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">all_required_field_names</span><span class="p">)</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
@@ -347,11 +348,12 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_identifying_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Get the identifying parameters."""</span>
-        <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="p">{},</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_default_params</span><span class="p">}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_default_params</span><span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_anthropic_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">HUMAN_PROMPT</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">AI_PROMPT</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span><span class="s2">"Please ensure the anthropic package is loaded"</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Please ensure the anthropic package is loaded"</span>
+            <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">stop</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">stop</span> <span class="o">=</span> <span class="p">[]</span>
@@ -376,6 +378,7 @@
 <span class="sd">            from langchain_anthropic import AnthropicLLM</span>
 
 <span class="sd">            model = AnthropicLLM()</span>
+
 <span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span>
@@ -390,7 +393,7 @@
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="s2">"This Anthropic LLM is deprecated. "</span>
             <span class="s2">"Please use `from langchain_anthropic import ChatAnthropic` "</span>
-            <span class="s2">"instead"</span>
+            <span class="s2">"instead"</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">values</span>
 
@@ -423,7 +426,9 @@
         <span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_ls_params</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">stop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">stop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LangSmithParams</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Get standard params for tracing."""</span>
         <span class="n">params</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_get_ls_params</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -437,7 +442,8 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_wrap_prompt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">HUMAN_PROMPT</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">AI_PROMPT</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span><span class="s2">"Please ensure the anthropic package is loaded"</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Please ensure the anthropic package is loaded"</span>
+            <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">prompt</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">HUMAN_PROMPT</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">prompt</span>  <span class="c1"># Already wrapped.</span>
@@ -462,6 +468,8 @@
 <span class="sd">        Args:</span>
 <span class="sd">            prompt: The prompt to pass into the model.</span>
 <span class="sd">            stop: Optional list of stop words to use when generating.</span>
+<span class="sd">            run_manager: Optional callback manager for LLM run.</span>
+<span class="sd">            kwargs: Additional keyword arguments to pass to the model.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The string generated by the model.</span>
@@ -477,7 +485,10 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">streaming</span><span class="p">:</span>
             <span class="n">completion</span> <span class="o">=</span> <span class="s2">""</span>
             <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span><span class="p">(</span>
-                <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="n">run_manager</span><span class="o">=</span><span class="n">run_manager</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+                <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span>
+                <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span>
+                <span class="n">run_manager</span><span class="o">=</span><span class="n">run_manager</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">):</span>
                 <span class="n">completion</span> <span class="o">+=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">text</span>
             <span class="k">return</span> <span class="n">completion</span>
@@ -508,7 +519,10 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">streaming</span><span class="p">:</span>
             <span class="n">completion</span> <span class="o">=</span> <span class="s2">""</span>
             <span class="k">async</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_astream</span><span class="p">(</span>
-                <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="n">run_manager</span><span class="o">=</span><span class="n">run_manager</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+                <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span>
+                <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span>
+                <span class="n">run_manager</span><span class="o">=</span><span class="n">run_manager</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">):</span>
                 <span class="n">completion</span> <span class="o">+=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">text</span>
             <span class="k">return</span> <span class="n">completion</span>
@@ -535,8 +549,12 @@
 <span class="sd">        Args:</span>
 <span class="sd">            prompt: The prompt to pass into the model.</span>
 <span class="sd">            stop: Optional list of stop words to use when generating.</span>
+<span class="sd">            run_manager: Optional callback manager for LLM run.</span>
+<span class="sd">            kwargs: Additional keyword arguments to pass to the model.</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            A generator representing the stream of tokens from Anthropic.</span>
+
 <span class="sd">        Example:</span>
 
 <span class="sd">            .. code-block:: python</span>
@@ -546,12 +564,16 @@
 <span class="sd">                generator = anthropic.stream(prompt)</span>
 <span class="sd">                for token in generator:</span>
 <span class="sd">                    yield token</span>
+
 <span class="sd">        """</span>
         <span class="n">stop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_anthropic_stop</span><span class="p">(</span><span class="n">stop</span><span class="p">)</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_default_params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">}</span>
 
         <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-            <span class="n">prompt</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_wrap_prompt</span><span class="p">(</span><span class="n">prompt</span><span class="p">),</span> <span class="n">stop_sequences</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span>
+            <span class="n">prompt</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_wrap_prompt</span><span class="p">(</span><span class="n">prompt</span><span class="p">),</span>
+            <span class="n">stop_sequences</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span>
+            <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">params</span><span class="p">,</span>
         <span class="p">):</span>
             <span class="n">chunk</span> <span class="o">=</span> <span class="n">GenerationChunk</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">token</span><span class="o">.</span><span class="n">completion</span><span class="p">)</span>
 
@@ -571,8 +593,12 @@
 <span class="sd">        Args:</span>
 <span class="sd">            prompt: The prompt to pass into the model.</span>
 <span class="sd">            stop: Optional list of stop words to use when generating.</span>
+<span class="sd">            run_manager: Optional callback manager for LLM run.</span>
+<span class="sd">            kwargs: Additional keyword arguments to pass to the model.</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            A generator representing the stream of tokens from Anthropic.</span>
+
 <span class="sd">        Example:</span>
 <span class="sd">            .. code-block:: python</span>
 
@@ -581,6 +607,7 @@
 <span class="sd">                generator = anthropic.stream(prompt)</span>
 <span class="sd">                for token in generator:</span>
 <span class="sd">                    yield token</span>
+
 <span class="sd">        """</span>
         <span class="n">stop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_anthropic_stop</span><span class="p">(</span><span class="n">stop</span><span class="p">)</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_default_params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">}</span>
@@ -601,10 +628,13 @@
 <a class="viewcode-back" href="../../anthropic/llms/langchain_anthropic.llms.AnthropicLLM.html#langchain_anthropic.llms.AnthropicLLM.get_num_tokens">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_num_tokens</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Calculate number of tokens."""</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">"Anthropic's legacy count_tokens method was removed in anthropic 0.39.0 "</span>
             <span class="s2">"and langchain-anthropic 0.3.0. Please use "</span>
             <span class="s2">"ChatAnthropic.get_num_tokens_from_messages instead."</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="n">msg</span><span class="p">,</span>
         <span class="p">)</span></div>
 </div>
 
@@ -614,9 +644,7 @@
 <a class="viewcode-back" href="../../anthropic/llms/langchain_anthropic.llms.Anthropic.html#langchain_anthropic.llms.Anthropic">[docs]</a>
 <span class="nd">@deprecated</span><span class="p">(</span><span class="n">since</span><span class="o">=</span><span class="s2">"0.1.0"</span><span class="p">,</span> <span class="n">removal</span><span class="o">=</span><span class="s2">"1.0.0"</span><span class="p">,</span> <span class="n">alternative</span><span class="o">=</span><span class="s2">"AnthropicLLM"</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Anthropic</span><span class="p">(</span><span class="n">AnthropicLLM</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Anthropic large language model."""</span>
-
-    <span class="k">pass</span></div>
+<span class="w">    </span><span class="sd">"""Anthropic large language model."""</span></div>
 
 </pre></div>
 </article>

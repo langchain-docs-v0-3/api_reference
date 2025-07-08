@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -286,12 +286,11 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">parsed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"limit"</span><span class="p">):</span>
                 <span class="n">parsed</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"limit"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">StructuredQuery</span><span class="p">(</span>
-                <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">parsed</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">allowed_keys</span><span class="p">}</span>
+                <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">parsed</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">allowed_keys</span><span class="p">},</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">OutputParserException</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Parsing text</span><span class="se">\n</span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="se">\n</span><span class="s2"> raised following error:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span></div>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Parsing text</span><span class="se">\n</span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="se">\n</span><span class="s2"> raised following error:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">raise</span> <span class="n">OutputParserException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StructuredQueryOutputParser.from_components">
@@ -302,7 +301,7 @@
         <span class="n">allowed_comparators</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Comparator</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">allowed_operators</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Operator</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">allowed_attributes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">fix_invalid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">fix_invalid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001,FBT002</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StructuredQueryOutputParser</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Create a structured query output parser from components.</span>
@@ -318,14 +317,16 @@
         <span class="k">if</span> <span class="n">fix_invalid</span><span class="p">:</span>
 
             <span class="k">def</span><span class="w"> </span><span class="nf">ast_parse</span><span class="p">(</span><span class="n">raw_filter</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FilterDirective</span><span class="p">]:</span>
-                <span class="nb">filter</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Optional</span><span class="p">[</span><span class="n">FilterDirective</span><span class="p">],</span> <span class="n">get_parser</span><span class="p">()</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">raw_filter</span><span class="p">))</span>
-                <span class="n">fixed</span> <span class="o">=</span> <span class="n">fix_filter_directive</span><span class="p">(</span>
-                    <span class="nb">filter</span><span class="p">,</span>
+                <span class="n">filter_directive</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+                    <span class="n">Optional</span><span class="p">[</span><span class="n">FilterDirective</span><span class="p">],</span>
+                    <span class="n">get_parser</span><span class="p">()</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">raw_filter</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">fix_filter_directive</span><span class="p">(</span>
+                    <span class="n">filter_directive</span><span class="p">,</span>
                     <span class="n">allowed_comparators</span><span class="o">=</span><span class="n">allowed_comparators</span><span class="p">,</span>
                     <span class="n">allowed_operators</span><span class="o">=</span><span class="n">allowed_operators</span><span class="p">,</span>
                     <span class="n">allowed_attributes</span><span class="o">=</span><span class="n">allowed_attributes</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="k">return</span> <span class="n">fixed</span>
 
         <span class="k">else</span><span class="p">:</span>
             <span class="n">ast_parse</span> <span class="o">=</span> <span class="n">get_parser</span><span class="p">(</span>
@@ -341,7 +342,7 @@
 <div class="viewcode-block" id="fix_filter_directive">
 <a class="viewcode-back" href="../../../../langchain/chains/langchain.chains.query_constructor.base.fix_filter_directive.html#langchain.chains.query_constructor.base.fix_filter_directive">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">fix_filter_directive</span><span class="p">(</span>
-    <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FilterDirective</span><span class="p">],</span>
+    <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FilterDirective</span><span class="p">],</span>  <span class="c1"># noqa: A002</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">allowed_comparators</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Comparator</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">allowed_operators</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Operator</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -363,13 +364,13 @@
     <span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">filter</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">filter</span>
 
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">filter</span><span class="p">,</span> <span class="n">Comparison</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">filter</span><span class="p">,</span> <span class="n">Comparison</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">allowed_comparators</span> <span class="ow">and</span> <span class="nb">filter</span><span class="o">.</span><span class="n">comparator</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed_comparators</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">allowed_attributes</span> <span class="ow">and</span> <span class="nb">filter</span><span class="o">.</span><span class="n">attribute</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed_attributes</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="nb">filter</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">filter</span><span class="p">,</span> <span class="n">Operation</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">filter</span><span class="p">,</span> <span class="n">Operation</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">allowed_operators</span> <span class="ow">and</span> <span class="nb">filter</span><span class="o">.</span><span class="n">operator</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed_operators</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="n">args</span> <span class="o">=</span> <span class="p">[</span>
@@ -387,15 +388,13 @@
         <span class="p">]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">filter</span><span class="o">.</span><span class="n">operator</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Operator</span><span class="o">.</span><span class="n">AND</span><span class="p">,</span> <span class="n">Operator</span><span class="o">.</span><span class="n">OR</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">filter</span><span class="o">.</span><span class="n">operator</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Operator</span><span class="o">.</span><span class="n">AND</span><span class="p">,</span> <span class="n">Operator</span><span class="o">.</span><span class="n">OR</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">Operation</span><span class="p">(</span>
-                <span class="n">operator</span><span class="o">=</span><span class="nb">filter</span><span class="o">.</span><span class="n">operator</span><span class="p">,</span>
-                <span class="n">arguments</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
-            <span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">filter</span></div>
+        <span class="k">return</span> <span class="n">Operation</span><span class="p">(</span>
+            <span class="n">operator</span><span class="o">=</span><span class="nb">filter</span><span class="o">.</span><span class="n">operator</span><span class="p">,</span>
+            <span class="n">arguments</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">filter</span></div>
 
 
 
@@ -476,7 +475,9 @@
         <span class="n">examples</span> <span class="o">=</span> <span class="n">construct_examples</span><span class="p">(</span><span class="n">examples</span><span class="p">)</span>
         <span class="n">example_prompt</span> <span class="o">=</span> <span class="n">USER_SPECIFIED_EXAMPLE_PROMPT</span>
         <span class="n">prefix</span> <span class="o">=</span> <span class="n">PREFIX_WITH_DATA_SOURCE</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-            <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="n">document_contents</span><span class="p">,</span> <span class="n">attributes</span><span class="o">=</span><span class="n">attribute_str</span>
+            <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">,</span>
+            <span class="n">content</span><span class="o">=</span><span class="n">document_contents</span><span class="p">,</span>
+            <span class="n">attributes</span><span class="o">=</span><span class="n">attribute_str</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">suffix</span> <span class="o">=</span> <span class="n">SUFFIX_WITHOUT_DATA_SOURCE</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">examples</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -486,7 +487,9 @@
         <span class="n">example_prompt</span> <span class="o">=</span> <span class="n">EXAMPLE_PROMPT</span>
         <span class="n">prefix</span> <span class="o">=</span> <span class="n">DEFAULT_PREFIX</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>
         <span class="n">suffix</span> <span class="o">=</span> <span class="n">DEFAULT_SUFFIX</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-            <span class="n">i</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">examples</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="n">document_contents</span><span class="p">,</span> <span class="n">attributes</span><span class="o">=</span><span class="n">attribute_str</span>
+            <span class="n">i</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">examples</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">content</span><span class="o">=</span><span class="n">document_contents</span><span class="p">,</span>
+            <span class="n">attributes</span><span class="o">=</span><span class="n">attribute_str</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">FewShotPromptTemplate</span><span class="p">(</span>
         <span class="n">examples</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">examples</span><span class="p">),</span>
@@ -513,7 +516,7 @@
     <span class="n">examples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">allowed_comparators</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Comparator</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">Comparator</span><span class="p">),</span>
     <span class="n">allowed_operators</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Operator</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">Operator</span><span class="p">),</span>
-    <span class="n">enable_limit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">enable_limit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001,FBT002</span>
     <span class="n">schema_prompt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BasePromptTemplate</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LLMChain</span><span class="p">:</span>
@@ -544,11 +547,10 @@
         <span class="n">enable_limit</span><span class="o">=</span><span class="n">enable_limit</span><span class="p">,</span>
         <span class="n">schema_prompt</span><span class="o">=</span><span class="n">schema_prompt</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">allowed_attributes</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">ainfo</span> <span class="ow">in</span> <span class="n">attribute_info</span><span class="p">:</span>
-        <span class="n">allowed_attributes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">ainfo</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ainfo</span><span class="p">,</span> <span class="n">AttributeInfo</span><span class="p">)</span> <span class="k">else</span> <span class="n">ainfo</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span>
-        <span class="p">)</span>
+    <span class="n">allowed_attributes</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ainfo</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ainfo</span><span class="p">,</span> <span class="n">AttributeInfo</span><span class="p">)</span> <span class="k">else</span> <span class="n">ainfo</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">ainfo</span> <span class="ow">in</span> <span class="n">attribute_info</span>
+    <span class="p">]</span>
     <span class="n">output_parser</span> <span class="o">=</span> <span class="n">StructuredQueryOutputParser</span><span class="o">.</span><span class="n">from_components</span><span class="p">(</span>
         <span class="n">allowed_comparators</span><span class="o">=</span><span class="n">allowed_comparators</span><span class="p">,</span>
         <span class="n">allowed_operators</span><span class="o">=</span><span class="n">allowed_operators</span><span class="p">,</span>
@@ -606,11 +608,10 @@
         <span class="n">schema_prompt</span><span class="o">=</span><span class="n">schema_prompt</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">allowed_attributes</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">ainfo</span> <span class="ow">in</span> <span class="n">attribute_info</span><span class="p">:</span>
-        <span class="n">allowed_attributes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">ainfo</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ainfo</span><span class="p">,</span> <span class="n">AttributeInfo</span><span class="p">)</span> <span class="k">else</span> <span class="n">ainfo</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span>
-        <span class="p">)</span>
+    <span class="n">allowed_attributes</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ainfo</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ainfo</span><span class="p">,</span> <span class="n">AttributeInfo</span><span class="p">)</span> <span class="k">else</span> <span class="n">ainfo</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">ainfo</span> <span class="ow">in</span> <span class="n">attribute_info</span>
+    <span class="p">]</span>
     <span class="n">output_parser</span> <span class="o">=</span> <span class="n">StructuredQueryOutputParser</span><span class="o">.</span><span class="n">from_components</span><span class="p">(</span>
         <span class="n">allowed_comparators</span><span class="o">=</span><span class="n">allowed_comparators</span><span class="p">,</span>
         <span class="n">allowed_operators</span><span class="o">=</span><span class="n">allowed_operators</span><span class="p">,</span>

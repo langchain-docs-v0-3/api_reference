@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -233,6 +233,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.output_parsers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseOutputParser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompts.prompt</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptTemplate</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain.chains.constitutional_ai.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConstitutionalPrinciple</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain.chains.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMChain</span>
@@ -293,7 +294,7 @@
             <span class="n">Criteria</span><span class="o">.</span><span class="n">DEPTH</span><span class="p">,</span>
         <span class="p">]</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="n">_SUPPORTED_CRITERIA</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">_default_criteria</span><span class="p">}</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">Criteria</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">Criteria</span><span class="p">):</span>
         <span class="n">criteria_</span> <span class="o">=</span> <span class="p">{</span><span class="n">criteria</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="n">_SUPPORTED_CRITERIA</span><span class="p">[</span><span class="n">criteria</span><span class="p">]}</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">criteria</span> <span class="ow">in</span> <span class="n">_SUPPORTED_CRITERIA</span><span class="p">:</span>
@@ -310,11 +311,12 @@
         <span class="p">}</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">criteria</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Criteria cannot be empty. "</span>
                 <span class="s2">"Please provide a criterion name or a mapping of the criterion name"</span>
                 <span class="s2">" to its description."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">criteria_</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">criteria</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">criteria_</span></div>
 
@@ -361,11 +363,12 @@
             <span class="n">verdict</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span> <span class="ow">or</span> <span class="n">verdict</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"A"</span><span class="p">,</span> <span class="s2">"B"</span><span class="p">,</span> <span class="s2">"C"</span><span class="p">}:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Invalid output: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">. "</span>
                 <span class="s2">"Output must contain a double bracketed string</span><span class="se">\</span>
 <span class="s2">                 with the verdict 'A', 'B', or 'C'."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="c1"># C means the models are tied. Return 'None' meaning no preference</span>
         <span class="n">verdict_</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">verdict</span> <span class="o">==</span> <span class="s2">"C"</span> <span class="k">else</span> <span class="n">verdict</span>
         <span class="n">score</span> <span class="o">=</span> <span class="p">{</span>
@@ -417,7 +420,7 @@
 
     <span class="n">output_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"results"</span>  <span class="c1">#: :meta private:</span>
     <span class="n">output_parser</span><span class="p">:</span> <span class="n">BaseOutputParser</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default_factory</span><span class="o">=</span><span class="n">PairwiseStringResultOutputParser</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="n">PairwiseStringResultOutputParser</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="nd">@classmethod</span>
@@ -491,16 +494,17 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">llm</span><span class="p">,</span> <span class="s2">"model_name"</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">llm</span><span class="o">.</span><span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"gpt-4"</span><span class="p">):</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                 <span class="s2">"This chain was only tested with GPT-4. </span><span class="se">\</span>
-<span class="s2">Performance may be significantly worse with other models."</span>
+<span class="s2">Performance may be significantly worse with other models."</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="n">expected_input_vars</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"prediction"</span><span class="p">,</span> <span class="s2">"prediction_b"</span><span class="p">,</span> <span class="s2">"input"</span><span class="p">,</span> <span class="s2">"criteria"</span><span class="p">}</span>
         <span class="n">prompt_</span> <span class="o">=</span> <span class="n">prompt</span> <span class="ow">or</span> <span class="n">COMPARISON_TEMPLATE</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">reference</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">expected_input_vars</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">prompt_</span><span class="o">.</span><span class="n">input_variables</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Input variables should be </span><span class="si">{</span><span class="n">expected_input_vars</span><span class="si">}</span><span class="s2">, "</span>
                 <span class="sa">f</span><span class="s2">"but got </span><span class="si">{</span><span class="n">prompt_</span><span class="o">.</span><span class="n">input_variables</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">criteria_</span> <span class="o">=</span> <span class="n">resolve_pairwise_criteria</span><span class="p">(</span><span class="n">criteria</span><span class="p">)</span>
         <span class="n">criteria_str</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">v</span> <span class="k">else</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">criteria_</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
         <span class="n">criteria_str</span> <span class="o">=</span> <span class="n">CRITERIA_INSTRUCTIONS</span> <span class="o">+</span> <span class="n">criteria_str</span> <span class="k">if</span> <span class="n">criteria_str</span> <span class="k">else</span> <span class="s2">""</span>
@@ -511,7 +515,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">prediction</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">prediction_b</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="nb">input</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">input_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">reference</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Prepare the input for the chain.</span>
@@ -519,21 +523,21 @@
 <span class="sd">        Args:</span>
 <span class="sd">            prediction (str): The output string from the first model.</span>
 <span class="sd">            prediction_b (str): The output string from the second model.</span>
-<span class="sd">            input (str, optional): The input or task string.</span>
+<span class="sd">            input_ (str, optional): The input or task string.</span>
 <span class="sd">            reference (str, optional): The reference string, if any.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            dict: The prepared input for the chain.</span>
 
 <span class="sd">        """</span>
-        <span class="n">input_</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">input_dict</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"prediction"</span><span class="p">:</span> <span class="n">prediction</span><span class="p">,</span>
             <span class="s2">"prediction_b"</span><span class="p">:</span> <span class="n">prediction_b</span><span class="p">,</span>
-            <span class="s2">"input"</span><span class="p">:</span> <span class="nb">input</span><span class="p">,</span>
+            <span class="s2">"input"</span><span class="p">:</span> <span class="n">input_</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_reference</span><span class="p">:</span>
-            <span class="n">input_</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span> <span class="o">=</span> <span class="n">reference</span>
-        <span class="k">return</span> <span class="n">input_</span>
+            <span class="n">input_dict</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span> <span class="o">=</span> <span class="n">reference</span>
+        <span class="k">return</span> <span class="n">input_dict</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Prepare the output."""</span>
@@ -542,6 +546,7 @@
             <span class="n">parsed</span><span class="p">[</span><span class="n">RUN_KEY</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">RUN_KEY</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">parsed</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_string_pairs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -584,6 +589,7 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_output</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_aevaluate_string_pairs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -685,10 +691,11 @@
         <span class="p">}</span>
         <span class="n">prompt_</span> <span class="o">=</span> <span class="n">prompt</span> <span class="ow">or</span> <span class="n">COMPARISON_TEMPLATE_WITH_REFERENCE</span>
         <span class="k">if</span> <span class="n">expected_input_vars</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">prompt_</span><span class="o">.</span><span class="n">input_variables</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Input variables should be </span><span class="si">{</span><span class="n">expected_input_vars</span><span class="si">}</span><span class="s2">, "</span>
                 <span class="sa">f</span><span class="s2">"but got </span><span class="si">{</span><span class="n">prompt_</span><span class="o">.</span><span class="n">input_variables</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">criteria_</span> <span class="o">=</span> <span class="n">resolve_pairwise_criteria</span><span class="p">(</span><span class="n">criteria</span><span class="p">)</span>
         <span class="n">criteria_str</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">criteria_</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
         <span class="n">criteria_str</span> <span class="o">=</span> <span class="n">CRITERIA_INSTRUCTIONS</span> <span class="o">+</span> <span class="n">criteria_str</span> <span class="k">if</span> <span class="n">criteria_str</span> <span class="k">else</span> <span class="s2">""</span>

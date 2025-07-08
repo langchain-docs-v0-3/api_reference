@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -236,7 +236,9 @@
 <div class="viewcode-block" id="CohereRerank">
 <a class="viewcode-back" href="../../../../langchain/retrievers/langchain.retrievers.document_compressors.cohere_rerank.CohereRerank.html#langchain.retrievers.document_compressors.cohere_rerank.CohereRerank">[docs]</a>
 <span class="nd">@deprecated</span><span class="p">(</span>
-    <span class="n">since</span><span class="o">=</span><span class="s2">"0.0.30"</span><span class="p">,</span> <span class="n">removal</span><span class="o">=</span><span class="s2">"1.0"</span><span class="p">,</span> <span class="n">alternative_import</span><span class="o">=</span><span class="s2">"langchain_cohere.CohereRerank"</span>
+    <span class="n">since</span><span class="o">=</span><span class="s2">"0.0.30"</span><span class="p">,</span>
+    <span class="n">removal</span><span class="o">=</span><span class="s2">"1.0"</span><span class="p">,</span>
+    <span class="n">alternative_import</span><span class="o">=</span><span class="s2">"langchain_cohere.CohereRerank"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CohereRerank</span><span class="p">(</span><span class="n">BaseDocumentCompressor</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Document compressor that uses `Cohere Rerank API`."""</span>
@@ -266,12 +268,15 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="kn">import</span><span class="w"> </span><span class="nn">cohere</span>
             <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="s2">"Could not import cohere python package. "</span>
                     <span class="s2">"Please install it with `pip install cohere`."</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="n">cohere_api_key</span> <span class="o">=</span> <span class="n">get_from_dict_or_env</span><span class="p">(</span>
-                <span class="n">values</span><span class="p">,</span> <span class="s2">"cohere_api_key"</span><span class="p">,</span> <span class="s2">"COHERE_API_KEY"</span>
+                <span class="n">values</span><span class="p">,</span>
+                <span class="s2">"cohere_api_key"</span><span class="p">,</span>
+                <span class="s2">"COHERE_API_KEY"</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">client_name</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"user_agent"</span><span class="p">,</span> <span class="s2">"langchain"</span><span class="p">)</span>
             <span class="n">values</span><span class="p">[</span><span class="s2">"client"</span><span class="p">]</span> <span class="o">=</span> <span class="n">cohere</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="n">cohere_api_key</span><span class="p">,</span> <span class="n">client_name</span><span class="o">=</span><span class="n">client_name</span><span class="p">)</span>
@@ -314,15 +319,10 @@
         <span class="p">)</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="s2">"results"</span><span class="p">):</span>
             <span class="n">results</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="s2">"results"</span><span class="p">)</span>
-        <span class="n">result_dicts</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-            <span class="n">result_dicts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">{</span>
-                    <span class="s2">"index"</span><span class="p">:</span> <span class="n">res</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
-                    <span class="s2">"relevance_score"</span><span class="p">:</span> <span class="n">res</span><span class="o">.</span><span class="n">relevance_score</span><span class="p">,</span>
-                <span class="p">}</span>
-            <span class="p">)</span>
-        <span class="k">return</span> <span class="n">result_dicts</span></div>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">res</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s2">"relevance_score"</span><span class="p">:</span> <span class="n">res</span><span class="o">.</span><span class="n">relevance_score</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">results</span>
+        <span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="CohereRerank.compress_documents">

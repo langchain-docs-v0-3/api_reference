@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -250,15 +250,15 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseTool</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunLog</span><span class="p">,</span> <span class="n">RunLogPatch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAlias</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAlias</span><span class="p">,</span> <span class="n">override</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">"init_chat_model"</span><span class="p">,</span>
     <span class="c1"># For backwards compatibility</span>
     <span class="s2">"BaseChatModel"</span><span class="p">,</span>
     <span class="s2">"SimpleChatModel"</span><span class="p">,</span>
-    <span class="s2">"generate_from_stream"</span><span class="p">,</span>
     <span class="s2">"agenerate_from_stream"</span><span class="p">,</span>
+    <span class="s2">"generate_from_stream"</span><span class="p">,</span>
+    <span class="s2">"init_chat_model"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -539,28 +539,32 @@
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">config_prefix</span><span class="si">=}</span><span class="s2"> has been set but no fields are configurable. Set "</span>
             <span class="sa">f</span><span class="s2">"`configurable_fields=(...)` to specify the model params that are "</span>
-            <span class="sa">f</span><span class="s2">"configurable."</span>
+            <span class="sa">f</span><span class="s2">"configurable."</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">configurable_fields</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_init_chat_model_helper</span><span class="p">(</span>
-            <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">model</span><span class="p">),</span> <span class="n">model_provider</span><span class="o">=</span><span class="n">model_provider</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+            <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">model</span><span class="p">),</span>
+            <span class="n">model_provider</span><span class="o">=</span><span class="n">model_provider</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">model</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span>
-        <span class="k">if</span> <span class="n">model_provider</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"model_provider"</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_provider</span>
-        <span class="k">return</span> <span class="n">_ConfigurableModel</span><span class="p">(</span>
-            <span class="n">default_config</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
-            <span class="n">config_prefix</span><span class="o">=</span><span class="n">config_prefix</span><span class="p">,</span>
-            <span class="n">configurable_fields</span><span class="o">=</span><span class="n">configurable_fields</span><span class="p">,</span>
-        <span class="p">)</span></div>
+    <span class="k">if</span> <span class="n">model</span><span class="p">:</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span>
+    <span class="k">if</span> <span class="n">model_provider</span><span class="p">:</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"model_provider"</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_provider</span>
+    <span class="k">return</span> <span class="n">_ConfigurableModel</span><span class="p">(</span>
+        <span class="n">default_config</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="n">config_prefix</span><span class="o">=</span><span class="n">config_prefix</span><span class="p">,</span>
+        <span class="n">configurable_fields</span><span class="o">=</span><span class="n">configurable_fields</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_init_chat_model_helper</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">model_provider</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">model_provider</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseChatModel</span><span class="p">:</span>
     <span class="n">model</span><span class="p">,</span> <span class="n">model_provider</span> <span class="o">=</span> <span class="n">_parse_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">model_provider</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"openai"</span><span class="p">:</span>
@@ -568,42 +572,42 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatOpenAI</span>
 
         <span class="k">return</span> <span class="n">ChatOpenAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"anthropic"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"anthropic"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_anthropic"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_anthropic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatAnthropic</span>
 
         <span class="k">return</span> <span class="n">ChatAnthropic</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[call-arg,unused-ignore]</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"azure_openai"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"azure_openai"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_openai"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">AzureChatOpenAI</span>
 
         <span class="k">return</span> <span class="n">AzureChatOpenAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"azure_ai"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"azure_ai"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_azure_ai"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_azure_ai.chat_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">AzureAIChatCompletionsModel</span>
 
         <span class="k">return</span> <span class="n">AzureAIChatCompletionsModel</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"cohere"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"cohere"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_cohere"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_cohere</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatCohere</span>
 
         <span class="k">return</span> <span class="n">ChatCohere</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"google_vertexai"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"google_vertexai"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_google_vertexai"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_google_vertexai</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatVertexAI</span>
 
         <span class="k">return</span> <span class="n">ChatVertexAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"google_genai"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"google_genai"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_google_genai"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_google_genai</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatGoogleGenerativeAI</span>
 
         <span class="k">return</span> <span class="n">ChatGoogleGenerativeAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"fireworks"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"fireworks"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_fireworks"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_fireworks</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatFireworks</span>
 
         <span class="k">return</span> <span class="n">ChatFireworks</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"ollama"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"ollama"</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_ollama"</span><span class="p">)</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_ollama</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatOllama</span>
@@ -618,73 +622,72 @@
                 <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_ollama"</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">ChatOllama</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"together"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"together"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_together"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_together</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatTogether</span>
 
         <span class="k">return</span> <span class="n">ChatTogether</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"mistralai"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"mistralai"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_mistralai"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_mistralai</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatMistralAI</span>
 
         <span class="k">return</span> <span class="n">ChatMistralAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[call-arg,unused-ignore]</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"huggingface"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"huggingface"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_huggingface"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_huggingface</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatHuggingFace</span>
 
         <span class="k">return</span> <span class="n">ChatHuggingFace</span><span class="p">(</span><span class="n">model_id</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"groq"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"groq"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_groq"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_groq</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatGroq</span>
 
         <span class="k">return</span> <span class="n">ChatGroq</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"bedrock"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"bedrock"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_aws"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_aws</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatBedrock</span>
 
         <span class="c1"># TODO: update to use model= once ChatBedrock supports</span>
         <span class="k">return</span> <span class="n">ChatBedrock</span><span class="p">(</span><span class="n">model_id</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"bedrock_converse"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"bedrock_converse"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_aws"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_aws</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatBedrockConverse</span>
 
         <span class="k">return</span> <span class="n">ChatBedrockConverse</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"google_anthropic_vertex"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"google_anthropic_vertex"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_google_vertexai"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_google_vertexai.model_garden</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatAnthropicVertex</span>
 
         <span class="k">return</span> <span class="n">ChatAnthropicVertex</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"deepseek"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"deepseek"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_deepseek"</span><span class="p">,</span> <span class="n">pkg_kebab</span><span class="o">=</span><span class="s2">"langchain-deepseek"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_deepseek</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatDeepSeek</span>
 
         <span class="k">return</span> <span class="n">ChatDeepSeek</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"nvidia"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"nvidia"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_nvidia_ai_endpoints"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_nvidia_ai_endpoints</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatNVIDIA</span>
 
         <span class="k">return</span> <span class="n">ChatNVIDIA</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"ibm"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"ibm"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_ibm"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_ibm</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatWatsonx</span>
 
         <span class="k">return</span> <span class="n">ChatWatsonx</span><span class="p">(</span><span class="n">model_id</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"xai"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"xai"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_xai"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_xai</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatXAI</span>
 
         <span class="k">return</span> <span class="n">ChatXAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"perplexity"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">model_provider</span> <span class="o">==</span> <span class="s2">"perplexity"</span><span class="p">:</span>
         <span class="n">_check_pkg</span><span class="p">(</span><span class="s2">"langchain_perplexity"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_perplexity</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatPerplexity</span>
 
         <span class="k">return</span> <span class="n">ChatPerplexity</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">supported</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_SUPPORTED_PROVIDERS</span><span class="p">)</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Unsupported </span><span class="si">{</span><span class="n">model_provider</span><span class="si">=}</span><span class="s2">.</span><span class="se">\n\n</span><span class="s2">Supported model providers are: "</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">supported</span><span class="si">}</span><span class="s2">"</span>
-        <span class="p">)</span>
+    <span class="n">supported</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_SUPPORTED_PROVIDERS</span><span class="p">)</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Unsupported </span><span class="si">{</span><span class="n">model_provider</span><span class="si">=}</span><span class="s2">.</span><span class="se">\n\n</span><span class="s2">Supported model providers are: </span><span class="si">{</span><span class="n">supported</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
 
 <span class="n">_SUPPORTED_PROVIDERS</span> <span class="o">=</span> <span class="p">{</span>
@@ -714,26 +717,25 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_attempt_infer_model_provider</span><span class="p">(</span><span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">pre</span><span class="p">)</span> <span class="k">for</span> <span class="n">pre</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"gpt-3"</span><span class="p">,</span> <span class="s2">"gpt-4"</span><span class="p">,</span> <span class="s2">"o1"</span><span class="p">,</span> <span class="s2">"o3"</span><span class="p">)):</span>
         <span class="k">return</span> <span class="s2">"openai"</span>
-    <span class="k">elif</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"claude"</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"claude"</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">"anthropic"</span>
-    <span class="k">elif</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"command"</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"command"</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">"cohere"</span>
-    <span class="k">elif</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"accounts/fireworks"</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"accounts/fireworks"</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">"fireworks"</span>
-    <span class="k">elif</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"gemini"</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"gemini"</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">"google_vertexai"</span>
-    <span class="k">elif</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"amazon."</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"amazon."</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">"bedrock"</span>
-    <span class="k">elif</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"mistral"</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"mistral"</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">"mistralai"</span>
-    <span class="k">elif</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"deepseek"</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"deepseek"</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">"deepseek"</span>
-    <span class="k">elif</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"grok"</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"grok"</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">"xai"</span>
-    <span class="k">elif</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"sonar"</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"sonar"</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">"perplexity"</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">model_provider</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
@@ -746,10 +748,11 @@
         <span class="n">model</span> <span class="o">=</span> <span class="s2">":"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span>
     <span class="n">model_provider</span> <span class="o">=</span> <span class="n">model_provider</span> <span class="ow">or</span> <span class="n">_attempt_infer_model_provider</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">model_provider</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Unable to infer model provider for </span><span class="si">{</span><span class="n">model</span><span class="si">=}</span><span class="s2">, please specify "</span>
             <span class="sa">f</span><span class="s2">"model_provider directly."</span>
         <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="n">model_provider</span> <span class="o">=</span> <span class="n">model_provider</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"-"</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">model_provider</span>
 
@@ -757,9 +760,10 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_pkg</span><span class="p">(</span><span class="n">pkg</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">pkg_kebab</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">util</span><span class="o">.</span><span class="n">find_spec</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
         <span class="n">pkg_kebab</span> <span class="o">=</span> <span class="n">pkg_kebab</span> <span class="k">if</span> <span class="n">pkg_kebab</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">pkg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">)</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Unable to import </span><span class="si">{</span><span class="n">pkg</span><span class="si">}</span><span class="s2">. Please install with `pip install -U </span><span class="si">{</span><span class="n">pkg_kebab</span><span class="si">}</span><span class="s2">`"</span>
         <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_remove_prefix</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -792,7 +796,7 @@
             <span class="k">else</span> <span class="n">config_prefix</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_queued_declarative_operations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
-            <span class="n">queued_declarative_operations</span>
+            <span class="n">queued_declarative_operations</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
@@ -804,7 +808,7 @@
             <span class="c1"># self._model()).</span>
             <span class="k">def</span><span class="w"> </span><span class="nf">queue</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ConfigurableModel</span><span class="p">:</span>
                 <span class="n">queued_declarative_operations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_queued_declarative_operations</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_queued_declarative_operations</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">queued_declarative_operations</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
                 <span class="k">return</span> <span class="n">_ConfigurableModel</span><span class="p">(</span>
@@ -817,14 +821,13 @@
                 <span class="p">)</span>
 
             <span class="k">return</span> <span class="n">queue</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_config</span> <span class="ow">and</span> <span class="p">(</span><span class="n">model</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">())</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_config</span> <span class="ow">and</span> <span class="p">(</span><span class="n">model</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">())</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is not a BaseChatModel attribute"</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_config</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">+=</span> <span class="s2">" and is not implemented on the default model"</span>
-            <span class="n">msg</span> <span class="o">+=</span> <span class="s2">"."</span>
-            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is not a BaseChatModel attribute"</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_config</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="s2">" and is not implemented on the default model"</span>
+        <span class="n">msg</span> <span class="o">+=</span> <span class="s2">"."</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Runnable</span><span class="p">:</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_default_config</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_params</span><span class="p">(</span><span class="n">config</span><span class="p">)}</span>
@@ -867,7 +870,7 @@
                     <span class="s2">"with_config"</span><span class="p">,</span>
                     <span class="p">(),</span>
                     <span class="p">{</span><span class="s2">"config"</span><span class="p">:</span> <span class="n">remaining_config</span><span class="p">},</span>
-                <span class="p">)</span>
+                <span class="p">),</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">_ConfigurableModel</span><span class="p">(</span>
             <span class="n">default_config</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_default_config</span><span class="p">,</span> <span class="o">**</span><span class="n">model_params</span><span class="p">},</span>
@@ -895,6 +898,7 @@
             <span class="nb">list</span><span class="p">[</span><span class="n">AnyMessage</span><span class="p">],</span>
         <span class="p">]</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">LanguageModelInput</span><span class="p">,</span>
@@ -903,6 +907,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="n">config</span><span class="p">)</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ainvoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">LanguageModelInput</span><span class="p">,</span>
@@ -911,6 +916,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="n">config</span><span class="p">)</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">stream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">LanguageModelInput</span><span class="p">,</span>
@@ -919,6 +925,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
         <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="n">config</span><span class="p">)</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">astream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">LanguageModelInput</span><span class="p">,</span>
@@ -942,14 +949,19 @@
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
                 <span class="n">config</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="n">config</span><span class="p">)</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span>
-                <span class="n">inputs</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">return_exceptions</span><span class="o">=</span><span class="n">return_exceptions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+                <span class="n">inputs</span><span class="p">,</span>
+                <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                <span class="n">return_exceptions</span><span class="o">=</span><span class="n">return_exceptions</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="c1"># If multiple configs default to Runnable.batch which uses executor to invoke</span>
         <span class="c1"># in parallel.</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span>
-                <span class="n">inputs</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">return_exceptions</span><span class="o">=</span><span class="n">return_exceptions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
-            <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span>
+            <span class="n">inputs</span><span class="p">,</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">return_exceptions</span><span class="o">=</span><span class="n">return_exceptions</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">abatch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -965,14 +977,19 @@
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
                 <span class="n">config</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="n">config</span><span class="p">)</span><span class="o">.</span><span class="n">abatch</span><span class="p">(</span>
-                <span class="n">inputs</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">return_exceptions</span><span class="o">=</span><span class="n">return_exceptions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+                <span class="n">inputs</span><span class="p">,</span>
+                <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                <span class="n">return_exceptions</span><span class="o">=</span><span class="n">return_exceptions</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="c1"># If multiple configs default to Runnable.batch which uses executor to invoke</span>
         <span class="c1"># in parallel.</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">abatch</span><span class="p">(</span>
-                <span class="n">inputs</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">return_exceptions</span><span class="o">=</span><span class="n">return_exceptions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
-            <span class="p">)</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">abatch</span><span class="p">(</span>
+            <span class="n">inputs</span><span class="p">,</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+            <span class="n">return_exceptions</span><span class="o">=</span><span class="n">return_exceptions</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">batch_as_completed</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -988,13 +1005,19 @@
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
                 <span class="n">config</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">RunnableConfig</span><span class="p">,</span> <span class="n">config</span><span class="p">))</span><span class="o">.</span><span class="n">batch_as_completed</span><span class="p">(</span>  <span class="c1"># type: ignore[call-overload]</span>
-                <span class="n">inputs</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">return_exceptions</span><span class="o">=</span><span class="n">return_exceptions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+                <span class="n">inputs</span><span class="p">,</span>
+                <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                <span class="n">return_exceptions</span><span class="o">=</span><span class="n">return_exceptions</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="c1"># If multiple configs default to Runnable.batch which uses executor to invoke</span>
         <span class="c1"># in parallel.</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">yield from</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">batch_as_completed</span><span class="p">(</span>  <span class="c1"># type: ignore[call-overload]</span>
-                <span class="n">inputs</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">return_exceptions</span><span class="o">=</span><span class="n">return_exceptions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+                <span class="n">inputs</span><span class="p">,</span>
+                <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                <span class="n">return_exceptions</span><span class="o">=</span><span class="n">return_exceptions</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">abatch_as_completed</span><span class="p">(</span>
@@ -1011,19 +1034,26 @@
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
                 <span class="n">config</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">async</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span>
-                <span class="n">cast</span><span class="p">(</span><span class="n">RunnableConfig</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+                <span class="n">cast</span><span class="p">(</span><span class="n">RunnableConfig</span><span class="p">,</span> <span class="n">config</span><span class="p">),</span>
             <span class="p">)</span><span class="o">.</span><span class="n">abatch_as_completed</span><span class="p">(</span>  <span class="c1"># type: ignore[call-overload]</span>
-                <span class="n">inputs</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">return_exceptions</span><span class="o">=</span><span class="n">return_exceptions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+                <span class="n">inputs</span><span class="p">,</span>
+                <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                <span class="n">return_exceptions</span><span class="o">=</span><span class="n">return_exceptions</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">):</span>
                 <span class="k">yield</span> <span class="n">x</span>
         <span class="c1"># If multiple configs default to Runnable.batch which uses executor to invoke</span>
         <span class="c1"># in parallel.</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">async</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">abatch_as_completed</span><span class="p">(</span>  <span class="c1"># type: ignore[call-overload]</span>
-                <span class="n">inputs</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">return_exceptions</span><span class="o">=</span><span class="n">return_exceptions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+                <span class="n">inputs</span><span class="p">,</span>
+                <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                <span class="n">return_exceptions</span><span class="o">=</span><span class="n">return_exceptions</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">):</span>
                 <span class="k">yield</span> <span class="n">x</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">LanguageModelInput</span><span class="p">],</span>
@@ -1032,6 +1062,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
         <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="n">config</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">atransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">LanguageModelInput</span><span class="p">],</span>
@@ -1075,6 +1106,7 @@
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">RunLog</span><span class="p">]:</span> <span class="o">...</span>
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">astream_log</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -1105,6 +1137,7 @@
         <span class="p">):</span>
             <span class="k">yield</span> <span class="n">x</span>
 
+    <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">astream_events</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="nb">input</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -1143,7 +1176,9 @@
 
     <span class="c1"># Explicitly added to satisfy downstream linters.</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">with_structured_output</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">schema</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">schema</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]],</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Runnable</span><span class="p">[</span><span class="n">LanguageModelInput</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">]]:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__getattr__</span><span class="p">(</span><span class="s2">"with_structured_output"</span><span class="p">)(</span><span class="n">schema</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </pre></div>

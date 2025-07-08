@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -240,7 +240,7 @@
     <span class="n">llm</span><span class="p">:</span> <span class="n">BaseLanguageModel</span><span class="p">,</span>
     <span class="n">tools</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">BaseTool</span><span class="p">],</span>
     <span class="n">prompt</span><span class="p">:</span> <span class="n">ChatPromptTemplate</span><span class="p">,</span>
-    <span class="n">stop_sequence</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">stop_sequence</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># noqa: FBT001,FBT002</span>
     <span class="n">tools_renderer</span><span class="p">:</span> <span class="n">ToolsRenderer</span> <span class="o">=</span> <span class="n">render_text_description</span><span class="p">,</span>
     <span class="n">template_tool_response</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">TEMPLATE_TOOL_RESPONSE</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Runnable</span><span class="p">:</span>
@@ -386,15 +386,15 @@
 <span class="sd">            )</span>
 <span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
     <span class="n">missing_vars</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"tools"</span><span class="p">,</span> <span class="s2">"tool_names"</span><span class="p">,</span> <span class="s2">"agent_scratchpad"</span><span class="p">}</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span>
-        <span class="n">prompt</span><span class="o">.</span><span class="n">input_variables</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">prompt</span><span class="o">.</span><span class="n">partial_variables</span><span class="p">)</span>
+        <span class="n">prompt</span><span class="o">.</span><span class="n">input_variables</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">prompt</span><span class="o">.</span><span class="n">partial_variables</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">missing_vars</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Prompt missing required variables: </span><span class="si">{</span><span class="n">missing_vars</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Prompt missing required variables: </span><span class="si">{</span><span class="n">missing_vars</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="s2">"</span><span class="si">{observation}</span><span class="s2">"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">template_tool_response</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">"Template tool response missing required variable 'observation'"</span>
-        <span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Template tool response missing required variable 'observation'"</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="n">prompt</span> <span class="o">=</span> <span class="n">prompt</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
         <span class="n">tools</span><span class="o">=</span><span class="n">tools_renderer</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">tools</span><span class="p">)),</span>
@@ -406,17 +406,17 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">llm_to_use</span> <span class="o">=</span> <span class="n">llm</span>
 
-    <span class="n">agent</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="k">return</span> <span class="p">(</span>
         <span class="n">RunnablePassthrough</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span>
             <span class="n">agent_scratchpad</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">format_log_to_messages</span><span class="p">(</span>
-                <span class="n">x</span><span class="p">[</span><span class="s2">"intermediate_steps"</span><span class="p">],</span> <span class="n">template_tool_response</span><span class="o">=</span><span class="n">template_tool_response</span>
-            <span class="p">)</span>
+                <span class="n">x</span><span class="p">[</span><span class="s2">"intermediate_steps"</span><span class="p">],</span>
+                <span class="n">template_tool_response</span><span class="o">=</span><span class="n">template_tool_response</span><span class="p">,</span>
+            <span class="p">),</span>
         <span class="p">)</span>
         <span class="o">|</span> <span class="n">prompt</span>
         <span class="o">|</span> <span class="n">llm_to_use</span>
         <span class="o">|</span> <span class="n">JSONAgentOutputParser</span><span class="p">()</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">agent</span></div>
+    <span class="p">)</span></div>
 
 </pre></div>
 </article>

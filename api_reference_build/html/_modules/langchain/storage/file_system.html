@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -302,34 +302,36 @@
 <span class="sd">            Path: The full path for the given key.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^[a-zA-Z0-9_.\-/]+$"</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">InvalidKeyException</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid characters in key: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Invalid characters in key: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">raise</span> <span class="n">InvalidKeyException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">full_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_path</span> <span class="o">/</span> <span class="n">key</span><span class="p">)</span>
         <span class="n">common_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">commonpath</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_path</span><span class="p">),</span> <span class="n">full_path</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">common_path</span> <span class="o">!=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_path</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">InvalidKeyException</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Invalid key: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">. Key should be relative to the full path."</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root_path</span><span class="si">}</span><span class="s2"> vs. </span><span class="si">{</span><span class="n">common_path</span><span class="si">}</span><span class="s2"> and full path of </span><span class="si">{</span><span class="n">full_path</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">InvalidKeyException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">full_path</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_mkdir_for_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_mkdir_for_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dir_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Makes a store directory path (including parents) with specified permissions</span>
 
 <span class="sd">        This is needed because `Path.mkdir()` is restricted by the current `umask`,</span>
 <span class="sd">        whereas the explicit `os.chmod()` used here is not.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            dir: (Path) The store directory to make</span>
+<span class="sd">            dir_path: (Path) The store directory to make</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            None</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_mkdir_for_store</span><span class="p">(</span><span class="nb">dir</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
-            <span class="nb">dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dir_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mkdir_for_store</span><span class="p">(</span><span class="n">dir_path</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
+            <span class="n">dir_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">chmod_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="nb">dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">chmod_dir</span><span class="p">)</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">dir_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">chmod_dir</span><span class="p">)</span>
 
 <div class="viewcode-block" id="LocalFileStore.mget">
 <a class="viewcode-back" href="../../../langchain/storage/langchain.storage.file_system.LocalFileStore.html#langchain.storage.file_system.LocalFileStore.mget">[docs]</a>

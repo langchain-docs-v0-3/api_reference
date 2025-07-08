@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -274,24 +274,27 @@
             <span class="n">found</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
                 <span class="c1"># Fast fail to parse Final Answer.</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"action not found"</span><span class="p">)</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"action not found"</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="n">action</span> <span class="o">=</span> <span class="n">found</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
             <span class="n">response</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">action</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
             <span class="n">includes_action</span> <span class="o">=</span> <span class="s2">"action"</span> <span class="ow">in</span> <span class="n">response</span>
             <span class="k">if</span> <span class="n">includes_answer</span> <span class="ow">and</span> <span class="n">includes_action</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">OutputParserException</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="s2">"Parsing LLM output produced a final answer "</span>
                     <span class="sa">f</span><span class="s2">"and a parse-able action: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="n">OutputParserException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">AgentAction</span><span class="p">(</span>
-                <span class="n">response</span><span class="p">[</span><span class="s2">"action"</span><span class="p">],</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"action_input"</span><span class="p">,</span> <span class="p">{}),</span> <span class="n">text</span>
+                <span class="n">response</span><span class="p">[</span><span class="s2">"action"</span><span class="p">],</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"action_input"</span><span class="p">,</span> <span class="p">{}),</span>
+                <span class="n">text</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">includes_answer</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">OutputParserException</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Could not parse LLM output: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span>
-                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Could not parse LLM output: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span>
+                <span class="k">raise</span> <span class="n">OutputParserException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
             <span class="n">output</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">FINAL_ANSWER_ACTION</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">AgentFinish</span><span class="p">({</span><span class="s2">"output"</span><span class="p">:</span> <span class="n">output</span><span class="p">},</span> <span class="n">text</span><span class="p">)</span></div>
 

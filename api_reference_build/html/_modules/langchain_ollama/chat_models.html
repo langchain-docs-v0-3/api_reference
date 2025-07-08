@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -228,7 +228,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Any</span><span class="p">,</span>
     <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">Final</span><span class="p">,</span>
     <span class="n">Literal</span><span class="p">,</span>
     <span class="n">Optional</span><span class="p">,</span>
     <span class="n">Union</span><span class="p">,</span>
@@ -247,7 +246,6 @@
     <span class="n">AIMessage</span><span class="p">,</span>
     <span class="n">AIMessageChunk</span><span class="p">,</span>
     <span class="n">BaseMessage</span><span class="p">,</span>
-    <span class="n">BaseMessageChunk</span><span class="p">,</span>
     <span class="n">ChatMessage</span><span class="p">,</span>
     <span class="n">HumanMessage</span><span class="p">,</span>
     <span class="n">SystemMessage</span><span class="p">,</span>
@@ -278,9 +276,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span><span class="p">,</span> <span class="n">is_typeddict</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_model</span>
-
-<span class="n">DEFAULT_THINK_TOKEN_START</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"&lt;think&gt;"</span>
-<span class="n">DEFAULT_THINK_TOKEN_END</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"&lt;/think&gt;"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_usage_metadata_from_generation_info</span><span class="p">(</span>
@@ -388,13 +383,14 @@
     <span class="k">return</span> <span class="n">tool_calls</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_lc_tool_call_to_openai_tool_call</span><span class="p">(</span><span class="n">tool_call</span><span class="p">:</span> <span class="n">ToolCall</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_lc_tool_call_to_openai_tool_call</span><span class="p">(</span><span class="n">tool_call_</span><span class="p">:</span> <span class="n">ToolCall</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Convert a LangChain tool call to an OpenAI tool call format."""</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"function"</span><span class="p">,</span>
-        <span class="s2">"id"</span><span class="p">:</span> <span class="n">tool_call</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="n">tool_call_</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
         <span class="s2">"function"</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">"name"</span><span class="p">:</span> <span class="n">tool_call</span><span class="p">[</span><span class="s2">"name"</span><span class="p">],</span>
-            <span class="s2">"arguments"</span><span class="p">:</span> <span class="n">tool_call</span><span class="p">[</span><span class="s2">"args"</span><span class="p">],</span>
+            <span class="s2">"name"</span><span class="p">:</span> <span class="n">tool_call_</span><span class="p">[</span><span class="s2">"name"</span><span class="p">],</span>
+            <span class="s2">"arguments"</span><span class="p">:</span> <span class="n">tool_call_</span><span class="p">[</span><span class="s2">"args"</span><span class="p">],</span>
         <span class="p">},</span>
     <span class="p">}</span>
 
@@ -435,6 +431,20 @@
 <span class="sd">    Key init args — completion params:</span>
 <span class="sd">        model: str</span>
 <span class="sd">            Name of Ollama model to use.</span>
+<span class="sd">        reasoning: Optional[bool]</span>
+<span class="sd">            Controls the reasoning/thinking mode for</span>
+<span class="sd">            `supported models &lt;https://ollama.com/search?c=thinking&gt;`__.</span>
+
+<span class="sd">            - ``True``: Enables reasoning mode. The model's reasoning process will be</span>
+<span class="sd">            captured and returned separately in the ``additional_kwargs`` of the</span>
+<span class="sd">            response message, under ``reasoning_content``. The main response</span>
+<span class="sd">            content will not include the reasoning tags.</span>
+<span class="sd">            - ``False``: Disables reasoning mode. The model will not perform any reasoning,</span>
+<span class="sd">            and the response will not include any reasoning content.</span>
+<span class="sd">            - ``None`` (Default): The model will use its default reasoning behavior. Note</span>
+<span class="sd">            however, if the model's default behavior *is* to perform reasoning, think tags</span>
+<span class="sd">            ()``&lt;think&gt;`` and ``&lt;/think&gt;``) will be present within the main response content</span>
+<span class="sd">            unless you set ``reasoning`` to ``True``.</span>
 <span class="sd">        temperature: float</span>
 <span class="sd">            Sampling temperature. Ranges from 0.0 to 1.0.</span>
 <span class="sd">        num_predict: Optional[int]</span>
@@ -571,20 +581,28 @@
 <span class="sd">            'args': {'a': 45, 'b': 67},</span>
 <span class="sd">            'id': '420c3f3b-df10-4188-945f-eb3abdb40622',</span>
 <span class="sd">            'type': 'tool_call'}]</span>
-<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">    """</span>  <span class="c1"># noqa: E501, pylint: disable=line-too-long</span>
 
     <span class="n">model</span><span class="p">:</span> <span class="nb">str</span>
 <span class="w">    </span><span class="sd">"""Model name to use."""</span>
 
+    <span class="n">reasoning</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">"""Controls the reasoning/thinking mode for</span>
+<span class="sd">    `supported models &lt;https://ollama.com/search?c=thinking&gt;`__.</span>
+
+<span class="sd">    - ``True``: Enables reasoning mode. The model's reasoning process will be</span>
+<span class="sd">      captured and returned separately in the ``additional_kwargs`` of the</span>
+<span class="sd">      response message, under ``reasoning_content``. The main response</span>
+<span class="sd">      content will not include the reasoning tags.</span>
+<span class="sd">    - ``False``: Disables reasoning mode. The model will not perform any reasoning,</span>
+<span class="sd">      and the response will not include any reasoning content.</span>
+<span class="sd">    - ``None`` (Default): The model will use its default reasoning behavior. Note</span>
+<span class="sd">      however, if the model's default behavior *is* to perform reasoning, think tags</span>
+<span class="sd">      ()``&lt;think&gt;`` and ``&lt;/think&gt;``) will be present within the main response content</span>
+<span class="sd">      unless you set ``reasoning`` to ``True``."""</span>
+
     <span class="n">validate_model_on_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="w">    </span><span class="sd">"""Whether to validate the model exists in Ollama locally on initialization."""</span>
-
-    <span class="n">extract_reasoning</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">False</span>
-<span class="w">    </span><span class="sd">"""Whether to extract the reasoning tokens in think blocks.</span>
-<span class="sd">    Extracts `chunk.content` to `chunk.additional_kwargs.reasoning_content`.</span>
-<span class="sd">    If a tuple is supplied, they are assumed to be the (start, end) tokens.</span>
-<span class="sd">    If `extract_reasoning=True`, the tokens will default to (&lt;think&gt;, &lt;/think&gt;).</span>
-<span class="sd">    """</span>
 
     <span class="n">mirostat</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Enable Mirostat sampling for controlling perplexity.</span>
@@ -672,24 +690,23 @@
 <span class="sd">    """</span>
 
     <span class="n">async_client_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="w">    </span><span class="sd">"""Additional kwargs to merge with client_kwargs before passing to the HTTPX</span>
-<span class="sd">    AsyncClient.</span>
-<span class="sd">    </span>
-<span class="sd">    For a full list of the params, see the `HTTPX documentation &lt;https://www.python-httpx.org/api/#asyncclient&gt;`__.</span>
+<span class="w">    </span><span class="sd">"""Additional kwargs to merge with client_kwargs before</span>
+<span class="sd">    passing to the httpx AsyncClient.</span>
+<span class="sd">    `Full list of params. &lt;https://www.python-httpx.org/api/#asyncclient&gt;`__</span>
 <span class="sd">    """</span>
 
     <span class="n">sync_client_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="w">    </span><span class="sd">"""Additional kwargs to merge with client_kwargs before passing to the HTTPX Client.</span>
-<span class="sd">    </span>
-<span class="sd">    For a full list of the params, see the `HTTPX documentation &lt;https://www.python-httpx.org/api/#client&gt;`__.</span>
+<span class="w">    </span><span class="sd">"""Additional kwargs to merge with client_kwargs before</span>
+<span class="sd">    passing to the httpx Client.</span>
+<span class="sd">    `Full list of params. &lt;https://www.python-httpx.org/api/#client&gt;`__</span>
 <span class="sd">    """</span>
 
-    <span class="n">_client</span><span class="p">:</span> <span class="n">Client</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+    <span class="n">_client</span><span class="p">:</span> <span class="n">Client</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">()</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    The client to use for making requests.</span>
 <span class="sd">    """</span>
 
-    <span class="n">_async_client</span><span class="p">:</span> <span class="n">AsyncClient</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+    <span class="n">_async_client</span><span class="p">:</span> <span class="n">AsyncClient</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">()</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    The async client to use for making requests.</span>
 <span class="sd">    """</span>
@@ -704,7 +721,7 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`stop` found in both the input and default params."</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">stop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span>
 
         <span class="n">options_dict</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span>
@@ -732,6 +749,7 @@
             <span class="s2">"messages"</span><span class="p">:</span> <span class="n">ollama_messages</span><span class="p">,</span>
             <span class="s2">"stream"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"stream"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
             <span class="s2">"model"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"model"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">),</span>
+            <span class="s2">"think"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"reasoning"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reasoning</span><span class="p">),</span>
             <span class="s2">"format"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"format"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">format</span><span class="p">),</span>
             <span class="s2">"options"</span><span class="p">:</span> <span class="n">Options</span><span class="p">(</span><span class="o">**</span><span class="n">options_dict</span><span class="p">),</span>
             <span class="s2">"keep_alive"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"keep_alive"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span><span class="p">),</span>
@@ -842,34 +860,12 @@
                 <span class="s2">"images"</span><span class="p">:</span> <span class="n">images</span><span class="p">,</span>
             <span class="p">}</span>
             <span class="k">if</span> <span class="n">tool_calls</span><span class="p">:</span>
-                <span class="n">msg</span><span class="p">[</span><span class="s2">"tool_calls"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tool_calls</span>  <span class="c1"># type: ignore</span>
+                <span class="n">msg</span><span class="p">[</span><span class="s2">"tool_calls"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tool_calls</span>
             <span class="k">if</span> <span class="n">tool_call_id</span><span class="p">:</span>
                 <span class="n">msg</span><span class="p">[</span><span class="s2">"tool_call_id"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tool_call_id</span>
             <span class="n">ollama_messages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">ollama_messages</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_reasoning</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">message_chunk</span><span class="p">:</span> <span class="n">BaseMessageChunk</span><span class="p">,</span> <span class="n">is_thinking</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">BaseMessageChunk</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Mutate a message chunk to extract reasoning content."""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_reasoning</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">message_chunk</span><span class="p">,</span> <span class="n">is_thinking</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_reasoning</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="n">start_token</span> <span class="o">=</span> <span class="n">DEFAULT_THINK_TOKEN_START</span>
-            <span class="n">end_token</span> <span class="o">=</span> <span class="n">DEFAULT_THINK_TOKEN_END</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">start_token</span><span class="p">,</span> <span class="n">end_token</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_reasoning</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">start_token</span> <span class="ow">in</span> <span class="n">message_chunk</span><span class="o">.</span><span class="n">content</span><span class="p">:</span>
-            <span class="n">is_thinking</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="n">content</span> <span class="o">=</span> <span class="n">message_chunk</span><span class="o">.</span><span class="n">content</span>
-        <span class="k">if</span> <span class="n">is_thinking</span><span class="p">:</span>
-            <span class="n">message_chunk</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"reasoning_content"</span><span class="p">]</span> <span class="o">=</span> <span class="n">content</span>
-            <span class="n">message_chunk</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="s2">""</span>
-        <span class="k">if</span> <span class="n">end_token</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
-            <span class="n">is_thinking</span> <span class="o">=</span> <span class="kc">False</span>
-
-        <span class="k">return</span> <span class="n">message_chunk</span><span class="p">,</span> <span class="n">is_thinking</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_acreate_chat_stream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -894,9 +890,11 @@
         <span class="n">chat_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chat_params</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">chat_params</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">]:</span>
-            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">chat</span><span class="p">(</span><span class="o">**</span><span class="n">chat_params</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="p">:</span>
+                <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">chat</span><span class="p">(</span><span class="o">**</span><span class="n">chat_params</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">chat</span><span class="p">(</span><span class="o">**</span><span class="n">chat_params</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">chat</span><span class="p">(</span><span class="o">**</span><span class="n">chat_params</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_chat_stream_with_aggregation</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -991,22 +989,34 @@
         <span class="n">stop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">ChatGenerationChunk</span><span class="p">]:</span>
-        <span class="n">is_thinking</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">for</span> <span class="n">stream_resp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_chat_stream</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stream_resp</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">stream_resp</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"done"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
                     <span class="n">generation_info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">stream_resp</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="s2">"model"</span> <span class="ow">in</span> <span class="n">generation_info</span><span class="p">:</span>
+                        <span class="n">generation_info</span><span class="p">[</span><span class="s2">"model_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">generation_info</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span>
                     <span class="n">_</span> <span class="o">=</span> <span class="n">generation_info</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"message"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">generation_info</span> <span class="o">=</span> <span class="kc">None</span>
+
+                <span class="n">content</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">stream_resp</span><span class="p">[</span><span class="s2">"message"</span><span class="p">][</span><span class="s2">"content"</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="s2">"message"</span> <span class="ow">in</span> <span class="n">stream_resp</span> <span class="ow">and</span> <span class="s2">"content"</span> <span class="ow">in</span> <span class="n">stream_resp</span><span class="p">[</span><span class="s2">"message"</span><span class="p">]</span>
+                    <span class="k">else</span> <span class="s2">""</span>
+                <span class="p">)</span>
+
+                <span class="n">additional_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">reasoning</span>
+                    <span class="ow">and</span> <span class="s2">"message"</span> <span class="ow">in</span> <span class="n">stream_resp</span>
+                    <span class="ow">and</span> <span class="p">(</span><span class="n">thinking_content</span> <span class="o">:=</span> <span class="n">stream_resp</span><span class="p">[</span><span class="s2">"message"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"thinking"</span><span class="p">))</span>
+                <span class="p">):</span>
+                    <span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"reasoning_content"</span><span class="p">]</span> <span class="o">=</span> <span class="n">thinking_content</span>
+
                 <span class="n">chunk</span> <span class="o">=</span> <span class="n">ChatGenerationChunk</span><span class="p">(</span>
                     <span class="n">message</span><span class="o">=</span><span class="n">AIMessageChunk</span><span class="p">(</span>
-                        <span class="n">content</span><span class="o">=</span><span class="p">(</span>
-                            <span class="n">stream_resp</span><span class="p">[</span><span class="s2">"message"</span><span class="p">][</span><span class="s2">"content"</span><span class="p">]</span>
-                            <span class="k">if</span> <span class="s2">"message"</span> <span class="ow">in</span> <span class="n">stream_resp</span>
-                            <span class="ow">and</span> <span class="s2">"content"</span> <span class="ow">in</span> <span class="n">stream_resp</span><span class="p">[</span><span class="s2">"message"</span><span class="p">]</span>
-                            <span class="k">else</span> <span class="s2">""</span>
-                        <span class="p">),</span>
+                        <span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span>
+                        <span class="n">additional_kwargs</span><span class="o">=</span><span class="n">additional_kwargs</span><span class="p">,</span>
                         <span class="n">usage_metadata</span><span class="o">=</span><span class="n">_get_usage_metadata_from_generation_info</span><span class="p">(</span>
                             <span class="n">stream_resp</span>
                         <span class="p">),</span>
@@ -1014,15 +1024,7 @@
                     <span class="p">),</span>
                     <span class="n">generation_info</span><span class="o">=</span><span class="n">generation_info</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="k">if</span> <span class="n">chunk</span><span class="o">.</span><span class="n">generation_info</span> <span class="ow">and</span> <span class="p">(</span>
-                    <span class="n">model</span> <span class="o">:=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">generation_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model"</span><span class="p">)</span>
-                <span class="p">):</span>
-                    <span class="n">chunk</span><span class="o">.</span><span class="n">generation_info</span><span class="p">[</span><span class="s2">"model_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span>  <span class="c1"># backwards compat</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_reasoning</span><span class="p">:</span>
-                    <span class="n">message</span><span class="p">,</span> <span class="n">is_thinking</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_reasoning</span><span class="p">(</span>
-                        <span class="n">chunk</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="n">is_thinking</span>
-                    <span class="p">)</span>
-                    <span class="n">chunk</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+
                 <span class="k">yield</span> <span class="n">chunk</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stream</span><span class="p">(</span>
@@ -1046,22 +1048,34 @@
         <span class="n">stop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">ChatGenerationChunk</span><span class="p">]:</span>
-        <span class="n">is_thinking</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">async</span> <span class="k">for</span> <span class="n">stream_resp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acreate_chat_stream</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stream_resp</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">stream_resp</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"done"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
                     <span class="n">generation_info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">stream_resp</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="s2">"model"</span> <span class="ow">in</span> <span class="n">generation_info</span><span class="p">:</span>
+                        <span class="n">generation_info</span><span class="p">[</span><span class="s2">"model_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">generation_info</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span>
                     <span class="n">_</span> <span class="o">=</span> <span class="n">generation_info</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"message"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">generation_info</span> <span class="o">=</span> <span class="kc">None</span>
+
+                <span class="n">content</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">stream_resp</span><span class="p">[</span><span class="s2">"message"</span><span class="p">][</span><span class="s2">"content"</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="s2">"message"</span> <span class="ow">in</span> <span class="n">stream_resp</span> <span class="ow">and</span> <span class="s2">"content"</span> <span class="ow">in</span> <span class="n">stream_resp</span><span class="p">[</span><span class="s2">"message"</span><span class="p">]</span>
+                    <span class="k">else</span> <span class="s2">""</span>
+                <span class="p">)</span>
+
+                <span class="n">additional_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">reasoning</span>
+                    <span class="ow">and</span> <span class="s2">"message"</span> <span class="ow">in</span> <span class="n">stream_resp</span>
+                    <span class="ow">and</span> <span class="p">(</span><span class="n">thinking_content</span> <span class="o">:=</span> <span class="n">stream_resp</span><span class="p">[</span><span class="s2">"message"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"thinking"</span><span class="p">))</span>
+                <span class="p">):</span>
+                    <span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"reasoning_content"</span><span class="p">]</span> <span class="o">=</span> <span class="n">thinking_content</span>
+
                 <span class="n">chunk</span> <span class="o">=</span> <span class="n">ChatGenerationChunk</span><span class="p">(</span>
                     <span class="n">message</span><span class="o">=</span><span class="n">AIMessageChunk</span><span class="p">(</span>
-                        <span class="n">content</span><span class="o">=</span><span class="p">(</span>
-                            <span class="n">stream_resp</span><span class="p">[</span><span class="s2">"message"</span><span class="p">][</span><span class="s2">"content"</span><span class="p">]</span>
-                            <span class="k">if</span> <span class="s2">"message"</span> <span class="ow">in</span> <span class="n">stream_resp</span>
-                            <span class="ow">and</span> <span class="s2">"content"</span> <span class="ow">in</span> <span class="n">stream_resp</span><span class="p">[</span><span class="s2">"message"</span><span class="p">]</span>
-                            <span class="k">else</span> <span class="s2">""</span>
-                        <span class="p">),</span>
+                        <span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span>
+                        <span class="n">additional_kwargs</span><span class="o">=</span><span class="n">additional_kwargs</span><span class="p">,</span>
                         <span class="n">usage_metadata</span><span class="o">=</span><span class="n">_get_usage_metadata_from_generation_info</span><span class="p">(</span>
                             <span class="n">stream_resp</span>
                         <span class="p">),</span>
@@ -1069,15 +1083,7 @@
                     <span class="p">),</span>
                     <span class="n">generation_info</span><span class="o">=</span><span class="n">generation_info</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="k">if</span> <span class="n">chunk</span><span class="o">.</span><span class="n">generation_info</span> <span class="ow">and</span> <span class="p">(</span>
-                    <span class="n">model</span> <span class="o">:=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">generation_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model"</span><span class="p">)</span>
-                <span class="p">):</span>
-                    <span class="n">chunk</span><span class="o">.</span><span class="n">generation_info</span><span class="p">[</span><span class="s2">"model_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span>  <span class="c1"># backwards compat</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_reasoning</span><span class="p">:</span>
-                    <span class="n">message</span><span class="p">,</span> <span class="n">is_thinking</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_reasoning</span><span class="p">(</span>
-                        <span class="n">chunk</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="n">is_thinking</span>
-                    <span class="p">)</span>
-                    <span class="n">chunk</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+
                 <span class="k">yield</span> <span class="n">chunk</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_astream</span><span class="p">(</span>
@@ -1179,7 +1185,7 @@
 <span class="sd">            method: The method for steering model generation, one of:</span>
 
 <span class="sd">                - "json_schema":</span>
-<span class="sd">                    Uses Ollama's structured output API: https://ollama.com/blog/structured-outputs</span>
+<span class="sd">                    Uses Ollama's `structured output API &lt;https://ollama.com/blog/structured-outputs&gt;`__</span>
 <span class="sd">                - "function_calling":</span>
 <span class="sd">                    Uses Ollama's tool-calling API</span>
 <span class="sd">                - "json_mode":</span>
@@ -1496,8 +1502,7 @@
                 <span class="p">[</span><span class="n">parser_none</span><span class="p">],</span> <span class="n">exception_key</span><span class="o">=</span><span class="s2">"parsing_error"</span>
             <span class="p">)</span>
             <span class="k">return</span> <span class="n">RunnableMap</span><span class="p">(</span><span class="n">raw</span><span class="o">=</span><span class="n">llm</span><span class="p">)</span> <span class="o">|</span> <span class="n">parser_with_fallback</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">llm</span> <span class="o">|</span> <span class="n">output_parser</span></div>
+        <span class="k">return</span> <span class="n">llm</span> <span class="o">|</span> <span class="n">output_parser</span></div>
 </div>
 
 </pre></div>

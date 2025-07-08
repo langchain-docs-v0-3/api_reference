@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 07, 2025" name="docbuild:last-update"/>
+<meta content="Jul 08, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -312,7 +312,7 @@
 
     <span class="k">return</span> <span class="p">(</span>
         <span class="n">RunnablePassthrough</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">document_variable_name</span><span class="p">:</span> <span class="n">format_docs</span><span class="p">})</span><span class="o">.</span><span class="n">with_config</span><span class="p">(</span>
-            <span class="n">run_name</span><span class="o">=</span><span class="s2">"format_inputs"</span>
+            <span class="n">run_name</span><span class="o">=</span><span class="s2">"format_inputs"</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="o">|</span> <span class="n">prompt</span>
         <span class="o">|</span> <span class="n">llm</span>
@@ -329,7 +329,7 @@
     <span class="n">message</span><span class="o">=</span><span class="p">(</span>
         <span class="s2">"This class is deprecated. Use the `create_stuff_documents_chain` constructor "</span>
         <span class="s2">"instead. See migration guide here: "</span>
-        <span class="s2">"https://python.langchain.com/docs/versions/migrating_chains/stuff_docs_chain/"</span>  <span class="c1"># noqa: E501</span>
+        <span class="s2">"https://python.langchain.com/docs/versions/migrating_chains/stuff_docs_chain/"</span>
     <span class="p">),</span>
 <span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">StuffDocumentsChain</span><span class="p">(</span><span class="n">BaseCombineDocumentsChain</span><span class="p">):</span>
@@ -374,7 +374,7 @@
 <span class="w">    </span><span class="sd">"""LLM chain which is called with the formatted document string,</span>
 <span class="sd">    along with any other inputs."""</span>
     <span class="n">document_prompt</span><span class="p">:</span> <span class="n">BasePromptTemplate</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">DEFAULT_DOCUMENT_PROMPT</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">DEFAULT_DOCUMENT_PROMPT</span><span class="p">,</span>
     <span class="p">)</span>
 <span class="w">    </span><span class="sd">"""Prompt to use to format each document, gets passed to `format_document`."""</span>
     <span class="n">document_variable_name</span><span class="p">:</span> <span class="nb">str</span>
@@ -402,16 +402,18 @@
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">llm_chain_variables</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">values</span><span class="p">[</span><span class="s2">"document_variable_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">llm_chain_variables</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="s2">"document_variable_name must be provided if there are "</span>
                     <span class="s2">"multiple llm_chain_variables"</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="s2">"document_variable_name"</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">llm_chain_variables</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"document_variable_name </span><span class="si">{</span><span class="n">values</span><span class="p">[</span><span class="s1">'document_variable_name'</span><span class="p">]</span><span class="si">}</span><span class="s2"> was "</span>
                     <span class="sa">f</span><span class="s2">"not found in llm_chain input_variables: </span><span class="si">{</span><span class="n">llm_chain_variables</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">values</span>
 
     <span class="nd">@property</span>
@@ -473,7 +475,10 @@
 <div class="viewcode-block" id="StuffDocumentsChain.combine_docs">
 <a class="viewcode-back" href="../../../../langchain/chains/langchain.chains.combine_documents.stuff.StuffDocumentsChain.html#langchain.chains.combine_documents.stuff.StuffDocumentsChain.combine_docs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">combine_docs</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">docs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">],</span> <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">docs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">],</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Stuff all documents into one prompt and pass to LLM.</span>
 
@@ -494,7 +499,10 @@
 <div class="viewcode-block" id="StuffDocumentsChain.acombine_docs">
 <a class="viewcode-back" href="../../../../langchain/chains/langchain.chains.combine_documents.stuff.StuffDocumentsChain.html#langchain.chains.combine_documents.stuff.StuffDocumentsChain.acombine_docs">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">acombine_docs</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">docs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">],</span> <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">docs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">],</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Async stuff all documents into one prompt and pass to LLM.</span>
 
