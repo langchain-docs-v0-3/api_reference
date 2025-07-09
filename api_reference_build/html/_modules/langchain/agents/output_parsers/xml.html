@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 08, 2025" name="docbuild:last-update"/>
+<meta content="Jul 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,54 +220,126 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain.agents.output_parsers.xml</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.agents</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentAction</span><span class="p">,</span> <span class="n">AgentFinish</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain.agents</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentOutputParser</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_unescape</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Convert custom tag delimiters back into XML tags."""</span>
+    <span class="n">replacements</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"[[tool]]"</span><span class="p">:</span> <span class="s2">"&lt;tool&gt;"</span><span class="p">,</span>
+        <span class="s2">"[[/tool]]"</span><span class="p">:</span> <span class="s2">"&lt;/tool&gt;"</span><span class="p">,</span>
+        <span class="s2">"[[tool_input]]"</span><span class="p">:</span> <span class="s2">"&lt;tool_input&gt;"</span><span class="p">,</span>
+        <span class="s2">"[[/tool_input]]"</span><span class="p">:</span> <span class="s2">"&lt;/tool_input&gt;"</span><span class="p">,</span>
+        <span class="s2">"[[observation]]"</span><span class="p">:</span> <span class="s2">"&lt;observation&gt;"</span><span class="p">,</span>
+        <span class="s2">"[[/observation]]"</span><span class="p">:</span> <span class="s2">"&lt;/observation&gt;"</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="n">repl</span><span class="p">,</span> <span class="n">orig</span> <span class="ow">in</span> <span class="n">replacements</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">repl</span><span class="p">,</span> <span class="n">orig</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">text</span>
 
 
 <div class="viewcode-block" id="XMLAgentOutputParser">
 <a class="viewcode-back" href="../../../../langchain/agents/langchain.agents.output_parsers.xml.XMLAgentOutputParser.html#langchain.agents.output_parsers.xml.XMLAgentOutputParser">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">XMLAgentOutputParser</span><span class="p">(</span><span class="n">AgentOutputParser</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Parses tool invocations and final answers in XML format.</span>
+<span class="w">    </span><span class="sd">"""Parses tool invocations and final answers from XML-formatted agent output.</span>
 
-<span class="sd">    Expects output to be in one of two formats.</span>
+<span class="sd">    This parser extracts structured information from XML tags to determine whether</span>
+<span class="sd">    an agent should perform a tool action or provide a final answer. It includes</span>
+<span class="sd">    built-in escaping support to safely handle tool names and inputs</span>
+<span class="sd">    containing XML special characters.</span>
 
-<span class="sd">    If the output signals that an action should be taken,</span>
-<span class="sd">    should be in the below format. This will result in an AgentAction</span>
-<span class="sd">    being returned.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        escape_format: The escaping format to use when parsing XML content.</span>
+<span class="sd">            Supports 'minimal' which uses custom delimiters like [[tool]] to replace</span>
+<span class="sd">            XML tags within content, preventing parsing conflicts.</span>
+<span class="sd">            Use 'minimal' if using a corresponding encoding format that uses</span>
+<span class="sd">            the _escape function when formatting the output (e.g., with format_xml).</span>
 
-<span class="sd">    ```</span>
-<span class="sd">    &lt;tool&gt;search&lt;/tool&gt;</span>
-<span class="sd">    &lt;tool_input&gt;what is 2 + 2&lt;/tool_input&gt;</span>
-<span class="sd">    ```</span>
+<span class="sd">    Expected formats:</span>
+<span class="sd">        Tool invocation (returns AgentAction):</span>
+<span class="sd">            &lt;tool&gt;search&lt;/tool&gt;</span>
+<span class="sd">            &lt;tool_input&gt;what is 2 + 2&lt;/tool_input&gt;</span>
 
-<span class="sd">    If the output signals that a final answer should be given,</span>
-<span class="sd">    should be in the below format. This will result in an AgentFinish</span>
-<span class="sd">    being returned.</span>
+<span class="sd">        Final answer (returns AgentFinish):</span>
+<span class="sd">            &lt;final_answer&gt;The answer is 4&lt;/final_answer&gt;</span>
 
-<span class="sd">    ```</span>
-<span class="sd">    &lt;final_answer&gt;Foo&lt;/final_answer&gt;</span>
-<span class="sd">    ```</span>
+<span class="sd">    Note:</span>
+<span class="sd">        Minimal escaping allows tool names containing XML tags to be safely</span>
+<span class="sd">        represented. For example, a tool named "search&lt;tool&gt;nested&lt;/tool&gt;" would be</span>
+<span class="sd">        escaped as "search[[tool]]nested[[/tool]]" in the XML and automatically</span>
+<span class="sd">        unescaped during parsing.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the input doesn't match either expected XML format or</span>
+<span class="sd">            contains malformed XML structure.</span>
+<span class="sd">    """</span>
+
+    <span class="n">escape_format</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"minimal"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"minimal"</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""The format to use for escaping XML characters.</span>
+
+<span class="sd">    minimal - uses custom delimiters to replace XML tags within content,</span>
+<span class="sd">    preventing parsing conflicts. This is the only supported format currently.</span>
+
+<span class="sd">    None - no escaping is applied, which may lead to parsing conflicts.</span>
 <span class="sd">    """</span>
 
 <div class="viewcode-block" id="XMLAgentOutputParser.parse">
 <a class="viewcode-back" href="../../../../langchain/agents/langchain.agents.output_parsers.xml.XMLAgentOutputParser.html#langchain.agents.output_parsers.xml.XMLAgentOutputParser.parse">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">AgentAction</span><span class="p">,</span> <span class="n">AgentFinish</span><span class="p">]:</span>
-        <span class="k">if</span> <span class="s2">"&lt;/tool&gt;"</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
-            <span class="n">tool</span><span class="p">,</span> <span class="n">tool_input</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"&lt;/tool&gt;"</span><span class="p">)</span>
-            <span class="n">_tool</span> <span class="o">=</span> <span class="n">tool</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"&lt;tool&gt;"</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="n">_tool_input</span> <span class="o">=</span> <span class="n">tool_input</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"&lt;tool_input&gt;"</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">if</span> <span class="s2">"&lt;/tool_input&gt;"</span> <span class="ow">in</span> <span class="n">_tool_input</span><span class="p">:</span>
-                <span class="n">_tool_input</span> <span class="o">=</span> <span class="n">_tool_input</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"&lt;/tool_input&gt;"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># Check for tool invocation first</span>
+        <span class="n">tool_matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s2">"&lt;tool&gt;(.*?)&lt;/tool&gt;"</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tool_matches</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tool_matches</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Malformed tool invocation: expected exactly one &lt;tool&gt; block, "</span>
+                    <span class="sa">f</span><span class="s2">"but found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tool_matches</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+                <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">_tool</span> <span class="o">=</span> <span class="n">tool_matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># Match optional tool input</span>
+            <span class="n">input_matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span>
+                <span class="sa">r</span><span class="s2">"&lt;tool_input&gt;(.*?)&lt;/tool_input&gt;"</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_matches</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Malformed tool invocation: expected at most one &lt;tool_input&gt; "</span>
+                    <span class="sa">f</span><span class="s2">"block, but found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">input_matches</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+                <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">_tool_input</span> <span class="o">=</span> <span class="n">input_matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">input_matches</span> <span class="k">else</span> <span class="s2">""</span>
+
+            <span class="c1"># Unescape if minimal escape format is used</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">escape_format</span> <span class="o">==</span> <span class="s2">"minimal"</span><span class="p">:</span>
+                <span class="n">_tool</span> <span class="o">=</span> <span class="n">_unescape</span><span class="p">(</span><span class="n">_tool</span><span class="p">)</span>
+                <span class="n">_tool_input</span> <span class="o">=</span> <span class="n">_unescape</span><span class="p">(</span><span class="n">_tool_input</span><span class="p">)</span>
+
             <span class="k">return</span> <span class="n">AgentAction</span><span class="p">(</span><span class="n">tool</span><span class="o">=</span><span class="n">_tool</span><span class="p">,</span> <span class="n">tool_input</span><span class="o">=</span><span class="n">_tool_input</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="n">text</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s2">"&lt;final_answer&gt;"</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">answer</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"&lt;final_answer&gt;"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="s2">"&lt;/final_answer&gt;"</span> <span class="ow">in</span> <span class="n">answer</span><span class="p">:</span>
-                <span class="n">answer</span> <span class="o">=</span> <span class="n">answer</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"&lt;/final_answer&gt;"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># Check for final answer</span>
+        <span class="k">if</span> <span class="s2">"&lt;final_answer&gt;"</span> <span class="ow">in</span> <span class="n">text</span> <span class="ow">and</span> <span class="s2">"&lt;/final_answer&gt;"</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+            <span class="n">matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s2">"&lt;final_answer&gt;(.*?)&lt;/final_answer&gt;"</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matches</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">"Malformed output: expected exactly one "</span>
+                    <span class="s2">"&lt;final_answer&gt;...&lt;/final_answer&gt; block."</span>
+                <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">answer</span> <span class="o">=</span> <span class="n">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># Unescape custom delimiters in final answer</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">escape_format</span> <span class="o">==</span> <span class="s2">"minimal"</span><span class="p">:</span>
+                <span class="n">answer</span> <span class="o">=</span> <span class="n">_unescape</span><span class="p">(</span><span class="n">answer</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">AgentFinish</span><span class="p">(</span><span class="n">return_values</span><span class="o">=</span><span class="p">{</span><span class="s2">"output"</span><span class="p">:</span> <span class="n">answer</span><span class="p">},</span> <span class="n">log</span><span class="o">=</span><span class="n">text</span><span class="p">)</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span></div>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"Malformed output: expected either a tool invocation "</span>
+            <span class="s2">"or a final answer in XML format."</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="XMLAgentOutputParser.get_format_instructions">

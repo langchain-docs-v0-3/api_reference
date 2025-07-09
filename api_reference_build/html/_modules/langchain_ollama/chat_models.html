@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 08, 2025" name="docbuild:last-update"/>
+<meta content="Jul 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -222,6 +222,8 @@
 <h1>Source code for langchain_ollama.chat_models</h1><div class="highlight"><pre>
 <span></span><span class="sd">"""Ollama chat models."""</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncIterator</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">itemgetter</span>
@@ -296,7 +298,9 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_json_string</span><span class="p">(</span>
-    <span class="n">json_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw_tool_call</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">skip</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">json_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">raw_tool_call</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">skip</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Attempt to parse a JSON string for tool calling.</span>
 
@@ -370,16 +374,19 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ToolCall</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Get tool calls from ollama response."""</span>
     <span class="n">tool_calls</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">if</span> <span class="s2">"message"</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">raw_tool_calls</span> <span class="o">:=</span> <span class="n">response</span><span class="p">[</span><span class="s2">"message"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tool_calls"</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">tc</span> <span class="ow">in</span> <span class="n">raw_tool_calls</span><span class="p">:</span>
-                <span class="n">tool_calls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">tool_call</span><span class="p">(</span>
-                        <span class="nb">id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">uuid4</span><span class="p">()),</span>
-                        <span class="n">name</span><span class="o">=</span><span class="n">tc</span><span class="p">[</span><span class="s2">"function"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">],</span>
-                        <span class="n">args</span><span class="o">=</span><span class="n">_parse_arguments_from_tool_call</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{},</span>
-                    <span class="p">)</span>
+    <span class="k">if</span> <span class="s2">"message"</span> <span class="ow">in</span> <span class="n">response</span> <span class="ow">and</span> <span class="p">(</span>
+        <span class="n">raw_tool_calls</span> <span class="o">:=</span> <span class="n">response</span><span class="p">[</span><span class="s2">"message"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tool_calls"</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="n">tool_calls</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">tool_call</span><span class="p">(</span>
+                    <span class="nb">id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">uuid4</span><span class="p">()),</span>
+                    <span class="n">name</span><span class="o">=</span><span class="n">tc</span><span class="p">[</span><span class="s2">"function"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">],</span>
+                    <span class="n">args</span><span class="o">=</span><span class="n">_parse_arguments_from_tool_call</span><span class="p">(</span><span class="n">tc</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{},</span>
                 <span class="p">)</span>
+                <span class="k">for</span> <span class="n">tc</span> <span class="ow">in</span> <span class="n">raw_tool_calls</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
     <span class="k">return</span> <span class="n">tool_calls</span>
 
 
@@ -400,13 +407,11 @@
     <span class="k">if</span> <span class="n">block</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"image"</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">block</span><span class="p">[</span><span class="s2">"source_type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"base64"</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">block</span><span class="p">[</span><span class="s2">"data"</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">error_message</span> <span class="o">=</span> <span class="s2">"Image data only supported through in-line base64 format."</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
-
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">error_message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Blocks of type </span><span class="si">{</span><span class="n">block</span><span class="p">[</span><span class="s1">'type'</span><span class="p">]</span><span class="si">}</span><span class="s2"> not supported."</span>
+        <span class="n">error_message</span> <span class="o">=</span> <span class="s2">"Image data only supported through in-line base64 format."</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
+
+    <span class="n">error_message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Blocks of type </span><span class="si">{</span><span class="n">block</span><span class="p">[</span><span class="s1">'type'</span><span class="p">]</span><span class="si">}</span><span class="s2"> not supported."</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_pydantic_class</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -436,17 +441,17 @@
 <span class="sd">            `supported models &lt;https://ollama.com/search?c=thinking&gt;`__.</span>
 
 <span class="sd">            - ``True``: Enables reasoning mode. The model's reasoning process will be</span>
-<span class="sd">            captured and returned separately in the ``additional_kwargs`` of the</span>
-<span class="sd">            response message, under ``reasoning_content``. The main response</span>
-<span class="sd">            content will not include the reasoning tags.</span>
+<span class="sd">              captured and returned separately in the ``additional_kwargs`` of the</span>
+<span class="sd">              response message, under ``reasoning_content``. The main response</span>
+<span class="sd">              content will not include the reasoning tags.</span>
 <span class="sd">            - ``False``: Disables reasoning mode. The model will not perform any reasoning,</span>
-<span class="sd">            and the response will not include any reasoning content.</span>
+<span class="sd">              and the response will not include any reasoning content.</span>
 <span class="sd">            - ``None`` (Default): The model will use its default reasoning behavior. Note</span>
-<span class="sd">            however, if the model's default behavior *is* to perform reasoning, think tags</span>
-<span class="sd">            ()``&lt;think&gt;`` and ``&lt;/think&gt;``) will be present within the main response content</span>
-<span class="sd">            unless you set ``reasoning`` to ``True``.</span>
+<span class="sd">              however, if the model's default behavior *is* to perform reasoning, think tags</span>
+<span class="sd">              (``&lt;think&gt;`` and ``&lt;/think&gt;``) will be present within the main response content</span>
+<span class="sd">              unless you set ``reasoning`` to ``True``.</span>
 <span class="sd">        temperature: float</span>
-<span class="sd">            Sampling temperature. Ranges from 0.0 to 1.0.</span>
+<span class="sd">            Sampling temperature. Ranges from ``0.0`` to ``1.0``.</span>
 <span class="sd">        num_predict: Optional[int]</span>
 <span class="sd">            Max number of tokens to generate.</span>
 
@@ -562,7 +567,6 @@
 <span class="sd">            '{"location": "Pune, India", "time_of_day": "morning"}'</span>
 
 <span class="sd">    Tool Calling:</span>
-
 <span class="sd">        .. code-block:: python</span>
 
 <span class="sd">            from langchain_ollama import ChatOllama</span>
@@ -581,6 +585,48 @@
 <span class="sd">            'args': {'a': 45, 'b': 67},</span>
 <span class="sd">            'id': '420c3f3b-df10-4188-945f-eb3abdb40622',</span>
 <span class="sd">            'type': 'tool_call'}]</span>
+
+<span class="sd">    Thinking / Reasoning:</span>
+<span class="sd">        You can enable reasoning mode for models that support it by setting</span>
+<span class="sd">        the ``reasoning`` parameter to ``True`` in either the constructor or</span>
+<span class="sd">        the ``invoke``/``stream`` methods. This will enable the model to think</span>
+<span class="sd">        through the problem and return the reasoning process separately in the</span>
+<span class="sd">        ``additional_kwargs`` of the response message, under ``reasoning_content``.</span>
+
+<span class="sd">        If ``reasoning`` is set to ``None``, the model will use its default reasoning</span>
+<span class="sd">        behavior, and any reasoning content will *not* be captured under the</span>
+<span class="sd">        ``reasoning_content`` key, but will be present within the main response content</span>
+<span class="sd">        as think tags (``&lt;think&gt;`` and ``&lt;/think&gt;``).</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            This feature is only available for `models that support reasoning &lt;https://ollama.com/search?c=thinking&gt;`__.</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from langchain_ollama import ChatOllama</span>
+
+<span class="sd">            llm = ChatOllama(</span>
+<span class="sd">                model = "deepseek-r1:8b",</span>
+<span class="sd">                reasoning= True,</span>
+<span class="sd">            )</span>
+
+<span class="sd">            user_message = HumanMessage(content="how many r in the word strawberry?")</span>
+<span class="sd">            messages: List[Any] = [user_message]</span>
+<span class="sd">            llm.invoke(messages)</span>
+
+<span class="sd">            # or, on an invocation basis:</span>
+
+<span class="sd">            llm.invoke(messages, reasoning=True)</span>
+<span class="sd">            # or llm.stream(messages, reasoning=True)</span>
+
+<span class="sd">            # If not provided, the invocation will default to the ChatOllama reasoning</span>
+<span class="sd">            # param provided (None by default).</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            AIMessage(content='The word "strawberry" contains **three \'r\' letters**. Here\'s a breakdown for clarity:\n\n- The spelling of "strawberry" has two parts ... be 3.\n\nTo be thorough, let\'s confirm with an online source or common knowledge.\n\nI can recall that "strawberry" has: s-t-r-a-w-b-e-r-r-y — yes, three r\'s.\n\nPerhaps it\'s misspelled by some, but standard is correct.\n\nSo I think the response should be 3.\n'}, response_metadata={'model': 'deepseek-r1:8b', 'created_at': '2025-07-08T19:33:55.891269Z', 'done': True, 'done_reason': 'stop', 'total_duration': 98232561292, 'load_duration': 28036792, 'prompt_eval_count': 10, 'prompt_eval_duration': 40171834, 'eval_count': 3615, 'eval_duration': 98163832416, 'model_name': 'deepseek-r1:8b'}, id='run--18f8269f-6a35-4a7c-826d-b89d52c753b3-0', usage_metadata={'input_tokens': 10, 'output_tokens': 3615, 'total_tokens': 3625})</span>
+
+
 <span class="sd">    """</span>  <span class="c1"># noqa: E501, pylint: disable=line-too-long</span>
 
     <span class="n">model</span><span class="p">:</span> <span class="nb">str</span>
@@ -683,7 +729,7 @@
 <span class="w">    </span><span class="sd">"""Base url the model is hosted under."""</span>
 
     <span class="n">client_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="w">    </span><span class="sd">"""Additional kwargs to pass to the httpx clients. </span>
+<span class="w">    </span><span class="sd">"""Additional kwargs to pass to the httpx clients.</span>
 <span class="sd">    These arguments are passed to both synchronous and async clients.</span>
 <span class="sd">    Use sync_client_kwargs and async_client_kwargs to pass different arguments</span>
 <span class="sd">    to synchronous and asynchronous clients.</span>
@@ -720,7 +766,8 @@
         <span class="n">ollama_messages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_messages_to_ollama_messages</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`stop` found in both the input and default params."</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"`stop` found in both the input and default params."</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">stop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span>
 
@@ -808,7 +855,8 @@
                 <span class="n">role</span> <span class="o">=</span> <span class="s2">"tool"</span>
                 <span class="n">tool_call_id</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">tool_call_id</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Received unsupported message type for Ollama."</span><span class="p">)</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Received unsupported message type for Ollama."</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
             <span class="n">content</span> <span class="o">=</span> <span class="s2">""</span>
             <span class="n">images</span> <span class="o">=</span> <span class="p">[]</span>
@@ -832,10 +880,11 @@
                         <span class="p">):</span>
                             <span class="n">image_url</span> <span class="o">=</span> <span class="n">temp_image_url</span><span class="p">[</span><span class="s2">"url"</span><span class="p">]</span>
                         <span class="k">else</span><span class="p">:</span>
-                            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                                 <span class="s2">"Only string image_url or dict with string 'url' "</span>
                                 <span class="s2">"inside content parts are supported."</span>
                             <span class="p">)</span>
+                            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
                         <span class="n">image_url_components</span> <span class="o">=</span> <span class="n">image_url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span>
                         <span class="c1"># Support data:image/jpeg;base64,&lt;image&gt; format</span>
@@ -848,22 +897,24 @@
                         <span class="n">image</span> <span class="o">=</span> <span class="n">_get_image_from_data_content_block</span><span class="p">(</span><span class="n">content_part</span><span class="p">)</span>
                         <span class="n">images</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                             <span class="s2">"Unsupported message content type. "</span>
                             <span class="s2">"Must either have type 'text' or type 'image_url' "</span>
                             <span class="s2">"with a string 'image_url' field."</span>
                         <span class="p">)</span>
-            <span class="c1"># Should convert to ollama.Message once role includes tool, and tool_call_id is in Message # noqa: E501</span>
-            <span class="n">msg</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="c1"># Should convert to ollama.Message once role includes tool,</span>
+            <span class="c1"># and tool_call_id is in Message</span>
+            <span class="n">msg_</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">"role"</span><span class="p">:</span> <span class="n">role</span><span class="p">,</span>
                 <span class="s2">"content"</span><span class="p">:</span> <span class="n">content</span><span class="p">,</span>
                 <span class="s2">"images"</span><span class="p">:</span> <span class="n">images</span><span class="p">,</span>
             <span class="p">}</span>
             <span class="k">if</span> <span class="n">tool_calls</span><span class="p">:</span>
-                <span class="n">msg</span><span class="p">[</span><span class="s2">"tool_calls"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tool_calls</span>
+                <span class="n">msg_</span><span class="p">[</span><span class="s2">"tool_calls"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tool_calls</span>
             <span class="k">if</span> <span class="n">tool_call_id</span><span class="p">:</span>
-                <span class="n">msg</span><span class="p">[</span><span class="s2">"tool_call_id"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tool_call_id</span>
-            <span class="n">ollama_messages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="n">msg_</span><span class="p">[</span><span class="s2">"tool_call_id"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tool_call_id</span>
+            <span class="n">ollama_messages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">msg_</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">ollama_messages</span>
 
@@ -901,7 +952,7 @@
         <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">],</span>
         <span class="n">stop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">run_manager</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CallbackManagerForLLMRun</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001, FBT002</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChatGenerationChunk</span><span class="p">:</span>
         <span class="n">final_chunk</span> <span class="o">=</span> <span class="kc">None</span>
@@ -917,7 +968,8 @@
                     <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
                 <span class="p">)</span>
         <span class="k">if</span> <span class="n">final_chunk</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No data received from Ollama stream."</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"No data received from Ollama stream."</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">final_chunk</span>
 
@@ -926,7 +978,7 @@
         <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">],</span>
         <span class="n">stop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">run_manager</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AsyncCallbackManagerForLLMRun</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001, FBT002</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChatGenerationChunk</span><span class="p">:</span>
         <span class="n">final_chunk</span> <span class="o">=</span> <span class="kc">None</span>
@@ -942,7 +994,8 @@
                     <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
                 <span class="p">)</span>
         <span class="k">if</span> <span class="n">final_chunk</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No data received from Ollama stream."</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"No data received from Ollama stream."</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">final_chunk</span>
 
@@ -989,6 +1042,7 @@
         <span class="n">stop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">ChatGenerationChunk</span><span class="p">]:</span>
+        <span class="n">reasoning</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reasoning"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reasoning</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">stream_resp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_chat_stream</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stream_resp</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">stream_resp</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"done"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
@@ -1007,7 +1061,7 @@
 
                 <span class="n">additional_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
                 <span class="k">if</span> <span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">reasoning</span>
+                    <span class="n">reasoning</span>
                     <span class="ow">and</span> <span class="s2">"message"</span> <span class="ow">in</span> <span class="n">stream_resp</span>
                     <span class="ow">and</span> <span class="p">(</span><span class="n">thinking_content</span> <span class="o">:=</span> <span class="n">stream_resp</span><span class="p">[</span><span class="s2">"message"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"thinking"</span><span class="p">))</span>
                 <span class="p">):</span>
@@ -1048,6 +1102,7 @@
         <span class="n">stop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">ChatGenerationChunk</span><span class="p">]:</span>
+        <span class="n">reasoning</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reasoning"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reasoning</span><span class="p">)</span>
         <span class="k">async</span> <span class="k">for</span> <span class="n">stream_resp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acreate_chat_stream</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stream_resp</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">stream_resp</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"done"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
@@ -1066,7 +1121,7 @@
 
                 <span class="n">additional_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
                 <span class="k">if</span> <span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">reasoning</span>
+                    <span class="n">reasoning</span>
                     <span class="ow">and</span> <span class="s2">"message"</span> <span class="ow">in</span> <span class="n">stream_resp</span>
                     <span class="ow">and</span> <span class="p">(</span><span class="n">thinking_content</span> <span class="o">:=</span> <span class="n">stream_resp</span><span class="p">[</span><span class="s2">"message"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"thinking"</span><span class="p">))</span>
                 <span class="p">):</span>
@@ -1134,7 +1189,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">tools</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">type</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">BaseTool</span><span class="p">]],</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">tool_choice</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"any"</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">tool_choice</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"any"</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: PYI051</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Runnable</span><span class="p">[</span><span class="n">LanguageModelInput</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Bind tool-like objects to this chat model.</span>
@@ -1149,7 +1204,7 @@
 <span class="sd">                is currently ignored as it is not supported by Ollama.**</span>
 <span class="sd">            kwargs: Any additional parameters are passed directly to</span>
 <span class="sd">                ``self.bind(**kwargs)``.</span>
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="n">formatted_tools</span> <span class="o">=</span> <span class="p">[</span><span class="n">convert_to_openai_tool</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span> <span class="k">for</span> <span class="n">tool</span> <span class="ow">in</span> <span class="n">tools</span><span class="p">]</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">tools</span><span class="o">=</span><span class="n">formatted_tools</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
@@ -1409,14 +1464,16 @@
 <span class="sd">        """</span>  <span class="c1"># noqa: E501, D301</span>
         <span class="n">_</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"strict"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Received unsupported arguments </span><span class="si">{</span><span class="n">kwargs</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Received unsupported arguments </span><span class="si">{</span><span class="n">kwargs</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">is_pydantic_schema</span> <span class="o">=</span> <span class="n">_is_pydantic_class</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"function_calling"</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="s2">"schema must be specified when method is not 'json_mode'. "</span>
                     <span class="s2">"Received None."</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="n">formatted_tool</span> <span class="o">=</span> <span class="n">convert_to_openai_tool</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
             <span class="n">tool_name</span> <span class="o">=</span> <span class="n">formatted_tool</span><span class="p">[</span><span class="s2">"function"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">]</span>
             <span class="n">llm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bind_tools</span><span class="p">(</span>
@@ -1451,10 +1508,11 @@
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"json_schema"</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="s2">"schema must be specified when method is not 'json_mode'. "</span>
                     <span class="s2">"Received None."</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">is_pydantic_schema</span><span class="p">:</span>
                 <span class="n">schema</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">TypeBaseModel</span><span class="p">,</span> <span class="n">schema</span><span class="p">)</span>
                 <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">BaseModelV1</span><span class="p">):</span>
@@ -1488,10 +1546,11 @@
                 <span class="p">)</span>
                 <span class="n">output_parser</span> <span class="o">=</span> <span class="n">JsonOutputParser</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Unrecognized method argument. Expected one of 'function_calling', "</span>
                 <span class="sa">f</span><span class="s2">"'json_schema', or 'json_mode'. Received: '</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">'"</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">include_raw</span><span class="p">:</span>
             <span class="n">parser_assign</span> <span class="o">=</span> <span class="n">RunnablePassthrough</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span>

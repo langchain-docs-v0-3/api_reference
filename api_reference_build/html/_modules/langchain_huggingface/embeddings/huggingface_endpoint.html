@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 08, 2025" name="docbuild:last-update"/>
+<meta content="Jul 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,9 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_huggingface.embeddings.huggingface_endpoint</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">Embeddings</span>
@@ -251,6 +253,7 @@
 <span class="sd">                task="feature-extraction",</span>
 <span class="sd">                huggingfacehub_api_token="my-api-key",</span>
 <span class="sd">            )</span>
+
 <span class="sd">    """</span>
 
     <span class="n">client</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1">#: :meta private:</span>
@@ -259,7 +262,7 @@
 <span class="w">    </span><span class="sd">"""Model name to use."""</span>
     <span class="n">provider</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Name of the provider to use for inference with the model specified in</span>
-<span class="sd">        ``repo_id``. e.g. "sambanova". if not specified, defaults to HF Inference API. </span>
+<span class="sd">        ``repo_id``. e.g. "sambanova". if not specified, defaults to HF Inference API.</span>
 <span class="sd">        available providers can be found in the [huggingface_hub documentation](https://huggingface.co/docs/huggingface_hub/guides/inference#supported-providers-and-tasks)."""</span>
     <span class="n">repo_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Huggingfacehub repository id, for backward compatibility."""</span>
@@ -311,18 +314,20 @@
             <span class="p">)</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">task</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VALID_TASKS</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Got invalid task </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="si">}</span><span class="s2">, "</span>
                     <span class="sa">f</span><span class="s2">"currently only </span><span class="si">{</span><span class="n">VALID_TASKS</span><span class="si">}</span><span class="s2"> are supported"</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">client</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span> <span class="o">=</span> <span class="n">async_client</span>
 
-        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Could not import huggingface_hub python package. "</span>
                 <span class="s2">"Please install it with `pip install huggingface_hub`."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="HuggingFaceEndpointEmbeddings.embed_documents">
@@ -335,6 +340,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of embeddings, one for each text.</span>
+
 <span class="sd">        """</span>
         <span class="c1"># replace newlines, which can negatively affect performance.</span>
         <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">)</span> <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">texts</span><span class="p">]</span>
@@ -354,6 +360,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of embeddings, one for each text.</span>
+
 <span class="sd">        """</span>
         <span class="c1"># replace newlines, which can negatively affect performance.</span>
         <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">)</span> <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">texts</span><span class="p">]</span>
@@ -374,9 +381,9 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Embeddings for the text.</span>
+
 <span class="sd">        """</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embed_documents</span><span class="p">([</span><span class="n">text</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">response</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">embed_documents</span><span class="p">([</span><span class="n">text</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="HuggingFaceEndpointEmbeddings.aembed_query">
@@ -389,9 +396,9 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Embeddings for the text.</span>
+
 <span class="sd">        """</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="p">(</span><span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">aembed_documents</span><span class="p">([</span><span class="n">text</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">response</span></div>
+        <span class="k">return</span> <span class="p">(</span><span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">aembed_documents</span><span class="p">([</span><span class="n">text</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span></div>
 </div>
 
 </pre></div>

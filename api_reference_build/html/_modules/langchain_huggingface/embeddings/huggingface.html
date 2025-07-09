@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 08, 2025" name="docbuild:last-update"/>
+<meta content="Jul 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,12 +220,14 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_huggingface.embeddings.huggingface</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">Embeddings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.import_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_huggingface.utils.import_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">IMPORT_ERROR</span><span class="p">,</span>
     <span class="n">is_ipex_available</span><span class="p">,</span>
     <span class="n">is_optimum_intel_available</span><span class="p">,</span>
@@ -257,12 +259,13 @@
 <span class="sd">                model_kwargs=model_kwargs,</span>
 <span class="sd">                encode_kwargs=encode_kwargs</span>
 <span class="sd">            )</span>
+
 <span class="sd">    """</span>
 
     <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_MODEL_NAME</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">"model"</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">"""Model name to use."""</span>
     <span class="n">cache_folder</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">"""Path to store models. </span>
+<span class="w">    </span><span class="sd">"""Path to store models.</span>
 <span class="sd">    Can be also set by SENTENCE_TRANSFORMERS_HOME environment variable."""</span>
     <span class="n">model_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">"""Keyword arguments to pass to the Sentence Transformer model, such as `device`,</span>
@@ -270,12 +273,12 @@
 <span class="sd">    See also the Sentence Transformer documentation: https://sbert.net/docs/package_reference/SentenceTransformer.html#sentence_transformers.SentenceTransformer"""</span>
     <span class="n">encode_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">"""Keyword arguments to pass when calling the `encode` method for the documents of</span>
-<span class="sd">    the Sentence Transformer model, such as `prompt_name`, `prompt`, `batch_size`, </span>
+<span class="sd">    the Sentence Transformer model, such as `prompt_name`, `prompt`, `batch_size`,</span>
 <span class="sd">    `precision`, `normalize_embeddings`, and more.</span>
 <span class="sd">    See also the Sentence Transformer documentation: https://sbert.net/docs/package_reference/SentenceTransformer.html#sentence_transformers.SentenceTransformer.encode"""</span>
     <span class="n">query_encode_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">"""Keyword arguments to pass when calling the `encode` method for the query of</span>
-<span class="sd">    the Sentence Transformer model, such as `prompt_name`, `prompt`, `batch_size`, </span>
+<span class="sd">    the Sentence Transformer model, such as `prompt_name`, `prompt`, `batch_size`,</span>
 <span class="sd">    `precision`, `normalize_embeddings`, and more.</span>
 <span class="sd">    See also the Sentence Transformer documentation: https://sbert.net/docs/package_reference/SentenceTransformer.html#sentence_transformers.SentenceTransformer.encode"""</span>
     <span class="n">multi_process</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
@@ -289,24 +292,25 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">import</span><span class="w"> </span><span class="nn">sentence_transformers</span>  <span class="c1"># type: ignore[import]</span>
         <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Could not import sentence_transformers python package. "</span>
                 <span class="s2">"Please install it with `pip install sentence-transformers`."</span>
-            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"backend"</span><span class="p">,</span> <span class="s2">"torch"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"ipex"</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">is_optimum_intel_available</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">is_ipex_available</span><span class="p">():</span>
-                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s1">'Backend: ipex </span><span class="si">{</span><span class="n">IMPORT_ERROR</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">"optimum[ipex]"</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span>
-                <span class="p">)</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Backend: ipex </span><span class="si">{</span><span class="n">IMPORT_ERROR</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">'optimum[ipex]'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">is_optimum_intel_version</span><span class="p">(</span><span class="s2">"&lt;"</span><span class="p">,</span> <span class="n">_MIN_OPTIMUM_VERSION</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Backend: ipex requires optimum-intel&gt;="</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_MIN_OPTIMUM_VERSION</span><span class="si">}</span><span class="s2">. You can install it with pip: "</span>
                     <span class="s2">"`pip install --upgrade --upgrade-strategy eager "</span>
                     <span class="s2">"`optimum[ipex]`."</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
             <span class="kn">from</span><span class="w"> </span><span class="nn">optimum.intel</span><span class="w"> </span><span class="kn">import</span> <span class="n">IPEXSentenceTransformer</span>  <span class="c1"># type: ignore[import]</span>
 
@@ -328,21 +332,21 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_embed</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">texts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">encode_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        Embed a text using the HuggingFace transformer model.</span>
+<span class="w">        </span><span class="sd">"""Embed a text using the HuggingFace transformer model.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            texts: The list of texts to embed.</span>
 <span class="sd">            encode_kwargs: Keyword arguments to pass when calling the</span>
 <span class="sd">                `encode` method for the documents of the SentenceTransformer</span>
-<span class="sd">                 encode method.</span>
+<span class="sd">                encode method.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of embeddings, one for each text.</span>
+
 <span class="sd">        """</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">sentence_transformers</span>  <span class="c1"># type: ignore[import]</span>
 
-        <span class="n">texts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">),</span> <span class="n">texts</span><span class="p">))</span>
+        <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">texts</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multi_process</span><span class="p">:</span>
             <span class="n">pool</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">start_multi_process_pool</span><span class="p">()</span>
             <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">encode_multi_process</span><span class="p">(</span><span class="n">texts</span><span class="p">,</span> <span class="n">pool</span><span class="p">)</span>
@@ -351,16 +355,17 @@
             <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
                 <span class="n">texts</span><span class="p">,</span>
                 <span class="n">show_progress_bar</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_progress</span><span class="p">,</span>
-                <span class="o">**</span><span class="n">encode_kwargs</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                <span class="o">**</span><span class="n">encode_kwargs</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Expected embeddings to be a Tensor or a numpy array, "</span>
                 <span class="s2">"got a list instead."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>  <span class="c1"># type: ignore[return-type]</span>
 
 <div class="viewcode-block" id="HuggingFaceEmbeddings.embed_documents">
 <a class="viewcode-back" href="../../../huggingface/embeddings/langchain_huggingface.embeddings.huggingface.HuggingFaceEmbeddings.html#langchain_huggingface.embeddings.huggingface.HuggingFaceEmbeddings.embed_documents">[docs]</a>
@@ -372,6 +377,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of embeddings, one for each text.</span>
+
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embed</span><span class="p">(</span><span class="n">texts</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode_kwargs</span><span class="p">)</span></div>
 
@@ -386,6 +392,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Embeddings for the text.</span>
+
 <span class="sd">        """</span>
         <span class="n">embed_kwargs</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">query_encode_kwargs</span>

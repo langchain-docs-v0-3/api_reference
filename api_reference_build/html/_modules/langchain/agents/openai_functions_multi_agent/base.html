@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 08, 2025" name="docbuild:last-update"/>
+<meta content="Jul 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -268,21 +268,21 @@
     <span class="k">if</span> <span class="n">function_call</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">arguments</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">function_call</span><span class="p">[</span><span class="s2">"arguments"</span><span class="p">],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">JSONDecodeError</span><span class="p">:</span>
+        <span class="k">except</span> <span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Could not parse tool input: </span><span class="si">{</span><span class="n">function_call</span><span class="si">}</span><span class="s2"> because "</span>
                 <span class="sa">f</span><span class="s2">"the `arguments` is not valid JSON."</span>
             <span class="p">)</span>
-            <span class="k">raise</span> <span class="n">OutputParserException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">OutputParserException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">tools</span> <span class="o">=</span> <span class="n">arguments</span><span class="p">[</span><span class="s2">"actions"</span><span class="p">]</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">):</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Could not parse tool input: </span><span class="si">{</span><span class="n">function_call</span><span class="si">}</span><span class="s2"> because "</span>
                 <span class="sa">f</span><span class="s2">"the `arguments` JSON does not contain `actions` key."</span>
             <span class="p">)</span>
-            <span class="k">raise</span> <span class="n">OutputParserException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">OutputParserException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
         <span class="n">final_tools</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AgentAction</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">tool_schema</span> <span class="ow">in</span> <span class="n">tools</span><span class="p">:</span>
@@ -320,6 +320,9 @@
         <span class="n">return_values</span><span class="o">=</span><span class="p">{</span><span class="s2">"output"</span><span class="p">:</span> <span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">},</span>
         <span class="n">log</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">),</span>
     <span class="p">)</span>
+
+
+<span class="n">_NOT_SET</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="OpenAIMultiFunctionsAgent">
@@ -498,9 +501,7 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_prompt</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
-        <span class="n">system_message</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SystemMessage</span><span class="p">]</span> <span class="o">=</span> <span class="n">SystemMessage</span><span class="p">(</span>
-            <span class="n">content</span><span class="o">=</span><span class="s2">"You are a helpful AI assistant."</span><span class="p">,</span>
-        <span class="p">),</span>
+        <span class="n">system_message</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SystemMessage</span><span class="p">]</span> <span class="o">=</span> <span class="n">_NOT_SET</span><span class="p">,</span>  <span class="c1"># type: ignore[assignment]</span>
         <span class="n">extra_prompt_messages</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">BaseMessagePromptTemplate</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BasePromptTemplate</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Create prompt for this agent.</span>
@@ -515,8 +516,13 @@
 <span class="sd">            A prompt template to pass into this agent.</span>
 <span class="sd">        """</span>
         <span class="n">_prompts</span> <span class="o">=</span> <span class="n">extra_prompt_messages</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="n">system_message_</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">system_message</span>
+            <span class="k">if</span> <span class="n">system_message</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_NOT_SET</span>
+            <span class="k">else</span> <span class="n">SystemMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s2">"You are a helpful AI assistant."</span><span class="p">)</span>
+        <span class="p">)</span>
         <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">BaseMessagePromptTemplate</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">]]</span>
-        <span class="n">messages</span> <span class="o">=</span> <span class="p">[</span><span class="n">system_message</span><span class="p">]</span> <span class="k">if</span> <span class="n">system_message</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="n">messages</span> <span class="o">=</span> <span class="p">[</span><span class="n">system_message_</span><span class="p">]</span> <span class="k">if</span> <span class="n">system_message_</span> <span class="k">else</span> <span class="p">[]</span>
 
         <span class="n">messages</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
             <span class="p">[</span>
@@ -537,9 +543,7 @@
         <span class="n">tools</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">BaseTool</span><span class="p">],</span>
         <span class="n">callback_manager</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseCallbackManager</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">extra_prompt_messages</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">BaseMessagePromptTemplate</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">system_message</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SystemMessage</span><span class="p">]</span> <span class="o">=</span> <span class="n">SystemMessage</span><span class="p">(</span>
-            <span class="n">content</span><span class="o">=</span><span class="s2">"You are a helpful AI assistant."</span><span class="p">,</span>
-        <span class="p">),</span>
+        <span class="n">system_message</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SystemMessage</span><span class="p">]</span> <span class="o">=</span> <span class="n">_NOT_SET</span><span class="p">,</span>  <span class="c1"># type: ignore[assignment]</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseMultiActionAgent</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Construct an agent from an LLM and tools.</span>
@@ -553,9 +557,14 @@
 <span class="sd">                Default is a default system message.</span>
 <span class="sd">            kwargs: Additional arguments.</span>
 <span class="sd">        """</span>
+        <span class="n">system_message_</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">system_message</span>
+            <span class="k">if</span> <span class="n">system_message</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_NOT_SET</span>
+            <span class="k">else</span> <span class="n">SystemMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s2">"You are a helpful AI assistant."</span><span class="p">)</span>
+        <span class="p">)</span>
         <span class="n">prompt</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">create_prompt</span><span class="p">(</span>
             <span class="n">extra_prompt_messages</span><span class="o">=</span><span class="n">extra_prompt_messages</span><span class="p">,</span>
-            <span class="n">system_message</span><span class="o">=</span><span class="n">system_message</span><span class="p">,</span>
+            <span class="n">system_message</span><span class="o">=</span><span class="n">system_message_</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>  <span class="c1"># type: ignore[call-arg]</span>
             <span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>

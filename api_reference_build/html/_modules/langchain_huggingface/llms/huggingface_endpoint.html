@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 08, 2025" name="docbuild:last-update"/>
+<meta content="Jul 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,9 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_huggingface.llms.huggingface_endpoint</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncIterator</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Mapping</span>
@@ -249,8 +251,7 @@
 <div class="viewcode-block" id="HuggingFaceEndpoint">
 <a class="viewcode-back" href="../../../huggingface/llms/langchain_huggingface.llms.huggingface_endpoint.HuggingFaceEndpoint.html#langchain_huggingface.llms.huggingface_endpoint.HuggingFaceEndpoint">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">HuggingFaceEndpoint</span><span class="p">(</span><span class="n">LLM</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Hugging Face Endpoint. This works with any model that supports text generation (i.e. text completion) task.</span>
+<span class="w">    </span><span class="sd">"""Hugging Face Endpoint. This works with any model that supports text generation (i.e. text completion) task.</span>
 
 <span class="sd">    To use this class, you should have installed the ``huggingface_hub`` package, and</span>
 <span class="sd">    the environment variable ``HUGGINGFACEHUB_API_TOKEN`` set with your API token,</span>
@@ -299,6 +300,7 @@
 <span class="sd">                huggingfacehub_api_token="my-api-key"</span>
 <span class="sd">            )</span>
 <span class="sd">            print(llm.invoke("What is Deep Learning?"))</span>
+
 <span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
 
     <span class="n">endpoint_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -371,7 +373,8 @@
         <span class="n">extra</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model_kwargs"</span><span class="p">,</span> <span class="p">{})</span>
         <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">extra</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2"> supplied twice."</span><span class="p">)</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2"> supplied twice."</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">field_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_required_field_names</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"""WARNING! </span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2"> is not default parameter.</span>
@@ -382,10 +385,11 @@
 
         <span class="n">invalid_model_kwargs</span> <span class="o">=</span> <span class="n">all_required_field_names</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">extra</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="k">if</span> <span class="n">invalid_model_kwargs</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Parameters </span><span class="si">{</span><span class="n">invalid_model_kwargs</span><span class="si">}</span><span class="s2"> should be specified explicitly. "</span>
                 <span class="sa">f</span><span class="s2">"Instead they were passed in as part of `model_kwargs` parameter."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="n">values</span><span class="p">[</span><span class="s2">"model_kwargs"</span><span class="p">]</span> <span class="o">=</span> <span class="n">extra</span>
 
@@ -409,18 +413,20 @@
         <span class="n">repo_id</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"repo_id"</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">sum</span><span class="p">([</span><span class="nb">bool</span><span class="p">(</span><span class="n">model</span><span class="p">),</span> <span class="nb">bool</span><span class="p">(</span><span class="n">endpoint_url</span><span class="p">),</span> <span class="nb">bool</span><span class="p">(</span><span class="n">repo_id</span><span class="p">)])</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Please specify either a `model` OR an `endpoint_url` OR a `repo_id`,"</span>
                 <span class="s2">"not more than one."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">values</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">model</span> <span class="ow">or</span> <span class="n">endpoint_url</span> <span class="ow">or</span> <span class="n">repo_id</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"HF_INFERENCE_ENDPOINT"</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">values</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Please specify a `model` or an `endpoint_url` or a `repo_id` for the "</span>
                 <span class="s2">"model."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">values</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
@@ -498,12 +504,10 @@
 <span class="w">        </span><span class="sd">"""Get the identifying parameters."""</span>
         <span class="n">_model_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="o">**</span><span class="p">{</span>
-                <span class="s2">"endpoint_url"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint_url</span><span class="p">,</span>
-                <span class="s2">"task"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">,</span>
-                <span class="s2">"provider"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">provider</span><span class="p">,</span>
-            <span class="p">},</span>
-            <span class="o">**</span><span class="p">{</span><span class="s2">"model_kwargs"</span><span class="p">:</span> <span class="n">_model_kwargs</span><span class="p">},</span>
+            <span class="s2">"endpoint_url"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint_url</span><span class="p">,</span>
+            <span class="s2">"task"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">,</span>
+            <span class="s2">"provider"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">provider</span><span class="p">,</span>
+            <span class="s2">"model_kwargs"</span><span class="p">:</span> <span class="n">_model_kwargs</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="nd">@property</span>
@@ -534,19 +538,19 @@
             <span class="p">):</span>
                 <span class="n">completion</span> <span class="o">+=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">text</span>
             <span class="k">return</span> <span class="n">completion</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">response_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">text_generation</span><span class="p">(</span>
-                <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span>
-                <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
-                <span class="o">**</span><span class="n">invocation_params</span><span class="p">,</span>
-            <span class="p">)</span>
 
-            <span class="c1"># Maybe the generation has stopped at one of the stop sequences:</span>
-            <span class="c1"># then we remove this stop sequence from the end of the generated text</span>
-            <span class="k">for</span> <span class="n">stop_seq</span> <span class="ow">in</span> <span class="n">invocation_params</span><span class="p">[</span><span class="s2">"stop"</span><span class="p">]:</span>
-                <span class="k">if</span> <span class="n">response_text</span><span class="p">[</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">stop_seq</span><span class="p">)</span> <span class="p">:]</span> <span class="o">==</span> <span class="n">stop_seq</span><span class="p">:</span>
-                    <span class="n">response_text</span> <span class="o">=</span> <span class="n">response_text</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">stop_seq</span><span class="p">)]</span>
-            <span class="k">return</span> <span class="n">response_text</span>
+        <span class="n">response_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">text_generation</span><span class="p">(</span>
+            <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">invocation_params</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Maybe the generation has stopped at one of the stop sequences:</span>
+        <span class="c1"># then we remove this stop sequence from the end of the generated text</span>
+        <span class="k">for</span> <span class="n">stop_seq</span> <span class="ow">in</span> <span class="n">invocation_params</span><span class="p">[</span><span class="s2">"stop"</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">response_text</span><span class="p">[</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">stop_seq</span><span class="p">)</span> <span class="p">:]</span> <span class="o">==</span> <span class="n">stop_seq</span><span class="p">:</span>
+                <span class="n">response_text</span> <span class="o">=</span> <span class="n">response_text</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">stop_seq</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">response_text</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_acall</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -563,20 +567,20 @@
             <span class="p">):</span>
                 <span class="n">completion</span> <span class="o">+=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">text</span>
             <span class="k">return</span> <span class="n">completion</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">response_text</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="o">.</span><span class="n">text_generation</span><span class="p">(</span>
-                <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span>
-                <span class="o">**</span><span class="n">invocation_params</span><span class="p">,</span>
-                <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
-                <span class="n">stream</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="p">)</span>
 
-            <span class="c1"># Maybe the generation has stopped at one of the stop sequences:</span>
-            <span class="c1"># then remove this stop sequence from the end of the generated text</span>
-            <span class="k">for</span> <span class="n">stop_seq</span> <span class="ow">in</span> <span class="n">invocation_params</span><span class="p">[</span><span class="s2">"stop"</span><span class="p">]:</span>
-                <span class="k">if</span> <span class="n">response_text</span><span class="p">[</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">stop_seq</span><span class="p">)</span> <span class="p">:]</span> <span class="o">==</span> <span class="n">stop_seq</span><span class="p">:</span>
-                    <span class="n">response_text</span> <span class="o">=</span> <span class="n">response_text</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">stop_seq</span><span class="p">)]</span>
-            <span class="k">return</span> <span class="n">response_text</span>
+        <span class="n">response_text</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="o">.</span><span class="n">text_generation</span><span class="p">(</span>
+            <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">invocation_params</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">stream</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Maybe the generation has stopped at one of the stop sequences:</span>
+        <span class="c1"># then remove this stop sequence from the end of the generated text</span>
+        <span class="k">for</span> <span class="n">stop_seq</span> <span class="ow">in</span> <span class="n">invocation_params</span><span class="p">[</span><span class="s2">"stop"</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">response_text</span><span class="p">[</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">stop_seq</span><span class="p">)</span> <span class="p">:]</span> <span class="o">==</span> <span class="n">stop_seq</span><span class="p">:</span>
+                <span class="n">response_text</span> <span class="o">=</span> <span class="n">response_text</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">stop_seq</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">response_text</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stream</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
