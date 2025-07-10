@@ -253,6 +253,9 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">ChatXAI</span><span class="p">(</span><span class="n">BaseChatOpenAI</span><span class="p">):</span>  <span class="c1"># type: ignore[override]</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""ChatXAI chat model.</span>
 
+<span class="sd">    Refer to `xAI's documentation &lt;https://docs.x.ai/docs/api-reference#chat-completions&gt;`__</span>
+<span class="sd">    for more nuanced details on the API's behavior and supported parameters.</span>
+
 <span class="sd">    Setup:</span>
 <span class="sd">        Install ``langchain-xai`` and set environment variable ``XAI_API_KEY``.</span>
 
@@ -266,9 +269,12 @@
 <span class="sd">        model: str</span>
 <span class="sd">            Name of model to use.</span>
 <span class="sd">        temperature: float</span>
-<span class="sd">            Sampling temperature.</span>
+<span class="sd">            Sampling temperature between ``0`` and ``2``. Higher values mean more random completions,</span>
+<span class="sd">            while lower values (like ``0.2``) mean more focused and deterministic completions.</span>
+<span class="sd">            (Default: ``1``.)</span>
 <span class="sd">        max_tokens: Optional[int]</span>
-<span class="sd">            Max number of tokens to generate.</span>
+<span class="sd">            Max number of tokens to generate. Refer to your `model's documentation &lt;https://docs.x.ai/docs/models#model-pricing&gt;`__</span>
+<span class="sd">            for the maximum number of tokens it can generate.</span>
 <span class="sd">        logprobs: Optional[bool]</span>
 <span class="sd">            Whether to return logprobs.</span>
 
@@ -286,7 +292,7 @@
 <span class="sd">            from langchain_xai import ChatXAI</span>
 
 <span class="sd">            llm = ChatXAI(</span>
-<span class="sd">                model="grok-beta",</span>
+<span class="sd">                model="grok-4",</span>
 <span class="sd">                temperature=0,</span>
 <span class="sd">                max_tokens=None,</span>
 <span class="sd">                timeout=None,</span>
@@ -313,7 +319,7 @@
 <span class="sd">                content="J'adore la programmation.",</span>
 <span class="sd">                response_metadata={</span>
 <span class="sd">                    'token_usage': {'completion_tokens': 9, 'prompt_tokens': 32, 'total_tokens': 41},</span>
-<span class="sd">                    'model_name': 'grok-beta',</span>
+<span class="sd">                    'model_name': 'grok-4',</span>
 <span class="sd">                    'system_fingerprint': None,</span>
 <span class="sd">                    'finish_reason': 'stop',</span>
 <span class="sd">                    'logprobs': None</span>
@@ -337,7 +343,7 @@
 <span class="sd">            content=' programm' id='run-1bc996b5-293f-4114-96a1-e0f755c05eb9'</span>
 <span class="sd">            content='ation' id='run-1bc996b5-293f-4114-96a1-e0f755c05eb9'</span>
 <span class="sd">            content='.' id='run-1bc996b5-293f-4114-96a1-e0f755c05eb9'</span>
-<span class="sd">            content='' response_metadata={'finish_reason': 'stop', 'model_name': 'grok-beta'} id='run-1bc996b5-293f-4114-96a1-e0f755c05eb9'</span>
+<span class="sd">            content='' response_metadata={'finish_reason': 'stop', 'model_name': 'grok-4'} id='run-1bc996b5-293f-4114-96a1-e0f755c05eb9'</span>
 
 
 <span class="sd">    Async:</span>
@@ -357,7 +363,7 @@
 <span class="sd">                content="J'adore la programmation.",</span>
 <span class="sd">                response_metadata={</span>
 <span class="sd">                    'token_usage': {'completion_tokens': 9, 'prompt_tokens': 32, 'total_tokens': 41},</span>
-<span class="sd">                    'model_name': 'grok-beta',</span>
+<span class="sd">                    'model_name': 'grok-4',</span>
 <span class="sd">                    'system_fingerprint': None,</span>
 <span class="sd">                    'finish_reason': 'stop',</span>
 <span class="sd">                    'logprobs': None</span>
@@ -365,12 +371,39 @@
 <span class="sd">                id='run-09371a11-7f72-4c53-8e7c-9de5c238b34c-0',</span>
 <span class="sd">                usage_metadata={'input_tokens': 32, 'output_tokens': 9, 'total_tokens': 41})</span>
 
-<span class="sd">    Tool calling:</span>
+<span class="sd">    Reasoning:</span>
+<span class="sd">        `Certain xAI models &lt;https://docs.x.ai/docs/models#model-pricing&gt;`__ support reasoning,</span>
+<span class="sd">        which allows the model to provide reasoning content along with the response.</span>
+
+<span class="sd">        If provided, reasoning content is returned under the ``additional_kwargs`` field of the</span>
+<span class="sd">        AIMessage or AIMessageChunk.</span>
+
+<span class="sd">        If supported, reasoning effort can be specified in the model constructor's ``extra_body``</span>
+<span class="sd">        argument, which will control the amount of reasoning the model does. The value can be one of</span>
+<span class="sd">        ``'low'`` or ``'high'``.</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            model = ChatXAI(</span>
+<span class="sd">                model="grok-3-mini",</span>
+<span class="sd">                extra_body={"reasoning_effort": "high"},</span>
+<span class="sd">            )</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            As of 2025-07-10, ``reasoning_content`` is only returned in Grok 3 models, such as</span>
+<span class="sd">            `Grok 3 Mini &lt;https://docs.x.ai/docs/models/grok-3-mini&gt;`__.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            Note that in `Grok 4 &lt;https://docs.x.ai/docs/models/grok-4-0709&gt;`__, as of 2025-07-10,</span>
+<span class="sd">            reasoning is not exposed in ``reasoning_content`` (other than initial ``'Thinking...'`` text),</span>
+<span class="sd">            reasoning cannot be disabled, and the ``reasoning_effort`` cannot be specified.</span>
+
+<span class="sd">    Tool calling / function calling:</span>
 <span class="sd">        .. code-block:: python</span>
 
 <span class="sd">            from pydantic import BaseModel, Field</span>
 
-<span class="sd">            llm = ChatXAI(model="grok-beta")</span>
+<span class="sd">            llm = ChatXAI(model="grok-4")</span>
 
 <span class="sd">            class GetWeather(BaseModel):</span>
 <span class="sd">                '''Get the current weather in a given location'''</span>
@@ -392,7 +425,6 @@
 <span class="sd">            )</span>
 <span class="sd">            ai_msg.tool_calls</span>
 
-
 <span class="sd">        .. code-block:: python</span>
 
 <span class="sd">            [</span>
@@ -409,6 +441,67 @@
 <span class="sd">                    'type': 'tool_call'</span>
 <span class="sd">                }</span>
 <span class="sd">            ]</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            With stream response, the tool / function call will be returned in whole in a</span>
+<span class="sd">            single chunk, instead of being streamed across chunks.</span>
+
+<span class="sd">        Tool choice can be controlled by setting the ``tool_choice`` parameter in the model</span>
+<span class="sd">        constructor's ``extra_body`` argument. For example, to disable tool / function calling:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            llm = ChatXAI(model="grok-4", extra_body={"tool_choice": "none"})</span>
+
+<span class="sd">        To require that the model always calls a tool / function, set ``tool_choice`` to ``'required'``:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            llm = ChatXAI(model="grok-4", extra_body={"tool_choice": "required"})</span>
+
+<span class="sd">        To specify a tool / function to call, set ``tool_choice`` to the name of the tool / function:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from pydantic import BaseModel, Field</span>
+
+<span class="sd">            llm = ChatXAI(</span>
+<span class="sd">                model="grok-4",</span>
+<span class="sd">                extra_body={</span>
+<span class="sd">                    "tool_choice": {"type": "function", "function": {"name": "GetWeather"}}</span>
+<span class="sd">                },</span>
+<span class="sd">            )</span>
+
+<span class="sd">            class GetWeather(BaseModel):</span>
+<span class="sd">                \"\"\"Get the current weather in a given location\"\"\"</span>
+
+<span class="sd">                location: str = Field(..., description='The city and state, e.g. San Francisco, CA')</span>
+
+
+<span class="sd">            class GetPopulation(BaseModel):</span>
+<span class="sd">                \"\"\"Get the current population in a given location\"\"\"</span>
+
+<span class="sd">                location: str = Field(..., description='The city and state, e.g. San Francisco, CA')</span>
+
+
+<span class="sd">            llm_with_tools = llm.bind_tools([GetWeather, GetPopulation])</span>
+<span class="sd">            ai_msg = llm_with_tools.invoke(</span>
+<span class="sd">                "Which city is bigger: LA or NY?",</span>
+<span class="sd">            )</span>
+<span class="sd">            ai_msg.tool_calls</span>
+
+<span class="sd">        The resulting tool call would be:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            [{'name': 'GetWeather',</span>
+<span class="sd">            'args': {'location': 'Los Angeles, CA'},</span>
+<span class="sd">            'id': 'call_81668711',</span>
+<span class="sd">            'type': 'tool_call'}]</span>
+
+<span class="sd">    Parallel tool calling / parallel function calling:</span>
+<span class="sd">        By default, parallel tool / function calling is enabled, so you can process</span>
+<span class="sd">        multiple function calls in one request/response cycle. When two or more tool calls</span>
+<span class="sd">        are required, all of the tool call requests will be included in the response body.</span>
 
 <span class="sd">    Structured output:</span>
 <span class="sd">        .. code-block:: python</span>
@@ -446,7 +539,7 @@
 <span class="sd">            from langchain_xai import ChatXAI</span>
 
 <span class="sd">            llm = ChatXAI(</span>
-<span class="sd">                model="grok-3-latest",</span>
+<span class="sd">                model="grok-4",</span>
 <span class="sd">                search_parameters={</span>
 <span class="sd">                    "mode": "auto",</span>
 <span class="sd">                    # Example optional parameters below:</span>
@@ -457,6 +550,10 @@
 <span class="sd">            )</span>
 
 <span class="sd">            llm.invoke("Provide me a digest of world news in the last 24 hours.")</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            `Citations &lt;https://docs.x.ai/docs/guides/live-search#returning-citations&gt;`__</span>
+<span class="sd">            are only available in `Grok 3 &lt;https://docs.x.ai/docs/models/grok-3&gt;`__.</span>
 
 <span class="sd">    Token usage:</span>
 <span class="sd">        .. code-block:: python</span>
@@ -499,7 +596,7 @@
 <span class="sd">                    'prompt_tokens': 19,</span>
 <span class="sd">                    'total_tokens': 23</span>
 <span class="sd">                    },</span>
-<span class="sd">                'model_name': 'grok-beta',</span>
+<span class="sd">                'model_name': 'grok-4',</span>
 <span class="sd">                'system_fingerprint': None,</span>
 <span class="sd">                'finish_reason': 'stop',</span>
 <span class="sd">                'logprobs': None</span>
@@ -507,7 +604,7 @@
 
 <span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
 
-    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="s2">"model"</span><span class="p">)</span>
+    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"grok-4"</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">"model"</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">"""Model name to use."""</span>
     <span class="n">xai_api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SecretStr</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">alias</span><span class="o">=</span><span class="s2">"api_key"</span><span class="p">,</span>
