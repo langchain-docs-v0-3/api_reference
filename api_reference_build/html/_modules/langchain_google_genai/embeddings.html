@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 14, 2025" name="docbuild:last-update"/>
+<meta content="Jul 15, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -239,7 +239,10 @@
     <span class="n">GoogleGenerativeAIError</span><span class="p">,</span>
     <span class="n">get_client_info</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_google_genai._genai_extension</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_generative_service</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_google_genai._genai_extension</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">build_generative_async_service</span><span class="p">,</span>
+    <span class="n">build_generative_service</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">_MAX_TOKENS_PER_BATCH</span> <span class="o">=</span> <span class="mi">20000</span>
 <span class="n">_DEFAULT_BATCH_SIZE</span> <span class="o">=</span> <span class="mi">100</span>
@@ -253,8 +256,8 @@
 <span class="sd">    To use, you must have either:</span>
 
 <span class="sd">        1. The ``GOOGLE_API_KEY`` environment variable set with your API key, or</span>
-<span class="sd">        2. Pass your API key using the google_api_key kwarg</span>
-<span class="sd">        to the GoogleGenerativeAIEmbeddings constructor.</span>
+<span class="sd">        2. Pass your API key using the google_api_key kwarg to the</span>
+<span class="sd">        GoogleGenerativeAIEmbeddings constructor.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        .. code-block:: python</span>
@@ -266,6 +269,7 @@
 <span class="sd">    """</span>
 
     <span class="n">client</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1">#: :meta private:</span>
+    <span class="n">async_client</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1">#: :meta private:</span>
     <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="o">...</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"The name of the embedding model to use. "</span>
@@ -317,7 +321,17 @@
             <span class="n">google_api_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">google_api_key</span>
         <span class="n">client_info</span> <span class="o">=</span> <span class="n">get_client_info</span><span class="p">(</span><span class="s2">"GoogleGenerativeAIEmbeddings"</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"models/"</span><span class="p">,)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"models/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="si">}</span><span class="s2">"</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">build_generative_service</span><span class="p">(</span>
+            <span class="n">credentials</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="p">,</span>
+            <span class="n">api_key</span><span class="o">=</span><span class="n">google_api_key</span><span class="p">,</span>
+            <span class="n">client_info</span><span class="o">=</span><span class="n">client_info</span><span class="p">,</span>
+            <span class="n">client_options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">client_options</span><span class="p">,</span>
+            <span class="n">transport</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span> <span class="o">=</span> <span class="n">build_generative_async_service</span><span class="p">(</span>
             <span class="n">credentials</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="p">,</span>
             <span class="n">api_key</span><span class="o">=</span><span class="n">google_api_key</span><span class="p">,</span>
             <span class="n">client_info</span><span class="o">=</span><span class="n">client_info</span><span class="p">,</span>
@@ -390,12 +404,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_request</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
         <span class="n">task_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">output_dimensionality</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EmbedContentRequest</span><span class="p">:</span>
         <span class="n">task_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_type</span> <span class="ow">or</span> <span class="n">task_type</span> <span class="ow">or</span> <span class="s2">"RETRIEVAL_DOCUMENT"</span>
-        <span class="c1"># https://ai.google.dev/api/rest/v1/models/batchEmbedContents#EmbedContentRequest</span>
         <span class="n">request</span> <span class="o">=</span> <span class="n">EmbedContentRequest</span><span class="p">(</span>
             <span class="n">content</span><span class="o">=</span><span class="p">{</span><span class="s2">"parts"</span><span class="p">:</span> <span class="p">[{</span><span class="s2">"text"</span><span class="p">:</span> <span class="n">text</span><span class="p">}]},</span>
             <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
@@ -416,16 +430,17 @@
         <span class="n">titles</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">output_dimensionality</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">"""Embed a list of strings. Google Generative AI currently</span>
-<span class="sd">        sets a max batch size of 100 strings.</span>
+<span class="w">        </span><span class="sd">"""Embed a list of strings using the `batch endpoint &lt;https://ai.google.dev/api/embeddings#method:-models.batchembedcontents&gt;`__.</span>
+
+<span class="sd">        Google Generative AI currently sets a max batch size of 100 strings.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            texts: List[str] The list of strings to embed.</span>
 <span class="sd">            batch_size: [int] The batch size of embeddings to send to the model</span>
-<span class="sd">            task_type: `task_type &lt;https://ai.google.dev/api/rest/v1/TaskType&gt;`__</span>
+<span class="sd">            task_type: `task_type &lt;https://ai.google.dev/api/embeddings#tasktype&gt;`__</span>
 <span class="sd">            titles: An optional list of titles for texts provided.</span>
-<span class="sd">            Only applicable when TaskType is ``'RETRIEVAL_DOCUMENT'``.</span>
-<span class="sd">            output_dimensionality: Optional `reduced dimension for the output embedding &lt;https://ai.google.dev/api/rest/v1/models/batchEmbedContents#EmbedContentRequest&gt;`__.</span>
+<span class="sd">              Only applicable when TaskType is ``'RETRIEVAL_DOCUMENT'``.</span>
+<span class="sd">            output_dimensionality: Optional `reduced dimension for the output embedding &lt;https://ai.google.dev/api/embeddings#EmbedContentRequest&gt;`__.</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            List of embeddings, one for each text.</span>
 <span class="sd">        """</span>
@@ -465,25 +480,26 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">embed_query</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
         <span class="n">task_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">output_dimensionality</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Embed a text, using the `non-batch endpoint &lt;https://ai.google.dev/api/rest/v1/models/embedContent#EmbedContentRequest&gt;`__.</span>
+<span class="w">        </span><span class="sd">"""Embed a text, using the `non-batch endpoint &lt;https://ai.google.dev/api/embeddings#method:-models.embedcontent&gt;`__.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            text: The text to embed.</span>
-<span class="sd">            task_type: `task_type &lt;https://ai.google.dev/api/rest/v1/TaskType&gt;`__</span>
+<span class="sd">            task_type: `task_type &lt;https://ai.google.dev/api/embeddings#tasktype&gt;`__</span>
 <span class="sd">            title: An optional title for the text.</span>
-<span class="sd">            Only applicable when TaskType is ``'RETRIEVAL_DOCUMENT'``.</span>
-<span class="sd">            output_dimensionality: Optional `reduced dimension for the output embedding &lt;https://ai.google.dev/api/rest/v1/models/batchEmbedContents#EmbedContentRequest&gt;`__.</span>
+<span class="sd">              Only applicable when TaskType is ``'RETRIEVAL_DOCUMENT'``.</span>
+<span class="sd">            output_dimensionality: Optional `reduced dimension for the output embedding &lt;https://ai.google.dev/api/embeddings#EmbedContentRequest&gt;`__.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Embedding for the text.</span>
 <span class="sd">        """</span>
         <span class="n">task_type_to_use</span> <span class="o">=</span> <span class="n">task_type</span> <span class="k">if</span> <span class="n">task_type</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_type</span>
         <span class="k">if</span> <span class="n">task_type_to_use</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">task_type_to_use</span> <span class="o">=</span> <span class="s2">"RETRIEVAL_QUERY"</span>  <span class="c1"># Default to RETRIEVAL_QUERY</span>
+            <span class="n">task_type_to_use</span> <span class="o">=</span> <span class="s2">"RETRIEVAL_QUERY"</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">request</span><span class="p">:</span> <span class="n">EmbedContentRequest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_request</span><span class="p">(</span>
                 <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
@@ -492,6 +508,102 @@
                 <span class="n">output_dimensionality</span><span class="o">=</span><span class="n">output_dimensionality</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">result</span><span class="p">:</span> <span class="n">EmbedContentResponse</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">embed_content</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">GoogleGenerativeAIError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error embedding content: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">embedding</span><span class="o">.</span><span class="n">values</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GoogleGenerativeAIEmbeddings.aembed_documents">
+<a class="viewcode-back" href="../../google_genai/embeddings/langchain_google_genai.embeddings.GoogleGenerativeAIEmbeddings.html#langchain_google_genai.embeddings.GoogleGenerativeAIEmbeddings.aembed_documents">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">aembed_documents</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">texts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_DEFAULT_BATCH_SIZE</span><span class="p">,</span>
+        <span class="n">task_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">titles</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">output_dimensionality</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Embed a list of strings using the `batch endpoint &lt;https://ai.google.dev/api/embeddings#method:-models.batchembedcontents&gt;`__.</span>
+
+<span class="sd">        Google Generative AI currently sets a max batch size of 100 strings.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            texts: List[str] The list of strings to embed.</span>
+<span class="sd">            batch_size: [int] The batch size of embeddings to send to the model</span>
+<span class="sd">            task_type: `task_type &lt;https://ai.google.dev/api/embeddings#tasktype&gt;`__</span>
+<span class="sd">            titles: An optional list of titles for texts provided.</span>
+<span class="sd">                Only applicable when TaskType is ``'RETRIEVAL_DOCUMENT'``.</span>
+<span class="sd">            output_dimensionality: Optional `reduced dimension for the output embedding &lt;https://ai.google.dev/api/embeddings#EmbedContentRequest&gt;`__.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            List of embeddings, one for each text.</span>
+<span class="sd">        """</span>
+        <span class="n">embeddings</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">batch_start_index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">GoogleGenerativeAIEmbeddings</span><span class="o">.</span><span class="n">_prepare_batches</span><span class="p">(</span><span class="n">texts</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">titles</span><span class="p">:</span>
+                <span class="n">titles_batch</span> <span class="o">=</span> <span class="n">titles</span><span class="p">[</span>
+                    <span class="n">batch_start_index</span> <span class="p">:</span> <span class="n">batch_start_index</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="n">batch_start_index</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">titles_batch</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>  <span class="c1"># type: ignore[list-item]</span>
+
+            <span class="n">requests</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_request</span><span class="p">(</span>
+                    <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+                    <span class="n">task_type</span><span class="o">=</span><span class="n">task_type</span><span class="p">,</span>
+                    <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+                    <span class="n">output_dimensionality</span><span class="o">=</span><span class="n">output_dimensionality</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">title</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">titles_batch</span><span class="p">)</span>
+            <span class="p">]</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="o">.</span><span class="n">batch_embed_contents</span><span class="p">(</span>
+                    <span class="n">BatchEmbedContentsRequest</span><span class="p">(</span><span class="n">requests</span><span class="o">=</span><span class="n">requests</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">GoogleGenerativeAIError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error embedding content: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="n">embeddings</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="nb">list</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">embeddings</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">embeddings</span></div>
+
+
+<div class="viewcode-block" id="GoogleGenerativeAIEmbeddings.aembed_query">
+<a class="viewcode-back" href="../../google_genai/embeddings/langchain_google_genai.embeddings.GoogleGenerativeAIEmbeddings.html#langchain_google_genai.embeddings.GoogleGenerativeAIEmbeddings.aembed_query">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">aembed_query</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">task_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">output_dimensionality</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Embed a text, using the `non-batch endpoint &lt;https://ai.google.dev/api/embeddings#method:-models.embedcontent&gt;`__.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            text: The text to embed.</span>
+<span class="sd">            task_type: `task_type &lt;https://ai.google.dev/api/embeddings#tasktype&gt;`__</span>
+<span class="sd">            title: An optional title for the text.</span>
+<span class="sd">                Only applicable when TaskType is ``'RETRIEVAL_DOCUMENT'``.</span>
+<span class="sd">            output_dimensionality: Optional `reduced dimension for the output embedding &lt;https://ai.google.dev/api/embeddings#EmbedContentRequest&gt;`__.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Embedding for the text.</span>
+<span class="sd">        """</span>
+        <span class="n">task_type_to_use</span> <span class="o">=</span> <span class="n">task_type</span> <span class="k">if</span> <span class="n">task_type</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_type</span>
+        <span class="k">if</span> <span class="n">task_type_to_use</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">task_type_to_use</span> <span class="o">=</span> <span class="s2">"RETRIEVAL_QUERY"</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">request</span><span class="p">:</span> <span class="n">EmbedContentRequest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_request</span><span class="p">(</span>
+                <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+                <span class="n">task_type</span><span class="o">=</span><span class="n">task_type</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+                <span class="n">output_dimensionality</span><span class="o">=</span><span class="n">output_dimensionality</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">result</span><span class="p">:</span> <span class="n">EmbedContentResponse</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="o">.</span><span class="n">embed_content</span><span class="p">(</span>
+                <span class="n">request</span>
+            <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">GoogleGenerativeAIError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error embedding content: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">embedding</span><span class="o">.</span><span class="n">values</span><span class="p">)</span></div>

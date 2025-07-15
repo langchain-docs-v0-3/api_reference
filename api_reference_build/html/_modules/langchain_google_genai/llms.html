@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 14, 2025" name="docbuild:last-update"/>
+<meta content="Jul 15, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -287,6 +287,9 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validates params and passes them to google-generativeai package."""</span>
 
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"models/"</span><span class="p">,)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"models/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="si">}</span><span class="s2">"</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">ChatGoogleGenerativeAI</span><span class="p">(</span>
             <span class="n">api_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">google_api_key</span><span class="p">,</span>
             <span class="n">credentials</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="p">,</span>
@@ -310,6 +313,15 @@
 <span class="w">        </span><span class="sd">"""Get standard params for tracing."""</span>
         <span class="n">ls_params</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_get_ls_params</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">ls_params</span><span class="p">[</span><span class="s2">"ls_provider"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"google_genai"</span>
+
+        <span class="n">models_prefix</span> <span class="o">=</span> <span class="s2">"models/"</span>
+        <span class="n">ls_model_name</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">models_prefix</span><span class="p">)</span> <span class="p">:]</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">models_prefix</span><span class="p">)</span>
+            <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+        <span class="p">)</span>
+        <span class="n">ls_params</span><span class="p">[</span><span class="s2">"ls_model_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">ls_model_name</span>
+
         <span class="k">if</span> <span class="n">ls_max_tokens</span> <span class="o">:=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"max_output_tokens"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_output_tokens</span><span class="p">):</span>
             <span class="n">ls_params</span><span class="p">[</span><span class="s2">"ls_max_tokens"</span><span class="p">]</span> <span class="o">=</span> <span class="n">ls_max_tokens</span>
         <span class="k">return</span> <span class="n">ls_params</span>

@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 14, 2025" name="docbuild:last-update"/>
+<meta content="Jul 15, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -447,7 +447,7 @@
             <span class="c1"># It's an arbitrary function, wrap it in a RunnableLambda</span>
             <span class="n">user_func</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Callable</span><span class="p">,</span> <span class="n">llm_or_chain_factory</span><span class="p">)</span>
             <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">user_func</span><span class="p">)</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Wrapping function </span><span class="si">{</span><span class="n">sig</span><span class="si">}</span><span class="s2"> as RunnableLambda."</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Wrapping function </span><span class="si">%s</span><span class="s2"> as RunnableLambda."</span><span class="p">,</span> <span class="n">sig</span><span class="p">)</span>
             <span class="n">wrapped</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="n">user_func</span><span class="p">)</span>
             <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">wrapped</span>
         <span class="n">constructor</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Callable</span><span class="p">,</span> <span class="n">llm_or_chain_factory</span><span class="p">)</span>
@@ -659,7 +659,7 @@
             <span class="c1"># Otherwise it's a runnable</span>
             <span class="n">_validate_example_inputs_for_chain</span><span class="p">(</span><span class="n">example</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="n">input_mapper</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">Runnable</span><span class="p">):</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Skipping input validation for </span><span class="si">{</span><span class="n">chain</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Skipping input validation for </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">chain</span><span class="p">)</span>
 
 
 <span class="c1">## Shared Evaluator Setup Utilities</span>
@@ -704,16 +704,19 @@
         <span class="n">input_key</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">input_key</span>
         <span class="k">if</span> <span class="n">run_inputs</span> <span class="ow">and</span> <span class="n">input_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">run_inputs</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Input key </span><span class="si">{</span><span class="n">input_key</span><span class="si">}</span><span class="s2"> not in chain's specified"</span>
-                <span class="sa">f</span><span class="s2">" input keys </span><span class="si">{</span><span class="n">run_inputs</span><span class="si">}</span><span class="s2">. Evaluation behavior may be undefined."</span><span class="p">,</span>
+                <span class="s2">"Input key </span><span class="si">%s</span><span class="s2"> not in chain's specified input keys </span><span class="si">%s</span><span class="s2">. "</span>
+                <span class="s2">"Evaluation behavior may be undefined."</span><span class="p">,</span>
+                <span class="n">input_key</span><span class="p">,</span>
+                <span class="n">run_inputs</span><span class="p">,</span>
             <span class="p">)</span>
     <span class="k">elif</span> <span class="n">run_inputs</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">run_inputs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">input_key</span> <span class="o">=</span> <span class="n">run_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">elif</span> <span class="n">run_inputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">run_inputs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Chain expects multiple input keys: </span><span class="si">{</span><span class="n">run_inputs</span><span class="si">}</span><span class="s2">,"</span>
-            <span class="sa">f</span><span class="s2">" Evaluator is likely to fail. Evaluation behavior may be undefined."</span>
+            <span class="s2">"Chain expects multiple input keys: </span><span class="si">%s</span><span class="s2">,"</span>
+            <span class="s2">" Evaluator is likely to fail. Evaluation behavior may be undefined."</span>
             <span class="s2">" Specify an input_key in the RunEvalConfig to avoid this warning."</span><span class="p">,</span>
+            <span class="n">run_inputs</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">input_key</span>
@@ -728,16 +731,19 @@
         <span class="n">prediction_key</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">prediction_key</span>
         <span class="k">if</span> <span class="n">run_outputs</span> <span class="ow">and</span> <span class="n">prediction_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">run_outputs</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Prediction key </span><span class="si">{</span><span class="n">prediction_key</span><span class="si">}</span><span class="s2"> not in chain's specified"</span>
-                <span class="sa">f</span><span class="s2">" output keys </span><span class="si">{</span><span class="n">run_outputs</span><span class="si">}</span><span class="s2">. Evaluation behavior may be undefined."</span><span class="p">,</span>
+                <span class="s2">"Prediction key </span><span class="si">%s</span><span class="s2"> not in chain's specified output keys </span><span class="si">%s</span><span class="s2">. "</span>
+                <span class="s2">"Evaluation behavior may be undefined."</span><span class="p">,</span>
+                <span class="n">prediction_key</span><span class="p">,</span>
+                <span class="n">run_outputs</span><span class="p">,</span>
             <span class="p">)</span>
     <span class="k">elif</span> <span class="n">run_outputs</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">run_outputs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">prediction_key</span> <span class="o">=</span> <span class="n">run_outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">elif</span> <span class="n">run_outputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">run_outputs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Chain expects multiple output keys: </span><span class="si">{</span><span class="n">run_outputs</span><span class="si">}</span><span class="s2">,"</span>
-            <span class="sa">f</span><span class="s2">" Evaluation behavior may be undefined. Specify a prediction_key"</span>
+            <span class="s2">"Chain expects multiple output keys: </span><span class="si">%s</span><span class="s2">,"</span>
+            <span class="s2">" Evaluation behavior may be undefined. Specify a prediction_key"</span>
             <span class="s2">" in the RunEvalConfig to avoid this warning."</span><span class="p">,</span>
+            <span class="n">run_outputs</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">prediction_key</span>
 
@@ -1063,9 +1069,11 @@
         <span class="n">result</span> <span class="o">=</span> <span class="n">output</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">chain_or_llm</span><span class="si">}</span><span class="s2"> failed for example </span><span class="si">{</span><span class="n">example</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> "</span>
-            <span class="sa">f</span><span class="s2">"with inputs </span><span class="si">{</span><span class="n">example</span><span class="o">.</span><span class="n">inputs</span><span class="si">}</span><span class="s2">"</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">!r}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"</span><span class="si">%s</span><span class="s2"> failed for example </span><span class="si">%s</span><span class="s2"> with inputs </span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">chain_or_llm</span><span class="p">,</span>
+            <span class="n">example</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="n">example</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span>
+            <span class="n">e</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">EvalError</span><span class="p">(</span><span class="n">Error</span><span class="o">=</span><span class="n">e</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">result</span>
@@ -1224,9 +1232,12 @@
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">error_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">chain_or_llm</span><span class="si">}</span><span class="s2"> failed for example </span><span class="si">{</span><span class="n">example</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> "</span>
-            <span class="sa">f</span><span class="s2">"with inputs </span><span class="si">{</span><span class="n">example</span><span class="o">.</span><span class="n">inputs</span><span class="si">}</span><span class="s2">"</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Error Type: </span><span class="si">{</span><span class="n">error_type</span><span class="si">}</span><span class="s2">, Message: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"</span><span class="si">%s</span><span class="s2"> failed for example </span><span class="si">%s</span><span class="s2"> with inputs </span><span class="si">%s</span><span class="se">\n</span><span class="s2">Error Type: </span><span class="si">%s</span><span class="s2">, Message: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">chain_or_llm</span><span class="p">,</span>
+            <span class="n">example</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="n">example</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span>
+            <span class="n">error_type</span><span class="p">,</span>
+            <span class="n">e</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">EvalError</span><span class="p">(</span><span class="n">Error</span><span class="o">=</span><span class="n">e</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">result</span>
@@ -1356,7 +1367,9 @@
                         <span class="n">project_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error running batch evaluator </span><span class="si">{</span><span class="n">evaluator</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+                        <span class="s2">"Error running batch evaluator </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">evaluator</span><span class="p">),</span> <span class="n">e</span>
+                    <span class="p">)</span>
         <span class="k">return</span> <span class="n">aggregate_feedback</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_collect_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_RowResult</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Run</span><span class="p">]]:</span>
@@ -1417,7 +1430,7 @@
                 <span class="n">agg_feedback</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">get_aggregate_feedback</span><span class="p">()</span>
                 <span class="n">_display_aggregate_results</span><span class="p">(</span><span class="n">agg_feedback</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to print aggregate feedback: </span><span class="si">{</span><span class="n">e</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Failed to print aggregate feedback: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Closing the project permits name changing and metric optimizations</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">update_project</span><span class="p">(</span>
@@ -1425,7 +1438,7 @@
                 <span class="n">end_time</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to close project: </span><span class="si">{</span><span class="n">e</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Failed to close project: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">results</span>
 
     <span class="nd">@classmethod</span>
