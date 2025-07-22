@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 21, 2025" name="docbuild:last-update"/>
+<meta content="Jul 22, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -224,6 +224,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncIterator</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">itemgetter</span>
@@ -299,33 +300,45 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_json_string</span><span class="p">(</span>
     <span class="n">json_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
     <span class="n">raw_tool_call</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-    <span class="n">skip</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
+    <span class="n">skip</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Attempt to parse a JSON string for tool calling.</span>
 
+<span class="sd">    It first tries to use the standard json.loads. If that fails, it falls</span>
+<span class="sd">    back to ast.literal_eval to safely parse Python literals, which is more</span>
+<span class="sd">    robust against models using single quotes or containing apostrophes.</span>
+
 <span class="sd">    Args:</span>
 <span class="sd">        json_string: JSON string to parse.</span>
-<span class="sd">        skip: Whether to ignore parsing errors and return the value anyways.</span>
 <span class="sd">        raw_tool_call: Raw tool call to include in error message.</span>
+<span class="sd">        skip: Whether to ignore parsing errors and return the value anyways.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        The parsed JSON string.</span>
+<span class="sd">        The parsed JSON string or Python literal.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        OutputParserException: If the JSON string wrong invalid and skip=False.</span>
+<span class="sd">        OutputParserException: If the string is invalid and skip=False.</span>
 <span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json_string</span><span class="p">)</span>
-    <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">skip</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">json_string</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Function </span><span class="si">{</span><span class="n">raw_tool_call</span><span class="p">[</span><span class="s1">'function'</span><span class="p">][</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2"> arguments:</span><span class="se">\n\n</span><span class="s2">"</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">raw_tool_call</span><span class="p">[</span><span class="s1">'function'</span><span class="p">][</span><span class="s1">'arguments'</span><span class="p">]</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">are not valid JSON. "</span>
-            <span class="sa">f</span><span class="s2">"Received JSONDecodeError </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
-        <span class="p">)</span>
-        <span class="k">raise</span> <span class="n">OutputParserException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+    <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Use ast.literal_eval to safely parse Python-style dicts</span>
+            <span class="c1"># (e.g. with single quotes)</span>
+            <span class="k">return</span> <span class="n">ast</span><span class="o">.</span><span class="n">literal_eval</span><span class="p">(</span><span class="n">json_string</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">SyntaxError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># If both fail, and we're not skipping, raise an informative error.</span>
+            <span class="k">if</span> <span class="n">skip</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">json_string</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Function </span><span class="si">{</span><span class="n">raw_tool_call</span><span class="p">[</span><span class="s1">'function'</span><span class="p">][</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2"> arguments:</span><span class="se">\n\n</span><span class="s2">"</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">raw_tool_call</span><span class="p">[</span><span class="s1">'function'</span><span class="p">][</span><span class="s1">'arguments'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+                <span class="s2">"</span><span class="se">\n\n</span><span class="s2">are not valid JSON or a Python literal. "</span>
+                <span class="sa">f</span><span class="s2">"Received error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">OutputParserException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
     <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">skip</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">json_string</span>
