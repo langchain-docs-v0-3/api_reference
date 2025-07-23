@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 22, 2025" name="docbuild:last-update"/>
+<meta content="Jul 23, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -644,8 +644,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="o">.</span><span class="n">set_properties</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_properties</span><span class="p">)</span>
         <span class="c1"># If need to drop old, drop it</span>
         <span class="k">if</span> <span class="n">drop_old</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="p">,</span> <span class="n">Collection</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="o">.</span><span class="n">drop</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drop</span><span class="p">()</span>
 
         <span class="c1"># Initialize the vector store</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_init</span><span class="p">(</span>
@@ -2263,6 +2262,19 @@
             <span class="k">return</span> <span class="kc">False</span></div>
 
 
+<div class="viewcode-block" id="Milvus.drop">
+<a class="viewcode-back" href="../../../milvus/vectorstores/langchain_milvus.vectorstores.milvus.Milvus.html#langchain_milvus.vectorstores.milvus.Milvus.drop">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">drop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Delete all the content in the index, by dropping the (only) collection."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">col</span><span class="o">.</span><span class="n">drop</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"Collection </span><span class="si">%s</span><span class="s2"> does not exist, nothing to drop."</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span>
+            <span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="Milvus.from_texts">
 <a class="viewcode-back" href="../../../milvus/vectorstores/langchain_milvus.vectorstores.milvus.Milvus.html#langchain_milvus.vectorstores.milvus.Milvus.from_texts">[docs]</a>
     <span class="nd">@classmethod</span>
@@ -2561,6 +2573,10 @@
         <span class="c1"># Default to retrieving all fields if none are provided</span>
         <span class="k">if</span> <span class="n">fields</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span>
+
+        <span class="c1"># Ensure the text field is included in the output fields</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_text_field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="n">fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_text_field</span><span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
@@ -3530,6 +3546,10 @@
         <span class="c1"># Default to retrieving all fields if none are provided</span>
         <span class="k">if</span> <span class="n">fields</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span>
+
+        <span class="c1"># Ensure the text field is included in the output fields</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_text_field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="n">fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_text_field</span><span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">aclient</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>

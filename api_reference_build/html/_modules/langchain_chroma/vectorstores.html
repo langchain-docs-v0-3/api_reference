@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 22, 2025" name="docbuild:last-update"/>
+<meta content="Jul 23, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -242,13 +242,15 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">chromadb</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">chromadb.config</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">chromadb</span><span class="w"> </span><span class="kn">import</span> <span class="n">Settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">chromadb.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">CreateCollectionConfiguration</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">Embeddings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">xor_args</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.vectorstores</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorStore</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">chromadb.api.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ID</span><span class="p">,</span> <span class="n">OneOrMany</span><span class="p">,</span> <span class="n">Where</span><span class="p">,</span> <span class="n">WhereDocument</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">chromadb.api.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Where</span><span class="p">,</span> <span class="n">WhereDocument</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
 <span class="n">DEFAULT_K</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># Number of Documents to return.</span>
@@ -397,6 +399,20 @@
 <span class="sd">            Chroma client settings.</span>
 <span class="sd">        persist_directory: Optional[str]</span>
 <span class="sd">            Directory to persist the collection.</span>
+<span class="sd">        host: Optional[str]</span>
+<span class="sd">            Hostname of a deployed Chroma server.</span>
+<span class="sd">        port: Optional[int]</span>
+<span class="sd">            Connection port for a deployed Chroma server. Default is 8000.</span>
+<span class="sd">        ssl: Optional[bool]</span>
+<span class="sd">            Whether to establish an SSL connection with a deployed Chroma server. Default is False.</span>
+<span class="sd">        headers: Optional[dict[str, str]]</span>
+<span class="sd">            HTTP headers to send to a deployed Chroma server.</span>
+<span class="sd">        chroma_cloud_api_key: Optional[str]</span>
+<span class="sd">            Chroma Cloud API key.</span>
+<span class="sd">        tenant: Optional[str]</span>
+<span class="sd">            Tenant ID. Required for Chroma Cloud connections. Default is 'default_tenant' for local Chroma servers.</span>
+<span class="sd">        database: Optional[str]</span>
+<span class="sd">            Database name. Required for Chroma Cloud connections. Default is 'default_database'.</span>
 
 <span class="sd">    Instantiate:</span>
 <span class="sd">        .. code-block:: python</span>
@@ -516,11 +532,20 @@
         <span class="n">collection_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_LANGCHAIN_DEFAULT_COLLECTION_NAME</span><span class="p">,</span>
         <span class="n">embedding_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Embeddings</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">persist_directory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">host</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">port</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">headers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">chroma_cloud_api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">tenant</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">database</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">client_settings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">chromadb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">Settings</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">collection_metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">collection_configuration</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CreateCollectionConfiguration</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">chromadb</span><span class="o">.</span><span class="n">ClientAPI</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">relevance_score_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">create_collection_if_not_exists</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># noqa: FBT001, FBT002</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">ssl</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Initialize with a Chroma client.</span>
 
@@ -528,8 +553,20 @@
 <span class="sd">            collection_name: Name of the collection to create.</span>
 <span class="sd">            embedding_function: Embedding class object. Used to embed texts.</span>
 <span class="sd">            persist_directory: Directory to persist the collection.</span>
+<span class="sd">            host: Hostname of a deployed Chroma server.</span>
+<span class="sd">            port: Connection port for a deployed Chroma server. Default is 8000.</span>
+<span class="sd">            ssl: Whether to establish an SSL connection with a deployed Chroma server.</span>
+<span class="sd">                    Default is False.</span>
+<span class="sd">            headers: HTTP headers to send to a deployed Chroma server.</span>
+<span class="sd">            chroma_cloud_api_key: Chroma Cloud API key.</span>
+<span class="sd">            tenant: Tenant ID. Required for Chroma Cloud connections.</span>
+<span class="sd">                    Default is 'default_tenant' for local Chroma servers.</span>
+<span class="sd">            database: Database name. Required for Chroma Cloud connections.</span>
+<span class="sd">                    Default is 'default_database'.</span>
 <span class="sd">            client_settings: Chroma client settings</span>
 <span class="sd">            collection_metadata: Collection configurations.</span>
+<span class="sd">            collection_configuration: Index configuration for the collection.</span>
+<span class="sd">                    Defaults to None.</span>
 <span class="sd">            client: Chroma client. Documentation:</span>
 <span class="sd">                    https://docs.trychroma.com/reference/python/client</span>
 <span class="sd">            relevance_score_fn: Function to calculate relevance score from distance.</span>
@@ -537,37 +574,73 @@
 <span class="sd">            create_collection_if_not_exists: Whether to create collection</span>
 <span class="sd">                    if it doesn't exist. Defaults to True.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">client</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_client_settings</span> <span class="o">=</span> <span class="n">client_settings</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">client</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_persist_directory</span> <span class="o">=</span> <span class="n">persist_directory</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">client_settings</span><span class="p">:</span>
-                <span class="c1"># If client_settings is provided with persist_directory specified,</span>
-                <span class="c1"># then it is "in-memory and persisting to disk" mode.</span>
-                <span class="n">client_settings</span><span class="o">.</span><span class="n">persist_directory</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">persist_directory</span> <span class="ow">or</span> <span class="n">client_settings</span><span class="o">.</span><span class="n">persist_directory</span>
-                <span class="p">)</span>
-                <span class="n">client_settings</span><span class="o">.</span><span class="n">is_persistent</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">client_settings</span><span class="o">.</span><span class="n">persist_directory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="p">)</span>
+        <span class="n">_tenant</span> <span class="o">=</span> <span class="n">tenant</span> <span class="ow">or</span> <span class="n">chromadb</span><span class="o">.</span><span class="n">DEFAULT_TENANT</span>
+        <span class="n">_database</span> <span class="o">=</span> <span class="n">database</span> <span class="ow">or</span> <span class="n">chromadb</span><span class="o">.</span><span class="n">DEFAULT_DATABASE</span>
+        <span class="n">_settings</span> <span class="o">=</span> <span class="n">client_settings</span> <span class="ow">or</span> <span class="n">Settings</span><span class="p">()</span>
 
-                <span class="n">_client_settings</span> <span class="o">=</span> <span class="n">client_settings</span>
-            <span class="k">elif</span> <span class="n">persist_directory</span><span class="p">:</span>
-                <span class="n">_client_settings</span> <span class="o">=</span> <span class="n">chromadb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">Settings</span><span class="p">(</span><span class="n">is_persistent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="n">_client_settings</span><span class="o">.</span><span class="n">persist_directory</span> <span class="o">=</span> <span class="n">persist_directory</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">_client_settings</span> <span class="o">=</span> <span class="n">chromadb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">Settings</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_client_settings</span> <span class="o">=</span> <span class="n">_client_settings</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">chromadb</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="n">_client_settings</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_persist_directory</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">_client_settings</span><span class="o">.</span><span class="n">persist_directory</span> <span class="ow">or</span> <span class="n">persist_directory</span>
+        <span class="n">client_args</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"persist_directory"</span><span class="p">:</span> <span class="n">persist_directory</span><span class="p">,</span>
+            <span class="s2">"host"</span><span class="p">:</span> <span class="n">host</span><span class="p">,</span>
+            <span class="s2">"chroma_cloud_api_key"</span><span class="p">:</span> <span class="n">chroma_cloud_api_key</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">arg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">client_args</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">provided</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">client_args</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">]</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Only one of 'persist_directory', 'host' and 'chroma_cloud_api_key' "</span>
+                <span class="sa">f</span><span class="s2">"is allowed, but got </span><span class="si">{</span><span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">provided</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">client</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">client</span>
+
+        <span class="c1"># PersistentClient</span>
+        <span class="k">elif</span> <span class="n">persist_directory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">chromadb</span><span class="o">.</span><span class="n">PersistentClient</span><span class="p">(</span>
+                <span class="n">path</span><span class="o">=</span><span class="n">persist_directory</span><span class="p">,</span>
+                <span class="n">settings</span><span class="o">=</span><span class="n">_settings</span><span class="p">,</span>
+                <span class="n">tenant</span><span class="o">=</span><span class="n">_tenant</span><span class="p">,</span>
+                <span class="n">database</span><span class="o">=</span><span class="n">_database</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># HttpClient</span>
+        <span class="k">elif</span> <span class="n">host</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_port</span> <span class="o">=</span> <span class="n">port</span> <span class="ow">or</span> <span class="mi">8000</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">chromadb</span><span class="o">.</span><span class="n">HttpClient</span><span class="p">(</span>
+                <span class="n">host</span><span class="o">=</span><span class="n">host</span><span class="p">,</span>
+                <span class="n">port</span><span class="o">=</span><span class="n">_port</span><span class="p">,</span>
+                <span class="n">ssl</span><span class="o">=</span><span class="n">ssl</span><span class="p">,</span>
+                <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+                <span class="n">settings</span><span class="o">=</span><span class="n">_settings</span><span class="p">,</span>
+                <span class="n">tenant</span><span class="o">=</span><span class="n">_tenant</span><span class="p">,</span>
+                <span class="n">database</span><span class="o">=</span><span class="n">_database</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># CloudClient</span>
+        <span class="k">elif</span> <span class="n">chroma_cloud_api_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">tenant</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">database</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">"Must provide tenant and database values to connect to Chroma Cloud"</span>
+                <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">chromadb</span><span class="o">.</span><span class="n">CloudClient</span><span class="p">(</span>
+                <span class="n">tenant</span><span class="o">=</span><span class="n">tenant</span><span class="p">,</span>
+                <span class="n">database</span><span class="o">=</span><span class="n">database</span><span class="p">,</span>
+                <span class="n">api_key</span><span class="o">=</span><span class="n">chroma_cloud_api_key</span><span class="p">,</span>
+                <span class="n">settings</span><span class="o">=</span><span class="n">_settings</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">chromadb</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="n">_settings</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span> <span class="o">=</span> <span class="n">embedding_function</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_chroma_collection</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">chromadb</span><span class="o">.</span><span class="n">Collection</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_collection_name</span> <span class="o">=</span> <span class="n">collection_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_collection_metadata</span> <span class="o">=</span> <span class="n">collection_metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_collection_configuration</span> <span class="o">=</span> <span class="n">collection_configuration</span>
         <span class="k">if</span> <span class="n">create_collection_if_not_exists</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">__ensure_collection</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
@@ -581,6 +654,7 @@
             <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_collection_name</span><span class="p">,</span>
             <span class="n">embedding_function</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">metadata</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_collection_metadata</span><span class="p">,</span>
+            <span class="n">configuration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_collection_configuration</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -640,7 +714,8 @@
 
 <div class="viewcode-block" id="Chroma.encode_image">
 <a class="viewcode-back" href="../../chroma/vectorstores/langchain_chroma.vectorstores.Chroma.html#langchain_chroma.vectorstores.Chroma.encode_image">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">encode_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">encode_image</span><span class="p">(</span><span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Get base64 string from image URI."""</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">image_file</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">image_file</span><span class="o">.</span><span class="n">read</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span></div>
@@ -653,7 +728,6 @@
         <span class="n">uris</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">metadatas</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Run more images through the embeddings and add to the vectorstore.</span>
 
@@ -662,7 +736,6 @@
 <span class="sd">            metadatas: Optional list of metadatas.</span>
 <span class="sd">                    When querying, you can filter on this metadata.</span>
 <span class="sd">            ids: Optional list of IDs. (Items without IDs will be assigned UUIDs)</span>
-<span class="sd">            kwargs: Additional keyword arguments to pass.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of IDs of the added images.</span>
@@ -882,7 +955,7 @@
 <span class="sd">            List of Documents most similar to the query vector.</span>
 <span class="sd">        """</span>
         <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__query_collection</span><span class="p">(</span>
-            <span class="n">query_embeddings</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
+            <span class="n">query_embeddings</span><span class="o">=</span><span class="p">[</span><span class="n">embedding</span><span class="p">],</span>
             <span class="n">n_results</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
             <span class="n">where</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
             <span class="n">where_document</span><span class="o">=</span><span class="n">where_document</span><span class="p">,</span>
@@ -908,7 +981,7 @@
 <span class="sd">            k: Number of Documents to return. Defaults to 4.</span>
 <span class="sd">            filter: Filter by metadata. Defaults to None.</span>
 <span class="sd">            where_document: dict used to filter by the documents.</span>
-<span class="sd">                    E.g. {"$contains": "hello"}}.</span>
+<span class="sd">                    E.g. {"$contains": "hello"}.</span>
 <span class="sd">            kwargs: Additional keyword arguments to pass to Chroma collection query.</span>
 
 <span class="sd">        Returns:</span>
@@ -916,7 +989,7 @@
 <span class="sd">            in float for each. Lower score represents more similarity.</span>
 <span class="sd">        """</span>
         <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__query_collection</span><span class="p">(</span>
-            <span class="n">query_embeddings</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
+            <span class="n">query_embeddings</span><span class="o">=</span><span class="p">[</span><span class="n">embedding</span><span class="p">],</span>
             <span class="n">n_results</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
             <span class="n">where</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
             <span class="n">where_document</span><span class="o">=</span><span class="n">where_document</span><span class="p">,</span>
@@ -1022,10 +1095,10 @@
 <span class="w">        </span><span class="sd">"""Select the relevance score function based on collections distance metric.</span>
 
 <span class="sd">        The most similar documents will have the lowest relevance score. Default</span>
-<span class="sd">        relevance score function is euclidean distance. Distance metric must be</span>
-<span class="sd">        provided in `collection_metadata` during initialization of Chroma object.</span>
-<span class="sd">        Example: collection_metadata={"hnsw:space": "cosine"}. Available distance</span>
-<span class="sd">        metrics are: 'cosine', 'l2' and 'ip'.</span>
+<span class="sd">        relevance score function is Euclidean distance. Distance metric must be</span>
+<span class="sd">        provided in `collection_configuration` during initialization of Chroma object.</span>
+<span class="sd">        Example: collection_configuration={"hnsw": {"space": "cosine"}}.</span>
+<span class="sd">        Available distance metrics are: 'cosine', 'l2' and 'ip'.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The relevance score function.</span>
@@ -1036,12 +1109,15 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">override_relevance_score_fn</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">override_relevance_score_fn</span>
 
-        <span class="n">distance</span> <span class="o">=</span> <span class="s2">"l2"</span>
-        <span class="n">distance_key</span> <span class="o">=</span> <span class="s2">"hnsw:space"</span>
-        <span class="n">metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">metadata</span>
+        <span class="n">hnsw_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">configuration</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"hnsw"</span><span class="p">)</span>
+        <span class="n">hnsw_distance</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">hnsw_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"space"</span><span class="p">)</span> <span class="k">if</span> <span class="n">hnsw_config</span> <span class="k">else</span> <span class="kc">None</span>
 
-        <span class="k">if</span> <span class="n">metadata</span> <span class="ow">and</span> <span class="n">distance_key</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">:</span>
-            <span class="n">distance</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="n">distance_key</span><span class="p">]</span>
+        <span class="n">spann_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">configuration</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"spann"</span><span class="p">)</span>
+        <span class="n">spann_distance</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">spann_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"space"</span><span class="p">)</span> <span class="k">if</span> <span class="n">spann_config</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="n">distance</span> <span class="o">=</span> <span class="n">hnsw_distance</span> <span class="ow">or</span> <span class="n">spann_distance</span>
 
         <span class="k">if</span> <span class="n">distance</span> <span class="o">==</span> <span class="s2">"cosine"</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cosine_relevance_score_fn</span>
@@ -1085,24 +1161,22 @@
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If the embedding function does not support image embeddings.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="p">,</span>
-            <span class="s2">"embed_image"</span><span class="p">,</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="p">,</span> <span class="s2">"embed_image"</span>
         <span class="p">):</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"The embedding function must support image embedding."</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="c1"># Obtain image embedding</span>
+            <span class="c1"># Assuming embed_image returns a single embedding</span>
+            <span class="n">image_embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="o">.</span><span class="n">embed_image</span><span class="p">(</span><span class="n">uris</span><span class="o">=</span><span class="p">[</span><span class="n">uri</span><span class="p">])</span>
 
-        <span class="c1"># Obtain image embedding</span>
-        <span class="c1"># Assuming embed_image returns a single embedding</span>
-        <span class="n">image_embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="o">.</span><span class="n">embed_image</span><span class="p">(</span><span class="n">uris</span><span class="o">=</span><span class="p">[</span><span class="n">uri</span><span class="p">])</span>
-
-        <span class="c1"># Perform similarity search based on the obtained embedding</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_by_vector</span><span class="p">(</span>
-            <span class="n">embedding</span><span class="o">=</span><span class="n">image_embedding</span><span class="p">,</span>
-            <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
-            <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-        <span class="p">)</span></div>
+            <span class="c1"># Perform similarity search based on the obtained embedding</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_by_vector</span><span class="p">(</span>
+                <span class="n">embedding</span><span class="o">=</span><span class="n">image_embedding</span><span class="p">,</span>
+                <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+                <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">"The embedding function must support image embedding."</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Chroma.similarity_search_by_image_with_relevance_score">
@@ -1132,24 +1206,22 @@
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If the embedding function does not support image embeddings.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="p">,</span>
-            <span class="s2">"embed_image"</span><span class="p">,</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="p">,</span> <span class="s2">"embed_image"</span>
         <span class="p">):</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"The embedding function must support image embedding."</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="c1"># Obtain image embedding</span>
+            <span class="c1"># Assuming embed_image returns a single embedding</span>
+            <span class="n">image_embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="o">.</span><span class="n">embed_image</span><span class="p">(</span><span class="n">uris</span><span class="o">=</span><span class="p">[</span><span class="n">uri</span><span class="p">])</span>
 
-        <span class="c1"># Obtain image embedding</span>
-        <span class="c1"># Assuming embed_image returns a single embedding</span>
-        <span class="n">image_embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="o">.</span><span class="n">embed_image</span><span class="p">(</span><span class="n">uris</span><span class="o">=</span><span class="p">[</span><span class="n">uri</span><span class="p">])</span>
-
-        <span class="c1"># Perform similarity search based on the obtained embedding</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_by_vector_with_relevance_scores</span><span class="p">(</span>
-            <span class="n">embedding</span><span class="o">=</span><span class="n">image_embedding</span><span class="p">,</span>
-            <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
-            <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-        <span class="p">)</span></div>
+            <span class="c1"># Perform similarity search based on the obtained embedding</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_by_vector_with_relevance_scores</span><span class="p">(</span>
+                <span class="n">embedding</span><span class="o">=</span><span class="n">image_embedding</span><span class="p">,</span>
+                <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+                <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">"The embedding function must support image embedding."</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Chroma.max_marginal_relevance_search_by_vector">
@@ -1187,7 +1259,7 @@
 <span class="sd">            List of Documents selected by maximal marginal relevance.</span>
 <span class="sd">        """</span>
         <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__query_collection</span><span class="p">(</span>
-            <span class="n">query_embeddings</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
+            <span class="n">query_embeddings</span><span class="o">=</span><span class="p">[</span><span class="n">embedding</span><span class="p">],</span>
             <span class="n">n_results</span><span class="o">=</span><span class="n">fetch_k</span><span class="p">,</span>
             <span class="n">where</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
             <span class="n">where_document</span><span class="o">=</span><span class="n">where_document</span><span class="p">,</span>
@@ -1282,7 +1354,7 @@
 <a class="viewcode-back" href="../../chroma/vectorstores/langchain_chroma.vectorstores.Chroma.html#langchain_chroma.vectorstores.Chroma.get">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OneOrMany</span><span class="p">[</span><span class="n">ID</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">where</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Where</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">offset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1346,7 +1418,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            List of Documents.</span>
 
-<span class="sd">        .. versionadded:: 0.2.1</span>
+<span class="sd">        ... versionadded:: 0.2.1</span>
 <span class="sd">        """</span>
         <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span>
         <span class="k">return</span> <span class="p">[</span>
@@ -1393,16 +1465,16 @@
         <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_function</span><span class="o">.</span><span class="n">embed_documents</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span>  <span class="c1"># noqa: SLF001</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span>
             <span class="s2">"get_max_batch_size"</span><span class="p">,</span>
         <span class="p">)</span> <span class="ow">or</span> <span class="nb">hasattr</span><span class="p">(</span>  <span class="c1"># for Chroma 0.5.1 and above</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span>  <span class="c1"># noqa: SLF001</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span>
             <span class="s2">"max_batch_size"</span><span class="p">,</span>
         <span class="p">):</span>  <span class="c1"># for Chroma 0.4.10 and above</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">chromadb.utils.batch_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_batches</span>
 
             <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">create_batches</span><span class="p">(</span>
-                <span class="n">api</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_collection</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span>  <span class="c1"># noqa: SLF001</span>
+                <span class="n">api</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span>
                 <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span>
                 <span class="n">metadatas</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
                 <span class="n">documents</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
@@ -1434,9 +1506,18 @@
         <span class="n">ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">collection_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_LANGCHAIN_DEFAULT_COLLECTION_NAME</span><span class="p">,</span>
         <span class="n">persist_directory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">host</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">port</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">headers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">chroma_cloud_api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">tenant</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">database</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">client_settings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">chromadb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">Settings</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">chromadb</span><span class="o">.</span><span class="n">ClientAPI</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">collection_metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">collection_configuration</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CreateCollectionConfiguration</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">ssl</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Chroma</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Create a Chroma vectorstore from a raw documents.</span>
@@ -1448,14 +1529,26 @@
 <span class="sd">            texts: List of texts to add to the collection.</span>
 <span class="sd">            collection_name: Name of the collection to create.</span>
 <span class="sd">            persist_directory: Directory to persist the collection.</span>
+<span class="sd">            host: Hostname of a deployed Chroma server.</span>
+<span class="sd">            port: Connection port for a deployed Chroma server.</span>
+<span class="sd">                    Default is 8000.</span>
+<span class="sd">            ssl: Whether to establish an SSL connection with a deployed Chroma server.</span>
+<span class="sd">                    Default is False.</span>
+<span class="sd">            headers: HTTP headers to send to a deployed Chroma server.</span>
+<span class="sd">            chroma_cloud_api_key: Chroma Cloud API key.</span>
+<span class="sd">            tenant: Tenant ID. Required for Chroma Cloud connections.</span>
+<span class="sd">                    Default is 'default_tenant' for local Chroma servers.</span>
+<span class="sd">            database: Database name. Required for Chroma Cloud connections.</span>
+<span class="sd">                    Default is 'default_database'.</span>
 <span class="sd">            embedding: Embedding function. Defaults to None.</span>
 <span class="sd">            metadatas: List of metadatas. Defaults to None.</span>
 <span class="sd">            ids: List of document IDs. Defaults to None.</span>
 <span class="sd">            client_settings: Chroma client settings.</span>
 <span class="sd">            client: Chroma client. Documentation:</span>
 <span class="sd">                    https://docs.trychroma.com/reference/python/client</span>
-<span class="sd">            collection_metadata: Collection configurations.</span>
-<span class="sd">                                                  Defaults to None.</span>
+<span class="sd">            collection_metadata: Collection configurations. Defaults to None.</span>
+<span class="sd">            collection_configuration: Index configuration for the collection.</span>
+<span class="sd">                    Defaults to None.</span>
 <span class="sd">            kwargs: Additional keyword arguments to initialize a Chroma client.</span>
 
 <span class="sd">        Returns:</span>
@@ -1465,9 +1558,17 @@
             <span class="n">collection_name</span><span class="o">=</span><span class="n">collection_name</span><span class="p">,</span>
             <span class="n">embedding_function</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
             <span class="n">persist_directory</span><span class="o">=</span><span class="n">persist_directory</span><span class="p">,</span>
+            <span class="n">host</span><span class="o">=</span><span class="n">host</span><span class="p">,</span>
+            <span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">,</span>
+            <span class="n">ssl</span><span class="o">=</span><span class="n">ssl</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+            <span class="n">chroma_cloud_api_key</span><span class="o">=</span><span class="n">chroma_cloud_api_key</span><span class="p">,</span>
+            <span class="n">tenant</span><span class="o">=</span><span class="n">tenant</span><span class="p">,</span>
+            <span class="n">database</span><span class="o">=</span><span class="n">database</span><span class="p">,</span>
             <span class="n">client_settings</span><span class="o">=</span><span class="n">client_settings</span><span class="p">,</span>
             <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
             <span class="n">collection_metadata</span><span class="o">=</span><span class="n">collection_metadata</span><span class="p">,</span>
+            <span class="n">collection_configuration</span><span class="o">=</span><span class="n">collection_configuration</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1509,9 +1610,18 @@
         <span class="n">ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">collection_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_LANGCHAIN_DEFAULT_COLLECTION_NAME</span><span class="p">,</span>
         <span class="n">persist_directory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">host</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">port</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">headers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">chroma_cloud_api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">tenant</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">database</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">client_settings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">chromadb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">Settings</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">chromadb</span><span class="o">.</span><span class="n">ClientAPI</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># Add this line</span>
         <span class="n">collection_metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">collection_configuration</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CreateCollectionConfiguration</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">ssl</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Chroma</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Create a Chroma vectorstore from a list of documents.</span>
@@ -1522,14 +1632,25 @@
 <span class="sd">        Args:</span>
 <span class="sd">            collection_name: Name of the collection to create.</span>
 <span class="sd">            persist_directory: Directory to persist the collection.</span>
+<span class="sd">            host: Hostname of a deployed Chroma server.</span>
+<span class="sd">            port: Connection port for a deployed Chroma server. Default is 8000.</span>
+<span class="sd">            ssl: Whether to establish an SSL connection with a deployed Chroma server.</span>
+<span class="sd">                    Default is False.</span>
+<span class="sd">            headers: HTTP headers to send to a deployed Chroma server.</span>
+<span class="sd">            chroma_cloud_api_key: Chroma Cloud API key.</span>
+<span class="sd">            tenant: Tenant ID. Required for Chroma Cloud connections.</span>
+<span class="sd">                    Default is 'default_tenant' for local Chroma servers.</span>
+<span class="sd">            database: Database name. Required for Chroma Cloud connections.</span>
+<span class="sd">                    Default is 'default_database'.</span>
 <span class="sd">            ids : List of document IDs. Defaults to None.</span>
 <span class="sd">            documents: List of documents to add to the vectorstore.</span>
 <span class="sd">            embedding: Embedding function. Defaults to None.</span>
 <span class="sd">            client_settings: Chroma client settings.</span>
 <span class="sd">            client: Chroma client. Documentation:</span>
 <span class="sd">                    https://docs.trychroma.com/reference/python/client</span>
-<span class="sd">            collection_metadata: Collection configurations.</span>
-<span class="sd">                                                  Defaults to None.</span>
+<span class="sd">            collection_metadata: Collection configurations. Defaults to None.</span>
+<span class="sd">            collection_configuration: Index configuration for the collection.</span>
+<span class="sd">                    Defaults to None.</span>
 <span class="sd">            kwargs: Additional keyword arguments to initialize a Chroma client.</span>
 
 <span class="sd">        Returns:</span>
@@ -1546,9 +1667,17 @@
             <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span>
             <span class="n">collection_name</span><span class="o">=</span><span class="n">collection_name</span><span class="p">,</span>
             <span class="n">persist_directory</span><span class="o">=</span><span class="n">persist_directory</span><span class="p">,</span>
+            <span class="n">host</span><span class="o">=</span><span class="n">host</span><span class="p">,</span>
+            <span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">,</span>
+            <span class="n">ssl</span><span class="o">=</span><span class="n">ssl</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+            <span class="n">chroma_cloud_api_key</span><span class="o">=</span><span class="n">chroma_cloud_api_key</span><span class="p">,</span>
+            <span class="n">tenant</span><span class="o">=</span><span class="n">tenant</span><span class="p">,</span>
+            <span class="n">database</span><span class="o">=</span><span class="n">database</span><span class="p">,</span>
             <span class="n">client_settings</span><span class="o">=</span><span class="n">client_settings</span><span class="p">,</span>
             <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
             <span class="n">collection_metadata</span><span class="o">=</span><span class="n">collection_metadata</span><span class="p">,</span>
+            <span class="n">collection_configuration</span><span class="o">=</span><span class="n">collection_configuration</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span></div>
 
