@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Jul 24, 2025" name="docbuild:last-update"/>
+<meta content="Jul 25, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -392,6 +392,12 @@
         <span class="n">outputs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">run_manager</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">CallbackManagerForChainRun</span><span class="p">,</span> <span class="n">AsyncCallbackManagerForChainRun</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AddableDict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Make final outputs for the iterator.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            outputs: The outputs from the agent executor.</span>
+<span class="sd">            run_manager: The run manager to use for callbacks.</span>
+<span class="sd">        """</span>
         <span class="c1"># have access to intermediate steps by design in iterator,</span>
         <span class="c1"># so return only outputs may as well always be true.</span>
 
@@ -408,6 +414,7 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">AgentExecutorIterator</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">AddableDict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Create an async iterator for the AgentExecutor."""</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"Initialising AgentExecutorIterator"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
         <span class="n">callback_manager</span> <span class="o">=</span> <span class="n">CallbackManager</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span>
@@ -426,14 +433,14 @@
             <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">run_name</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_should_continue</span><span class="p">(</span>
+            <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_should_continue</span><span class="p">(</span>  <span class="c1"># noqa: SLF001</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">iterations</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">time_elapsed</span><span class="p">,</span>
             <span class="p">):</span>
                 <span class="c1"># take the next step: this plans next action, executes it,</span>
                 <span class="c1"># yielding action and observation as they are generated</span>
                 <span class="n">next_step_seq</span><span class="p">:</span> <span class="n">NextStepOutput</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_iter_next_step</span><span class="p">(</span>
+                <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_iter_next_step</span><span class="p">(</span>  <span class="c1"># noqa: SLF001</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">name_to_tool_map</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">color_mapping</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span>
@@ -450,7 +457,7 @@
                             <span class="k">yield</span> <span class="n">AddableDict</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="p">[</span><span class="n">chunk</span><span class="p">],</span> <span class="n">messages</span><span class="o">=</span><span class="n">chunk</span><span class="o">.</span><span class="n">messages</span><span class="p">)</span>
 
                 <span class="c1"># convert iterator output to format handled by _process_next_step_output</span>
-                <span class="n">next_step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_consume_next_step</span><span class="p">(</span><span class="n">next_step_seq</span><span class="p">)</span>
+                <span class="n">next_step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_consume_next_step</span><span class="p">(</span><span class="n">next_step_seq</span><span class="p">)</span>  <span class="c1"># noqa: SLF001</span>
                 <span class="c1"># update iterations and time elapsed</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">update_iterations</span><span class="p">()</span>
                 <span class="c1"># decide if this is the final output</span>
@@ -494,14 +501,14 @@
         <span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">async</span> <span class="k">with</span> <span class="n">asyncio_timeout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">max_execution_time</span><span class="p">):</span>
-                <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_should_continue</span><span class="p">(</span>
+                <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_should_continue</span><span class="p">(</span>  <span class="c1"># noqa: SLF001</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">iterations</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">time_elapsed</span><span class="p">,</span>
                 <span class="p">):</span>
                     <span class="c1"># take the next step: this plans next action, executes it,</span>
                     <span class="c1"># yielding action and observation as they are generated</span>
                     <span class="n">next_step_seq</span><span class="p">:</span> <span class="n">NextStepOutput</span> <span class="o">=</span> <span class="p">[]</span>
-                    <span class="k">async</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_aiter_next_step</span><span class="p">(</span>
+                    <span class="k">async</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_aiter_next_step</span><span class="p">(</span>  <span class="c1"># noqa: SLF001</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">name_to_tool_map</span><span class="p">,</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">color_mapping</span><span class="p">,</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span>
@@ -524,7 +531,7 @@
                                 <span class="p">)</span>
 
                     <span class="c1"># convert iterator output to format handled by _process_next_step</span>
-                    <span class="n">next_step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_consume_next_step</span><span class="p">(</span><span class="n">next_step_seq</span><span class="p">)</span>
+                    <span class="n">next_step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_consume_next_step</span><span class="p">(</span><span class="n">next_step_seq</span><span class="p">)</span>  <span class="c1"># noqa: SLF001</span>
                     <span class="c1"># update iterations and time elapsed</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">update_iterations</span><span class="p">()</span>
                     <span class="c1"># decide if this is the final output</span>
@@ -572,7 +579,7 @@
         <span class="c1"># Check for tool return</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">next_step_output</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">next_step_action</span> <span class="o">=</span> <span class="n">next_step_output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">tool_return</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_get_tool_return</span><span class="p">(</span><span class="n">next_step_action</span><span class="p">)</span>
+            <span class="n">tool_return</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_get_tool_return</span><span class="p">(</span><span class="n">next_step_action</span><span class="p">)</span>  <span class="c1"># noqa: SLF001</span>
             <span class="k">if</span> <span class="n">tool_return</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_return</span><span class="p">(</span><span class="n">tool_return</span><span class="p">,</span> <span class="n">run_manager</span><span class="o">=</span><span class="n">run_manager</span><span class="p">)</span>
 
@@ -600,7 +607,7 @@
         <span class="c1"># Check for tool return</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">next_step_output</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">next_step_action</span> <span class="o">=</span> <span class="n">next_step_output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">tool_return</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_get_tool_return</span><span class="p">(</span><span class="n">next_step_action</span><span class="p">)</span>
+            <span class="n">tool_return</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_get_tool_return</span><span class="p">(</span><span class="n">next_step_action</span><span class="p">)</span>  <span class="c1"># noqa: SLF001</span>
             <span class="k">if</span> <span class="n">tool_return</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_areturn</span><span class="p">(</span><span class="n">tool_return</span><span class="p">,</span> <span class="n">run_manager</span><span class="o">=</span><span class="n">run_manager</span><span class="p">)</span>
 
@@ -612,7 +619,7 @@
 <span class="sd">        """</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Stopping agent prematurely due to triggering stop condition"</span><span class="p">)</span>
         <span class="c1"># this manually constructs agent finish with output key</span>
-        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_action_agent</span><span class="o">.</span><span class="n">return_stopped_response</span><span class="p">(</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_action_agent</span><span class="o">.</span><span class="n">return_stopped_response</span><span class="p">(</span>  <span class="c1"># noqa: SLF001</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">early_stopping_method</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">intermediate_steps</span><span class="p">,</span>
             <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span>
@@ -625,7 +632,7 @@
 <span class="sd">        the stopped response.</span>
 <span class="sd">        """</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Stopping agent prematurely due to triggering stop condition"</span><span class="p">)</span>
-        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_action_agent</span><span class="o">.</span><span class="n">return_stopped_response</span><span class="p">(</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_action_agent</span><span class="o">.</span><span class="n">return_stopped_response</span><span class="p">(</span>  <span class="c1"># noqa: SLF001</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">early_stopping_method</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">intermediate_steps</span><span class="p">,</span>
             <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span>
@@ -640,7 +647,7 @@
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Return the final output of the iterator.</span>
 <span class="sd">        """</span>
-        <span class="n">returned_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_return</span><span class="p">(</span>
+        <span class="n">returned_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_return</span><span class="p">(</span>  <span class="c1"># noqa: SLF001</span>
             <span class="n">output</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">intermediate_steps</span><span class="p">,</span>
             <span class="n">run_manager</span><span class="o">=</span><span class="n">run_manager</span><span class="p">,</span>
@@ -657,7 +664,7 @@
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Return the final output of the async iterator.</span>
 <span class="sd">        """</span>
-        <span class="n">returned_output</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_areturn</span><span class="p">(</span>
+        <span class="n">returned_output</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">agent_executor</span><span class="o">.</span><span class="n">_areturn</span><span class="p">(</span>  <span class="c1"># noqa: SLF001</span>
             <span class="n">output</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">intermediate_steps</span><span class="p">,</span>
             <span class="n">run_manager</span><span class="o">=</span><span class="n">run_manager</span><span class="p">,</span>
