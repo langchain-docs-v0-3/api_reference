@@ -674,6 +674,9 @@
     <span class="n">scoped_full_cleanup_source_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
     <span class="k">for</span> <span class="n">doc_batch</span> <span class="ow">in</span> <span class="n">_batch</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">doc_iterator</span><span class="p">):</span>
+        <span class="c1"># Track original batch size before deduplication</span>
+        <span class="n">original_batch_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">doc_batch</span><span class="p">)</span>
+
         <span class="n">hashed_docs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
             <span class="n">_deduplicate_in_order</span><span class="p">(</span>
                 <span class="p">[</span>
@@ -682,6 +685,8 @@
                 <span class="p">]</span>
             <span class="p">)</span>
         <span class="p">)</span>
+        <span class="c1"># Count documents removed by within-batch deduplication</span>
+        <span class="n">num_skipped</span> <span class="o">+=</span> <span class="n">original_batch_size</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">hashed_docs</span><span class="p">)</span>
 
         <span class="n">source_ids</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">source_id_assigner</span><span class="p">(</span><span class="n">hashed_doc</span><span class="p">)</span> <span class="k">for</span> <span class="n">hashed_doc</span> <span class="ow">in</span> <span class="n">hashed_docs</span>
@@ -1017,6 +1022,9 @@
     <span class="n">scoped_full_cleanup_source_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
     <span class="k">async</span> <span class="k">for</span> <span class="n">doc_batch</span> <span class="ow">in</span> <span class="n">_abatch</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">async_doc_iterator</span><span class="p">):</span>
+        <span class="c1"># Track original batch size before deduplication</span>
+        <span class="n">original_batch_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">doc_batch</span><span class="p">)</span>
+
         <span class="n">hashed_docs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
             <span class="n">_deduplicate_in_order</span><span class="p">(</span>
                 <span class="p">[</span>
@@ -1025,6 +1033,8 @@
                 <span class="p">]</span>
             <span class="p">)</span>
         <span class="p">)</span>
+        <span class="c1"># Count documents removed by within-batch deduplication</span>
+        <span class="n">num_skipped</span> <span class="o">+=</span> <span class="n">original_batch_size</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">hashed_docs</span><span class="p">)</span>
 
         <span class="n">source_ids</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">source_id_assigner</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">hashed_docs</span>
