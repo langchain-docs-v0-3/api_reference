@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 05, 2025" name="docbuild:last-update"/>
+<meta content="Aug 06, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -536,6 +536,10 @@
 <span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
 
     <span class="n">client</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1">#: :meta private:</span>
+<span class="w">    </span><span class="sd">"""The bedrock runtime client for making data plane API calls"""</span>
+
+    <span class="n">bedrock_client</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1">#: :meta private:</span>
+<span class="w">    </span><span class="sd">"""The bedrock client for making control plane API calls"""</span>
 
     <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="s2">"model"</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">"""Id of the model to call.</span>
@@ -727,29 +731,15 @@
             <span class="p">}</span>
         <span class="k">return</span> <span class="n">values</span>
 
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">set_disable_streaming</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="n">model_id</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model_id"</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model"</span><span class="p">))</span>
-
-        <span class="c1"># Extract provider from the model_id</span>
-        <span class="c1"># (e.g., "amazon", "anthropic", "ai21", "meta", "mistral")</span>
-        <span class="k">if</span> <span class="s2">"provider"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">model_id</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"arn"</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">"Model provider should be supplied when passing a model ARN as model_id."</span>
-                <span class="p">)</span>
-            <span class="n">model_parts</span> <span class="o">=</span> <span class="n">model_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
-            <span class="n">values</span><span class="p">[</span><span class="s2">"provider"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">model_parts</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">model_parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">model_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="p">)</span>
-
-        <span class="n">provider</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="s2">"provider"</span><span class="p">]</span>
-
-        <span class="n">model_id_lower</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="s2">"base_model_id"</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"base_model"</span><span class="p">,</span> <span class="n">model_id</span><span class="p">)</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_streaming_support</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">provider</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">model_id_lower</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Determine streaming support for a given provider and model.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            True: Full streaming support</span>
+<span class="sd">            "no_tools": Streaming supported but not with tools</span>
+<span class="sd">            False: No streaming support</span>
+<span class="sd">        """</span>
         <span class="c1"># Determine if the model supports plain-text streaming (ConverseStream)</span>
         <span class="c1"># Here we check based on the updated AWS documentation.</span>
         <span class="k">if</span> <span class="p">(</span>
@@ -777,7 +767,7 @@
             <span class="c1"># Cohere Command R models</span>
             <span class="p">(</span><span class="n">provider</span> <span class="o">==</span> <span class="s2">"cohere"</span> <span class="ow">and</span> <span class="s2">"command-r"</span> <span class="ow">in</span> <span class="n">model_id_lower</span><span class="p">)</span>
         <span class="p">):</span>
-            <span class="n">streaming_support</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="kc">True</span>
         <span class="k">elif</span> <span class="p">(</span>
             <span class="c1"># AI21 Jamba-Instruct model</span>
             <span class="p">(</span><span class="n">provider</span> <span class="o">==</span> <span class="s2">"ai21"</span> <span class="ow">and</span> <span class="s2">"jamba-instruct"</span> <span class="ow">in</span> <span class="n">model_id_lower</span><span class="p">)</span>
@@ -810,9 +800,34 @@
             <span class="c1"># Writer Palmyra models</span>
             <span class="p">(</span><span class="n">provider</span> <span class="o">==</span> <span class="s2">"writer"</span> <span class="ow">and</span> <span class="s2">"palmyra"</span> <span class="ow">in</span> <span class="n">model_id_lower</span><span class="p">)</span>
         <span class="p">):</span>
-            <span class="n">streaming_support</span> <span class="o">=</span> <span class="s2">"no_tools"</span>
+            <span class="k">return</span> <span class="s2">"no_tools"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">streaming_support</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_disable_streaming</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="n">model_id</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model_id"</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model"</span><span class="p">))</span>
+        
+        <span class="c1"># Extract provider from the model_id</span>
+        <span class="c1"># (e.g., "amazon", "anthropic", "ai21", "meta", "mistral")</span>
+        <span class="k">if</span> <span class="s2">"provider"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">model_id</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"arn"</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Model provider should be supplied when passing a model ARN as model_id."</span>
+                <span class="p">)</span>
+            <span class="n">model_parts</span> <span class="o">=</span> <span class="n">model_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
+            <span class="n">values</span><span class="p">[</span><span class="s2">"provider"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">model_parts</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">model_parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">model_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">)</span>
+
+        <span class="n">provider</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="s2">"provider"</span><span class="p">]</span>
+
+        <span class="n">model_id_lower</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">"base_model_id"</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"base_model"</span><span class="p">,</span> <span class="n">model_id</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+        <span class="n">streaming_support</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_streaming_support</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="n">model_id_lower</span><span class="p">)</span>
 
         <span class="c1"># Set the disable_streaming flag accordingly:</span>
         <span class="c1"># - If streaming is supported (plain streaming),</span>
@@ -833,6 +848,23 @@
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validate that AWS credentials to and python package exists in environment."""</span>
+        
+         <span class="c1"># Create bedrock client for control plane API call</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bedrock_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bedrock_client</span> <span class="o">=</span> <span class="n">create_aws_client</span><span class="p">(</span>
+                <span class="n">region_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region_name</span><span class="p">,</span>
+                <span class="n">credentials_profile_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials_profile_name</span><span class="p">,</span>
+                <span class="n">aws_access_key_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aws_access_key_id</span><span class="p">,</span>
+                <span class="n">aws_secret_access_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aws_secret_access_key</span><span class="p">,</span>
+                <span class="n">aws_session_token</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aws_session_token</span><span class="p">,</span>
+                <span class="n">endpoint_url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">endpoint_url</span><span class="p">,</span>
+                <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span>
+                <span class="n">service_name</span><span class="o">=</span><span class="s2">"bedrock"</span><span class="p">,</span>
+            <span class="p">)</span>
+            
+        <span class="c1"># Handle streaming configuration for application inference profiles</span>
+        <span class="k">if</span> <span class="s2">"application-inference-profile"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_id</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_configure_streaming_for_resolved_model</span><span class="p">()</span>
 
         <span class="c1"># As of 12/03/24:</span>
         <span class="c1"># only claude-3/4, mistral-large, and nova models support tool choice:</span>
@@ -876,10 +908,36 @@
                 <span class="s2">"Provide a guardrail via `guardrail_config` or "</span>
                 <span class="s2">"disable `guard_last_turn_only`."</span>
             <span class="p">)</span>
+            
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_base_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="c1"># identify the base model id used in the application inference profile (AIP)</span>
+        <span class="c1"># Format: arn:aws:bedrock:us-east-1:&lt;accountId&gt;:application-inference-profile/&lt;id&gt;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_model_id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">'application-inference-profile'</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_id</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bedrock_client</span><span class="o">.</span><span class="n">get_inference_profile</span><span class="p">(</span>
+                <span class="n">inferenceProfileIdentifier</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_id</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="s1">'models'</span> <span class="ow">in</span> <span class="n">response</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s1">'models'</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">model_arn</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s1">'models'</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">'modelArn'</span><span class="p">]</span>
+                <span class="c1"># Format: arn:aws:bedrock:region::foundation-model/provider.model-name</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">base_model_id</span> <span class="o">=</span> <span class="n">model_arn</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_model_id</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_model_id</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_id</span>
+        
+    <span class="k">def</span><span class="w"> </span><span class="nf">_configure_streaming_for_resolved_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Configure streaming support after resolving the base model for application inference profiles."""</span>
+        <span class="n">base_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_base_model</span><span class="p">()</span>
+        <span class="n">model_id_lower</span> <span class="o">=</span> <span class="n">base_model</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        
+        <span class="n">streaming_support</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_streaming_support</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">provider</span><span class="p">,</span> <span class="n">model_id_lower</span><span class="p">)</span>
+
+        <span class="c1"># Set the disable_streaming flag accordingly</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">streaming_support</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">disable_streaming</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="n">streaming_support</span> <span class="o">==</span> <span class="s2">"no_tools"</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">disable_streaming</span> <span class="o">=</span> <span class="s2">"tool_calling"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">disable_streaming</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_apply_guard_last_turn_only</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">messages</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">messages</span><span class="p">):</span>
