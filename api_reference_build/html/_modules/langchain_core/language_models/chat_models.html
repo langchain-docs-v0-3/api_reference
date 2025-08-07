@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 06, 2025" name="docbuild:last-update"/>
+<meta content="Aug 07, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -908,6 +908,16 @@
                 <span class="n">converted_generations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chat_gen</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># Already a ChatGeneration or other expected type</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">gen</span><span class="p">,</span> <span class="s2">"message"</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gen</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="n">AIMessage</span><span class="p">):</span>
+                    <span class="c1"># We zero out cost on cache hits</span>
+                    <span class="n">gen</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">gen</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span>
+                        <span class="n">update</span><span class="o">=</span><span class="p">{</span>
+                            <span class="s2">"usage_metadata"</span><span class="p">:</span> <span class="p">{</span>
+                                <span class="o">**</span><span class="p">(</span><span class="n">gen</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">usage_metadata</span> <span class="ow">or</span> <span class="p">{}),</span>
+                                <span class="s2">"total_cost"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                            <span class="p">}</span>
+                        <span class="p">}</span>
+                    <span class="p">)</span>
                 <span class="n">converted_generations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gen</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">converted_generations</span>
 
