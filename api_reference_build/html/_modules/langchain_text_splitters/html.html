@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 07, 2025" name="docbuild:last-update"/>
+<meta content="Aug 13, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -225,9 +225,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">io</span><span class="w"> </span><span class="kn">import</span> <span class="n">StringIO</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TYPE_CHECKING</span><span class="p">,</span>
     <span class="n">Any</span><span class="p">,</span>
     <span class="n">Callable</span><span class="p">,</span>
     <span class="n">Literal</span><span class="p">,</span>
@@ -242,6 +242,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseDocumentTransformer</span><span class="p">,</span> <span class="n">Document</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_text_splitters.character</span><span class="w"> </span><span class="kn">import</span> <span class="n">RecursiveCharacterTextSplitter</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">bs4.element</span><span class="w"> </span><span class="kn">import</span> <span class="n">PageElement</span>
 
 
 <div class="viewcode-block" id="ElementType">
@@ -394,7 +399,11 @@
 <span class="sd">            requests.RequestException: If the HTTP request fails.</span>
 <span class="sd">        """</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"timeout"</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">url</span><span class="p">,</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"timeout"</span><span class="p">,</span> <span class="n">timeout</span><span class="p">),</span>
+            <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"timeout"</span><span class="p">},</span>
+        <span class="p">)</span>
         <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_text</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
 
@@ -468,9 +477,9 @@
             <span class="n">children</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">bs4.element</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tag</span>
 
-            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">children</span><span class="p">):</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">Tag</span><span class="p">):</span>
-                    <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+            <span class="n">stack</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="n">child</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">children</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">Tag</span><span class="p">)</span>
+            <span class="p">)</span>
 
             <span class="n">tag</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">tag</span><span class="p">:</span>
@@ -638,7 +647,6 @@
 <span class="sd">        """</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">bs4</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeautifulSoup</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">bs4.element</span><span class="w"> </span><span class="kn">import</span> <span class="n">PageElement</span>
         <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Unable to import BeautifulSoup/PageElement, </span><span class="se">\</span>
 <span class="s2">                    please install with `pip install </span><span class="se">\</span>
@@ -652,7 +660,7 @@
         <span class="n">headers</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">([</span><span class="s2">"body"</span><span class="p">,</span> <span class="o">*</span><span class="n">headers</span><span class="p">])</span>  <span class="c1"># type: ignore[assignment]</span>
 
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">header</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">headers</span><span class="p">):</span>
-            <span class="n">header_element</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">PageElement</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span>
+            <span class="n">header_element</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"PageElement"</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">current_header</span> <span class="o">=</span> <span class="s2">"#TITLE#"</span>
                 <span class="n">current_header_tag</span> <span class="o">=</span> <span class="s2">"h1"</span>
@@ -739,7 +747,7 @@
 
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">Document</span><span class="p">(</span>
-                <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">section</span><span class="p">[</span><span class="s2">"content"</span><span class="p">]),</span>
+                <span class="n">cast</span><span class="p">(</span><span class="s2">"str"</span><span class="p">,</span> <span class="n">section</span><span class="p">[</span><span class="s2">"content"</span><span class="p">]),</span>
                 <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">headers_to_split_on</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">section</span><span class="p">[</span><span class="s2">"tag_name"</span><span class="p">])]:</span> <span class="n">section</span><span class="p">[</span>
                         <span class="s2">"header"</span>
@@ -855,19 +863,19 @@
         <span class="n">denylist_tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">preserve_parent_metadata</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">keep_separator</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"start"</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="p">):</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Initialize splitter."""</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">bs4</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeautifulSoup</span><span class="p">,</span> <span class="n">Tag</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_BeautifulSoup</span> <span class="o">=</span> <span class="n">BeautifulSoup</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_Tag</span> <span class="o">=</span> <span class="n">Tag</span>
-        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Could not import BeautifulSoup. "</span>
                 <span class="s2">"Please install it with 'pip install bs4'."</span>
             <span class="p">)</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_headers_to_split_on</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">headers_to_split_on</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_max_chunk_size</span> <span class="o">=</span> <span class="n">max_chunk_size</span>
@@ -915,11 +923,11 @@
 
                 <span class="n">nltk</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="s2">"stopwords"</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_stopwords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">nltk</span><span class="o">.</span><span class="n">corpus</span><span class="o">.</span><span class="n">stopwords</span><span class="o">.</span><span class="n">words</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stopword_lang</span><span class="p">))</span>
-            <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
                 <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="s2">"Could not import nltk. Please install it with 'pip install nltk'."</span>
                 <span class="p">)</span>
-                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span></div>
 
 
 <div class="viewcode-block" id="HTMLSemanticPreservingSplitter.split_text">

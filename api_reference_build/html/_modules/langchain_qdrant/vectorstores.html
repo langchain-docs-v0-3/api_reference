@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 07, 2025" name="docbuild:last-update"/>
+<meta content="Aug 13, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -229,13 +229,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncGenerator</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">islice</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">itemgetter</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">TYPE_CHECKING</span><span class="p">,</span>
-    <span class="n">Any</span><span class="p">,</span>
-    <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">Optional</span><span class="p">,</span>
-    <span class="n">Union</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core._api.deprecation</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecated</span>
@@ -264,10 +258,11 @@
 <div class="viewcode-block" id="sync_call_fallback">
 <a class="viewcode-back" href="../../qdrant/vectorstores/langchain_qdrant.vectorstores.sync_call_fallback.html#langchain_qdrant.vectorstores.sync_call_fallback">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">sync_call_fallback</span><span class="p">(</span><span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Decorator to call the synchronous method of the class if the async method is not</span>
-<span class="sd">    implemented. This decorator might be only used for the methods that are defined</span>
-<span class="sd">    as async in the class.</span>
+<span class="w">    </span><span class="sd">"""Call the synchronous method if the async method is not implemented.</span>
+
+<span class="sd">    This decorator should only be used for methods that are defined as async in the</span>
+<span class="sd">    class.</span>
+
 <span class="sd">    """</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
@@ -325,27 +320,29 @@
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Initialize with necessary components."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">QdrantClient</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"client should be an instance of qdrant_client.QdrantClient, "</span>
                 <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">client</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">async_client</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">async_client</span><span class="p">,</span> <span class="n">AsyncQdrantClient</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"async_client should be an instance of qdrant_client.AsyncQdrantClient"</span>
                 <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">async_client</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">embeddings</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">embedding_function</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"`embeddings` value can't be None. Pass `embeddings` instance."</span>
-            <span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"`embeddings` value can't be None. Pass `embeddings` instance."</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">embeddings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">embedding_function</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Both `embeddings` and `embedding_function` are passed. "</span>
                 <span class="s2">"Use `embeddings` only."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_embeddings</span> <span class="o">=</span> <span class="n">embeddings</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_embeddings_function</span> <span class="o">=</span> <span class="n">embedding_function</span>
@@ -359,13 +356,15 @@
         <span class="k">if</span> <span class="n">embedding_function</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
                 <span class="s2">"Using `embedding_function` is deprecated. "</span>
-                <span class="s2">"Pass `Embeddings` instance to `embeddings` instead."</span>
+                <span class="s2">"Pass `Embeddings` instance to `embeddings` instead."</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">Embeddings</span><span class="p">):</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
                 <span class="s2">"`embeddings` should be an instance of `Embeddings`."</span>
-                <span class="s2">"Using `embeddings` as `embedding_function` which is deprecated"</span>
+                <span class="s2">"Using `embeddings` as `embedding_function` which is deprecated"</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_embeddings_function</span> <span class="o">=</span> <span class="n">embeddings</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_embeddings</span> <span class="o">=</span> <span class="kc">None</span>
@@ -398,9 +397,11 @@
 <span class="sd">            batch_size:</span>
 <span class="sd">                How many vectors upload per-request.</span>
 <span class="sd">                Default: ``64``</span>
+<span class="sd">            **kwargs: Additional keyword arguments.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of ids from adding the texts into the vectorstore.</span>
+
 <span class="sd">        """</span>
         <span class="n">added_ids</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">batch_ids</span><span class="p">,</span> <span class="n">points</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_rest_batches</span><span class="p">(</span>
@@ -436,16 +437,17 @@
 <span class="sd">            batch_size:</span>
 <span class="sd">                How many vectors upload per-request.</span>
 <span class="sd">                Default: ``64``</span>
+<span class="sd">            **kwargs: Additional keyword arguments.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of ids from adding the texts into the vectorstore.</span>
+
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span> <span class="n">AsyncQdrantLocal</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="s2">"QdrantLocal cannot interoperate with sync and async clients"</span>
-            <span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"QdrantLocal cannot interoperate with sync and async clients"</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="n">added_ids</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">async</span> <span class="k">for</span> <span class="n">batch_ids</span><span class="p">,</span> <span class="n">points</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_agenerate_rest_batches</span><span class="p">(</span>
@@ -465,7 +467,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">search_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">SearchParams</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">score_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -505,6 +507,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of Documents most similar to the query.</span>
+
 <span class="sd">        """</span>
         <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_with_score</span><span class="p">(</span>
             <span class="n">query</span><span class="p">,</span>
@@ -526,16 +529,20 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Return docs most similar to query.</span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            query: Text to look up documents similar to.</span>
 <span class="sd">            k: Number of Documents to return. Defaults to 4.</span>
 <span class="sd">            filter: Filter by metadata. Defaults to None.</span>
+<span class="sd">            **kwargs: Additional keyword arguments.</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            List of Documents most similar to the query.</span>
+
 <span class="sd">        """</span>
         <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">asimilarity_search_with_score</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="nb">filter</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">results</span><span class="p">))</span></div>
@@ -547,7 +554,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">search_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">SearchParams</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">score_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -587,6 +594,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of documents most similar to the query text and distance for each.</span>
+
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_with_score_by_vector</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">),</span>
@@ -607,7 +615,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">search_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">SearchParams</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">score_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -648,6 +656,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of documents most similar to the query text and distance for each.</span>
+
 <span class="sd">        """</span>
         <span class="n">query_embedding</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aembed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
         <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">asimilarity_search_with_score_by_vector</span><span class="p">(</span>
@@ -668,7 +677,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">embedding</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">search_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">SearchParams</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">score_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -708,6 +717,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of Documents most similar to the query.</span>
+
 <span class="sd">        """</span>
         <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_with_score_by_vector</span><span class="p">(</span>
             <span class="n">embedding</span><span class="p">,</span>
@@ -729,7 +739,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">embedding</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">search_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">SearchParams</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">score_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -770,6 +780,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of Documents most similar to the query.</span>
+
 <span class="sd">        """</span>
         <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">asimilarity_search_with_score_by_vector</span><span class="p">(</span>
             <span class="n">embedding</span><span class="p">,</span>
@@ -790,7 +801,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">embedding</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">search_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">SearchParams</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">score_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -830,6 +841,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of documents most similar to the query text and distance for each.</span>
+
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">filter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">filter</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
@@ -837,6 +849,7 @@
                 <span class="s2">"filters directly: "</span>
                 <span class="s2">"https://qdrant.tech/documentation/concepts/filtering/"</span><span class="p">,</span>
                 <span class="ne">DeprecationWarning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">qdrant_filter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qdrant_filter_from_dict</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -880,7 +893,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">embedding</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">search_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">SearchParams</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">score_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -921,20 +934,20 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of documents most similar to the query text and distance for each.</span>
-<span class="sd">        """</span>
 
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span> <span class="n">AsyncQdrantLocal</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="s2">"QdrantLocal cannot interoperate with sync and async clients"</span>
-            <span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"QdrantLocal cannot interoperate with sync and async clients"</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">filter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">filter</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
                 <span class="s2">"Using dict as a `filter` is deprecated. Please use qdrant-client "</span>
                 <span class="s2">"filters directly: "</span>
                 <span class="s2">"https://qdrant.tech/documentation/concepts/filtering/"</span><span class="p">,</span>
                 <span class="ne">DeprecationWarning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">qdrant_filter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qdrant_filter_from_dict</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -979,7 +992,7 @@
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="n">fetch_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">lambda_mult</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">search_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">SearchParams</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">score_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">consistency</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">ReadConsistency</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1020,8 +1033,10 @@
 <span class="sd">                - 'all' - query all replicas, and return values present in all replicas</span>
 <span class="sd">            **kwargs:</span>
 <span class="sd">                Any other named arguments to pass through to QdrantClient.search()</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            List of Documents selected by maximal marginal relevance.</span>
+
 <span class="sd">        """</span>
         <span class="n">query_embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_marginal_relevance_search_by_vector</span><span class="p">(</span>
@@ -1046,7 +1061,7 @@
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="n">fetch_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">lambda_mult</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">search_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">SearchParams</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">score_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">consistency</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">ReadConsistency</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1088,8 +1103,10 @@
 <span class="sd">            **kwargs:</span>
 <span class="sd">                Any other named arguments to pass through to</span>
 <span class="sd">                AsyncQdrantClient.Search().</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            List of Documents selected by maximal marginal relevance.</span>
+
 <span class="sd">        """</span>
         <span class="n">query_embedding</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aembed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
         <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">amax_marginal_relevance_search_by_vector</span><span class="p">(</span>
@@ -1113,7 +1130,7 @@
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="n">fetch_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">lambda_mult</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">search_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">SearchParams</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">score_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">consistency</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">ReadConsistency</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1153,8 +1170,10 @@
 <span class="sd">                - 'all' - query all replicas, and return values present in all replicas</span>
 <span class="sd">            **kwargs:</span>
 <span class="sd">                Any other named arguments to pass through to QdrantClient.search()</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            List of Documents selected by maximal marginal relevance.</span>
+
 <span class="sd">        """</span>
         <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_marginal_relevance_search_with_score_by_vector</span><span class="p">(</span>
             <span class="n">embedding</span><span class="p">,</span>
@@ -1179,15 +1198,17 @@
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="n">fetch_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">lambda_mult</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">search_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">SearchParams</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">score_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">consistency</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">ReadConsistency</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Return docs selected using the maximal marginal relevance.</span>
+
 <span class="sd">        Maximal marginal relevance optimizes for similarity to query AND diversity</span>
 <span class="sd">        among selected documents.</span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            embedding: Embedding vector to look up documents similar to.</span>
 <span class="sd">            k: Number of Documents to return. Defaults to 4.</span>
@@ -1219,9 +1240,11 @@
 <span class="sd">            **kwargs:</span>
 <span class="sd">                Any other named arguments to pass through to</span>
 <span class="sd">                AsyncQdrantClient.Search().</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            List of Documents selected by maximal marginal relevance and distance for</span>
 <span class="sd">            each.</span>
+
 <span class="sd">        """</span>
         <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">amax_marginal_relevance_search_with_score_by_vector</span><span class="p">(</span>
             <span class="n">embedding</span><span class="p">,</span>
@@ -1245,15 +1268,17 @@
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="n">fetch_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">lambda_mult</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">search_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">SearchParams</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">score_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">consistency</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">ReadConsistency</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Return docs selected using the maximal marginal relevance.</span>
+
 <span class="sd">        Maximal marginal relevance optimizes for similarity to query AND diversity</span>
 <span class="sd">        among selected documents.</span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            embedding: Embedding vector to look up documents similar to.</span>
 <span class="sd">            k: Number of Documents to return. Defaults to 4.</span>
@@ -1284,9 +1309,11 @@
 <span class="sd">                - 'all' - query all replicas, and return values present in all replicas</span>
 <span class="sd">            **kwargs:</span>
 <span class="sd">                Any other named arguments to pass through to QdrantClient.search()</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            List of Documents selected by maximal marginal relevance and distance for</span>
 <span class="sd">            each.</span>
+
 <span class="sd">        """</span>
         <span class="n">query_vector</span> <span class="o">=</span> <span class="n">embedding</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">vector_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1336,15 +1363,17 @@
         <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
         <span class="n">fetch_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
         <span class="n">lambda_mult</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
-        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MetadataFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
         <span class="n">search_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">SearchParams</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">score_threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">consistency</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">ReadConsistency</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Return docs selected using the maximal marginal relevance.</span>
+
 <span class="sd">        Maximal marginal relevance optimizes for similarity to query AND diversity</span>
 <span class="sd">        among selected documents.</span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            embedding: Embedding vector to look up documents similar to.</span>
 <span class="sd">            k: Number of Documents to return. Defaults to 4.</span>
@@ -1354,16 +1383,22 @@
 <span class="sd">                        of diversity among the results with 0 corresponding</span>
 <span class="sd">                        to maximum diversity and 1 to minimum diversity.</span>
 <span class="sd">                        Defaults to 0.5.</span>
+<span class="sd">            filter: Filter by metadata. Defaults to None.</span>
+<span class="sd">            search_params: Additional search params.</span>
+<span class="sd">            score_threshold: Define a minimal score threshold for the result.</span>
+<span class="sd">            consistency: Read consistency of the search.</span>
+<span class="sd">            **kwargs: Additional keyword arguments.</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            List of Documents selected by maximal marginal relevance and distance for</span>
 <span class="sd">            each.</span>
+
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span> <span class="n">AsyncQdrantLocal</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="s2">"QdrantLocal cannot interoperate with sync and async clients"</span>
-            <span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"QdrantLocal cannot interoperate with sync and async clients"</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">query_vector</span> <span class="o">=</span> <span class="n">embedding</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">vector_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">query_vector</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vector_name</span><span class="p">,</span> <span class="n">query_vector</span><span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
@@ -1414,8 +1449,8 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            True if deletion is successful, False otherwise.</span>
-<span class="sd">        """</span>
 
+<span class="sd">        """</span>
         <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span>
             <span class="n">collection_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">,</span>
             <span class="n">points_selector</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span>
@@ -1437,13 +1472,13 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            True if deletion is successful, False otherwise.</span>
+
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="o">.</span><span class="n">_client</span><span class="p">,</span> <span class="n">AsyncQdrantLocal</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="s2">"QdrantLocal cannot interoperate with sync and async clients"</span>
-            <span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"QdrantLocal cannot interoperate with sync and async clients"</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span>
             <span class="n">collection_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="p">,</span>
@@ -1466,8 +1501,8 @@
         <span class="n">url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">port</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">6333</span><span class="p">,</span>
         <span class="n">grpc_port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6334</span><span class="p">,</span>
-        <span class="n">prefer_grpc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">https</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefer_grpc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001, FBT002</span>
+        <span class="n">https</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
         <span class="n">api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">prefix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1482,14 +1517,14 @@
         <span class="n">shard_number</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">replication_factor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">write_consistency_factor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">on_disk_payload</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">on_disk_payload</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
         <span class="n">hnsw_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">HnswConfigDiff</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">optimizers_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">OptimizersConfigDiff</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">wal_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">WalConfigDiff</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">quantization_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">QuantizationConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">init_from</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">InitFrom</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">on_disk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">force_recreate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">on_disk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
+        <span class="n">force_recreate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001, FBT002</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Qdrant</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Construct Qdrant wrapper from a list of texts.</span>
@@ -1576,6 +1611,8 @@
 <span class="sd">                Params for quantization, if None - quantization will be disabled</span>
 <span class="sd">            init_from:</span>
 <span class="sd">                Use data stored in another collection to initialize this collection</span>
+<span class="sd">            on_disk:</span>
+<span class="sd">                If true - vectors will be stored on disk, reducing memory usage.</span>
 <span class="sd">            force_recreate:</span>
 <span class="sd">                Force recreating the collection</span>
 <span class="sd">            **kwargs:</span>
@@ -1646,8 +1683,8 @@
         <span class="n">url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">port</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">6333</span><span class="p">,</span>
         <span class="n">grpc_port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6334</span><span class="p">,</span>
-        <span class="n">prefer_grpc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">https</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefer_grpc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001, FBT002</span>
+        <span class="n">https</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
         <span class="n">api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">prefix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1658,14 +1695,14 @@
         <span class="n">vector_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">VECTOR_NAME</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Qdrant</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        Get instance of an existing Qdrant collection.</span>
-<span class="sd">        This method will return the instance of the store without inserting any new</span>
-<span class="sd">        embeddings</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""Get instance of an existing Qdrant collection.</span>
 
+<span class="sd">        This method will return the instance of the store without inserting any new</span>
+<span class="sd">        embeddings.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">collection_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Must specify collection_name. Received None."</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Must specify collection_name. Received None."</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="n">client</span><span class="p">,</span> <span class="n">async_client</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_generate_clients</span><span class="p">(</span>
             <span class="n">location</span><span class="o">=</span><span class="n">location</span><span class="p">,</span>
@@ -1707,8 +1744,8 @@
         <span class="n">url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">port</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">6333</span><span class="p">,</span>
         <span class="n">grpc_port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6334</span><span class="p">,</span>
-        <span class="n">prefer_grpc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">https</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefer_grpc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001, FBT002</span>
+        <span class="n">https</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
         <span class="n">api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">prefix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1723,14 +1760,14 @@
         <span class="n">shard_number</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">replication_factor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">write_consistency_factor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">on_disk_payload</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">on_disk_payload</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
         <span class="n">hnsw_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">HnswConfigDiff</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">optimizers_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">OptimizersConfigDiff</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">wal_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">WalConfigDiff</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">quantization_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">QuantizationConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">init_from</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">InitFrom</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">on_disk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">force_recreate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">on_disk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
+        <span class="n">force_recreate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001, FBT002</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Qdrant</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Construct Qdrant wrapper from a list of texts.</span>
@@ -1817,6 +1854,12 @@
 <span class="sd">                Params for quantization, if None - quantization will be disabled</span>
 <span class="sd">            init_from:</span>
 <span class="sd">                Use data stored in another collection to initialize this collection</span>
+<span class="sd">            on_disk:</span>
+<span class="sd">                If true - point`s payload will not be stored in memory.</span>
+<span class="sd">                It will be read from the disk every time it is requested.</span>
+<span class="sd">                This setting saves RAM by (slightly) increasing the response time.</span>
+<span class="sd">                Note: those payload values that are involved in filtering and are</span>
+<span class="sd">                indexed - remain in RAM.</span>
 <span class="sd">            force_recreate:</span>
 <span class="sd">                Force recreating the collection</span>
 <span class="sd">            **kwargs:</span>
@@ -1886,8 +1929,8 @@
         <span class="n">url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">port</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">6333</span><span class="p">,</span>
         <span class="n">grpc_port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6334</span><span class="p">,</span>
-        <span class="n">prefer_grpc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">https</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefer_grpc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001, FBT002</span>
+        <span class="n">https</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
         <span class="n">api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">prefix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1901,14 +1944,14 @@
         <span class="n">shard_number</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">replication_factor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">write_consistency_factor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">on_disk_payload</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">on_disk_payload</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
         <span class="n">hnsw_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">HnswConfigDiff</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">optimizers_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">OptimizersConfigDiff</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">wal_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">WalConfigDiff</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">quantization_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">QuantizationConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">init_from</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">InitFrom</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">on_disk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">force_recreate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">on_disk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
+        <span class="n">force_recreate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001, FBT002</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Qdrant</span><span class="p">:</span>
         <span class="c1"># Just do a single quick embedding to get vector size</span>
@@ -1944,16 +1987,17 @@
             <span class="n">current_vector_config</span> <span class="o">=</span> <span class="n">collection_info</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">vectors</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">current_vector_config</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">vector_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">vector_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_vector_config</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                         <span class="sa">f</span><span class="s2">"Existing Qdrant collection </span><span class="si">{</span><span class="n">collection_name</span><span class="si">}</span><span class="s2"> does not "</span>
                         <span class="sa">f</span><span class="s2">"contain vector named </span><span class="si">{</span><span class="n">vector_name</span><span class="si">}</span><span class="s2">. Did you mean one of the "</span>
                         <span class="sa">f</span><span class="s2">"existing vectors: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_vector_config</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">? "</span>
                         <span class="sa">f</span><span class="s2">"If you want to recreate the collection, set `force_recreate` "</span>
                         <span class="sa">f</span><span class="s2">"parameter to `True`."</span>
                     <span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
                 <span class="n">current_vector_config</span> <span class="o">=</span> <span class="n">current_vector_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">vector_name</span><span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">current_vector_config</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">vector_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Existing Qdrant collection </span><span class="si">{</span><span class="n">collection_name</span><span class="si">}</span><span class="s2"> uses named vectors. "</span>
                     <span class="sa">f</span><span class="s2">"If you want to reuse it, please set `vector_name` to any of the "</span>
                     <span class="sa">f</span><span class="s2">"existing named vectors: "</span>
@@ -1961,35 +2005,39 @@
                     <span class="sa">f</span><span class="s2">"If you want to recreate the collection, set `force_recreate` "</span>
                     <span class="sa">f</span><span class="s2">"parameter to `True`."</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">elif</span> <span class="p">(</span>
                 <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">current_vector_config</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">vector_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="p">):</span>
-                <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Existing Qdrant collection </span><span class="si">{</span><span class="n">collection_name</span><span class="si">}</span><span class="s2"> doesn't use named "</span>
                     <span class="sa">f</span><span class="s2">"vectors. If you want to reuse it, please set `vector_name` to "</span>
                     <span class="sa">f</span><span class="s2">"`None`. If you want to recreate the collection, set "</span>
                     <span class="sa">f</span><span class="s2">"`force_recreate` parameter to `True`."</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">current_vector_config</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">VectorParams</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="s2">"Expected current_vector_config to be an instance of "</span>
                     <span class="sa">f</span><span class="s2">"models.VectorParams, but got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">current_vector_config</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="c1"># Check if the vector configuration has the same dimensionality.</span>
             <span class="k">if</span> <span class="n">current_vector_config</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="n">vector_size</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Existing Qdrant collection is configured for vectors with "</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">current_vector_config</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> "</span>
                     <span class="sa">f</span><span class="s2">"dimensions. Selected embeddings are </span><span class="si">{</span><span class="n">vector_size</span><span class="si">}</span><span class="s2">-dimensional. "</span>
                     <span class="sa">f</span><span class="s2">"If you want to recreate the collection, set `force_recreate` "</span>
                     <span class="sa">f</span><span class="s2">"parameter to `True`."</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
             <span class="n">current_distance_func</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">current_vector_config</span><span class="o">.</span><span class="n">distance</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>  <span class="c1"># type: ignore[union-attr]</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">current_distance_func</span> <span class="o">!=</span> <span class="n">distance_func</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Existing Qdrant collection is configured for "</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">current_distance_func</span><span class="si">}</span><span class="s2"> similarity, but requested "</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">distance_func</span><span class="si">}</span><span class="s2">. Please set `distance_func` parameter to "</span>
@@ -1997,6 +2045,7 @@
                     <span class="sa">f</span><span class="s2">"If you want to recreate the collection, set `force_recreate` "</span>
                     <span class="sa">f</span><span class="s2">"parameter to `True`."</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">vectors_config</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">VectorParams</span><span class="p">(</span>
                 <span class="n">size</span><span class="o">=</span><span class="n">vector_size</span><span class="p">,</span>
@@ -2025,7 +2074,7 @@
                 <span class="n">init_from</span><span class="o">=</span><span class="n">init_from</span><span class="p">,</span>
                 <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
             <span class="p">)</span>
-        <span class="n">qdrant</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
             <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
             <span class="n">collection_name</span><span class="o">=</span><span class="n">collection_name</span><span class="p">,</span>
             <span class="n">embeddings</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
@@ -2034,8 +2083,7 @@
             <span class="n">distance_strategy</span><span class="o">=</span><span class="n">distance_func</span><span class="p">,</span>
             <span class="n">vector_name</span><span class="o">=</span><span class="n">vector_name</span><span class="p">,</span>
             <span class="n">async_client</span><span class="o">=</span><span class="n">async_client</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">qdrant</span></div>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Qdrant.aconstruct_instance">
@@ -2049,8 +2097,8 @@
         <span class="n">url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">port</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">6333</span><span class="p">,</span>
         <span class="n">grpc_port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6334</span><span class="p">,</span>
-        <span class="n">prefer_grpc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">https</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefer_grpc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001, FBT002</span>
+        <span class="n">https</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
         <span class="n">api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">prefix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -2064,14 +2112,14 @@
         <span class="n">shard_number</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">replication_factor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">write_consistency_factor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">on_disk_payload</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">on_disk_payload</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
         <span class="n">hnsw_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">HnswConfigDiff</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">optimizers_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">OptimizersConfigDiff</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">wal_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">WalConfigDiff</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">quantization_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">QuantizationConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">init_from</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">InitFrom</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">on_disk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">force_recreate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">on_disk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
+        <span class="n">force_recreate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001, FBT002</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Qdrant</span><span class="p">:</span>
         <span class="c1"># Just do a single quick embedding to get vector size</span>
@@ -2108,16 +2156,17 @@
             <span class="n">current_vector_config</span> <span class="o">=</span> <span class="n">collection_info</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">vectors</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">current_vector_config</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">vector_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">vector_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_vector_config</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                         <span class="sa">f</span><span class="s2">"Existing Qdrant collection </span><span class="si">{</span><span class="n">collection_name</span><span class="si">}</span><span class="s2"> does not "</span>
                         <span class="sa">f</span><span class="s2">"contain vector named </span><span class="si">{</span><span class="n">vector_name</span><span class="si">}</span><span class="s2">. Did you mean one of the "</span>
                         <span class="sa">f</span><span class="s2">"existing vectors: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_vector_config</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">? "</span>
                         <span class="sa">f</span><span class="s2">"If you want to recreate the collection, set `force_recreate` "</span>
                         <span class="sa">f</span><span class="s2">"parameter to `True`."</span>
                     <span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
                 <span class="n">current_vector_config</span> <span class="o">=</span> <span class="n">current_vector_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">vector_name</span><span class="p">)</span>  <span class="c1"># type: ignore[assignment]</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">current_vector_config</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">vector_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Existing Qdrant collection </span><span class="si">{</span><span class="n">collection_name</span><span class="si">}</span><span class="s2"> uses named vectors. "</span>
                     <span class="sa">f</span><span class="s2">"If you want to reuse it, please set `vector_name` to any of the "</span>
                     <span class="sa">f</span><span class="s2">"existing named vectors: "</span>
@@ -2125,36 +2174,40 @@
                     <span class="sa">f</span><span class="s2">"If you want to recreate the collection, set `force_recreate` "</span>
                     <span class="sa">f</span><span class="s2">"parameter to `True`."</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">elif</span> <span class="p">(</span>
                 <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">current_vector_config</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">vector_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="p">):</span>
-                <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Existing Qdrant collection </span><span class="si">{</span><span class="n">collection_name</span><span class="si">}</span><span class="s2"> doesn't use named "</span>
                     <span class="sa">f</span><span class="s2">"vectors. If you want to reuse it, please set `vector_name` to "</span>
                     <span class="sa">f</span><span class="s2">"`None`. If you want to recreate the collection, set "</span>
                     <span class="sa">f</span><span class="s2">"`force_recreate` parameter to `True`."</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">current_vector_config</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">VectorParams</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="s2">"Expected current_vector_config to be an instance of "</span>
                     <span class="sa">f</span><span class="s2">"models.VectorParams, but got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">current_vector_config</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
             <span class="c1"># Check if the vector configuration has the same dimensionality.</span>
             <span class="k">if</span> <span class="n">current_vector_config</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="n">vector_size</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Existing Qdrant collection is configured for vectors with "</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">current_vector_config</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> "</span>
                     <span class="sa">f</span><span class="s2">"dimensions. Selected embeddings are </span><span class="si">{</span><span class="n">vector_size</span><span class="si">}</span><span class="s2">-dimensional. "</span>
                     <span class="sa">f</span><span class="s2">"If you want to recreate the collection, set `force_recreate` "</span>
                     <span class="sa">f</span><span class="s2">"parameter to `True`."</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
             <span class="n">current_distance_func</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">current_vector_config</span><span class="o">.</span><span class="n">distance</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>  <span class="c1"># type: ignore[union-attr]</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">current_distance_func</span> <span class="o">!=</span> <span class="n">distance_func</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"Existing Qdrant collection is configured for "</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">current_vector_config</span><span class="o">.</span><span class="n">distance</span><span class="si">}</span><span class="s2"> "</span>  <span class="c1"># type: ignore[union-attr]</span>
                     <span class="sa">f</span><span class="s2">"similarity. Please set `distance_func` parameter to "</span>
@@ -2162,6 +2215,7 @@
                     <span class="sa">f</span><span class="s2">"recreate the collection, set `force_recreate` parameter to "</span>
                     <span class="sa">f</span><span class="s2">"`True`."</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="n">QdrantException</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">vectors_config</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">VectorParams</span><span class="p">(</span>
                 <span class="n">size</span><span class="o">=</span><span class="n">vector_size</span><span class="p">,</span>
@@ -2190,7 +2244,7 @@
                 <span class="n">init_from</span><span class="o">=</span><span class="n">init_from</span><span class="p">,</span>
                 <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
             <span class="p">)</span>
-        <span class="n">qdrant</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
             <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
             <span class="n">collection_name</span><span class="o">=</span><span class="n">collection_name</span><span class="p">,</span>
             <span class="n">embeddings</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
@@ -2199,8 +2253,7 @@
             <span class="n">distance_strategy</span><span class="o">=</span><span class="n">distance_func</span><span class="p">,</span>
             <span class="n">vector_name</span><span class="o">=</span><span class="n">vector_name</span><span class="p">,</span>
             <span class="n">async_client</span><span class="o">=</span><span class="n">async_client</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">qdrant</span></div>
+        <span class="p">)</span></div>
 
 
     <span class="nd">@staticmethod</span>
@@ -2209,26 +2262,24 @@
         <span class="k">return</span> <span class="p">(</span><span class="n">distance</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_select_relevance_score_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        The 'correct' relevance function</span>
-<span class="sd">        may differ depending on a few things, including:</span>
-<span class="sd">        - the distance / similarity metric used by the VectorStore</span>
-<span class="sd">        - the scale of your embeddings (OpenAI's are unit normed. Many others are not!)</span>
-<span class="sd">        - embedding dimensionality</span>
+<span class="w">        </span><span class="sd">"""Your 'correct' relevance function may differ depending on a few things.</span>
+
+<span class="sd">        For example:</span>
+<span class="sd">        - The distance / similarity metric used by the VectorStore</span>
+<span class="sd">        - The scale of your embeddings (OpenAI's are unit normed. Many others are not!)</span>
+<span class="sd">        - Embedding dimensionality</span>
 <span class="sd">        - etc.</span>
 <span class="sd">        """</span>
-
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_strategy</span> <span class="o">==</span> <span class="s2">"COSINE"</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cosine_relevance_score_fn</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_strategy</span> <span class="o">==</span> <span class="s2">"DOT"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_strategy</span> <span class="o">==</span> <span class="s2">"DOT"</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_inner_product_relevance_score_fn</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_strategy</span> <span class="o">==</span> <span class="s2">"EUCLID"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_strategy</span> <span class="o">==</span> <span class="s2">"EUCLID"</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_euclidean_relevance_score_fn</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"Unknown distance strategy, must be cosine, "</span>
-                <span class="s2">"max_inner_product, or euclidean"</span>
-            <span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"Unknown distance strategy, must be cosine, max_inner_product, or euclidean"</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_similarity_search_with_relevance_scores</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -2249,6 +2300,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of Tuples of (doc, similarity_score)</span>
+
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">similarity_search_with_score</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -2272,6 +2324,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of Tuples of (doc, similarity_score)</span>
+
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">asimilarity_search_with_score</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -2286,10 +2339,11 @@
         <span class="n">payloads</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">texts</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="s2">"At least one of the texts is None. Please remove it before "</span>
                     <span class="s2">"calling .from_texts or .add_texts on Qdrant instance."</span>
                 <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadatas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">metadatas</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
             <span class="n">payloads</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
@@ -2320,8 +2374,8 @@
         <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">_key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">out</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_condition</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">_key</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">_key</span><span class="p">,</span> <span class="n">_value</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_condition</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">_key</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">_value</span><span class="p">))</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">_value</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -2339,15 +2393,15 @@
         <span class="k">return</span> <span class="n">out</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_qdrant_filter_from_dict</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="nb">filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DictFilter</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">filter_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DictFilter</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">Filter</span><span class="p">]:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">filter</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">filter_</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
         <span class="k">return</span> <span class="n">models</span><span class="o">.</span><span class="n">Filter</span><span class="p">(</span>
             <span class="n">must</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">condition</span>
-                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">filter</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">filter_</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>  <span class="c1"># type: ignore[union-attr]</span>
                 <span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_condition</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
             <span class="p">]</span>
         <span class="p">)</span>
@@ -2362,14 +2416,15 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of floats representing the query embedding.</span>
+
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embeddings_function</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embeddings_function</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embeddings_function</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embeddings_function</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Neither of embeddings or embedding_function is set"</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Neither of embeddings or embedding_function is set"</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">embedding</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">embedding</span><span class="p">,</span> <span class="s2">"tolist"</span><span class="p">)</span> <span class="k">else</span> <span class="n">embedding</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_aembed_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
@@ -2382,14 +2437,15 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of floats representing the query embedding.</span>
+
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">embedding</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">aembed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embeddings_function</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embeddings_function</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embeddings_function</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embeddings_function</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Neither of embeddings or embedding_function is set"</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Neither of embeddings or embedding_function is set"</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">embedding</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">embedding</span><span class="p">,</span> <span class="s2">"tolist"</span><span class="p">)</span> <span class="k">else</span> <span class="n">embedding</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_embed_texts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">texts</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
@@ -2402,6 +2458,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of floats representing the texts embedding.</span>
+
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">embed_documents</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">texts</span><span class="p">))</span>
@@ -2415,7 +2472,8 @@
                     <span class="n">embedding</span> <span class="o">=</span> <span class="n">embedding</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
                 <span class="n">embeddings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">embedding</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Neither of embeddings or embedding_function is set"</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Neither of embeddings or embedding_function is set"</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">embeddings</span>
 
@@ -2429,6 +2487,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of floats representing the texts embedding.</span>
+
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">embeddings</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">aembed_documents</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">texts</span><span class="p">))</span>
@@ -2442,7 +2501,8 @@
                     <span class="n">embedding</span> <span class="o">=</span> <span class="n">embedding</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
                 <span class="n">embeddings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">embedding</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Neither of embeddings or embedding_function is set"</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Neither of embeddings or embedding_function is set"</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">embeddings</span>
 
@@ -2532,8 +2592,8 @@
         <span class="n">url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">port</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">6333</span><span class="p">,</span>
         <span class="n">grpc_port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6334</span><span class="p">,</span>
-        <span class="n">prefer_grpc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">https</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefer_grpc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001, FBT002</span>
+        <span class="n">https</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
         <span class="n">api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">prefix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>

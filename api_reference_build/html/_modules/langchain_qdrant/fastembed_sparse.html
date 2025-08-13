@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 07, 2025" name="docbuild:last-update"/>
+<meta content="Aug 13, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,9 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_qdrant.fastembed_sparse</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_qdrant.sparse_embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparseEmbeddings</span><span class="p">,</span> <span class="n">SparseVector</span>
@@ -243,9 +245,11 @@
         <span class="n">parallel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        Sparse encoder implementation using FastEmbed - https://qdrant.github.io/fastembed/</span>
-<span class="sd">        For a list of available models, see https://qdrant.github.io/fastembed/examples/Supported_Models/</span>
+<span class="w">        </span><span class="sd">"""Sparse encoder implementation using FastEmbed.</span>
+
+<span class="sd">        Uses `FastEmbed &lt;https://qdrant.github.io/fastembed/&gt;`__ for sparse text</span>
+<span class="sd">        embeddings.</span>
+<span class="sd">        For a list of available models, see `the Qdrant docs &lt;https://qdrant.github.io/fastembed/examples/Supported_Models/&gt;`__.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model_name (str): The name of the model to use. Defaults to `"Qdrant/bm25"`.</span>
@@ -264,15 +268,19 @@
 <span class="sd">            kwargs: Additional options to pass to fastembed.SparseTextEmbedding</span>
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If the model_name is not supported in SparseTextEmbedding.</span>
+
 <span class="sd">        """</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">fastembed</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparseTextEmbedding</span>  <span class="c1"># type: ignore</span>
-        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">fastembed</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># type: ignore[import-not-found]</span>
+                <span class="n">SparseTextEmbedding</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"The 'fastembed' package is not installed. "</span>
                 <span class="s2">"Please install it with "</span>
                 <span class="s2">"`pip install fastembed` or `pip install fastembed-gpu`."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_parallel</span> <span class="o">=</span> <span class="n">parallel</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">SparseTextEmbedding</span><span class="p">(</span>

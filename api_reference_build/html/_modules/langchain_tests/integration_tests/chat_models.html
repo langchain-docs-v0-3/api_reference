@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 07, 2025" name="docbuild:last-update"/>
+<meta content="Aug 13, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,9 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_tests.integration_tests.chat_models</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
+<span></span><span class="sd">"""Integration tests for chat models."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">cast</span>
@@ -254,17 +256,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">vcr.cassette</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cassette</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_tests.unit_tests.chat_models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">ChatModelTests</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_tests.unit_tests.chat_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatModelTests</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_tests.utils.pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">PYDANTIC_MAJOR_VERSION</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_joke_class</span><span class="p">(</span>
     <span class="n">schema_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"pydantic"</span><span class="p">,</span> <span class="s2">"typeddict"</span><span class="p">,</span> <span class="s2">"json_schema"</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">""":private:"""</span>
-
     <span class="k">class</span><span class="w"> </span><span class="nc">Joke</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Joke to tell user."""</span>
 
@@ -319,19 +317,20 @@
 
 <span class="nd">@tool</span><span class="p">(</span><span class="n">args_schema</span><span class="o">=</span><span class="n">_MagicFunctionSchema</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">magic_function</span><span class="p">(</span><span class="n">_input</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Applies a magic function to an input."""</span>
+<span class="w">    </span><span class="sd">"""Apply a magic function to an input."""</span>
     <span class="k">return</span> <span class="n">_input</span> <span class="o">+</span> <span class="mi">2</span>
 
 
 <span class="nd">@tool</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">magic_function_no_args</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Calculates a magic function."""</span>
+<span class="w">    </span><span class="sd">"""Calculate a magic function."""</span>
     <span class="k">return</span> <span class="mi">5</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_validate_tool_call_message</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="n">BaseMessage</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">AIMessage</span><span class="p">)</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">tool_calls</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+
     <span class="n">tool_call</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">tool_calls</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">assert</span> <span class="n">tool_call</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"magic_function"</span>
     <span class="k">assert</span> <span class="n">tool_call</span><span class="p">[</span><span class="s2">"args"</span><span class="p">]</span> <span class="o">==</span> <span class="p">{</span><span class="s2">"input"</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
@@ -342,6 +341,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_validate_tool_call_message_no_args</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="n">BaseMessage</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">AIMessage</span><span class="p">)</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">tool_calls</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+
     <span class="n">tool_call</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">tool_calls</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">assert</span> <span class="n">tool_call</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"magic_function_no_args"</span>
     <span class="k">assert</span> <span class="n">tool_call</span><span class="p">[</span><span class="s2">"args"</span><span class="p">]</span> <span class="o">==</span> <span class="p">{}</span>
@@ -359,6 +359,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A confirmation message about the customer creation.</span>
+
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s2">"Created customer: </span><span class="si">{</span><span class="n">customer_name</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">"</span>
 
@@ -366,7 +367,7 @@
 <div class="viewcode-block" id="ChatModelIntegrationTests">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ChatModelIntegrationTests</span><span class="p">(</span><span class="n">ChatModelTests</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Base class for chat model integration tests.</span>
+<span class="w">    </span><span class="sd">'''Base class for chat model integration tests.</span>
 
 <span class="sd">    Test subclasses must implement the ``chat_model_class`` and</span>
 <span class="sd">    ``chat_model_params`` properties to specify what model to test and its</span>
@@ -397,7 +398,7 @@
 <span class="sd">          API references for individual test methods include troubleshooting tips.</span>
 
 
-<span class="sd">    Test subclasses must implement the following two properties:</span>
+<span class="sd">    Test subclasses **must** implement the following two properties:</span>
 
 <span class="sd">    chat_model_class</span>
 <span class="sd">        The chat model class to test, e.g., ``ChatParrotLink``.</span>
@@ -650,10 +651,10 @@
 <span class="sd">    .. dropdown:: returns_usage_metadata</span>
 
 <span class="sd">        Boolean property indicating whether the chat model returns usage metadata</span>
-<span class="sd">        on invoke and streaming responses.</span>
+<span class="sd">        on invoke and streaming responses. Defaults to ``True``.</span>
 
-<span class="sd">        ``usage_metadata`` is an optional dict attribute on AIMessages that track input</span>
-<span class="sd">        and output tokens: https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.UsageMetadata.html</span>
+<span class="sd">        ``usage_metadata`` is an optional dict attribute on ``AIMessage``s that track input</span>
+<span class="sd">        and output tokens. `See more. &lt;https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.UsageMetadata.html&gt;`__</span>
 
 <span class="sd">        Example:</span>
 
@@ -664,7 +665,7 @@
 <span class="sd">                return False</span>
 
 <span class="sd">        Models supporting ``usage_metadata`` should also return the name of the</span>
-<span class="sd">        underlying model in the ``response_metadata`` of the AIMessage.</span>
+<span class="sd">        underlying model in the ``response_metadata`` of the ``AIMessage``.</span>
 
 <span class="sd">    .. dropdown:: supports_anthropic_inputs</span>
 
@@ -749,8 +750,8 @@
 <span class="sd">        Property controlling what usage metadata details are emitted in both invoke</span>
 <span class="sd">        and stream.</span>
 
-<span class="sd">        ``usage_metadata`` is an optional dict attribute on AIMessages that track input</span>
-<span class="sd">        and output tokens: https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.UsageMetadata.html</span>
+<span class="sd">        ``usage_metadata`` is an optional dict attribute on ``AIMessage``s that track input</span>
+<span class="sd">        and output tokens. `See more. &lt;https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.UsageMetadata.html&gt;`__</span>
 
 <span class="sd">        It includes optional keys ``input_token_details`` and ``output_token_details``</span>
 <span class="sd">        that can track usage details associated with special types of tokens, such as</span>
@@ -810,7 +811,7 @@
 
 <span class="sd">                @pytest.fixture(scope="session")</span>
 <span class="sd">                def vcr_config(_base_vcr_config: dict) -&gt; dict:  # noqa: F811</span>
-<span class="sd">                    \"\"\"Extend the default configuration from langchain_tests.\"\"\"</span>
+<span class="sd">                    """Extend the default configuration from langchain_tests."""</span>
 <span class="sd">                    config = _base_vcr_config.copy()</span>
 <span class="sd">                    config.setdefault("filter_headers", []).extend(_EXTRA_HEADERS)</span>
 <span class="sd">                    config["before_record_response"] = remove_response_headers</span>
@@ -846,7 +847,7 @@
 
 <span class="sd">                    @pytest.fixture(scope="session")</span>
 <span class="sd">                    def vcr_config(_base_vcr_config: dict) -&gt; dict:  # noqa: F811</span>
-<span class="sd">                        \"\"\"Extend the default configuration from langchain_tests.\"\"\"</span>
+<span class="sd">                        """Extend the default configuration from langchain_tests."""</span>
 <span class="sd">                        config = _base_vcr_config.copy()</span>
 <span class="sd">                        config.setdefault("filter_headers", []).extend(_EXTRA_HEADERS)</span>
 <span class="sd">                        config["before_record_response"] = remove_response_headers</span>
@@ -898,23 +899,26 @@
 <span class="sd">            You can then commit the cassette to your repository. Subsequent test runs</span>
 <span class="sd">            will use the cassette instead of making HTTP calls.</span>
 
-<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">    '''</span>  <span class="c1"># noqa: E501,D214</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">standard_chat_model_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">""":private:"""</span>
+<span class="w">        </span><span class="sd">"""Standard parameters for chat model.</span>
+
+<span class="sd">        :private:</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">{}</span>
 
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_invoke">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_invoke">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_invoke</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test to verify that `model.invoke(simple_message)` works.</span>
+<span class="w">        </span><span class="sd">"""Test to verify that ``model.invoke(simple_message)`` works.</span>
 
 <span class="sd">        This should pass for all integrations.</span>
 
 <span class="sd">        .. dropdown:: Troubleshooting</span>
 
-<span class="sd">            If this test fails, you should make sure your _generate method</span>
+<span class="sd">            If this test fails, you should make sure your ``_generate`` method</span>
 <span class="sd">            does not raise any exceptions, and that it returns a valid</span>
 <span class="sd">            :class:`~langchain_core.outputs.chat_result.ChatResult` like so:</span>
 
@@ -937,7 +941,7 @@
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_ainvoke">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_ainvoke">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_ainvoke</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test to verify that `await model.ainvoke(simple_message)` works.</span>
+<span class="w">        </span><span class="sd">"""Test to verify that ``await model.ainvoke(simple_message)`` works.</span>
 
 <span class="sd">        This should pass for all integrations. Passing this test does not indicate</span>
 <span class="sd">        a "natively async" implementation, but rather that the model can be used</span>
@@ -947,7 +951,7 @@
 
 <span class="sd">            First, debug</span>
 <span class="sd">            :meth:`~langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_invoke`.</span>
-<span class="sd">            because `ainvoke` has a default implementation that calls `invoke` in an</span>
+<span class="sd">            because ``ainvoke`` has a default implementation that calls ``invoke`` in an</span>
 <span class="sd">            async context.</span>
 
 <span class="sd">            If that test passes but not this one, you should make sure your _agenerate</span>
@@ -973,7 +977,7 @@
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_stream">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_stream">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test to verify that `model.stream(simple_message)` works.</span>
+<span class="w">        </span><span class="sd">"""Test to verify that ``model.stream(simple_message)`` works.</span>
 
 <span class="sd">        This should pass for all integrations. Passing this test does not indicate</span>
 <span class="sd">        a "streaming" implementation, but rather that the model can be used in a</span>
@@ -983,10 +987,10 @@
 
 <span class="sd">            First, debug</span>
 <span class="sd">            :meth:`~langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_invoke`.</span>
-<span class="sd">            because `stream` has a default implementation that calls `invoke` and yields</span>
-<span class="sd">            the result as a single chunk.</span>
+<span class="sd">            because ``stream`` has a default implementation that calls ``invoke`` and</span>
+<span class="sd">            yields the result as a single chunk.</span>
 
-<span class="sd">            If that test passes but not this one, you should make sure your _stream</span>
+<span class="sd">            If that test passes but not this one, you should make sure your ``_stream``</span>
 <span class="sd">            method does not raise any exceptions, and that it yields valid</span>
 <span class="sd">            :class:`~langchain_core.outputs.chat_generation.ChatGenerationChunk`</span>
 <span class="sd">            objects like so:</span>
@@ -1002,6 +1006,7 @@
         <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="s2">"Hello"</span><span class="p">):</span>
             <span class="k">assert</span> <span class="n">chunk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">AIMessageChunk</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">))</span>
             <span class="n">num_chunks</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">assert</span> <span class="n">num_chunks</span> <span class="o">&gt;</span> <span class="mi">0</span></div>
 
@@ -1009,7 +1014,7 @@
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_astream">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_astream">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_astream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test to verify that `await model.astream(simple_message)` works.</span>
+<span class="w">        </span><span class="sd">"""Test to verify that ``await model.astream(simple_message)`` works.</span>
 
 <span class="sd">        This should pass for all integrations. Passing this test does not indicate</span>
 <span class="sd">        a "natively async" or "streaming" implementation, but rather that the model can</span>
@@ -1021,11 +1026,11 @@
 <span class="sd">            :meth:`~langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_stream`.</span>
 <span class="sd">            and</span>
 <span class="sd">            :meth:`~langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_ainvoke`.</span>
-<span class="sd">            because `astream` has a default implementation that calls `_stream` in an</span>
-<span class="sd">            async context if it is implemented, or `ainvoke` and yields the result as a</span>
-<span class="sd">            single chunk if not.</span>
+<span class="sd">            because ``astream`` has a default implementation that calls ``_stream`` in</span>
+<span class="sd">            an async context if it is implemented, or ``ainvoke`` and yields the result</span>
+<span class="sd">            as a single chunk if not.</span>
 
-<span class="sd">            If those tests pass but not this one, you should make sure your _astream</span>
+<span class="sd">            If those tests pass but not this one, you should make sure your ``_astream``</span>
 <span class="sd">            method does not raise any exceptions, and that it yields valid</span>
 <span class="sd">            :class:`~langchain_core.outputs.chat_generation.ChatGenerationChunk`</span>
 <span class="sd">            objects like so:</span>
@@ -1049,7 +1054,7 @@
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_batch">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_batch">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test to verify that `model.batch([messages])` works.</span>
+<span class="w">        </span><span class="sd">"""Test to verify that ``model.batch([messages])`` works.</span>
 
 <span class="sd">        This should pass for all integrations. Tests the model's ability to process</span>
 <span class="sd">        multiple prompts in a single batch.</span>
@@ -1058,12 +1063,13 @@
 
 <span class="sd">            First, debug</span>
 <span class="sd">            :meth:`~langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_invoke`</span>
-<span class="sd">            because `batch` has a default implementation that calls `invoke` for each</span>
-<span class="sd">            message in the batch.</span>
+<span class="sd">            because ``batch`` has a default implementation that calls ``invoke`` for</span>
+<span class="sd">            each message in the batch.</span>
 
-<span class="sd">            If that test passes but not this one, you should make sure your `batch`</span>
+<span class="sd">            If that test passes but not this one, you should make sure your ``batch``</span>
 <span class="sd">            method does not raise any exceptions, and that it returns a list of valid</span>
 <span class="sd">            :class:`~langchain_core.messages.AIMessage` objects.</span>
+
 <span class="sd">        """</span>
         <span class="n">batch_results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">batch</span><span class="p">([</span><span class="s2">"Hello"</span><span class="p">,</span> <span class="s2">"Hey"</span><span class="p">])</span>
         <span class="k">assert</span> <span class="n">batch_results</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -1079,7 +1085,7 @@
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_abatch">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_abatch">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_abatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test to verify that `await model.abatch([messages])` works.</span>
+<span class="w">        </span><span class="sd">"""Test to verify that ``await model.abatch([messages])`` works.</span>
 
 <span class="sd">        This should pass for all integrations. Tests the model's ability to process</span>
 <span class="sd">        multiple prompts in a single batch asynchronously.</span>
@@ -1090,12 +1096,13 @@
 <span class="sd">            :meth:`~langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_batch`</span>
 <span class="sd">            and</span>
 <span class="sd">            :meth:`~langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_ainvoke`</span>
-<span class="sd">            because `abatch` has a default implementation that calls `ainvoke` for each</span>
-<span class="sd">            message in the batch.</span>
+<span class="sd">            because ``abatch`` has a default implementation that calls ``ainvoke`` for</span>
+<span class="sd">            each message in the batch.</span>
 
-<span class="sd">            If those tests pass but not this one, you should make sure your `abatch`</span>
+<span class="sd">            If those tests pass but not this one, you should make sure your ``abatch``</span>
 <span class="sd">            method does not raise any exceptions, and that it returns a list of valid</span>
 <span class="sd">            :class:`~langchain_core.messages.AIMessage` objects.</span>
+
 <span class="sd">        """</span>
         <span class="n">batch_results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">model</span><span class="o">.</span><span class="n">abatch</span><span class="p">([</span><span class="s2">"Hello"</span><span class="p">,</span> <span class="s2">"Hey"</span><span class="p">])</span>
         <span class="k">assert</span> <span class="n">batch_results</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -1121,18 +1128,20 @@
 
 <span class="sd">            First, debug</span>
 <span class="sd">            :meth:`~langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_invoke`</span>
-<span class="sd">            because this test also uses `model.invoke()`.</span>
+<span class="sd">            because this test also uses ``model.invoke()``.</span>
 
 <span class="sd">            If that test passes but not this one, you should verify that:</span>
 <span class="sd">            1. Your model correctly processes the message history</span>
 <span class="sd">            2. The model maintains appropriate context from previous messages</span>
 <span class="sd">            3. The response is a valid :class:`~langchain_core.messages.AIMessage`</span>
+
 <span class="sd">        """</span>
         <span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">HumanMessage</span><span class="p">(</span><span class="s2">"hello"</span><span class="p">),</span>
             <span class="n">AIMessage</span><span class="p">(</span><span class="s2">"hello"</span><span class="p">),</span>
             <span class="n">HumanMessage</span><span class="p">(</span><span class="s2">"how are you"</span><span class="p">),</span>
         <span class="p">]</span>
+
         <span class="n">result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">AIMessage</span><span class="p">)</span>
@@ -1153,17 +1162,17 @@
 
 <span class="sd">            First, debug</span>
 <span class="sd">            :meth:`~langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_invoke`</span>
-<span class="sd">            because this test also uses `model.invoke()`.</span>
+<span class="sd">            because this test also uses ``model.invoke()``.</span>
 
 <span class="sd">            Second, debug</span>
 <span class="sd">            :meth:`~langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_conversation`</span>
 <span class="sd">            because this test is the "basic case" without double messages.</span>
 
 <span class="sd">            If that test passes those but not this one, you should verify that:</span>
-<span class="sd">            1. Your model API can handle double messages, or the integration should</span>
-<span class="sd">               merge messages before sending them to the API.</span>
+<span class="sd">            1. Your model API can handle double messages, or the integration should merge messages before sending them to the API.</span>
 <span class="sd">            2. The response is a valid :class:`~langchain_core.messages.AIMessage`</span>
-<span class="sd">        """</span>
+
+<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
         <span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">SystemMessage</span><span class="p">(</span><span class="s2">"hello"</span><span class="p">),</span>
             <span class="n">SystemMessage</span><span class="p">(</span><span class="s2">"hello"</span><span class="p">),</span>
@@ -1173,6 +1182,7 @@
             <span class="n">AIMessage</span><span class="p">(</span><span class="s2">"hello"</span><span class="p">),</span>
             <span class="n">HumanMessage</span><span class="p">(</span><span class="s2">"how are you"</span><span class="p">),</span>
         <span class="p">]</span>
+
         <span class="n">result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">AIMessage</span><span class="p">)</span>
@@ -1190,13 +1200,14 @@
 
 <span class="sd">        .. versionchanged:: 0.3.17</span>
 
-<span class="sd">            Additionally check for the presence of `model_name` in the response</span>
+<span class="sd">            Additionally check for the presence of ``model_name`` in the response</span>
 <span class="sd">            metadata, which is needed for usage tracking in callback handlers.</span>
 
 <span class="sd">        .. dropdown:: Configuration</span>
 
 <span class="sd">            By default, this test is run.</span>
-<span class="sd">            To disable this feature, set `returns_usage_metadata` to False in your</span>
+
+<span class="sd">            To disable this feature, set ``returns_usage_metadata`` to ``False`` in your</span>
 <span class="sd">            test class:</span>
 
 <span class="sd">            .. code-block:: python</span>
@@ -1207,7 +1218,7 @@
 <span class="sd">                        return False</span>
 
 <span class="sd">            This test can also check the format of specific kinds of usage metadata</span>
-<span class="sd">            based on the `supported_usage_metadata_details` property. This property</span>
+<span class="sd">            based on the ``supported_usage_metadata_details`` property. This property</span>
 <span class="sd">            should be configured as follows with the types of tokens that the model</span>
 <span class="sd">            supports tracking:</span>
 
@@ -1238,7 +1249,7 @@
 
 <span class="sd">            If this test fails, first verify that your model returns</span>
 <span class="sd">            :class:`~langchain_core.messages.ai.UsageMetadata` dicts</span>
-<span class="sd">            attached to the returned AIMessage object in `_generate`:</span>
+<span class="sd">            attached to the returned AIMessage object in ``_generate``:</span>
 
 <span class="sd">            .. code-block:: python</span>
 
@@ -1270,9 +1281,11 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">returns_usage_metadata</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Not implemented."</span><span class="p">)</span>
+
         <span class="n">result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"Hello"</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">AIMessage</span><span class="p">)</span>
+
         <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">usage_metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">usage_metadata</span><span class="p">[</span><span class="s2">"input_tokens"</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">usage_metadata</span><span class="p">[</span><span class="s2">"output_tokens"</span><span class="p">],</span> <span class="nb">int</span><span class="p">)</span>
@@ -1359,13 +1372,13 @@
 
 <span class="sd">        .. versionchanged:: 0.3.17</span>
 
-<span class="sd">            Additionally check for the presence of `model_name` in the response</span>
+<span class="sd">            Additionally check for the presence of ``model_name`` in the response</span>
 <span class="sd">            metadata, which is needed for usage tracking in callback handlers.</span>
 
 <span class="sd">        .. dropdown:: Configuration</span>
 
 <span class="sd">            By default, this test is run.</span>
-<span class="sd">            To disable this feature, set `returns_usage_metadata` to False in your</span>
+<span class="sd">            To disable this feature, set ``returns_usage_metadata`` to ``False`` in your</span>
 <span class="sd">            test class:</span>
 
 <span class="sd">            .. code-block:: python</span>
@@ -1376,7 +1389,7 @@
 <span class="sd">                        return False</span>
 
 <span class="sd">            This test can also check the format of specific kinds of usage metadata</span>
-<span class="sd">            based on the `supported_usage_metadata_details` property. This property</span>
+<span class="sd">            based on the ``supported_usage_metadata_details`` property. This property</span>
 <span class="sd">            should be configured as follows with the types of tokens that the model</span>
 <span class="sd">            supports tracking:</span>
 
@@ -1406,16 +1419,16 @@
 
 <span class="sd">            If this test fails, first verify that your model yields</span>
 <span class="sd">            :class:`~langchain_core.messages.ai.UsageMetadata` dicts</span>
-<span class="sd">            attached to the returned AIMessage object in `_stream`</span>
+<span class="sd">            attached to the returned AIMessage object in ``_stream``</span>
 <span class="sd">            that sum up to the total usage metadata.</span>
 
-<span class="sd">            Note that `input_tokens` should only be included on one of the chunks</span>
-<span class="sd">            (typically the first or the last chunk), and the rest should have 0 or None</span>
-<span class="sd">            to avoid counting input tokens multiple times.</span>
+<span class="sd">            Note that ``input_tokens`` should only be included on one of the chunks</span>
+<span class="sd">            (typically the first or the last chunk), and the rest should have ``0`` or</span>
+<span class="sd">            ``None`` to avoid counting input tokens multiple times.</span>
 
-<span class="sd">            `output_tokens` typically count the number of tokens in each chunk, not the</span>
-<span class="sd">            sum. This test will pass as long as the sum of `output_tokens` across all</span>
-<span class="sd">            chunks is not 0.</span>
+<span class="sd">            ``output_tokens`` typically count the number of tokens in each chunk, not</span>
+<span class="sd">            the sum. This test will pass as long as the sum of ``output_tokens`` across</span>
+<span class="sd">            all chunks is not ``0``.</span>
 
 <span class="sd">            .. code-block:: python</span>
 
@@ -1451,6 +1464,7 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">returns_usage_metadata</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Not implemented."</span><span class="p">)</span>
+
         <span class="n">full</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AIMessageChunk</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="s2">"Write me 2 haikus. Only include the haikus."</span><span class="p">):</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">AIMessageChunk</span><span class="p">)</span>
@@ -1515,10 +1529,12 @@
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_stop_sequence">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_stop_sequence">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_stop_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test that model does not fail when invoked with the ``stop`` parameter,</span>
-<span class="sd">        which is a standard parameter for stopping generation at a certain token.</span>
+<span class="w">        </span><span class="sd">"""Test that model does not fail when invoked with the ``stop`` parameter.</span>
 
-<span class="sd">        More on standard parameters here: https://python.langchain.com/docs/concepts/chat_models/#standard-parameters</span>
+<span class="sd">        The ``stop`` parameter is a standard parameter for stopping generation at a</span>
+<span class="sd">        certain token.</span>
+
+<span class="sd">        `More on standard parameters &lt;https://python.langchain.com/docs/concepts/chat_models/#standard-parameters&gt;`__</span>
 
 <span class="sd">        This should pass for all integrations.</span>
 
@@ -1554,8 +1570,10 @@
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_tool_calling">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_tool_calling">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_tool_calling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test that the model generates tool calls. This test is skipped if the</span>
-<span class="sd">        ``has_tool_calling`` property on the test class is set to False.</span>
+<span class="w">        </span><span class="sd">"""Test that the model generates tool calls.</span>
+
+<span class="sd">        This test is skipped if the ``has_tool_calling`` property on the test class is</span>
+<span class="sd">        set to False.</span>
 
 <span class="sd">        This test is optional and should be skipped if the model does not support</span>
 <span class="sd">        tool calling (see Configuration below).</span>
@@ -1595,6 +1613,7 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
+
         <span class="n">tool_choice_value</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_choice</span> <span class="k">else</span> <span class="s2">"any"</span>
         <span class="c1"># Emit warning if tool_choice_value property is overridden</span>
         <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getattr_static</span><span class="p">(</span>
@@ -1631,8 +1650,10 @@
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_tool_calling_async">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_tool_calling_async">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_tool_calling_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test that the model generates tool calls. This test is skipped if the</span>
-<span class="sd">        ``has_tool_calling`` property on the test class is set to False.</span>
+<span class="w">        </span><span class="sd">"""Test that the model generates tool calls.</span>
+
+<span class="sd">        This test is skipped if the ``has_tool_calling`` property on the test class is</span>
+<span class="sd">        set to False.</span>
 
 <span class="sd">        This test is optional and should be skipped if the model does not support</span>
 <span class="sd">        tool calling (see Configuration below).</span>
@@ -1672,6 +1693,7 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
+
         <span class="n">tool_choice_value</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_choice</span> <span class="k">else</span> <span class="s2">"any"</span>
         <span class="n">model_with_tools</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">bind_tools</span><span class="p">(</span>
             <span class="p">[</span><span class="n">magic_function</span><span class="p">],</span> <span class="n">tool_choice</span><span class="o">=</span><span class="n">tool_choice_value</span>
@@ -1693,7 +1715,9 @@
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_bind_runnables_as_tools">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_bind_runnables_as_tools">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_bind_runnables_as_tools</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test that the model generates tool calls for tools that are derived from</span>
+<span class="w">        </span><span class="sd">"""Test bind runnables as tools.</span>
+
+<span class="sd">        Test that the model generates tool calls for tools that are derived from</span>
 <span class="sd">        LangChain runnables. This test is skipped if the ``has_tool_calling`` property</span>
 <span class="sd">        on the test class is set to False.</span>
 
@@ -1764,8 +1788,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">test_tool_message_histories_string_content</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">,</span> <span class="n">my_adder_tool</span><span class="p">:</span> <span class="n">BaseTool</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test that message histories are compatible with string tool contents</span>
-<span class="sd">        (e.g. OpenAI format). If a model passes this test, it should be compatible</span>
+<span class="w">        </span><span class="sd">"""Test that message histories are compatible with string tool contents.</span>
+
+<span class="sd">        For instance with OpenAI format contents.</span>
+<span class="sd">        If a model passes this test, it should be compatible</span>
 <span class="sd">        with messages generated from providers following OpenAI format.</span>
 
 <span class="sd">        This test should be skipped if the model does not support tool calling</span>
@@ -1787,10 +1813,10 @@
 
 <span class="sd">            If this test fails, check that:</span>
 
-<span class="sd">            1. The model can correctly handle message histories that include AIMessage objects with ``""`` content.</span>
-<span class="sd">            2. The ``tool_calls`` attribute on AIMessage objects is correctly handled and passed to the model in an appropriate format.</span>
-<span class="sd">            3. The model can correctly handle ToolMessage objects with string content and arbitrary string values for ``tool_call_id``.</span>
-<span class="sd">        assert tool_call.get("type") == "tool_call"</span>
+<span class="sd">            1. The model can correctly handle message histories that include ``AIMessage`` objects with ``""`` content.</span>
+<span class="sd">            2. The ``tool_calls`` attribute on ``AIMessage`` objects is correctly handled and passed to the model in an appropriate format.</span>
+<span class="sd">            3. The model can correctly handle ``ToolMessage`` objects with string content and arbitrary string values for ``tool_call_id``.</span>
+
 <span class="sd">            You can ``xfail`` the test if tool calling is implemented but this format</span>
 <span class="sd">            is not supported.</span>
 
@@ -1803,6 +1829,7 @@
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
+
         <span class="n">model_with_tools</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">bind_tools</span><span class="p">([</span><span class="n">my_adder_tool</span><span class="p">])</span>
         <span class="n">function_name</span> <span class="o">=</span> <span class="s2">"my_adder_tool"</span>
         <span class="n">function_args</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"a"</span><span class="p">:</span> <span class="s2">"1"</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">:</span> <span class="s2">"2"</span><span class="p">}</span>
@@ -1838,10 +1865,11 @@
         <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">,</span>
         <span class="n">my_adder_tool</span><span class="p">:</span> <span class="n">BaseTool</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test that message histories are compatible with list tool contents</span>
-<span class="sd">        (e.g. Anthropic format).</span>
+<span class="w">        </span><span class="sd">"""Test that message histories are compatible with list tool contents.</span>
 
-<span class="sd">        These message histories will include AIMessage objects with "tool use" and</span>
+<span class="sd">        For instance with Anthropic format contents.</span>
+
+<span class="sd">        These message histories will include ``AIMessage`` objects with "tool use" and</span>
 <span class="sd">        content blocks, e.g.,</span>
 
 <span class="sd">        .. code-block:: python</span>
@@ -1875,8 +1903,8 @@
 
 <span class="sd">            If this test fails, check that:</span>
 
-<span class="sd">            1. The model can correctly handle message histories that include AIMessage objects with list content.</span>
-<span class="sd">            2. The ``tool_calls`` attribute on AIMessage objects is correctly handled and passed to the model in an appropriate format.</span>
+<span class="sd">            1. The model can correctly handle message histories that include ``AIMessage`` objects with list content.</span>
+<span class="sd">            2. The ``tool_calls`` attribute on ``AIMessage`` objects is correctly handled and passed to the model in an appropriate format.</span>
 <span class="sd">            3. The model can correctly handle ToolMessage objects with string content and arbitrary string values for ``tool_call_id``.</span>
 
 <span class="sd">            You can ``xfail`` the test if tool calling is implemented but this format</span>
@@ -1891,6 +1919,7 @@
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
+
         <span class="n">model_with_tools</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">bind_tools</span><span class="p">([</span><span class="n">my_adder_tool</span><span class="p">])</span>
         <span class="n">function_name</span> <span class="o">=</span> <span class="s2">"my_adder_tool"</span>
         <span class="n">function_args</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"a"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
@@ -1930,7 +1959,9 @@
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_tool_choice">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_tool_choice">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_tool_choice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test that the model can force tool calling via the ``tool_choice``</span>
+<span class="w">        </span><span class="sd">"""Test ``tool_choice`` parameter.</span>
+
+<span class="sd">        Test that the model can force tool calling via the ``tool_choice``</span>
 <span class="sd">        parameter. This test is skipped if the ``has_tool_choice`` property on the</span>
 <span class="sd">        test class is set to False.</span>
 
@@ -1966,7 +1997,7 @@
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool choice."</span><span class="p">)</span>
 
         <span class="nd">@tool</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">get_weather</span><span class="p">(</span><span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># pylint: disable=unused-argument</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_weather</span><span class="p">(</span><span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">            </span><span class="sd">"""Get weather at a location."""</span>
             <span class="k">return</span> <span class="s2">"It's sunny."</span>
 
@@ -1985,6 +2016,7 @@
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_tool_calling_with_no_arguments">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_tool_calling_with_no_arguments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Test that the model generates tool calls for tools with no arguments.</span>
+
 <span class="sd">        This test is skipped if the ``has_tool_calling`` property on the test class</span>
 <span class="sd">        is set to False.</span>
 
@@ -2027,6 +2059,7 @@
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
+
         <span class="n">tool_choice_value</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_choice</span> <span class="k">else</span> <span class="s2">"any"</span>
         <span class="n">model_with_tools</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">bind_tools</span><span class="p">(</span>
             <span class="p">[</span><span class="n">magic_function_no_args</span><span class="p">],</span> <span class="n">tool_choice</span><span class="o">=</span><span class="n">tool_choice_value</span>
@@ -2047,7 +2080,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">test_tool_message_error_status</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">,</span> <span class="n">my_adder_tool</span><span class="p">:</span> <span class="n">BaseTool</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test that ToolMessage with ``status="error"`` can be handled.</span>
+<span class="w">        </span><span class="sd">"""Test that ``ToolMessage`` with ``status="error"`` can be handled.</span>
 
 <span class="sd">        These messages may take the form:</span>
 
@@ -2086,6 +2119,7 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
+
         <span class="n">model_with_tools</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">bind_tools</span><span class="p">([</span><span class="n">my_adder_tool</span><span class="p">])</span>
         <span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">HumanMessage</span><span class="p">(</span><span class="s2">"What is 1 + 2"</span><span class="p">),</span>
@@ -2143,8 +2177,9 @@
 
 <span class="sd">        .. dropdown:: Troubleshooting</span>
 
-<span class="sd">            This test uses a utility function in ``langchain_core`` to generate a</span>
-<span class="sd">            sequence of messages representing "few-shot" examples: https://python.langchain.com/api_reference/core/utils/langchain_core.utils.function_calling.tool_example_to_messages.html</span>
+<span class="sd">            This test uses `a utility function &lt;https://python.langchain.com/api_reference/core/utils/langchain_core.utils.function_calling.tool_example_to_messages.html&gt;`__</span>
+<span class="sd">            in ``langchain_core`` to generate a sequence of messages representing</span>
+<span class="sd">            "few-shot" examples.</span>
 
 <span class="sd">            If this test fails, check that the model can correctly handle this</span>
 <span class="sd">            sequence of messages.</span>
@@ -2161,6 +2196,7 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
+
         <span class="n">model_with_tools</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">bind_tools</span><span class="p">([</span><span class="n">my_adder_tool</span><span class="p">],</span> <span class="n">tool_choice</span><span class="o">=</span><span class="s2">"any"</span><span class="p">)</span>
         <span class="n">function_result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">"result"</span><span class="p">:</span> <span class="mi">3</span><span class="p">})</span>
 
@@ -2207,10 +2243,12 @@
 
 <span class="sd">            If this test fails, ensure that the model's ``bind_tools`` method</span>
 <span class="sd">            properly handles both JSON Schema and Pydantic V2 models.</span>
-<span class="sd">            ``langchain_core`` implements a utility function that will accommodate</span>
-<span class="sd">            most formats: https://python.langchain.com/api_reference/core/utils/langchain_core.utils.function_calling.convert_to_openai_tool.html</span>
 
-<span class="sd">            See example implementation of ``with_structured_output`` here: https://python.langchain.com/api_reference/_modules/langchain_openai/chat_models/base.html#BaseChatOpenAI.with_structured_output</span>
+<span class="sd">            ``langchain_core`` implements `a utility function &lt;https://python.langchain.com/api_reference/core/utils/langchain_core.utils.function_calling.convert_to_openai_tool.html&gt;`__</span>
+<span class="sd">            that will accommodate most formats.</span>
+
+<span class="sd">            See `example implementation &lt;https://python.langchain.com/api_reference/_modules/langchain_openai/chat_models/base.html#BaseChatOpenAI.with_structured_output&gt;`__</span>
+<span class="sd">            of ``with_structured_output``.</span>
 
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_structured_output</span><span class="p">:</span>
@@ -2289,10 +2327,12 @@
 
 <span class="sd">            If this test fails, ensure that the model's ``bind_tools`` method</span>
 <span class="sd">            properly handles both JSON Schema and Pydantic V2 models.</span>
-<span class="sd">            ``langchain_core`` implements a utility function that will accommodate</span>
-<span class="sd">            most formats: https://python.langchain.com/api_reference/core/utils/langchain_core.utils.function_calling.convert_to_openai_tool.html</span>
 
-<span class="sd">            See example implementation of ``with_structured_output`` here: https://python.langchain.com/api_reference/_modules/langchain_openai/chat_models/base.html#BaseChatOpenAI.with_structured_output</span>
+<span class="sd">            ``langchain_core`` implements `a utility function &lt;https://python.langchain.com/api_reference/core/utils/langchain_core.utils.function_calling.convert_to_openai_tool.html&gt;`__</span>
+<span class="sd">            that will accommodate most formats.</span>
+
+<span class="sd">            See `example implementation &lt;https://python.langchain.com/api_reference/_modules/langchain_openai/chat_models/base.html#BaseChatOpenAI.with_structured_output&gt;`__</span>
+<span class="sd">            of ``with_structured_output``.</span>
 
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_structured_output</span><span class="p">:</span>
@@ -2344,10 +2384,11 @@
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_structured_output_pydantic_2_v1">[docs]</a>
     <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skipif</span><span class="p">(</span><span class="n">PYDANTIC_MAJOR_VERSION</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s2">"Test requires pydantic 2."</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_structured_output_pydantic_2_v1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test to verify we can generate structured output using</span>
-<span class="sd">        pydantic.v1.BaseModel.</span>
+<span class="w">        </span><span class="sd">"""Test structured output using pydantic.v1.BaseModel.</span>
 
-<span class="sd">        pydantic.v1.BaseModel is available in the pydantic 2 package.</span>
+<span class="sd">        Verify we can generate structured output using ``pydantic.v1.BaseModel``.</span>
+
+<span class="sd">        ``pydantic.v1.BaseModel`` is available in the Pydantic 2 package.</span>
 
 <span class="sd">        This test is optional and should be skipped if the model does not support</span>
 <span class="sd">        structured output (see Configuration below).</span>
@@ -2371,12 +2412,14 @@
 
 <span class="sd">            If this test fails, ensure that the model's ``bind_tools`` method</span>
 <span class="sd">            properly handles both JSON Schema and Pydantic V1 models.</span>
-<span class="sd">            ``langchain_core`` implements a utility function that will accommodate</span>
-<span class="sd">            most formats: https://python.langchain.com/api_reference/core/utils/langchain_core.utils.function_calling.convert_to_openai_tool.html</span>
 
-<span class="sd">            See example implementation of ``with_structured_output`` here: https://python.langchain.com/api_reference/_modules/langchain_openai/chat_models/base.html#BaseChatOpenAI.with_structured_output</span>
+<span class="sd">            ``langchain_core`` implements `a utility function &lt;https://python.langchain.com/api_reference/core/utils/langchain_core.utils.function_calling.convert_to_openai_tool.html&gt;`__</span>
+<span class="sd">            that will accommodate most formats.</span>
 
-<span class="sd">        """</span>
+<span class="sd">            See `example implementation &lt;https://python.langchain.com/api_reference/_modules/langchain_openai/chat_models/base.html#BaseChatOpenAI.with_structured_output&gt;`__</span>
+<span class="sd">            of ``with_structured_output``.</span>
+
+<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_structured_output</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires structured output."</span><span class="p">)</span>
 
@@ -2411,7 +2454,9 @@
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_structured_output_optional_param">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_structured_output_optional_param">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_structured_output_optional_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test to verify we can generate structured output that includes optional</span>
+<span class="w">        </span><span class="sd">"""Test structured output with optional parameters.</span>
+
+<span class="sd">        Test to verify we can generate structured output that includes optional</span>
 <span class="sd">        parameters.</span>
 
 <span class="sd">        This test is optional and should be skipped if the model does not support</span>
@@ -2436,10 +2481,12 @@
 
 <span class="sd">            If this test fails, ensure that the model's ``bind_tools`` method</span>
 <span class="sd">            properly handles Pydantic V2 models with optional parameters.</span>
-<span class="sd">            ``langchain_core`` implements a utility function that will accommodate</span>
-<span class="sd">            most formats: https://python.langchain.com/api_reference/core/utils/langchain_core.utils.function_calling.convert_to_openai_tool.html</span>
 
-<span class="sd">            See example implementation of ``with_structured_output`` here: https://python.langchain.com/api_reference/_modules/langchain_openai/chat_models/base.html#BaseChatOpenAI.with_structured_output</span>
+<span class="sd">            ``langchain_core`` implements `a utility function &lt;https://python.langchain.com/api_reference/core/utils/langchain_core.utils.function_calling.convert_to_openai_tool.html&gt;`__</span>
+<span class="sd">            that will accommodate most formats.</span>
+
+<span class="sd">            See `example implementation &lt;https://python.langchain.com/api_reference/_modules/langchain_openai/chat_models/base.html#BaseChatOpenAI.with_structured_output&gt;`__</span>
+<span class="sd">            of ``with_structured_output``.</span>
 
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_structured_output</span><span class="p">:</span>
@@ -2523,7 +2570,7 @@
         <span class="c1"># Type ignoring since the interface only officially supports pydantic 1</span>
         <span class="c1"># or pydantic.v1.BaseModel but not pydantic.BaseModel from pydantic 2.</span>
         <span class="c1"># We'll need to do a pass updating the type signatures.</span>
-        <span class="n">chat</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">with_structured_output</span><span class="p">(</span><span class="n">Joke</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"json_mode"</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="n">chat</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">with_structured_output</span><span class="p">(</span><span class="n">Joke</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"json_mode"</span><span class="p">)</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">"Tell me a joke about cats. Return the result as a JSON with 'setup' and "</span>
             <span class="s2">"'punchline' keys. Return nothing other than JSON."</span>
@@ -2589,6 +2636,7 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports_pdf_inputs</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Model does not support PDF inputs."</span><span class="p">)</span>
+
         <span class="n">url</span> <span class="o">=</span> <span class="s2">"https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"</span>
         <span class="n">pdf_data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">httpx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">content</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
 
@@ -2668,6 +2716,7 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports_audio_inputs</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Model does not support audio inputs."</span><span class="p">)</span>
+
         <span class="n">url</span> <span class="o">=</span> <span class="s2">"https://upload.wikimedia.org/wikipedia/commons/3/3d/Alcal%C3%A1_de_Henares_%28RPS_13-04-2024%29_canto_de_ruise%C3%B1or_</span><span class="si">%28Lu</span><span class="s2">scinia_megarhynchos%29_en_el_Soto_del_Henares.wav"</span>
         <span class="n">audio_data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">httpx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">content</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
 
@@ -2772,6 +2821,7 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports_image_inputs</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Model does not support image message."</span><span class="p">)</span>
+
         <span class="n">image_url</span> <span class="o">=</span> <span class="s2">"https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg"</span>
         <span class="n">image_data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">httpx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">image_url</span><span class="p">)</span><span class="o">.</span><span class="n">content</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
 
@@ -2882,6 +2932,7 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports_image_tool_message</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Model does not support image tool message."</span><span class="p">)</span>
+
         <span class="n">image_url</span> <span class="o">=</span> <span class="s2">"https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg"</span>
         <span class="n">image_data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">httpx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">image_url</span><span class="p">)</span><span class="o">.</span><span class="n">content</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
 
@@ -3000,7 +3051,7 @@
 
 <span class="sd">            1. The model can correctly handle message histories that include message objects with list content.</span>
 <span class="sd">            2. The ``tool_calls`` attribute on AIMessage objects is correctly handled and passed to the model in an appropriate format.</span>
-<span class="sd">            3. HumanMessages with "tool_result" content blocks are correctly handled.</span>
+<span class="sd">            3. ``HumanMessage``s with "tool_result" content blocks are correctly handled.</span>
 
 <span class="sd">            Otherwise, if Anthropic tool call and result formats are not supported,</span>
 <span class="sd">            set the ``supports_anthropic_inputs`` property to False.</span>
@@ -3109,7 +3160,7 @@
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_message_with_name">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_message_with_name">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_message_with_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test that HumanMessage with values for the ``name`` field can be handled.</span>
+<span class="w">        </span><span class="sd">"""Test that ``HumanMessage`` with values for the ``name`` field can be handled.</span>
 
 <span class="sd">        These messages may take the form:</span>
 
@@ -3136,8 +3187,10 @@
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_agent_loop">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_agent_loop">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_agent_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test that the model supports a simple ReAct agent loop. This test is skipped</span>
-<span class="sd">        if the ``has_tool_calling`` property on the test class is set to False.</span>
+<span class="w">        </span><span class="sd">"""Test that the model supports a simple ReAct agent loop.</span>
+
+<span class="sd">        This test is skipped if the ``has_tool_calling`` property on the test class is</span>
+<span class="sd">        set to False.</span>
 
 <span class="sd">        This test is optional and should be skipped if the model does not support</span>
 <span class="sd">        tool calling (see Configuration below).</span>
@@ -3161,7 +3214,7 @@
 <span class="sd">            chat model.</span>
 
 <span class="sd">            Check also that all required information (e.g., tool calling identifiers)</span>
-<span class="sd">            from AIMessage objects is propagated correctly to model payloads.</span>
+<span class="sd">            from ``AIMessage`` objects is propagated correctly to model payloads.</span>
 
 <span class="sd">            This test may fail if the chat model does not consistently generate tool</span>
 <span class="sd">            calls in response to an appropriate query. In these cases you can ``xfail``</span>
@@ -3178,7 +3231,7 @@
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
 
         <span class="nd">@tool</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">get_weather</span><span class="p">(</span><span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># pylint: disable=unused-argument</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_weather</span><span class="p">(</span><span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">            </span><span class="sd">"""Call to surf the web."""</span>
             <span class="k">return</span> <span class="s2">"It's sunny."</span>
 
@@ -3246,23 +3299,38 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke_with_audio_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AIMessage</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">""":private:"""</span>
+<span class="w">        </span><span class="sd">"""Invoke with audio input.</span>
+
+<span class="sd">        :private:</span>
+<span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke_with_audio_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AIMessage</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">""":private:"""</span>
+<span class="w">        </span><span class="sd">"""Invoke with audio output.</span>
+
+<span class="sd">        :private:</span>
+<span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke_with_reasoning_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AIMessage</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">""":private:"""</span>
+<span class="w">        </span><span class="sd">"""Invoke with reasoning output.</span>
+
+<span class="sd">        :private:</span>
+<span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke_with_cache_read_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AIMessage</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">""":private:"""</span>
+<span class="w">        </span><span class="sd">"""Invoke with cache read input.</span>
+
+<span class="sd">        :private:</span>
+<span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke_with_cache_creation_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AIMessage</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">""":private:"""</span>
+<span class="w">        </span><span class="sd">"""Invoke with cache creation input.</span>
+
+<span class="sd">        :private:</span>
+<span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_unicode_tool_call_integration">
@@ -3274,16 +3342,17 @@
         <span class="n">tool_choice</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">force_tool_call</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Generic integration test for Unicode characters in tool calls.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Generic integration test for Unicode characters in tool calls.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: The chat model to test</span>
-<span class="sd">            tool_choice: Tool choice parameter to pass to bind_tools (provider-specific)</span>
-<span class="sd">            force_tool_call: Whether to force a tool call (use tool_choice=True if None)</span>
+<span class="sd">            tool_choice: Tool choice parameter to pass to ``bind_tools()`` (provider-specific)</span>
+<span class="sd">            force_tool_call: Whether to force a tool call (use ``tool_choice=True`` if None)</span>
 
 <span class="sd">        Tests that Unicode characters in tool call arguments are preserved correctly,</span>
-<span class="sd">        not escaped as \\uXXXX sequences.</span>
-<span class="sd">        """</span>
+<span class="sd">        not escaped as ``\\uXXXX`` sequences.</span>
+
+<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling support."</span><span class="p">)</span>
 

@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 07, 2025" name="docbuild:last-update"/>
+<meta content="Aug 13, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -309,8 +309,8 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Attempt to parse a JSON string for tool calling.</span>
 
-<span class="sd">    It first tries to use the standard json.loads. If that fails, it falls</span>
-<span class="sd">    back to ast.literal_eval to safely parse Python literals, which is more</span>
+<span class="sd">    It first tries to use the standard ``json.loads``. If that fails, it falls</span>
+<span class="sd">    back to ``ast.literal_eval`` to safely parse Python literals, which is more</span>
 <span class="sd">    robust against models using single quotes or containing apostrophes.</span>
 
 <span class="sd">    Args:</span>
@@ -322,7 +322,8 @@
 <span class="sd">        The parsed JSON string or Python literal.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        OutputParserException: If the string is invalid and skip=False.</span>
+<span class="sd">        OutputParserException: If the string is invalid and ``skip=False``.</span>
+
 <span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json_string</span><span class="p">)</span>
@@ -360,14 +361,20 @@
 
 <span class="sd">    Band-aid fix for issue in Ollama with inconsistent tool call argument structure.</span>
 <span class="sd">    Should be removed/changed if fixed upstream.</span>
+
 <span class="sd">    See https://github.com/ollama/ollama/issues/6155</span>
+
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="s2">"function"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">raw_tool_call</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">function_name</span> <span class="o">=</span> <span class="n">raw_tool_call</span><span class="p">[</span><span class="s2">"function"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">]</span>
     <span class="n">arguments</span> <span class="o">=</span> <span class="n">raw_tool_call</span><span class="p">[</span><span class="s2">"function"</span><span class="p">][</span><span class="s2">"arguments"</span><span class="p">]</span>
     <span class="n">parsed_arguments</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arguments</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">arguments</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># Filter out metadata fields like 'functionName' that echo function name</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"functionName"</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">==</span> <span class="n">function_name</span><span class="p">:</span>
+                <span class="k">continue</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
                 <span class="n">parsed_value</span> <span class="o">=</span> <span class="n">_parse_json_string</span><span class="p">(</span>
                     <span class="n">value</span><span class="p">,</span> <span class="n">skip</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">raw_tool_call</span><span class="o">=</span><span class="n">raw_tool_call</span>
@@ -446,7 +453,7 @@
 
 <span class="sd">        .. code-block:: bash</span>
 
-<span class="sd">            ollama pull mistral:v0.3</span>
+<span class="sd">            ollama pull gpt-oss:20b</span>
 <span class="sd">            pip install -U langchain-ollama</span>
 
 <span class="sd">    Key init args — completion params:</span>
@@ -479,7 +486,8 @@
 <span class="sd">            from langchain_ollama import ChatOllama</span>
 
 <span class="sd">            llm = ChatOllama(</span>
-<span class="sd">                model = "llama3",</span>
+<span class="sd">                model = "gpt-oss:20b",</span>
+<span class="sd">                validate_model_on_init = True,</span>
 <span class="sd">                temperature = 0.8,</span>
 <span class="sd">                num_predict = 256,</span>
 <span class="sd">                # other params ...</span>
@@ -501,10 +509,7 @@
 <span class="sd">    Stream:</span>
 <span class="sd">        .. code-block:: python</span>
 
-<span class="sd">            messages = [</span>
-<span class="sd">                ("human", "Return the words Hello World!"),</span>
-<span class="sd">            ]</span>
-<span class="sd">            for chunk in llm.stream(messages):</span>
+<span class="sd">            for chunk in llm.stream("Return the words Hello World!"):</span>
 <span class="sd">                print(chunk.text(), end="")</span>
 
 
@@ -531,10 +536,7 @@
 <span class="sd">    Async:</span>
 <span class="sd">        .. code-block:: python</span>
 
-<span class="sd">            messages = [</span>
-<span class="sd">                ("human", "Hello how are you!"),</span>
-<span class="sd">            ]</span>
-<span class="sd">            await llm.ainvoke(messages)</span>
+<span class="sd">            await llm.ainvoke("Hello how are you!")</span>
 
 <span class="sd">        .. code-block:: python</span>
 
@@ -542,10 +544,7 @@
 
 <span class="sd">        .. code-block:: python</span>
 
-<span class="sd">            messages = [</span>
-<span class="sd">                ("human", "Say hello world!"),</span>
-<span class="sd">            ]</span>
-<span class="sd">            async for chunk in llm.astream(messages):</span>
+<span class="sd">            async for chunk in llm.astream("Say hello world!"):</span>
 <span class="sd">                print(chunk.content)</span>
 
 <span class="sd">        .. code-block:: python</span>
@@ -573,10 +572,7 @@
 
 
 <span class="sd">            json_llm = ChatOllama(format="json")</span>
-<span class="sd">            messages = [</span>
-<span class="sd">                ("human", "Return a query for the weather in a random location and time of day with two keys: location and time_of_day. Respond using JSON only."),</span>
-<span class="sd">            ]</span>
-<span class="sd">            llm.invoke(messages).content</span>
+<span class="sd">            llm.invoke("Return a query for the weather in a random location and time of day with two keys: location and time_of_day. Respond using JSON only.").content</span>
 
 <span class="sd">        .. code-block:: python</span>
 
@@ -623,17 +619,16 @@
 
 <span class="sd">            llm = ChatOllama(</span>
 <span class="sd">                model = "deepseek-r1:8b",</span>
+<span class="sd">                validate_model_on_init = True,</span>
 <span class="sd">                reasoning= True,</span>
 <span class="sd">            )</span>
 
-<span class="sd">            user_message = HumanMessage(content="how many r in the word strawberry?")</span>
-<span class="sd">            messages: List[Any] = [user_message]</span>
-<span class="sd">            llm.invoke(messages)</span>
+<span class="sd">            llm.invoke("how many r in the word strawberry?")</span>
 
 <span class="sd">            # or, on an invocation basis:</span>
 
-<span class="sd">            llm.invoke(messages, reasoning=True)</span>
-<span class="sd">            # or llm.stream(messages, reasoning=True)</span>
+<span class="sd">            llm.invoke("how many r in the word strawberry?", reasoning=True)</span>
+<span class="sd">            # or llm.stream("how many r in the word strawberry?", reasoning=True)</span>
 
 <span class="sd">            # If not provided, the invocation will default to the ChatOllama reasoning</span>
 <span class="sd">            # param provided (None by default).</span>
@@ -670,26 +665,26 @@
 
     <span class="n">mirostat</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Enable Mirostat sampling for controlling perplexity.</span>
-<span class="sd">    (default: 0, 0 = disabled, 1 = Mirostat, 2 = Mirostat 2.0)"""</span>
+<span class="sd">    (default: ``0``, ``0`` = disabled, ``1`` = Mirostat, ``2`` = Mirostat 2.0)"""</span>
 
     <span class="n">mirostat_eta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Influences how quickly the algorithm responds to feedback</span>
 <span class="sd">    from the generated text. A lower learning rate will result in</span>
 <span class="sd">    slower adjustments, while a higher learning rate will make</span>
-<span class="sd">    the algorithm more responsive. (Default: 0.1)"""</span>
+<span class="sd">    the algorithm more responsive. (Default: ``0.1``)"""</span>
 
     <span class="n">mirostat_tau</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Controls the balance between coherence and diversity</span>
 <span class="sd">    of the output. A lower value will result in more focused and</span>
-<span class="sd">    coherent text. (Default: 5.0)"""</span>
+<span class="sd">    coherent text. (Default: ``5.0``)"""</span>
 
     <span class="n">num_ctx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Sets the size of the context window used to generate the</span>
-<span class="sd">    next token. (Default: 2048)	"""</span>
+<span class="sd">    next token. (Default: ``2048``)	"""</span>
 
     <span class="n">num_gpu</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">"""The number of GPUs to use. On macOS it defaults to 1 to</span>
-<span class="sd">    enable metal support, 0 to disable."""</span>
+<span class="w">    </span><span class="sd">"""The number of GPUs to use. On macOS it defaults to ``1`` to</span>
+<span class="sd">    enable metal support, ``0`` to disable."""</span>
 
     <span class="n">num_thread</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Sets the number of threads to use during computation.</span>
@@ -699,20 +694,20 @@
 
     <span class="n">num_predict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Maximum number of tokens to predict when generating text.</span>
-<span class="sd">    (Default: 128, -1 = infinite generation, -2 = fill context)"""</span>
+<span class="sd">    (Default: ``128``, ``-1`` = infinite generation, ``-2`` = fill context)"""</span>
 
     <span class="n">repeat_last_n</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Sets how far back for the model to look back to prevent</span>
-<span class="sd">    repetition. (Default: 64, 0 = disabled, -1 = num_ctx)"""</span>
+<span class="sd">    repetition. (Default: ``64``, ``0`` = disabled, ``-1`` = ``num_ctx``)"""</span>
 
     <span class="n">repeat_penalty</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">"""Sets how strongly to penalize repetitions. A higher value (e.g., 1.5)</span>
-<span class="sd">    will penalize repetitions more strongly, while a lower value (e.g., 0.9)</span>
-<span class="sd">    will be more lenient. (Default: 1.1)"""</span>
+<span class="w">    </span><span class="sd">"""Sets how strongly to penalize repetitions. A higher value (e.g., ``1.5``)</span>
+<span class="sd">    will penalize repetitions more strongly, while a lower value (e.g., ``0.9``)</span>
+<span class="sd">    will be more lenient. (Default: ``1.1``)"""</span>
 
     <span class="n">temperature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""The temperature of the model. Increasing the temperature will</span>
-<span class="sd">    make the model answer more creatively. (Default: 0.8)"""</span>
+<span class="sd">    make the model answer more creatively. (Default: ``0.8``)"""</span>
 
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Sets the random number seed to use for generation. Setting this</span>
@@ -724,21 +719,21 @@
 
     <span class="n">tfs_z</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Tail free sampling is used to reduce the impact of less probable</span>
-<span class="sd">    tokens from the output. A higher value (e.g., 2.0) will reduce the</span>
-<span class="sd">    impact more, while a value of 1.0 disables this setting. (default: 1)"""</span>
+<span class="sd">    tokens from the output. A higher value (e.g., ``2.0``) will reduce the</span>
+<span class="sd">    impact more, while a value of ``1.0`` disables this setting. (default: ``1``)"""</span>
 
     <span class="n">top_k</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">"""Reduces the probability of generating nonsense. A higher value (e.g. 100)</span>
-<span class="sd">    will give more diverse answers, while a lower value (e.g. 10)</span>
-<span class="sd">    will be more conservative. (Default: 40)"""</span>
+<span class="w">    </span><span class="sd">"""Reduces the probability of generating nonsense. A higher value (e.g. ``100``)</span>
+<span class="sd">    will give more diverse answers, while a lower value (e.g. ``10``)</span>
+<span class="sd">    will be more conservative. (Default: ``40``)"""</span>
 
     <span class="n">top_p</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">"""Works together with top-k. A higher value (e.g., 0.95) will lead</span>
-<span class="sd">    to more diverse text, while a lower value (e.g., 0.5) will</span>
-<span class="sd">    generate more focused and conservative text. (Default: 0.9)"""</span>
+<span class="w">    </span><span class="sd">"""Works together with top-k. A higher value (e.g., ``0.95``) will lead</span>
+<span class="sd">    to more diverse text, while a lower value (e.g., ``0.5``) will</span>
+<span class="sd">    generate more focused and conservative text. (Default: ``0.9``)"""</span>
 
     <span class="nb">format</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"json"</span><span class="p">],</span> <span class="n">JsonSchemaValue</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">"""Specify the format of the output (options: "json", JSON schema)."""</span>
+<span class="w">    </span><span class="sd">"""Specify the format of the output (options: ``'json'``, JSON schema)."""</span>
 
     <span class="n">keep_alive</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""How long the model will stay loaded into memory."""</span>
@@ -748,32 +743,35 @@
 
     <span class="n">client_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="w">    </span><span class="sd">"""Additional kwargs to pass to the httpx clients.</span>
+
 <span class="sd">    These arguments are passed to both synchronous and async clients.</span>
-<span class="sd">    Use sync_client_kwargs and async_client_kwargs to pass different arguments</span>
+
+<span class="sd">    Use ``sync_client_kwargs`` and ``async_client_kwargs`` to pass different arguments</span>
 <span class="sd">    to synchronous and asynchronous clients.</span>
+
 <span class="sd">    """</span>
 
     <span class="n">async_client_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="w">    </span><span class="sd">"""Additional kwargs to merge with client_kwargs before</span>
+<span class="w">    </span><span class="sd">"""Additional kwargs to merge with ``client_kwargs`` before</span>
 <span class="sd">    passing to the httpx AsyncClient.</span>
+
 <span class="sd">    `Full list of params. &lt;https://www.python-httpx.org/api/#asyncclient&gt;`__</span>
+
 <span class="sd">    """</span>
 
     <span class="n">sync_client_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="w">    </span><span class="sd">"""Additional kwargs to merge with client_kwargs before</span>
+<span class="w">    </span><span class="sd">"""Additional kwargs to merge with ``client_kwargs`` before</span>
 <span class="sd">    passing to the httpx Client.</span>
+
 <span class="sd">    `Full list of params. &lt;https://www.python-httpx.org/api/#client&gt;`__</span>
+
 <span class="sd">    """</span>
 
     <span class="n">_client</span><span class="p">:</span> <span class="n">Client</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">()</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    The client to use for making requests.</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""The client to use for making requests."""</span>
 
     <span class="n">_async_client</span><span class="p">:</span> <span class="n">AsyncClient</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">()</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    The async client to use for making requests.</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""The async client to use for making requests."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_chat_params</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -1293,14 +1291,14 @@
 <span class="sd">                - ``'function_calling'``:</span>
 <span class="sd">                    Uses Ollama's tool-calling API</span>
 <span class="sd">                - ``'json_mode'``:</span>
-<span class="sd">                    Specifies ``format="json"``. Note that if using JSON mode then you</span>
+<span class="sd">                    Specifies ``format='json'``. Note that if using JSON mode then you</span>
 <span class="sd">                    must include instructions for formatting the output into the</span>
 <span class="sd">                    desired schema into the model call.</span>
 
 <span class="sd">            include_raw:</span>
 <span class="sd">                If False then only the parsed structured output is returned. If</span>
 <span class="sd">                an error occurs during model output parsing it will be raised. If True</span>
-<span class="sd">                then both the raw model response (a BaseMessage) and the parsed model</span>
+<span class="sd">                then both the raw model response (a ``BaseMessage``) and the parsed model</span>
 <span class="sd">                response will be returned. If an error occurs during output parsing it</span>
 <span class="sd">                will be caught and returned as well. The final output is always a dict</span>
 <span class="sd">                with keys ``'raw'``, ``'parsed'``, and ``'parsing_error'``.</span>
@@ -1314,7 +1312,7 @@
 
 <span class="sd">            If ``include_raw`` is True, then Runnable outputs a dict with keys:</span>
 
-<span class="sd">            - ``'raw'``: BaseMessage</span>
+<span class="sd">            - ``'raw'``: ``BaseMessage``</span>
 <span class="sd">            - ``'parsed'``: None if there was a parsing error, otherwise the type depends on the ``schema`` as described above.</span>
 <span class="sd">            - ``'parsing_error'``: Optional[BaseException]</span>
 
@@ -1359,7 +1357,7 @@
 <span class="sd">                #     justification='Both a pound of bricks and a pound of feathers weigh one pound. The weight is the same, but the volume or density of the objects may differ.'</span>
 <span class="sd">                # )</span>
 
-<span class="sd">        .. dropdown:: Example: schema=Pydantic class, method="json_schema", include_raw=True</span>
+<span class="sd">        .. dropdown:: Example: ``schema=Pydantic`` class, ``method='json_schema'``, ``include_raw=True``</span>
 
 <span class="sd">            .. code-block:: python</span>
 
@@ -1388,7 +1386,7 @@
 <span class="sd">                #     'parsing_error': None</span>
 <span class="sd">                # }</span>
 
-<span class="sd">        .. dropdown:: Example: schema=Pydantic class, method="function_calling", include_raw=False</span>
+<span class="sd">        .. dropdown:: Example: ``schema=Pydantic`` class, ``method='function_calling'``, ``include_raw=False``</span>
 
 <span class="sd">            .. code-block:: python</span>
 
@@ -1452,7 +1450,7 @@
 <span class="sd">                #     'justification': 'Both a pound of bricks and a pound of feathers weigh one pound. The weight is the same, but the volume and density of the two substances differ.'</span>
 <span class="sd">                # }</span>
 
-<span class="sd">        .. dropdown:: Example: schema=OpenAI function schema, method="function_calling", include_raw=False</span>
+<span class="sd">        .. dropdown:: Example: ``schema=OpenAI`` function schema, ``method='function_calling'``, ``include_raw=False``</span>
 
 <span class="sd">            .. code-block:: python</span>
 
@@ -1482,7 +1480,7 @@
 <span class="sd">                #     'justification': 'Both a pound of bricks and a pound of feathers weigh one pound. The weight is the same, but the volume and density of the two substances differ.'</span>
 <span class="sd">                # }</span>
 
-<span class="sd">        .. dropdown:: Example: schema=Pydantic class, method="json_mode", include_raw=True</span>
+<span class="sd">        .. dropdown:: Example: ``schema=Pydantic`` class, ``method='json_mode'``, ``include_raw=True``</span>
 
 <span class="sd">            .. code-block::</span>
 

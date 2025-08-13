@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 07, 2025" name="docbuild:last-update"/>
+<meta content="Aug 13, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -242,7 +242,9 @@
     <span class="n">Sequence</span><span class="p">,</span>
     <span class="n">Tuple</span><span class="p">,</span>
     <span class="n">Type</span><span class="p">,</span>
+    <span class="n">TypeVar</span><span class="p">,</span>
     <span class="n">Union</span><span class="p">,</span>
+    <span class="n">cast</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks.manager</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -277,6 +279,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_nvidia_ai_endpoints._common</span><span class="w"> </span><span class="kn">import</span> <span class="n">_NVIDIAClient</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_nvidia_ai_endpoints._statics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_nvidia_ai_endpoints._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert_message_to_dict</span>
+
+<span class="c1"># Type variable for generic parser types</span>
+<span class="n">T_Parser</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T_Parser"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">"BaseOutputParser"</span><span class="p">)</span>
 
 <span class="n">_CallbackManager</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">AsyncCallbackManagerForLLMRun</span><span class="p">,</span> <span class="n">CallbackManagerForLLMRun</span><span class="p">]</span>
 
@@ -402,6 +407,67 @@
                         <span class="k">else</span><span class="p">:</span>
                             <span class="n">part</span><span class="p">[</span><span class="s2">"image_url"</span><span class="p">][</span><span class="s2">"url"</span><span class="p">]</span> <span class="o">=</span> <span class="n">url</span>
     <span class="k">return</span> <span class="n">message_dict</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_extract_content_after_thinking</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Extract content that comes after thinking tags.</span>
+
+<span class="sd">    When thinking mode is enabled, the actual structured output content</span>
+<span class="sd">    comes after the &lt;/think&gt; closing tag. This function extracts that content</span>
+<span class="sd">    while preserving the original content structure.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        content: The full content including potential thinking tags</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Content after the last &lt;/think&gt; tag, or original content if no thinking tags</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">content</span> <span class="ow">and</span> <span class="s2">"&lt;think&gt;"</span> <span class="ow">in</span> <span class="n">content</span> <span class="ow">and</span> <span class="s2">"&lt;/think&gt;"</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+        <span class="c1"># Find the last &lt;/think&gt; tag and extract content after it</span>
+        <span class="n">think_end</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s2">"&lt;/think&gt;"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">think_end</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># Extract content after &lt;/think&gt; tag</span>
+            <span class="n">actual_content</span> <span class="o">=</span> <span class="n">content</span><span class="p">[</span><span class="n">think_end</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="s2">"&lt;/think&gt;"</span><span class="p">)</span> <span class="p">:]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">actual_content</span>
+    <span class="k">return</span> <span class="n">content</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_create_thinking_aware_parser</span><span class="p">(</span>
+    <span class="n">base_parser_class</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">T_Parser</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">T_Parser</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Create a thinking-aware version of any output parser.</span>
+
+<span class="sd">    This wrapper extracts content after thinking tags for parsing, but preserves</span>
+<span class="sd">    the original content with thinking tags in the response.</span>
+<span class="sd">    """</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">ThinkingAwareParser</span><span class="p">(</span><span class="n">base_parser_class</span><span class="p">):</span>  <span class="c1"># type: ignore[valid-type,misc]</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+            <span class="c1"># Extract only the content after thinking tags for parsing</span>
+            <span class="n">actual_content</span> <span class="o">=</span> <span class="n">_extract_content_after_thinking</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">actual_content</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">parse_result</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Generation</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">partial</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">result</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"text"</span><span class="p">):</span>
+                <span class="n">original_text</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span>
+                <span class="c1"># Extract only the content after thinking tags for parsing</span>
+                <span class="n">actual_content</span> <span class="o">=</span> <span class="n">_extract_content_after_thinking</span><span class="p">(</span><span class="n">original_text</span><span class="p">)</span>
+
+                <span class="c1"># Create a new generation object with extracted content</span>
+                <span class="n">clean_generation</span> <span class="o">=</span> <span class="n">Generation</span><span class="p">(</span>
+                    <span class="n">text</span><span class="o">=</span><span class="n">actual_content</span><span class="p">,</span> <span class="n">generation_info</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">generation_info</span>
+                <span class="p">)</span>
+
+                <span class="n">clean_result</span> <span class="o">=</span> <span class="p">[</span><span class="n">clean_generation</span><span class="p">]</span> <span class="o">+</span> <span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+                <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">parse_result</span><span class="p">(</span><span class="n">clean_result</span><span class="p">,</span> <span class="n">partial</span><span class="o">=</span><span class="n">partial</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">parse_result</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">partial</span><span class="o">=</span><span class="n">partial</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Type</span><span class="p">[</span><span class="n">T_Parser</span><span class="p">],</span> <span class="n">ThinkingAwareParser</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_nv_vlm_get_asset_ids</span><span class="p">(</span>
@@ -716,6 +782,10 @@
             <span class="s2">"additional_kwargs"</span><span class="p">:</span> <span class="p">{},</span>
             <span class="s2">"response_metadata"</span><span class="p">:</span> <span class="p">{},</span>
         <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">rc</span> <span class="o">:=</span> <span class="n">kw_left</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"reasoning_content"</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">out_dict</span><span class="p">[</span><span class="s2">"additional_kwargs"</span><span class="p">][</span><span class="s2">"reasoning_content"</span><span class="p">]</span> <span class="o">=</span> <span class="n">rc</span>
+
         <span class="k">if</span> <span class="n">token_usage</span> <span class="o">:=</span> <span class="n">kw_left</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"token_usage"</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
             <span class="n">out_dict</span><span class="p">[</span><span class="s2">"usage_metadata"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">"input_tokens"</span><span class="p">:</span> <span class="n">token_usage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"prompt_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
@@ -1095,7 +1165,10 @@
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="n">output_parser</span><span class="p">:</span> <span class="n">BaseOutputParser</span> <span class="o">=</span> <span class="n">JsonOutputParser</span><span class="p">()</span>
+            <span class="n">ThinkingAwareJsonOutputParser</span> <span class="o">=</span> <span class="n">_create_thinking_aware_parser</span><span class="p">(</span>
+                <span class="n">JsonOutputParser</span>
+            <span class="p">)</span>
+            <span class="n">output_parser</span><span class="p">:</span> <span class="n">BaseOutputParser</span> <span class="o">=</span> <span class="n">ThinkingAwareJsonOutputParser</span><span class="p">()</span>
             <span class="n">nvext_param</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"guided_json"</span><span class="p">:</span> <span class="n">schema</span><span class="p">}</span>
         <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
             <span class="c1"># langchain's EnumOutputParser is not in langchain_core</span>
@@ -1122,7 +1195,10 @@
                     <span class="s2">"Enum schema must only contain string choices. "</span>
                     <span class="s2">"Use StrEnum or ensure all member values are strings."</span>
                 <span class="p">)</span>
-            <span class="n">output_parser</span> <span class="o">=</span> <span class="n">EnumOutputParser</span><span class="p">(</span><span class="n">enum</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>
+            <span class="n">ThinkingAwareEnumOutputParser</span> <span class="o">=</span> <span class="n">_create_thinking_aware_parser</span><span class="p">(</span>
+                <span class="n">EnumOutputParser</span>
+            <span class="p">)</span>
+            <span class="n">output_parser</span> <span class="o">=</span> <span class="n">ThinkingAwareEnumOutputParser</span><span class="p">(</span><span class="n">enum</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>
             <span class="n">nvext_param</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"guided_choice"</span><span class="p">:</span> <span class="n">choices</span><span class="p">}</span>
             <span class="n">guided_schema</span> <span class="o">=</span> <span class="n">choices</span>
 
@@ -1141,7 +1217,10 @@
                         <span class="k">pass</span>
                     <span class="k">return</span> <span class="kc">None</span>
 
-            <span class="n">output_parser</span> <span class="o">=</span> <span class="n">ForgivingPydanticOutputParser</span><span class="p">(</span><span class="n">pydantic_object</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>
+            <span class="n">ThinkingAwarePydanticOutputParser</span> <span class="o">=</span> <span class="n">_create_thinking_aware_parser</span><span class="p">(</span>
+                <span class="n">ForgivingPydanticOutputParser</span>
+            <span class="p">)</span>
+            <span class="n">output_parser</span> <span class="o">=</span> <span class="n">ThinkingAwarePydanticOutputParser</span><span class="p">(</span><span class="n">pydantic_object</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="s2">"model_json_schema"</span><span class="p">):</span>
                 <span class="n">json_schema</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>

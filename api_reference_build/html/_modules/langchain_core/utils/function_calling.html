@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 07, 2025" name="docbuild:last-update"/>
+<meta content="Aug 13, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -508,7 +508,7 @@
         <span class="p">)</span>
         <span class="n">fields</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">arg</span><span class="p">,</span> <span class="n">arg_type</span> <span class="ow">in</span> <span class="n">annotations_</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">arg_type</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Annotated</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">arg_type</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Annotated</span><span class="p">:</span>  <span class="c1"># type: ignore[comparison-overlap]</span>
                 <span class="n">annotated_args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">arg_type</span><span class="p">)</span>
                 <span class="n">new_arg_type</span> <span class="o">=</span> <span class="n">_convert_any_typed_dicts_to_pydantic</span><span class="p">(</span>
                     <span class="n">annotated_args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">depth</span><span class="o">=</span><span class="n">depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">visited</span><span class="o">=</span><span class="n">visited</span>
@@ -814,12 +814,23 @@
 
 <span class="sd">        Added support for OpenAI's image generation built-in tool.</span>
 <span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tool</span>
+
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">tool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_WellKnownOpenAITools</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">tool</span>
         <span class="c1"># As of 03.12.25 can be "web_search_preview" or "web_search_preview_2025_03_11"</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">tool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"web_search_preview"</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">tool</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="n">Tool</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">tool</span><span class="o">.</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"custom_tool"</span><span class="p">:</span>
+        <span class="n">oai_tool</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"custom"</span><span class="p">,</span>
+            <span class="s2">"name"</span><span class="p">:</span> <span class="n">tool</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="s2">"description"</span><span class="p">:</span> <span class="n">tool</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">tool</span><span class="o">.</span><span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">"format"</span> <span class="ow">in</span> <span class="n">tool</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span>
+            <span class="n">oai_tool</span><span class="p">[</span><span class="s2">"format"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tool</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"format"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">oai_tool</span>
     <span class="n">oai_function</span> <span class="o">=</span> <span class="n">convert_to_openai_function</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"function"</span><span class="p">,</span> <span class="s2">"function"</span><span class="p">:</span> <span class="n">oai_function</span><span class="p">}</span></div>
 
@@ -861,7 +872,7 @@
 <a class="viewcode-back" href="../../../core/utils/langchain_core.utils.function_calling.tool_example_to_messages.html#langchain_core.utils.function_calling.tool_example_to_messages">[docs]</a>
 <span class="nd">@beta</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">tool_example_to_messages</span><span class="p">(</span>
-    <span class="nb">input</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>  <span class="c1"># noqa: A002</span>
+    <span class="nb">input</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">tool_calls</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span>
     <span class="n">tool_outputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -874,15 +885,16 @@
 
 <span class="sd">    The list of messages per example by default corresponds to:</span>
 
-<span class="sd">    1) HumanMessage: contains the content from which content should be extracted.</span>
-<span class="sd">    2) AIMessage: contains the extracted information from the model</span>
-<span class="sd">    3) ToolMessage: contains confirmation to the model that the model requested a tool</span>
-<span class="sd">       correctly.</span>
+<span class="sd">    1. ``HumanMessage``: contains the content from which content should be extracted.</span>
+<span class="sd">    2. ``AIMessage``: contains the extracted information from the model</span>
+<span class="sd">    3. ``ToolMessage``: contains confirmation to the model that the model requested a</span>
+<span class="sd">       tool correctly.</span>
 
-<span class="sd">    If `ai_response` is specified, there will be a final AIMessage with that response.</span>
+<span class="sd">    If ``ai_response`` is specified, there will be a final ``AIMessage`` with that</span>
+<span class="sd">    response.</span>
 
-<span class="sd">    The ToolMessage is required because some chat models are hyper-optimized for agents</span>
-<span class="sd">    rather than for an extraction use case.</span>
+<span class="sd">    The ``ToolMessage`` is required because some chat models are hyper-optimized for</span>
+<span class="sd">    agents rather than for an extraction use case.</span>
 
 <span class="sd">    Arguments:</span>
 <span class="sd">        input: string, the user input</span>
@@ -891,7 +903,7 @@
 <span class="sd">        tool_outputs: Optional[list[str]], a list of tool call outputs.</span>
 <span class="sd">            Does not need to be provided. If not provided, a placeholder value</span>
 <span class="sd">            will be inserted. Defaults to None.</span>
-<span class="sd">        ai_response: Optional[str], if provided, content for a final AIMessage.</span>
+<span class="sd">        ai_response: Optional[str], if provided, content for a final ``AIMessage``.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A list of messages</span>
@@ -974,6 +986,7 @@
 <span class="w">    </span><span class="sd">"""Parse the function and argument descriptions from the docstring of a function.</span>
 
 <span class="sd">    Assumes the function docstring follows Google Python style guide.</span>
+
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">docstring</span><span class="p">:</span>
         <span class="n">docstring_blocks</span> <span class="o">=</span> <span class="n">docstring</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">)</span>

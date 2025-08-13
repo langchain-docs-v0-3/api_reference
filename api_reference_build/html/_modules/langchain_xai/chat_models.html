@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 07, 2025" name="docbuild:last-update"/>
+<meta content="Aug 13, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -222,26 +222,24 @@
 <h1>Source code for langchain_xai.chat_models</h1><div class="highlight"><pre>
 <span></span><span class="sd">"""Wrapper around xAI's Chat Completions API."""</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Any</span><span class="p">,</span>
-    <span class="n">Literal</span><span class="p">,</span>
-    <span class="n">Optional</span><span class="p">,</span>
-    <span class="n">TypeVar</span><span class="p">,</span>
-    <span class="n">Union</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">openai</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.language_models.chat_models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">LangSmithParams</span><span class="p">,</span>
-    <span class="n">LanguageModelInput</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.messages</span><span class="w"> </span><span class="kn">import</span> <span class="n">AIMessageChunk</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.outputs</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatGenerationChunk</span><span class="p">,</span> <span class="n">ChatResult</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">Runnable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">secret_from_env</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_openai.chat_models.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseChatOpenAI</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">SecretStr</span><span class="p">,</span> <span class="n">model_validator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.language_models.chat_models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">LangSmithParams</span><span class="p">,</span>
+        <span class="n">LanguageModelInput</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.outputs</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatGenerationChunk</span><span class="p">,</span> <span class="n">ChatResult</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">Runnable</span>
 
 <span class="n">_BM</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"_BM"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">BaseModel</span><span class="p">)</span>
 <span class="n">_DictOrPydanticClass</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">_BM</span><span class="p">],</span> <span class="nb">type</span><span class="p">]</span>
@@ -674,9 +672,11 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validate that api key and python package exists in environment."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"n must be at least 1."</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"n must be at least 1."</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">streaming</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"n must be 1 when streaming."</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"n must be 1 when streaming."</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="n">client_params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"api_key"</span><span class="p">:</span> <span class="p">(</span>
@@ -691,10 +691,11 @@
             <span class="n">client_params</span><span class="p">[</span><span class="s2">"max_retries"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_retries</span>
 
         <span class="k">if</span> <span class="n">client_params</span><span class="p">[</span><span class="s2">"api_key"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"xAI API key is not set. Please set it in the `xai_api_key` field or "</span>
                 <span class="s2">"in the `XAI_API_KEY` environment variable."</span>
             <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">):</span>
             <span class="n">sync_specific</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"http_client"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">http_client</span><span class="p">}</span>
@@ -735,9 +736,9 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">openai</span><span class="o">.</span><span class="n">BaseModel</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">rtn</span>
 
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="s2">"reasoning_content"</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="s2">"reasoning_content"</span><span class="p">):</span>  <span class="c1"># type: ignore[attr-defined]</span>
             <span class="n">rtn</span><span class="o">.</span><span class="n">generations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"reasoning_content"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">reasoning_content</span>  <span class="c1"># type: ignore</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">reasoning_content</span>  <span class="c1"># type: ignore[attr-defined]</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s2">"citations"</span><span class="p">):</span>
@@ -760,15 +761,19 @@
         <span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">choices</span> <span class="o">:=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"choices"</span><span class="p">))</span> <span class="ow">and</span> <span class="n">generation_chunk</span><span class="p">:</span>
             <span class="n">top</span> <span class="o">=</span> <span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">generation_chunk</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="n">AIMessageChunk</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">reasoning_content</span> <span class="o">:=</span> <span class="n">top</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"delta"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reasoning_content"</span><span class="p">):</span>
-                    <span class="n">generation_chunk</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"reasoning_content"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="n">reasoning_content</span>
-                    <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">generation_chunk</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="n">AIMessageChunk</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="n">reasoning_content</span> <span class="o">:=</span> <span class="n">top</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"delta"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reasoning_content"</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="n">generation_chunk</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"reasoning_content"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">reasoning_content</span>
+                <span class="p">)</span>
 
-        <span class="k">if</span> <span class="p">(</span><span class="n">citations</span> <span class="o">:=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"citations"</span><span class="p">))</span> <span class="ow">and</span> <span class="n">generation_chunk</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">generation_chunk</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="n">AIMessageChunk</span><span class="p">):</span>
-                <span class="n">generation_chunk</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"citations"</span><span class="p">]</span> <span class="o">=</span> <span class="n">citations</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">citations</span> <span class="o">:=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"citations"</span><span class="p">))</span>
+            <span class="ow">and</span> <span class="n">generation_chunk</span>
+            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">generation_chunk</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="n">AIMessageChunk</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">generation_chunk</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"citations"</span><span class="p">]</span> <span class="o">=</span> <span class="n">citations</span>
 
         <span class="k">return</span> <span class="n">generation_chunk</span>
 

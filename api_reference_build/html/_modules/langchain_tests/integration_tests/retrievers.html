@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 07, 2025" name="docbuild:last-update"/>
+<meta content="Aug 13, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,7 +220,9 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_tests.integration_tests.retrievers</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span></span><span class="sd">"""Integration tests for retrievers."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
@@ -237,7 +239,7 @@
     <span class="nd">@property</span>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">retriever_constructor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseRetriever</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""A BaseRetriever subclass to be tested."""</span>
+<span class="w">        </span><span class="sd">"""A ``BaseRetriever`` subclass to be tested."""</span>
         <span class="o">...</span>
 
     <span class="nd">@property</span>
@@ -248,25 +250,56 @@
     <span class="nd">@property</span>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">retriever_query_example</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Returns a str representing the "query" of an example retriever call."""</span>
-        <span class="o">...</span>
+<span class="w">        </span><span class="sd">"""Returns a str representing the ``query`` of an example retriever call."""</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num_results_arg_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Returns the name of the parameter for the number of results returned.</span>
+
+<span class="sd">        Usually something like ``k`` or ``top_k``.</span>
+
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="s2">"k"</span>
 
     <span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">retriever</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseRetriever</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">""":private:"""</span>
+<span class="w">        </span><span class="sd">"""Return retriever fixture.</span>
+
+<span class="sd">        :private:</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">retriever_constructor</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">retriever_constructor_params</span><span class="p">)</span>
 
 <div class="viewcode-block" id="RetrieversIntegrationTests.test_k_constructor_param">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.retrievers.RetrieversIntegrationTests.html#langchain_tests.integration_tests.retrievers.RetrieversIntegrationTests.test_k_constructor_param">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_k_constructor_param</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test that the retriever constructor accepts a k parameter, representing</span>
+<span class="w">        </span><span class="sd">"""Test the number of results constructor parameter.</span>
+
+<span class="sd">        Test that the retriever constructor accepts a parameter representing</span>
 <span class="sd">        the number of documents to return.</span>
+
+<span class="sd">        By default, the parameter tested is named ``k``, but it can be overridden by</span>
+<span class="sd">        setting the ``num_results_arg_name`` property.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            If the retriever doesn't support configuring the number of results returned</span>
+<span class="sd">            via the constructor, this test can be skipped using a pytest ``xfail`` on</span>
+<span class="sd">            the test class:</span>
+
+<span class="sd">            .. code-block:: python</span>
+
+<span class="sd">                @pytest.mark.xfail(</span>
+<span class="sd">                    reason="This retriever doesn't support setting "</span>
+<span class="sd">                    "the number of results via the constructor."</span>
+<span class="sd">                )</span>
+<span class="sd">                def test_k_constructor_param(self) -&gt; None:</span>
+<span class="sd">                    raise NotImplementedError</span>
 
 <span class="sd">        .. dropdown:: Troubleshooting</span>
 
-<span class="sd">            If this test fails, either the retriever constructor does not accept a k</span>
-<span class="sd">            parameter, or the retriever does not return the correct number of documents</span>
-<span class="sd">            (`k`) when it is set.</span>
+<span class="sd">            If this test fails, the retriever constructor does not accept a number</span>
+<span class="sd">            of results parameter, or the retriever does not return the correct number</span>
+<span class="sd">            of documents ( of the one set in ``num_results_arg_name``) when it is</span>
+<span class="sd">            set.</span>
 
 <span class="sd">            For example, a retriever like</span>
 
@@ -278,15 +311,17 @@
 
 <span class="sd">        """</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">retriever_constructor_params</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"k"</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">retriever_constructor_params</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_results_arg_name</span>
         <span class="p">}</span>
-        <span class="n">params_3</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">params</span><span class="p">,</span> <span class="s2">"k"</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
+        <span class="n">params_3</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_results_arg_name</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
         <span class="n">retriever_3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retriever_constructor</span><span class="p">(</span><span class="o">**</span><span class="n">params_3</span><span class="p">)</span>
         <span class="n">result_3</span> <span class="o">=</span> <span class="n">retriever_3</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">retriever_query_example</span><span class="p">)</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result_3</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
         <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">Document</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">result_3</span><span class="p">)</span>
 
-        <span class="n">params_1</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">params</span><span class="p">,</span> <span class="s2">"k"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="n">params_1</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_results_arg_name</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
         <span class="n">retriever_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retriever_constructor</span><span class="p">(</span><span class="o">**</span><span class="n">params_1</span><span class="p">)</span>
         <span class="n">result_1</span> <span class="o">=</span> <span class="n">retriever_1</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">retriever_query_example</span><span class="p">)</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result_1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
@@ -296,14 +331,34 @@
 <div class="viewcode-block" id="RetrieversIntegrationTests.test_invoke_with_k_kwarg">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.retrievers.RetrieversIntegrationTests.html#langchain_tests.integration_tests.retrievers.RetrieversIntegrationTests.test_invoke_with_k_kwarg">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_invoke_with_k_kwarg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retriever</span><span class="p">:</span> <span class="n">BaseRetriever</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Test that the invoke method accepts a k parameter, representing the number of</span>
-<span class="sd">        documents to return.</span>
+<span class="w">        </span><span class="sd">"""Test the number of results parameter in ``invoke()``.</span>
+
+<span class="sd">        Test that the invoke method accepts a parameter representing</span>
+<span class="sd">        the number of documents to return.</span>
+
+<span class="sd">        By default, the parameter is named ``, but it can be overridden by</span>
+<span class="sd">        setting the ``num_results_arg_name`` property.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            If the retriever doesn't support configuring the number of results returned</span>
+<span class="sd">            via the invoke method, this test can be skipped using a pytest ``xfail`` on</span>
+<span class="sd">            the test class:</span>
+
+<span class="sd">            .. code-block:: python</span>
+
+<span class="sd">                @pytest.mark.xfail(</span>
+<span class="sd">                    reason="This retriever doesn't support setting "</span>
+<span class="sd">                    "the number of results in the invoke method."</span>
+<span class="sd">                )</span>
+<span class="sd">                def test_invoke_with_k_kwarg(self) -&gt; None:</span>
+<span class="sd">                    raise NotImplementedError</span>
 
 <span class="sd">        .. dropdown:: Troubleshooting</span>
 
-<span class="sd">            If this test fails, the retriever's invoke method does not accept a k</span>
-<span class="sd">            parameter, or the retriever does not return the correct number of documents</span>
-<span class="sd">            (`k`) when it is set.</span>
+<span class="sd">            If this test fails, the retriever's invoke method does not accept a number</span>
+<span class="sd">            of results parameter, or the retriever does not return the correct number</span>
+<span class="sd">            of documents (``k`` of the one set in ``num_results_arg_name``) when it is</span>
+<span class="sd">            set.</span>
 
 <span class="sd">            For example, a retriever like</span>
 
@@ -314,11 +369,15 @@
 <span class="sd">            should return 3 documents when invoked with a query.</span>
 
 <span class="sd">        """</span>
-        <span class="n">result_1</span> <span class="o">=</span> <span class="n">retriever</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">retriever_query_example</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">result_1</span> <span class="o">=</span> <span class="n">retriever</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">retriever_query_example</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_results_arg_name</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="p">)</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result_1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
         <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">Document</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">result_1</span><span class="p">)</span>
 
-        <span class="n">result_3</span> <span class="o">=</span> <span class="n">retriever</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">retriever_query_example</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+        <span class="n">result_3</span> <span class="o">=</span> <span class="n">retriever</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">retriever_query_example</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_results_arg_name</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
+        <span class="p">)</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result_3</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
         <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">Document</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">result_3</span><span class="p">)</span></div>
 
@@ -326,14 +385,16 @@
 <div class="viewcode-block" id="RetrieversIntegrationTests.test_invoke_returns_documents">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.retrievers.RetrieversIntegrationTests.html#langchain_tests.integration_tests.retrievers.RetrieversIntegrationTests.test_invoke_returns_documents">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">test_invoke_returns_documents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retriever</span><span class="p">:</span> <span class="n">BaseRetriever</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""If invoked with the example params, the retriever should return a list of</span>
+<span class="w">        </span><span class="sd">"""Test invoke returns documents.</span>
+
+<span class="sd">        If invoked with the example params, the retriever should return a list of</span>
 <span class="sd">        Documents.</span>
 
 <span class="sd">        .. dropdown:: Troubleshooting</span>
 
 <span class="sd">            If this test fails, the retriever's invoke method does not return a list of</span>
-<span class="sd">            `langchain_core.document.Document` objects. Please confirm that your</span>
-<span class="sd">            `_get_relevant_documents` method returns a list of `Document` objects.</span>
+<span class="sd">            ``langchain_core.document.Document`` objects. Please confirm that your</span>
+<span class="sd">            ``_get_relevant_documents`` method returns a list of ``Document`` objects.</span>
 <span class="sd">        """</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">retriever</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">retriever_query_example</span><span class="p">)</span>
 
@@ -344,7 +405,9 @@
 <div class="viewcode-block" id="RetrieversIntegrationTests.test_ainvoke_returns_documents">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.retrievers.RetrieversIntegrationTests.html#langchain_tests.integration_tests.retrievers.RetrieversIntegrationTests.test_ainvoke_returns_documents">[docs]</a>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_ainvoke_returns_documents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">retriever</span><span class="p">:</span> <span class="n">BaseRetriever</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""If ainvoked with the example params, the retriever should return a list of</span>
+<span class="w">        </span><span class="sd">"""Test ainvoke returns documents.</span>
+
+<span class="sd">        If ainvoked with the example params, the retriever should return a list of</span>
 <span class="sd">        Documents.</span>
 
 <span class="sd">        See :meth:`test_invoke_returns_documents` for more information on</span>
