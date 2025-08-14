@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 13, 2025" name="docbuild:last-update"/>
+<meta content="Aug 14, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -231,6 +231,11 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pinecone</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparseValues</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_pinecone._utilities</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">aget_pinecone_supported_models</span><span class="p">,</span>
+    <span class="n">get_pinecone_supported_models</span><span class="p">,</span>
+<span class="p">)</span>
+
 <span class="c1"># Conditional import for EmbeddingsList based on Pinecone version</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">pinecone.core.openapi.inference.model.embeddings_list</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmbeddingsList</span>
@@ -239,6 +244,7 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">pinecone.data.features.inference.inference</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmbeddingsList</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AliasChoices</span><span class="p">,</span>
     <span class="n">BaseModel</span><span class="p">,</span>
     <span class="n">ConfigDict</span><span class="p">,</span>
     <span class="n">Field</span><span class="p">,</span>
@@ -299,8 +305,8 @@
     <span class="c1"># Clients</span>
     <span class="n">_client</span><span class="p">:</span> <span class="n">PineconeClient</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">_async_client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PineconeAsyncioClient</span><span class="p">]</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span>
-<span class="w">    </span><span class="sd">"""Model to use for example 'multilingual-e5-large'."""</span>
+    <span class="c1"># Model to use for example 'multilingual-e5-large'. Defaults to 'multilingual-e5-large' if not provided.</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"multilingual-e5-large"</span><span class="p">)</span>
     <span class="c1"># Config</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Batch size for embedding documents."""</span>
@@ -318,7 +324,8 @@
             <span class="n">error_message</span><span class="o">=</span><span class="s2">"Pinecone API key not found. Please set the PINECONE_API_KEY "</span>
             <span class="s2">"environment variable or pass it via `pinecone_api_key`."</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="n">alias</span><span class="o">=</span><span class="s2">"api_key"</span><span class="p">,</span>
+        <span class="n">alias</span><span class="o">=</span><span class="s2">"pinecone_api_key"</span><span class="p">,</span>
+        <span class="n">validation_alias</span><span class="o">=</span><span class="n">AliasChoices</span><span class="p">(</span><span class="s2">"pinecone_api_key"</span><span class="p">,</span> <span class="s2">"api_key"</span><span class="p">),</span>
     <span class="p">)</span>
 <span class="w">    </span><span class="sd">"""Pinecone API key. </span>
 <span class="sd">    </span>
@@ -356,12 +363,45 @@
             <span class="p">},</span>
         <span class="p">}</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="s2">"multilingual-e5-large"</span>
         <span class="k">if</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">default_config_map</span><span class="p">:</span>
             <span class="n">config</span> <span class="o">=</span> <span class="n">default_config_map</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
                     <span class="n">values</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
         <span class="k">return</span> <span class="n">values</span>
+
+<div class="viewcode-block" id="PineconeEmbeddings.list_supported_models">
+<a class="viewcode-back" href="../../pinecone/embeddings/langchain_pinecone.embeddings.PineconeEmbeddings.html#langchain_pinecone.embeddings.PineconeEmbeddings.list_supported_models">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_supported_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vector_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a list of supported embedding models from Pinecone."""</span>
+        <span class="n">api_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pinecone_api_key</span><span class="o">.</span><span class="n">get_secret_value</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">get_pinecone_supported_models</span><span class="p">(</span>
+            <span class="n">api_key</span><span class="p">,</span> <span class="n">model_type</span><span class="o">=</span><span class="s2">"embed"</span><span class="p">,</span> <span class="n">vector_type</span><span class="o">=</span><span class="n">vector_type</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PineconeEmbeddings.alist_supported_models">
+<a class="viewcode-back" href="../../pinecone/embeddings/langchain_pinecone.embeddings.PineconeEmbeddings.html#langchain_pinecone.embeddings.PineconeEmbeddings.alist_supported_models">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">alist_supported_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vector_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return a list of supported embedding models from Pinecone asynchronously."""</span>
+        <span class="n">api_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pinecone_api_key</span><span class="o">.</span><span class="n">get_secret_value</span><span class="p">()</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="n">aget_pinecone_supported_models</span><span class="p">(</span>
+            <span class="n">api_key</span><span class="p">,</span> <span class="n">model_type</span><span class="o">=</span><span class="s2">"embed"</span><span class="p">,</span> <span class="n">vector_type</span><span class="o">=</span><span class="n">vector_type</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_model_supported</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Validate that the provided model is supported by Pinecone."""</span>
+        <span class="n">supported</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_supported_models</span><span class="p">()</span>
+        <span class="n">supported_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="p">[</span><span class="s2">"model"</span><span class="p">]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">supported</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">supported_names</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Model '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="si">}</span><span class="s2">' is not a supported Pinecone embedding model. Supported: </span><span class="si">{</span><span class="n">supported_names</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
