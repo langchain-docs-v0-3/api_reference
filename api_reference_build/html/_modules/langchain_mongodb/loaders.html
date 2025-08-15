@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 14, 2025" name="docbuild:last-update"/>
+<meta content="Aug 15, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -224,7 +224,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">version</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.document_loaders.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseLoader</span>
@@ -232,7 +231,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_in_executor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pymongo</span><span class="w"> </span><span class="kn">import</span> <span class="n">MongoClient</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pymongo.collection</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pymongo.driver_info</span><span class="w"> </span><span class="kn">import</span> <span class="n">DriverInfo</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_mongodb.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">DRIVER_METADATA</span><span class="p">,</span> <span class="n">_append_client_metadata</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -277,7 +277,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">field_names</span> <span class="o">=</span> <span class="n">field_names</span> <span class="ow">or</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">filter_criteria</span> <span class="o">=</span> <span class="n">filter_criteria</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metadata_names</span> <span class="o">=</span> <span class="n">metadata_names</span> <span class="ow">or</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">include_db_collection_in_metadata</span> <span class="o">=</span> <span class="n">include_db_collection_in_metadata</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">include_db_collection_in_metadata</span> <span class="o">=</span> <span class="n">include_db_collection_in_metadata</span>
+
+        <span class="c1"># append_metadata was added in PyMongo 4.14.0, but is a valid database name on earlier versions</span>
+        <span class="n">_append_client_metadata</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">client</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="MongoDBLoader.from_connection_string">
@@ -313,7 +316,7 @@
 <span class="sd">        """</span>
         <span class="n">client</span><span class="p">:</span> <span class="n">MongoClient</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">MongoClient</span><span class="p">(</span>
             <span class="n">connection_string</span><span class="p">,</span>
-            <span class="n">driver</span><span class="o">=</span><span class="n">DriverInfo</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Langchain"</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">(</span><span class="s2">"langchain-mongodb"</span><span class="p">)),</span>
+            <span class="n">driver</span><span class="o">=</span><span class="n">DRIVER_METADATA</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">collection</span> <span class="o">=</span> <span class="n">client</span><span class="p">[</span><span class="n">db_name</span><span class="p">][</span><span class="n">collection_name</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">MongoDBLoader</span><span class="p">(</span>
