@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 15, 2025" name="docbuild:last-update"/>
+<meta content="Aug 16, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -267,6 +267,10 @@
 <span class="w">    </span><span class="sd">"""Penalty applied to vector search results in RRF: scores=1/(rank + penalty)"""</span>
     <span class="n">fulltext_penalty</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">60.0</span>
 <span class="w">    </span><span class="sd">"""Penalty applied to full-text search results in RRF: scores=1/(rank + penalty)"""</span>
+    <span class="n">vector_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="w">    </span><span class="sd">"""Weight applied to vector search results in RRF: score = weight * (1 / (rank + penalty + 1))"""</span>
+    <span class="n">fulltext_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="w">    </span><span class="sd">"""Weight applied to full-text search results in RRF: score = weight * (1 / (rank + penalty + 1))"""</span>
     <span class="n">show_embeddings</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="w">    </span><span class="sd">"""If true, returned Document metadata will include vectors."""</span>
     <span class="n">top_k</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
@@ -322,7 +326,11 @@
                 <span class="n">oversampling_factor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">oversampling_factor</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">]</span>
-        <span class="n">vector_pipeline</span> <span class="o">+=</span> <span class="n">reciprocal_rank_stage</span><span class="p">(</span><span class="s2">"vector_score"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vector_penalty</span><span class="p">)</span>
+        <span class="n">vector_pipeline</span> <span class="o">+=</span> <span class="n">reciprocal_rank_stage</span><span class="p">(</span>
+            <span class="n">score_field</span><span class="o">=</span><span class="s2">"vector_score"</span><span class="p">,</span>
+            <span class="n">penalty</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">vector_penalty</span><span class="p">,</span>
+            <span class="n">weight</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">vector_weight</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="n">combine_pipelines</span><span class="p">(</span><span class="n">pipeline</span><span class="p">,</span> <span class="n">vector_pipeline</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
@@ -336,7 +344,11 @@
         <span class="p">)</span>
 
         <span class="n">text_pipeline</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-            <span class="n">reciprocal_rank_stage</span><span class="p">(</span><span class="s2">"fulltext_score"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fulltext_penalty</span><span class="p">)</span>
+            <span class="n">reciprocal_rank_stage</span><span class="p">(</span>
+                <span class="n">score_field</span><span class="o">=</span><span class="s2">"fulltext_score"</span><span class="p">,</span>
+                <span class="n">penalty</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fulltext_penalty</span><span class="p">,</span>
+                <span class="n">weight</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fulltext_weight</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="p">)</span>
 
         <span class="n">combine_pipelines</span><span class="p">(</span><span class="n">pipeline</span><span class="p">,</span> <span class="n">text_pipeline</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>

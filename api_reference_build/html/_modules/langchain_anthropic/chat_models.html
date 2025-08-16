@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 15, 2025" name="docbuild:last-update"/>
+<meta content="Aug 16, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -293,6 +293,20 @@
     <span class="n">description</span><span class="p">:</span> <span class="n">NotRequired</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">cache_control</span><span class="p">:</span> <span class="n">NotRequired</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span></div>
 
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_CombinedUsage</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Combined usage model for deferred token counting in streaming.</span>
+
+<span class="sd">    This mimics the Anthropic Usage structure while combining stored input usage</span>
+<span class="sd">    with final output usage for accurate token reporting during streaming.</span>
+<span class="sd">    """</span>
+
+    <span class="n">input_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">output_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">cache_creation_input_tokens</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">cache_read_input_tokens</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">cache_creation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_builtin_tool</span><span class="p">(</span><span class="n">tool</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -1720,12 +1734,18 @@
                 <span class="ow">and</span> <span class="ow">not</span> <span class="n">_thinking_in_params</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="n">block_start_event</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">stored_input_usage</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
-                <span class="n">msg</span><span class="p">,</span> <span class="n">block_start_event</span> <span class="o">=</span> <span class="n">_make_message_chunk_from_anthropic_event</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">msg</span><span class="p">,</span>
+                    <span class="n">block_start_event</span><span class="p">,</span>
+                    <span class="n">stored_input_usage</span><span class="p">,</span>
+                <span class="p">)</span> <span class="o">=</span> <span class="n">_make_message_chunk_from_anthropic_event</span><span class="p">(</span>
                     <span class="n">event</span><span class="p">,</span>
                     <span class="n">stream_usage</span><span class="o">=</span><span class="n">stream_usage</span><span class="p">,</span>
                     <span class="n">coerce_content_to_string</span><span class="o">=</span><span class="n">coerce_content_to_string</span><span class="p">,</span>
                     <span class="n">block_start_event</span><span class="o">=</span><span class="n">block_start_event</span><span class="p">,</span>
+                    <span class="n">stored_input_usage</span><span class="o">=</span><span class="n">stored_input_usage</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">chunk</span> <span class="o">=</span> <span class="n">ChatGenerationChunk</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
@@ -1756,12 +1776,18 @@
                 <span class="ow">and</span> <span class="ow">not</span> <span class="n">_thinking_in_params</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="n">block_start_event</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">stored_input_usage</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">async</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
-                <span class="n">msg</span><span class="p">,</span> <span class="n">block_start_event</span> <span class="o">=</span> <span class="n">_make_message_chunk_from_anthropic_event</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">msg</span><span class="p">,</span>
+                    <span class="n">block_start_event</span><span class="p">,</span>
+                    <span class="n">stored_input_usage</span><span class="p">,</span>
+                <span class="p">)</span> <span class="o">=</span> <span class="n">_make_message_chunk_from_anthropic_event</span><span class="p">(</span>
                     <span class="n">event</span><span class="p">,</span>
                     <span class="n">stream_usage</span><span class="o">=</span><span class="n">stream_usage</span><span class="p">,</span>
                     <span class="n">coerce_content_to_string</span><span class="o">=</span><span class="n">coerce_content_to_string</span><span class="p">,</span>
                     <span class="n">block_start_event</span><span class="o">=</span><span class="n">block_start_event</span><span class="p">,</span>
+                    <span class="n">stored_input_usage</span><span class="o">=</span><span class="n">stored_input_usage</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">chunk</span> <span class="o">=</span> <span class="n">ChatGenerationChunk</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
@@ -2407,22 +2433,40 @@
     <span class="n">stream_usage</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">coerce_content_to_string</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="n">block_start_event</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">anthropic</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">RawMessageStreamEvent</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">AIMessageChunk</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="n">anthropic</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">RawMessageStreamEvent</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">"""Convert Anthropic event to AIMessageChunk.</span>
+    <span class="n">stored_input_usage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
+    <span class="n">Optional</span><span class="p">[</span><span class="n">AIMessageChunk</span><span class="p">],</span>
+    <span class="n">Optional</span><span class="p">[</span><span class="n">anthropic</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">RawMessageStreamEvent</span><span class="p">],</span>
+    <span class="n">Optional</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span>
+<span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Convert Anthropic event to ``AIMessageChunk``.</span>
 
 <span class="sd">    Note that not all events will result in a message chunk. In these cases</span>
 <span class="sd">    we return ``None``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        event: The Anthropic streaming event to convert.</span>
+<span class="sd">        stream_usage: Whether to include usage metadata in the chunk.</span>
+<span class="sd">        coerce_content_to_string: Whether to coerce content blocks to strings.</span>
+<span class="sd">        block_start_event: Previous content block start event for context.</span>
+<span class="sd">        stored_input_usage: Usage metadata from ``message_start`` event to be used</span>
+<span class="sd">            in ``message_delta`` event for accurate input token counts.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple of ``(message_chunk, block_start_event, stored_usage)``</span>
+
 <span class="sd">    """</span>
     <span class="n">message_chunk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AIMessageChunk</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">updated_stored_usage</span> <span class="o">=</span> <span class="n">stored_input_usage</span>
     <span class="c1"># See https://github.com/anthropics/anthropic-sdk-python/blob/main/src/anthropic/lib/streaming/_messages.py  # noqa: E501</span>
     <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"message_start"</span> <span class="ow">and</span> <span class="n">stream_usage</span><span class="p">:</span>
-        <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">_create_usage_metadata</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">usage</span><span class="p">)</span>
-        <span class="c1"># We pick up a cumulative count of output_tokens at the end of the stream,</span>
-        <span class="c1"># so here we zero out to avoid double counting.</span>
-        <span class="n">usage_metadata</span><span class="p">[</span><span class="s2">"total_tokens"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">usage_metadata</span><span class="p">[</span><span class="s2">"total_tokens"</span><span class="p">]</span> <span class="o">-</span> <span class="n">usage_metadata</span><span class="p">[</span><span class="s2">"output_tokens"</span><span class="p">]</span>
+        <span class="c1"># Store input usage for later use in message_delta but don't emit tokens yet</span>
+        <span class="n">updated_stored_usage</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">usage</span>
+        <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">UsageMetadata</span><span class="p">(</span>
+            <span class="n">input_tokens</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">output_tokens</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">total_tokens</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">usage_metadata</span><span class="p">[</span><span class="s2">"output_tokens"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="s2">"model"</span><span class="p">):</span>
             <span class="n">response_metadata</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"model_name"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">model</span><span class="p">}</span>
         <span class="k">else</span><span class="p">:</span>
@@ -2510,11 +2554,37 @@
                 <span class="n">tool_call_chunks</span><span class="o">=</span><span class="n">tool_call_chunks</span><span class="p">,</span>
             <span class="p">)</span>
     <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"message_delta"</span> <span class="ow">and</span> <span class="n">stream_usage</span><span class="p">:</span>
-        <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">UsageMetadata</span><span class="p">(</span>
-            <span class="n">input_tokens</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-            <span class="n">output_tokens</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">output_tokens</span><span class="p">,</span>
-            <span class="n">total_tokens</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">output_tokens</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="c1"># Create usage metadata combining stored input usage with final output usage</span>
+        <span class="c1">#</span>
+        <span class="c1"># Per Anthropic docs: "The token counts shown in the usage field of the</span>
+        <span class="c1"># message_delta event are cumulative." Thus, when MCP tools are called</span>
+        <span class="c1"># mid-stream, `input_tokens` may be updated with a higher cumulative count.</span>
+        <span class="c1"># We prioritize `event.usage.input_tokens` when available to handle this case.</span>
+        <span class="k">if</span> <span class="n">stored_input_usage</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Create a combined usage object that mimics the Anthropic Usage structure</span>
+            <span class="n">combined_usage</span> <span class="o">=</span> <span class="n">_CombinedUsage</span><span class="p">(</span>
+                <span class="n">input_tokens</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">input_tokens</span>
+                <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">stored_input_usage</span><span class="p">,</span> <span class="s2">"input_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="n">output_tokens</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">output_tokens</span><span class="p">,</span>
+                <span class="n">cache_creation_input_tokens</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span>
+                    <span class="n">stored_input_usage</span><span class="p">,</span> <span class="s2">"cache_creation_input_tokens"</span><span class="p">,</span> <span class="kc">None</span>
+                <span class="p">),</span>
+                <span class="n">cache_read_input_tokens</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span>
+                    <span class="n">stored_input_usage</span><span class="p">,</span> <span class="s2">"cache_read_input_tokens"</span><span class="p">,</span> <span class="kc">None</span>
+                <span class="p">),</span>
+                <span class="n">cache_creation</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">stored_input_usage</span><span class="p">,</span> <span class="s2">"cache_creation"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">stored_input_usage</span><span class="p">,</span> <span class="s2">"cache_creation"</span><span class="p">)</span>
+                <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">_create_usage_metadata</span><span class="p">(</span><span class="n">combined_usage</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Fallback to just output tokens if no stored usage</span>
+            <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">UsageMetadata</span><span class="p">(</span>
+                <span class="n">input_tokens</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">input_tokens</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="n">output_tokens</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">output_tokens</span><span class="p">,</span>
+                <span class="n">total_tokens</span><span class="o">=</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">input_tokens</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="o">+</span> <span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">output_tokens</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="n">message_chunk</span> <span class="o">=</span> <span class="n">AIMessageChunk</span><span class="p">(</span>
             <span class="n">content</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
             <span class="n">usage_metadata</span><span class="o">=</span><span class="n">usage_metadata</span><span class="p">,</span>
@@ -2526,7 +2596,7 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">pass</span>
 
-    <span class="k">return</span> <span class="n">message_chunk</span><span class="p">,</span> <span class="n">block_start_event</span>
+    <span class="k">return</span> <span class="n">message_chunk</span><span class="p">,</span> <span class="n">block_start_event</span><span class="p">,</span> <span class="n">updated_stored_usage</span>
 
 
 <div class="viewcode-block" id="ChatAnthropicMessages">

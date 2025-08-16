@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 15, 2025" name="docbuild:last-update"/>
+<meta content="Aug 16, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -335,39 +335,41 @@
 <div class="viewcode-block" id="reciprocal_rank_stage">
 <a class="viewcode-back" href="../../mongodb/pipelines/langchain_mongodb.pipelines.reciprocal_rank_stage.html#langchain_mongodb.pipelines.reciprocal_rank_stage">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">reciprocal_rank_stage</span><span class="p">(</span>
-    <span class="n">score_field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">penalty</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">score_field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">penalty</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">"""Stage adds Reciprocal Rank Fusion weighting.</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Stage adds Weighted Reciprocal Rank Fusion (WRRF) scoring.</span>
 
-<span class="sd">        First, it pushes documents retrieved from previous stage</span>
-<span class="sd">        into a temporary sub-document. It then unwinds to establish</span>
-<span class="sd">        the rank to each and applies the penalty.</span>
+<span class="sd">    First, it groups documents into an array, assigns rank by array index,</span>
+<span class="sd">    and then computes a weighted RRF score.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        score_field: A unique string to identify the search being ranked</span>
-<span class="sd">        penalty: A non-negative float.</span>
-<span class="sd">        extra_fields: Any fields other than text_field that one wishes to keep.</span>
+<span class="sd">        score_field: A unique string to identify the search being ranked.</span>
+<span class="sd">        penalty: A non-negative float (e.g., 60 for RRF-60). Controls the denominator.</span>
+<span class="sd">        weight: A float multiplier for this source's importance.</span>
+<span class="sd">        **kwargs: Ignored; allows future extensions or passthrough args.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        RRF score</span>
+<span class="sd">        Aggregation pipeline stage for weighted RRF scoring.</span>
 <span class="sd">    """</span>
 
-    <span class="n">rrf_pipeline</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="k">return</span> <span class="p">[</span>
         <span class="p">{</span><span class="s2">"$group"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"_id"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"docs"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"$push"</span><span class="p">:</span> <span class="s2">"$$ROOT"</span><span class="p">}}},</span>
         <span class="p">{</span><span class="s2">"$unwind"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"path"</span><span class="p">:</span> <span class="s2">"$docs"</span><span class="p">,</span> <span class="s2">"includeArrayIndex"</span><span class="p">:</span> <span class="s2">"rank"</span><span class="p">}},</span>
         <span class="p">{</span>
             <span class="s2">"$addFields"</span><span class="p">:</span> <span class="p">{</span>
                 <span class="sa">f</span><span class="s2">"docs.</span><span class="si">{</span><span class="n">score_field</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="p">{</span>
-                    <span class="s2">"$divide"</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="p">{</span><span class="s2">"$add"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"$rank"</span><span class="p">,</span> <span class="n">penalty</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}]</span>
+                    <span class="s2">"$multiply"</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="n">weight</span><span class="p">,</span>
+                        <span class="p">{</span><span class="s2">"$divide"</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="p">{</span><span class="s2">"$add"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"$rank"</span><span class="p">,</span> <span class="n">penalty</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}]},</span>
+                    <span class="p">]</span>
                 <span class="p">},</span>
                 <span class="s2">"docs.rank"</span><span class="p">:</span> <span class="s2">"$rank"</span><span class="p">,</span>
                 <span class="s2">"_id"</span><span class="p">:</span> <span class="s2">"$docs._id"</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="p">},</span>
         <span class="p">{</span><span class="s2">"$replaceRoot"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"newRoot"</span><span class="p">:</span> <span class="s2">"$docs"</span><span class="p">}},</span>
-    <span class="p">]</span>
-
-    <span class="k">return</span> <span class="n">rrf_pipeline</span>  <span class="c1"># type: ignore</span></div>
+    <span class="p">]</span></div>
 
 
 
