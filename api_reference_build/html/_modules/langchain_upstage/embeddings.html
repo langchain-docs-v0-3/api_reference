@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 17, 2025" name="docbuild:last-update"/>
+<meta content="Aug 18, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -254,6 +254,11 @@
 <span class="n">DEFAULT_EMBED_BATCH_SIZE</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="n">MAX_EMBED_BATCH_SIZE</span> <span class="o">=</span> <span class="mi">100</span>
 
+<span class="c1"># Constants for header management</span>
+<span class="n">UPSTAGE_CLIENT_HEADER</span> <span class="o">=</span> <span class="s2">"x-upstage-client"</span>
+<span class="n">UPSTAGE_CLIENT_VALUE</span> <span class="o">=</span> <span class="s2">"langchain"</span>
+<span class="n">DEFAULT_HEADERS</span> <span class="o">=</span> <span class="p">{</span><span class="n">UPSTAGE_CLIENT_HEADER</span><span class="p">:</span> <span class="n">UPSTAGE_CLIENT_VALUE</span><span class="p">}</span>
+
 
 <div class="viewcode-block" id="UpstageEmbeddings">
 <a class="viewcode-back" href="../../upstage/embeddings/langchain_upstage.embeddings.UpstageEmbeddings.html#langchain_upstage.embeddings.UpstageEmbeddings">[docs]</a>
@@ -335,7 +340,7 @@
 <span class="sd">    Defaults to not skipping.</span>
 <span class="sd">    </span>
 <span class="sd">    Not yet supported."""</span>
-    <span class="n">default_headers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"x-upstage-client"</span><span class="p">:</span> <span class="s2">"langchain"</span><span class="p">}</span>
+    <span class="n">default_headers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_HEADERS</span>
 <span class="w">    </span><span class="sd">"""add trace header."""</span>
     <span class="n">default_query</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1"># Configure a custom httpx client. See the</span>
@@ -384,6 +389,15 @@
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validate that api key and python package exists in environment."""</span>
+
+        <span class="c1"># Ensure x-upstage-client header is always set to "langchain"</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_headers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">default_headers</span> <span class="o">=</span> <span class="n">DEFAULT_HEADERS</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Create a copy to avoid modifying the original</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_headers</span><span class="p">)</span>
+            <span class="n">headers</span><span class="p">[</span><span class="n">UPSTAGE_CLIENT_HEADER</span><span class="p">]</span> <span class="o">=</span> <span class="n">UPSTAGE_CLIENT_VALUE</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">default_headers</span> <span class="o">=</span> <span class="n">headers</span>
 
         <span class="n">client_params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"api_key"</span><span class="p">:</span> <span class="p">(</span>
