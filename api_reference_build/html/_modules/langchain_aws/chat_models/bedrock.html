@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 18, 2025" name="docbuild:last-update"/>
+<meta content="Aug 19, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -257,6 +257,7 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.messages.ai</span><span class="w"> </span><span class="kn">import</span> <span class="n">UsageMetadata</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.messages.tool</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolCall</span><span class="p">,</span> <span class="n">ToolMessage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.messages.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert_to_openai_messages</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.outputs</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatGeneration</span><span class="p">,</span> <span class="n">ChatGenerationChunk</span><span class="p">,</span> <span class="n">ChatResult</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">Runnable</span><span class="p">,</span> <span class="n">RunnableMap</span><span class="p">,</span> <span class="n">RunnablePassthrough</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseTool</span>
@@ -525,6 +526,53 @@
     <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
         <span class="p">[</span><span class="n">_convert_one_message_to_text_llama</span><span class="p">(</span><span class="n">message</span><span class="p">)</span> <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">]</span>
     <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert_one_message_to_text_openai</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="n">BaseMessage</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">SystemMessage</span><span class="p">):</span>
+        <span class="n">message_text</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"&lt;|start|&gt;system&lt;|message|&gt;</span><span class="si">{</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2">&lt;|end|&gt;"</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">ChatMessage</span><span class="p">):</span>
+        <span class="c1"># developer role messages</span>
+        <span class="n">message_text</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"&lt;|start|&gt;</span><span class="si">{</span><span class="n">message</span><span class="o">.</span><span class="n">role</span><span class="si">}</span><span class="s2">&lt;|message|&gt;</span><span class="si">{</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2">&lt;|end|&gt;"</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">HumanMessage</span><span class="p">):</span>
+        <span class="n">message_text</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"&lt;|start|&gt;user&lt;|message|&gt;</span><span class="si">{</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2">&lt;|end|&gt;"</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">AIMessage</span><span class="p">):</span>
+        <span class="n">message_text</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"&lt;|start|&gt;assistant&lt;|channel|&gt;final&lt;|message|&gt;</span><span class="si">{</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2">&lt;|end|&gt;"</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">ToolMessage</span><span class="p">):</span>
+      <span class="c1"># TODO: Tool messages in the OpenAI format should use "&lt;|start|&gt;{toolname} to=assistant&lt;|message|&gt;"</span>
+      <span class="c1"># Need to extract the tool name from the ToolMessage content or tool_call_id</span>
+      <span class="c1"># For now using generic "to=assistant" format as placeholder until we implement tool calling</span>
+      <span class="c1"># Will be resolved in follow-up PR with full tool support</span>
+        <span class="n">message_text</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"&lt;|start|&gt;to=assistant&lt;|channel|&gt;commentary&lt;|message|&gt;</span><span class="si">{</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="si">}</span><span class="s2">&lt;|end|&gt;"</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Got unknown type </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">message_text</span>
+
+
+<div class="viewcode-block" id="convert_messages_to_prompt_openai">
+<a class="viewcode-back" href="../../../aws/chat_models/langchain_aws.chat_models.bedrock.convert_messages_to_prompt_openai.html#langchain_aws.chat_models.bedrock.convert_messages_to_prompt_openai">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_messages_to_prompt_openai</span><span class="p">(</span><span class="n">messages</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Convert a list of messages to a Harmony format prompt for OpenAI Responses API."""</span>
+
+    <span class="n">prompt</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">:</span>
+        <span class="n">prompt</span> <span class="o">+=</span> <span class="n">_convert_one_message_to_text_openai</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+    <span class="n">prompt</span> <span class="o">+=</span> <span class="s2">"&lt;|start|&gt;assistant</span><span class="se">\n\n</span><span class="s2">"</span>
+
+    <span class="k">return</span> <span class="n">prompt</span></div>
 
 
 
@@ -887,6 +935,8 @@
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">provider</span> <span class="o">==</span> <span class="s2">"writer"</span><span class="p">:</span>
             <span class="n">prompt</span> <span class="o">=</span> <span class="n">convert_messages_to_prompt_writer</span><span class="p">(</span><span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">provider</span> <span class="o">==</span> <span class="s2">"openai"</span><span class="p">:</span>
+            <span class="n">prompt</span> <span class="o">=</span> <span class="n">convert_messages_to_prompt_openai</span><span class="p">(</span><span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"Provider </span><span class="si">{</span><span class="n">provider</span><span class="si">}</span><span class="s2"> model does not support chat."</span>
@@ -899,10 +949,11 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">format_messages</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="n">provider</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">messages</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]]:</span>
         <span class="k">if</span> <span class="n">provider</span> <span class="o">==</span> <span class="s2">"anthropic"</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">_format_anthropic_messages</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
-
+        <span class="k">elif</span> <span class="n">provider</span> <span class="o">==</span> <span class="s2">"openai"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">convert_to_openai_messages</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Provider </span><span class="si">{</span><span class="n">provider</span><span class="si">}</span><span class="s2"> not supported for format_messages"</span>
         <span class="p">)</span></div>
@@ -1031,6 +1082,8 @@
                     <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">system_prompt_with_tools</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">system</span><span class="si">}</span><span class="s2">"</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">system_prompt_with_tools</span>
+        <span class="k">elif</span> <span class="n">provider</span> <span class="o">==</span> <span class="s2">"openai"</span><span class="p">:</span>
+            <span class="n">formatted_messages</span> <span class="o">=</span> <span class="n">ChatPromptAdapter</span><span class="o">.</span><span class="n">format_messages</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="n">messages</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">prompt</span> <span class="o">=</span> <span class="n">ChatPromptAdapter</span><span class="o">.</span><span class="n">convert_messages_to_prompt</span><span class="p">(</span>
                 <span class="n">provider</span><span class="o">=</span><span class="n">provider</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_base_model</span><span class="p">()</span>
@@ -1130,6 +1183,8 @@
                         <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">system_prompt_with_tools</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">system</span><span class="si">}</span><span class="s2">"</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="n">system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">system_prompt_with_tools</span>
+            <span class="k">elif</span> <span class="n">provider</span> <span class="o">==</span> <span class="s2">"openai"</span><span class="p">:</span>
+                <span class="n">formatted_messages</span> <span class="o">=</span> <span class="n">ChatPromptAdapter</span><span class="o">.</span><span class="n">format_messages</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="n">messages</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">prompt</span> <span class="o">=</span> <span class="n">ChatPromptAdapter</span><span class="o">.</span><span class="n">convert_messages_to_prompt</span><span class="p">(</span>
                     <span class="n">provider</span><span class="o">=</span><span class="n">provider</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_base_model</span><span class="p">()</span>

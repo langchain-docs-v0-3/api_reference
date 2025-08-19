@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 18, 2025" name="docbuild:last-update"/>
+<meta content="Aug 19, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -223,7 +223,7 @@
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypedDict</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypedDict</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
 
@@ -258,6 +258,7 @@
         <span class="n">headers_to_split_on</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
         <span class="n">return_each_line</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa: FBT001,FBT002</span>
         <span class="n">strip_headers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># noqa: FBT001,FBT002</span>
+        <span class="n">custom_header_patterns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Create a new MarkdownHeaderTextSplitter.</span>
 
@@ -265,6 +266,9 @@
 <span class="sd">            headers_to_split_on: Headers we want to track</span>
 <span class="sd">            return_each_line: Return each line w/ associated headers</span>
 <span class="sd">            strip_headers: Strip split headers from the content of the chunk</span>
+<span class="sd">            custom_header_patterns: Optional dict mapping header patterns to their</span>
+<span class="sd">                levels. For example: {"**": 1, "***": 2} to treat **Header** as</span>
+<span class="sd">                level 1 and ***Header*** as level 2 headers.</span>
 <span class="sd">        """</span>
         <span class="c1"># Output line-by-line or aggregated into chunks w/ common headers</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">return_each_line</span> <span class="o">=</span> <span class="n">return_each_line</span>
@@ -274,8 +278,41 @@
             <span class="n">headers_to_split_on</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">split</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
         <span class="c1"># Strip headers split headers from the content of the chunk</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">strip_headers</span> <span class="o">=</span> <span class="n">strip_headers</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strip_headers</span> <span class="o">=</span> <span class="n">strip_headers</span>
+        <span class="c1"># Custom header patterns with their levels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">custom_header_patterns</span> <span class="o">=</span> <span class="n">custom_header_patterns</span> <span class="ow">or</span> <span class="p">{}</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_custom_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sep</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check if line matches a custom header pattern.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            line: The line to check</span>
+<span class="sd">            sep: The separator pattern to match</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if the line matches the custom pattern format</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">sep</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_header_patterns</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># Escape special regex characters in the separator</span>
+        <span class="n">escaped_sep</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">sep</span><span class="p">)</span>
+        <span class="c1"># Create regex pattern to match exactly one separator at start and end</span>
+        <span class="c1"># with content in between</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"^</span><span class="si">{</span><span class="n">escaped_sep</span><span class="si">}</span><span class="s2">(?!</span><span class="si">{</span><span class="n">escaped_sep</span><span class="si">}</span><span class="s2">)(.+?)(?&lt;!</span><span class="si">{</span><span class="n">escaped_sep</span><span class="si">}</span><span class="s2">)</span><span class="si">{</span><span class="n">escaped_sep</span><span class="si">}</span><span class="s2">$"</span>
+        <span class="p">)</span>
+
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+            <span class="c1"># Extract the content between the patterns</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="c1"># Valid header if there's actual content (not just whitespace or separators)</span>
+            <span class="c1"># Check that content doesn't consist only of separator characters</span>
+            <span class="k">if</span> <span class="n">content</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">c</span> <span class="ow">in</span> <span class="n">sep</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">content</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="s2">""</span><span class="p">)):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
 
 <div class="viewcode-block" id="MarkdownHeaderTextSplitter.aggregate_lines_to_chunks">
 <a class="viewcode-back" href="../../text_splitters/markdown/langchain_text_splitters.markdown.MarkdownHeaderTextSplitter.html#langchain_text_splitters.markdown.MarkdownHeaderTextSplitter.aggregate_lines_to_chunks">[docs]</a>
@@ -369,16 +406,22 @@
 
             <span class="c1"># Check each line against each of the header types (e.g., #, ##)</span>
             <span class="k">for</span> <span class="n">sep</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers_to_split_on</span><span class="p">:</span>
-                <span class="c1"># Check if line starts with a header that we intend to split on</span>
-                <span class="k">if</span> <span class="n">stripped_line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">sep</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="n">is_standard_header</span> <span class="o">=</span> <span class="n">stripped_line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">sep</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
                     <span class="c1"># Header with no text OR header is followed by space</span>
                     <span class="c1"># Both are valid conditions that sep is being used a header</span>
                     <span class="nb">len</span><span class="p">(</span><span class="n">stripped_line</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">sep</span><span class="p">)</span> <span class="ow">or</span> <span class="n">stripped_line</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">sep</span><span class="p">)]</span> <span class="o">==</span> <span class="s2">" "</span>
-                <span class="p">):</span>
+                <span class="p">)</span>
+                <span class="n">is_custom_header</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_custom_header</span><span class="p">(</span><span class="n">stripped_line</span><span class="p">,</span> <span class="n">sep</span><span class="p">)</span>
+
+                <span class="c1"># Check if line matches either standard or custom header pattern</span>
+                <span class="k">if</span> <span class="n">is_standard_header</span> <span class="ow">or</span> <span class="n">is_custom_header</span><span class="p">:</span>
                     <span class="c1"># Ensure we are tracking the header as metadata</span>
                     <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="c1"># Get the current header level</span>
-                        <span class="n">current_header_level</span> <span class="o">=</span> <span class="n">sep</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">"#"</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">sep</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_header_patterns</span><span class="p">:</span>
+                            <span class="n">current_header_level</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_header_patterns</span><span class="p">[</span><span class="n">sep</span><span class="p">]</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">current_header_level</span> <span class="o">=</span> <span class="n">sep</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">"#"</span><span class="p">)</span>
 
                         <span class="c1"># Pop out headers of lower or same level from the stack</span>
                         <span class="k">while</span> <span class="p">(</span>
@@ -394,10 +437,20 @@
                                 <span class="n">initial_metadata</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">popped_header</span><span class="p">[</span><span class="s2">"name"</span><span class="p">])</span>
 
                         <span class="c1"># Push the current header to the stack</span>
+                        <span class="c1"># Extract header text based on header type</span>
+                        <span class="k">if</span> <span class="n">is_custom_header</span><span class="p">:</span>
+                            <span class="c1"># For custom headers like **Header**, extract text</span>
+                            <span class="c1"># between patterns</span>
+                            <span class="n">header_text</span> <span class="o">=</span> <span class="n">stripped_line</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">sep</span><span class="p">)</span> <span class="p">:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">sep</span><span class="p">)]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="c1"># For standard headers like # Header, extract text</span>
+                            <span class="c1"># after the separator</span>
+                            <span class="n">header_text</span> <span class="o">=</span> <span class="n">stripped_line</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">sep</span><span class="p">)</span> <span class="p">:]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
                         <span class="n">header</span><span class="p">:</span> <span class="n">HeaderType</span> <span class="o">=</span> <span class="p">{</span>
                             <span class="s2">"level"</span><span class="p">:</span> <span class="n">current_header_level</span><span class="p">,</span>
                             <span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
-                            <span class="s2">"data"</span><span class="p">:</span> <span class="n">stripped_line</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">sep</span><span class="p">)</span> <span class="p">:]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                            <span class="s2">"data"</span><span class="p">:</span> <span class="n">header_text</span><span class="p">,</span>
                         <span class="p">}</span>
                         <span class="n">header_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
                         <span class="c1"># Update initial_metadata with the current header</span>
@@ -538,7 +591,7 @@
 <span class="sd">        chunks based on specified headers and formatting preferences.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            headers_to_split_on (Union[List[Tuple[str, str]], None]):</span>
+<span class="sd">            headers_to_split_on (Union[list[tuple[str, str]], None]):</span>
 <span class="sd">                A list of tuples, where each tuple contains a header tag (e.g., "h1")</span>
 <span class="sd">                and its corresponding metadata key. If None, default headers are used.</span>
 <span class="sd">            return_each_line (bool):</span>

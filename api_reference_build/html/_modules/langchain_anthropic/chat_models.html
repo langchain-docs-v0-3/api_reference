@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 18, 2025" name="docbuild:last-update"/>
+<meta content="Aug 19, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -293,20 +293,6 @@
     <span class="n">description</span><span class="p">:</span> <span class="n">NotRequired</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">cache_control</span><span class="p">:</span> <span class="n">NotRequired</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span></div>
 
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">_CombinedUsage</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Combined usage model for deferred token counting in streaming.</span>
-
-<span class="sd">    This mimics the Anthropic Usage structure while combining stored input usage</span>
-<span class="sd">    with final output usage for accurate token reporting during streaming.</span>
-<span class="sd">    """</span>
-
-    <span class="n">input_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">output_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">cache_creation_input_tokens</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">cache_read_input_tokens</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">cache_creation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_builtin_tool</span><span class="p">(</span><span class="n">tool</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -636,14 +622,23 @@
                         <span class="c1"># accepted.</span>
                         <span class="c1"># https://github.com/anthropics/anthropic-sdk-python/issues/461</span>
                         <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-                            <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                                <span class="p">{</span>
-                                    <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
-                                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                                    <span class="k">if</span> <span class="n">k</span>
-                                    <span class="ow">in</span> <span class="p">(</span><span class="s2">"type"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"cache_control"</span><span class="p">,</span> <span class="s2">"citations"</span><span class="p">)</span>
-                                <span class="p">},</span>
-                            <span class="p">)</span>
+                            <span class="n">formatted_block</span> <span class="o">=</span> <span class="p">{</span>
+                                <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
+                                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                                <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"type"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">"cache_control"</span><span class="p">,</span> <span class="s2">"citations"</span><span class="p">)</span>
+                            <span class="p">}</span>
+                            <span class="c1"># Clean up citations to remove null file_id fields</span>
+                            <span class="k">if</span> <span class="n">formatted_block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"citations"</span><span class="p">):</span>
+                                <span class="n">cleaned_citations</span> <span class="o">=</span> <span class="p">[]</span>
+                                <span class="k">for</span> <span class="n">citation</span> <span class="ow">in</span> <span class="n">formatted_block</span><span class="p">[</span><span class="s2">"citations"</span><span class="p">]:</span>
+                                    <span class="n">cleaned_citation</span> <span class="o">=</span> <span class="p">{</span>
+                                        <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
+                                        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">citation</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                                        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">k</span> <span class="o">==</span> <span class="s2">"file_id"</span> <span class="ow">and</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span>
+                                    <span class="p">}</span>
+                                    <span class="n">cleaned_citations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cleaned_citation</span><span class="p">)</span>
+                                <span class="n">formatted_block</span><span class="p">[</span><span class="s2">"citations"</span><span class="p">]</span> <span class="o">=</span> <span class="n">cleaned_citations</span>
+                            <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">formatted_block</span><span class="p">)</span>
                     <span class="k">elif</span> <span class="n">block</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"thinking"</span><span class="p">:</span>
                         <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                             <span class="p">{</span>
@@ -1749,18 +1744,12 @@
                 <span class="ow">and</span> <span class="ow">not</span> <span class="n">_thinking_in_params</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="n">block_start_event</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="n">stored_input_usage</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
-                <span class="p">(</span>
-                    <span class="n">msg</span><span class="p">,</span>
-                    <span class="n">block_start_event</span><span class="p">,</span>
-                    <span class="n">stored_input_usage</span><span class="p">,</span>
-                <span class="p">)</span> <span class="o">=</span> <span class="n">_make_message_chunk_from_anthropic_event</span><span class="p">(</span>
+                <span class="n">msg</span><span class="p">,</span> <span class="n">block_start_event</span> <span class="o">=</span> <span class="n">_make_message_chunk_from_anthropic_event</span><span class="p">(</span>
                     <span class="n">event</span><span class="p">,</span>
                     <span class="n">stream_usage</span><span class="o">=</span><span class="n">stream_usage</span><span class="p">,</span>
                     <span class="n">coerce_content_to_string</span><span class="o">=</span><span class="n">coerce_content_to_string</span><span class="p">,</span>
                     <span class="n">block_start_event</span><span class="o">=</span><span class="n">block_start_event</span><span class="p">,</span>
-                    <span class="n">stored_input_usage</span><span class="o">=</span><span class="n">stored_input_usage</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">chunk</span> <span class="o">=</span> <span class="n">ChatGenerationChunk</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
@@ -1791,18 +1780,12 @@
                 <span class="ow">and</span> <span class="ow">not</span> <span class="n">_thinking_in_params</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="n">block_start_event</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="n">stored_input_usage</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">async</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
-                <span class="p">(</span>
-                    <span class="n">msg</span><span class="p">,</span>
-                    <span class="n">block_start_event</span><span class="p">,</span>
-                    <span class="n">stored_input_usage</span><span class="p">,</span>
-                <span class="p">)</span> <span class="o">=</span> <span class="n">_make_message_chunk_from_anthropic_event</span><span class="p">(</span>
+                <span class="n">msg</span><span class="p">,</span> <span class="n">block_start_event</span> <span class="o">=</span> <span class="n">_make_message_chunk_from_anthropic_event</span><span class="p">(</span>
                     <span class="n">event</span><span class="p">,</span>
                     <span class="n">stream_usage</span><span class="o">=</span><span class="n">stream_usage</span><span class="p">,</span>
                     <span class="n">coerce_content_to_string</span><span class="o">=</span><span class="n">coerce_content_to_string</span><span class="p">,</span>
                     <span class="n">block_start_event</span><span class="o">=</span><span class="n">block_start_event</span><span class="p">,</span>
-                    <span class="n">stored_input_usage</span><span class="o">=</span><span class="n">stored_input_usage</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">chunk</span> <span class="o">=</span> <span class="n">ChatGenerationChunk</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
@@ -1977,7 +1960,7 @@
 <span class="sd">                    product: str = Field(..., description="The product to look up.")</span>
 
 
-<span class="sd">                llm = ChatAnthropic(model="claude-3-5-sonnet-20240620", temperature=0)</span>
+<span class="sd">                llm = ChatAnthropic(model="claude-3-5-sonnet-latest", temperature=0)</span>
 <span class="sd">                llm_with_tools = llm.bind_tools([GetWeather, GetPrice])</span>
 <span class="sd">                llm_with_tools.invoke("what is the weather like in San Francisco",)</span>
 <span class="sd">                # -&gt; AIMessage(</span>
@@ -1985,7 +1968,7 @@
 <span class="sd">                #         {'text': '&lt;thinking&gt;\nBased on the user\'s question, the relevant function to call is GetWeather, which requires the "location" parameter.\n\nThe user has directly specified the location as "San Francisco". Since San Francisco is a well known city, I can reasonably infer they mean San Francisco, CA without needing the state specified.\n\nAll the required parameters are provided, so I can proceed with the API call.\n&lt;/thinking&gt;', 'type': 'text'},</span>
 <span class="sd">                #         {'text': None, 'type': 'tool_use', 'id': 'toolu_01SCgExKzQ7eqSkMHfygvYuu', 'name': 'GetWeather', 'input': {'location': 'San Francisco, CA'}}</span>
 <span class="sd">                #     ],</span>
-<span class="sd">                #     response_metadata={'id': 'msg_01GM3zQtoFv8jGQMW7abLnhi', 'model': 'claude-3-5-sonnet-20240620', 'stop_reason': 'tool_use', 'stop_sequence': None, 'usage': {'input_tokens': 487, 'output_tokens': 145}},</span>
+<span class="sd">                #     response_metadata={'id': 'msg_01GM3zQtoFv8jGQMW7abLnhi', 'model': 'claude-3-5-sonnet-latest', 'stop_reason': 'tool_use', 'stop_sequence': None, 'usage': {'input_tokens': 487, 'output_tokens': 145}},</span>
 <span class="sd">                #     id='run-87b1331e-9251-4a68-acef-f0a018b639cc-0'</span>
 <span class="sd">                # )</span>
 
@@ -2007,7 +1990,7 @@
 <span class="sd">                    product: str = Field(..., description="The product to look up.")</span>
 
 
-<span class="sd">                llm = ChatAnthropic(model="claude-3-5-sonnet-20240620", temperature=0)</span>
+<span class="sd">                llm = ChatAnthropic(model="claude-3-5-sonnet-latest", temperature=0)</span>
 <span class="sd">                llm_with_tools = llm.bind_tools([GetWeather, GetPrice], tool_choice="any")</span>
 <span class="sd">                llm_with_tools.invoke("what is the weather like in San Francisco",)</span>
 
@@ -2030,7 +2013,7 @@
 <span class="sd">                    product: str = Field(..., description="The product to look up.")</span>
 
 
-<span class="sd">                llm = ChatAnthropic(model="claude-3-5-sonnet-20240620", temperature=0)</span>
+<span class="sd">                llm = ChatAnthropic(model="claude-3-5-sonnet-latest", temperature=0)</span>
 <span class="sd">                llm_with_tools = llm.bind_tools([GetWeather, GetPrice], tool_choice="GetWeather")</span>
 <span class="sd">                llm_with_tools.invoke("what is the weather like in San Francisco",)</span>
 
@@ -2062,7 +2045,7 @@
 <span class="sd">                # We need to pass in extra headers to enable use of the beta cache</span>
 <span class="sd">                # control API.</span>
 <span class="sd">                llm = ChatAnthropic(</span>
-<span class="sd">                    model="claude-3-5-sonnet-20240620",</span>
+<span class="sd">                    model="claude-3-5-sonnet-latest",</span>
 <span class="sd">                    temperature=0,</span>
 <span class="sd">                )</span>
 <span class="sd">                llm_with_tools = llm.bind_tools([GetWeather, cached_price_tool])</span>
@@ -2072,13 +2055,13 @@
 
 <span class="sd">            .. code-block:: python</span>
 
-<span class="sd">                AIMessage(content=[{'text': "Certainly! I can help you find out the current weather in San Francisco. To get this information, I'll use the GetWeather function. Let me fetch that data for you right away.", 'type': 'text'}, {'id': 'toolu_01TS5h8LNo7p5imcG7yRiaUM', 'input': {'location': 'San Francisco, CA'}, 'name': 'GetWeather', 'type': 'tool_use'}], response_metadata={'id': 'msg_01Xg7Wr5inFWgBxE5jH9rpRo', 'model': 'claude-3-5-sonnet-20240620', 'stop_reason': 'tool_use', 'stop_sequence': None, 'usage': {'input_tokens': 171, 'output_tokens': 96, 'cache_creation_input_tokens': 1470, 'cache_read_input_tokens': 0}}, id='run-b36a5b54-5d69-470e-a1b0-b932d00b089e-0', tool_calls=[{'name': 'GetWeather', 'args': {'location': 'San Francisco, CA'}, 'id': 'toolu_01TS5h8LNo7p5imcG7yRiaUM', 'type': 'tool_call'}], usage_metadata={'input_tokens': 171, 'output_tokens': 96, 'total_tokens': 267})</span>
+<span class="sd">                AIMessage(content=[{'text': "Certainly! I can help you find out the current weather in San Francisco. To get this information, I'll use the GetWeather function. Let me fetch that data for you right away.", 'type': 'text'}, {'id': 'toolu_01TS5h8LNo7p5imcG7yRiaUM', 'input': {'location': 'San Francisco, CA'}, 'name': 'GetWeather', 'type': 'tool_use'}], response_metadata={'id': 'msg_01Xg7Wr5inFWgBxE5jH9rpRo', 'model': 'claude-3-5-sonnet-latest', 'stop_reason': 'tool_use', 'stop_sequence': None, 'usage': {'input_tokens': 171, 'output_tokens': 96, 'cache_creation_input_tokens': 1470, 'cache_read_input_tokens': 0}}, id='run-b36a5b54-5d69-470e-a1b0-b932d00b089e-0', tool_calls=[{'name': 'GetWeather', 'args': {'location': 'San Francisco, CA'}, 'id': 'toolu_01TS5h8LNo7p5imcG7yRiaUM', 'type': 'tool_call'}], usage_metadata={'input_tokens': 171, 'output_tokens': 96, 'total_tokens': 267})</span>
 
 <span class="sd">            If we invoke the tool again, we can see that the "usage" information in the AIMessage.response_metadata shows that we had a cache hit:</span>
 
 <span class="sd">            .. code-block:: python</span>
 
-<span class="sd">                AIMessage(content=[{'text': 'To get the current weather in San Francisco, I can use the GetWeather function. Let me check that for you.', 'type': 'text'}, {'id': 'toolu_01HtVtY1qhMFdPprx42qU2eA', 'input': {'location': 'San Francisco, CA'}, 'name': 'GetWeather', 'type': 'tool_use'}], response_metadata={'id': 'msg_016RfWHrRvW6DAGCdwB6Ac64', 'model': 'claude-3-5-sonnet-20240620', 'stop_reason': 'tool_use', 'stop_sequence': None, 'usage': {'input_tokens': 171, 'output_tokens': 82, 'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 1470}}, id='run-88b1f825-dcb7-4277-ac27-53df55d22001-0', tool_calls=[{'name': 'GetWeather', 'args': {'location': 'San Francisco, CA'}, 'id': 'toolu_01HtVtY1qhMFdPprx42qU2eA', 'type': 'tool_call'}], usage_metadata={'input_tokens': 171, 'output_tokens': 82, 'total_tokens': 253})</span>
+<span class="sd">                AIMessage(content=[{'text': 'To get the current weather in San Francisco, I can use the GetWeather function. Let me check that for you.', 'type': 'text'}, {'id': 'toolu_01HtVtY1qhMFdPprx42qU2eA', 'input': {'location': 'San Francisco, CA'}, 'name': 'GetWeather', 'type': 'tool_use'}], response_metadata={'id': 'msg_016RfWHrRvW6DAGCdwB6Ac64', 'model': 'claude-3-5-sonnet-latest', 'stop_reason': 'tool_use', 'stop_sequence': None, 'usage': {'input_tokens': 171, 'output_tokens': 82, 'cache_creation_input_tokens': 0, 'cache_read_input_tokens': 1470}}, id='run-88b1f825-dcb7-4277-ac27-53df55d22001-0', tool_calls=[{'name': 'GetWeather', 'args': {'location': 'San Francisco, CA'}, 'id': 'toolu_01HtVtY1qhMFdPprx42qU2eA', 'type': 'tool_call'}], usage_metadata={'input_tokens': 171, 'output_tokens': 82, 'total_tokens': 253})</span>
 
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
         <span class="n">formatted_tools</span> <span class="o">=</span> <span class="p">[</span>
@@ -2178,7 +2161,7 @@
 <span class="sd">                    answer: str</span>
 <span class="sd">                    justification: str</span>
 
-<span class="sd">                llm = ChatAnthropic(model="claude-3-5-sonnet-20240620", temperature=0)</span>
+<span class="sd">                llm = ChatAnthropic(model="claude-3-5-sonnet-latest", temperature=0)</span>
 <span class="sd">                structured_llm = llm.with_structured_output(AnswerWithJustification)</span>
 
 <span class="sd">                structured_llm.invoke("What weighs more a pound of bricks or a pound of feathers")</span>
@@ -2200,7 +2183,7 @@
 <span class="sd">                    answer: str</span>
 <span class="sd">                    justification: str</span>
 
-<span class="sd">                llm = ChatAnthropic(model="claude-3-5-sonnet-20240620", temperature=0)</span>
+<span class="sd">                llm = ChatAnthropic(model="claude-3-5-sonnet-latest", temperature=0)</span>
 <span class="sd">                structured_llm = llm.with_structured_output(AnswerWithJustification, include_raw=True)</span>
 
 <span class="sd">                structured_llm.invoke("What weighs more a pound of bricks or a pound of feathers")</span>
@@ -2228,7 +2211,7 @@
 <span class="sd">                        "required": ["answer", "justification"]</span>
 <span class="sd">                    }</span>
 <span class="sd">                }</span>
-<span class="sd">                llm = ChatAnthropic(model="claude-3-5-sonnet-20240620", temperature=0)</span>
+<span class="sd">                llm = ChatAnthropic(model="claude-3-5-sonnet-latest", temperature=0)</span>
 <span class="sd">                structured_llm = llm.with_structured_output(schema)</span>
 
 <span class="sd">                structured_llm.invoke("What weighs more a pound of bricks or a pound of feathers")</span>
@@ -2448,66 +2431,66 @@
     <span class="n">stream_usage</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">coerce_content_to_string</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="n">block_start_event</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">anthropic</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">RawMessageStreamEvent</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">stored_input_usage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
-    <span class="n">Optional</span><span class="p">[</span><span class="n">AIMessageChunk</span><span class="p">],</span>
-    <span class="n">Optional</span><span class="p">[</span><span class="n">anthropic</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">RawMessageStreamEvent</span><span class="p">],</span>
-    <span class="n">Optional</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span>
-<span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Convert Anthropic event to ``AIMessageChunk``.</span>
-
-<span class="sd">    Note that not all events will result in a message chunk. In these cases</span>
-<span class="sd">    we return ``None``.</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">AIMessageChunk</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="n">anthropic</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">RawMessageStreamEvent</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Convert Anthropic streaming event to `AIMessageChunk`.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        event: The Anthropic streaming event to convert.</span>
-<span class="sd">        stream_usage: Whether to include usage metadata in the chunk.</span>
-<span class="sd">        coerce_content_to_string: Whether to coerce content blocks to strings.</span>
-<span class="sd">        block_start_event: Previous content block start event for context.</span>
-<span class="sd">        stored_input_usage: Usage metadata from ``message_start`` event to be used</span>
-<span class="sd">            in ``message_delta`` event for accurate input token counts.</span>
+<span class="sd">        event: Raw streaming event from Anthropic SDK</span>
+<span class="sd">        stream_usage: Whether to include usage metadata in the output chunks.</span>
+<span class="sd">        coerce_content_to_string: Whether to convert structured content to plain</span>
+<span class="sd">            text strings. When True, only text content is preserved; when False,</span>
+<span class="sd">            structured content like tool calls and citations are maintained.</span>
+<span class="sd">        block_start_event: Previous content block start event, used for tracking</span>
+<span class="sd">            tool use blocks and maintaining context across related events.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Tuple of ``(message_chunk, block_start_event, stored_usage)``</span>
+<span class="sd">        Tuple containing:</span>
+<span class="sd">        - AIMessageChunk: Converted message chunk with appropriate content and</span>
+<span class="sd">          metadata, or None if the event doesn't produce a chunk</span>
+<span class="sd">        - RawMessageStreamEvent: Updated `block_start_event` for tracking content</span>
+<span class="sd">          blocks across sequential events, or None if not applicable</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        Not all Anthropic events result in message chunks. Events like internal</span>
+<span class="sd">        state changes return None for the message chunk while potentially</span>
+<span class="sd">        updating the `block_start_event` for context tracking.</span>
 
 <span class="sd">    """</span>
     <span class="n">message_chunk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AIMessageChunk</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">updated_stored_usage</span> <span class="o">=</span> <span class="n">stored_input_usage</span>
-    <span class="c1"># See https://github.com/anthropics/anthropic-sdk-python/blob/main/src/anthropic/lib/streaming/_messages.py  # noqa: E501</span>
+    <span class="c1"># Reference: Anthropic SDK streaming implementation</span>
+    <span class="c1"># https://github.com/anthropics/anthropic-sdk-python/blob/main/src/anthropic/lib/streaming/_messages.py  # noqa: E501</span>
+
     <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"message_start"</span> <span class="ow">and</span> <span class="n">stream_usage</span><span class="p">:</span>
-        <span class="c1"># Store input usage for later use in message_delta but don't emit tokens yet</span>
-        <span class="n">updated_stored_usage</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">usage</span>
-        <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">UsageMetadata</span><span class="p">(</span>
-            <span class="n">input_tokens</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-            <span class="n">output_tokens</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-            <span class="n">total_tokens</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="c1"># Capture model name, but don't include usage_metadata yet</span>
+        <span class="c1"># as it will be properly reported in message_delta with complete info</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="s2">"model"</span><span class="p">):</span>
             <span class="n">response_metadata</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"model_name"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">model</span><span class="p">}</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">response_metadata</span> <span class="o">=</span> <span class="p">{}</span>
+
         <span class="n">message_chunk</span> <span class="o">=</span> <span class="n">AIMessageChunk</span><span class="p">(</span>
             <span class="n">content</span><span class="o">=</span><span class="s2">""</span> <span class="k">if</span> <span class="n">coerce_content_to_string</span> <span class="k">else</span> <span class="p">[],</span>
-            <span class="n">usage_metadata</span><span class="o">=</span><span class="n">usage_metadata</span><span class="p">,</span>
             <span class="n">response_metadata</span><span class="o">=</span><span class="n">response_metadata</span><span class="p">,</span>
         <span class="p">)</span>
+
     <span class="k">elif</span> <span class="p">(</span>
         <span class="n">event</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"content_block_start"</span>
         <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">content_block</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">content_block</span><span class="o">.</span><span class="n">type</span>
         <span class="ow">in</span> <span class="p">(</span>
-            <span class="s2">"tool_use"</span><span class="p">,</span>
-            <span class="s2">"code_execution_tool_result"</span><span class="p">,</span>
+            <span class="s2">"tool_use"</span><span class="p">,</span>  <span class="c1"># Standard tool usage</span>
+            <span class="s2">"code_execution_tool_result"</span><span class="p">,</span>  <span class="c1"># Built-in code execution results</span>
             <span class="s2">"document"</span><span class="p">,</span>
             <span class="s2">"redacted_thinking"</span><span class="p">,</span>
             <span class="s2">"mcp_tool_use"</span><span class="p">,</span>
             <span class="s2">"mcp_tool_result"</span><span class="p">,</span>
-            <span class="s2">"server_tool_use"</span><span class="p">,</span>
-            <span class="s2">"web_search_tool_result"</span><span class="p">,</span>
+            <span class="s2">"server_tool_use"</span><span class="p">,</span>  <span class="c1"># Server-side tool usage</span>
+            <span class="s2">"web_search_tool_result"</span><span class="p">,</span>  <span class="c1"># Built-in web search results</span>
         <span class="p">)</span>
     <span class="p">):</span>
         <span class="k">if</span> <span class="n">coerce_content_to_string</span><span class="p">:</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"Received unexpected tool content block."</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
         <span class="n">content_block</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">content_block</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
         <span class="n">content_block</span><span class="p">[</span><span class="s2">"index"</span><span class="p">]</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">index</span>
         <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">content_block</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"tool_use"</span><span class="p">:</span>
@@ -2525,35 +2508,47 @@
             <span class="n">tool_call_chunks</span><span class="o">=</span><span class="n">tool_call_chunks</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">block_start_event</span> <span class="o">=</span> <span class="n">event</span>
+
+    <span class="c1"># Process incremental content updates</span>
     <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"content_block_delta"</span><span class="p">:</span>
+        <span class="c1"># Text and citation deltas (incremental text content)</span>
         <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"text_delta"</span><span class="p">,</span> <span class="s2">"citations_delta"</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">coerce_content_to_string</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">):</span>
-                <span class="n">text</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">text</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
                 <span class="n">message_chunk</span> <span class="o">=</span> <span class="n">AIMessageChunk</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="n">text</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">content_block</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
                 <span class="n">content_block</span><span class="p">[</span><span class="s2">"index"</span><span class="p">]</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">index</span>
+
+                <span class="c1"># All citation deltas are part of a text block</span>
                 <span class="n">content_block</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"text"</span>
                 <span class="k">if</span> <span class="s2">"citation"</span> <span class="ow">in</span> <span class="n">content_block</span><span class="p">:</span>
+                    <span class="c1"># Assign citations to a list if present</span>
                     <span class="n">content_block</span><span class="p">[</span><span class="s2">"citations"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">content_block</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"citation"</span><span class="p">)]</span>
                 <span class="n">message_chunk</span> <span class="o">=</span> <span class="n">AIMessageChunk</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="p">[</span><span class="n">content_block</span><span class="p">])</span>
+
+        <span class="c1"># Reasoning</span>
         <span class="k">elif</span> <span class="p">(</span>
             <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"thinking_delta"</span>
             <span class="ow">or</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"signature_delta"</span>
         <span class="p">):</span>
             <span class="n">content_block</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
-            <span class="k">if</span> <span class="s2">"text"</span> <span class="ow">in</span> <span class="n">content_block</span> <span class="ow">and</span> <span class="n">content_block</span><span class="p">[</span><span class="s2">"text"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">content_block</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"text"</span><span class="p">)</span>
             <span class="n">content_block</span><span class="p">[</span><span class="s2">"index"</span><span class="p">]</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">index</span>
             <span class="n">content_block</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"thinking"</span>
             <span class="n">message_chunk</span> <span class="o">=</span> <span class="n">AIMessageChunk</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="p">[</span><span class="n">content_block</span><span class="p">])</span>
+
+        <span class="c1"># Tool input JSON (streaming tool arguments)</span>
         <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"input_json_delta"</span><span class="p">:</span>
             <span class="n">content_block</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
             <span class="n">content_block</span><span class="p">[</span><span class="s2">"index"</span><span class="p">]</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">index</span>
+            <span class="n">start_event_block</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="n">block_start_event</span><span class="p">,</span> <span class="s2">"content_block"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">block_start_event</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">)</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="p">(</span><span class="n">block_start_event</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
-                <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">block_start_event</span><span class="p">,</span> <span class="s2">"content_block"</span><span class="p">)</span>
-                <span class="ow">and</span> <span class="p">(</span><span class="n">block_start_event</span><span class="o">.</span><span class="n">content_block</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"tool_use"</span><span class="p">)</span>
+                <span class="n">start_event_block</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">start_event_block</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"tool_use"</span>
             <span class="p">):</span>
                 <span class="n">tool_call_chunk</span> <span class="o">=</span> <span class="n">create_tool_call_chunk</span><span class="p">(</span>
                     <span class="n">index</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
@@ -2568,38 +2563,10 @@
                 <span class="n">content</span><span class="o">=</span><span class="p">[</span><span class="n">content_block</span><span class="p">],</span>
                 <span class="n">tool_call_chunks</span><span class="o">=</span><span class="n">tool_call_chunks</span><span class="p">,</span>
             <span class="p">)</span>
+
+    <span class="c1"># Process final usage metadata and completion info</span>
     <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"message_delta"</span> <span class="ow">and</span> <span class="n">stream_usage</span><span class="p">:</span>
-        <span class="c1"># Create usage metadata combining stored input usage with final output usage</span>
-        <span class="c1">#</span>
-        <span class="c1"># Per Anthropic docs: "The token counts shown in the usage field of the</span>
-        <span class="c1"># message_delta event are cumulative." Thus, when MCP tools are called</span>
-        <span class="c1"># mid-stream, `input_tokens` may be updated with a higher cumulative count.</span>
-        <span class="c1"># We prioritize `event.usage.input_tokens` when available to handle this case.</span>
-        <span class="k">if</span> <span class="n">stored_input_usage</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># Create a combined usage object that mimics the Anthropic Usage structure</span>
-            <span class="n">combined_usage</span> <span class="o">=</span> <span class="n">_CombinedUsage</span><span class="p">(</span>
-                <span class="n">input_tokens</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">input_tokens</span>
-                <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">stored_input_usage</span><span class="p">,</span> <span class="s2">"input_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-                <span class="n">output_tokens</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">output_tokens</span><span class="p">,</span>
-                <span class="n">cache_creation_input_tokens</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span>
-                    <span class="n">stored_input_usage</span><span class="p">,</span> <span class="s2">"cache_creation_input_tokens"</span><span class="p">,</span> <span class="kc">None</span>
-                <span class="p">),</span>
-                <span class="n">cache_read_input_tokens</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span>
-                    <span class="n">stored_input_usage</span><span class="p">,</span> <span class="s2">"cache_read_input_tokens"</span><span class="p">,</span> <span class="kc">None</span>
-                <span class="p">),</span>
-                <span class="n">cache_creation</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">stored_input_usage</span><span class="p">,</span> <span class="s2">"cache_creation"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">stored_input_usage</span><span class="p">,</span> <span class="s2">"cache_creation"</span><span class="p">)</span>
-                <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">_create_usage_metadata</span><span class="p">(</span><span class="n">combined_usage</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Fallback to just output tokens if no stored usage</span>
-            <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">UsageMetadata</span><span class="p">(</span>
-                <span class="n">input_tokens</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">input_tokens</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">,</span>
-                <span class="n">output_tokens</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">output_tokens</span><span class="p">,</span>
-                <span class="n">total_tokens</span><span class="o">=</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">input_tokens</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
-                <span class="o">+</span> <span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="o">.</span><span class="n">output_tokens</span><span class="p">,</span>
-            <span class="p">)</span>
+        <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">_create_usage_metadata</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="p">)</span>
         <span class="n">message_chunk</span> <span class="o">=</span> <span class="n">AIMessageChunk</span><span class="p">(</span>
             <span class="n">content</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
             <span class="n">usage_metadata</span><span class="o">=</span><span class="n">usage_metadata</span><span class="p">,</span>
@@ -2608,10 +2575,12 @@
                 <span class="s2">"stop_sequence"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">stop_sequence</span><span class="p">,</span>
             <span class="p">},</span>
         <span class="p">)</span>
+    <span class="c1"># Unhandled event types (e.g., `content_block_stop`, `ping` events)</span>
+    <span class="c1"># https://docs.anthropic.com/en/docs/build-with-claude/streaming#other-events</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">pass</span>
 
-    <span class="k">return</span> <span class="n">message_chunk</span><span class="p">,</span> <span class="n">block_start_event</span><span class="p">,</span> <span class="n">updated_stored_usage</span>
+    <span class="k">return</span> <span class="n">message_chunk</span><span class="p">,</span> <span class="n">block_start_event</span>
 
 
 <div class="viewcode-block" id="ChatAnthropicMessages">
@@ -2623,26 +2592,38 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_create_usage_metadata</span><span class="p">(</span><span class="n">anthropic_usage</span><span class="p">:</span> <span class="n">BaseModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">UsageMetadata</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Create LangChain `UsageMetadata` from Anthropic `Usage` data.</span>
+
+<span class="sd">    Note: Anthropic's `input_tokens` excludes cached tokens, so we manually add</span>
+<span class="sd">    `cache_read` and `cache_creation` tokens to get the true total.</span>
+
+<span class="sd">    """</span>
     <span class="n">input_token_details</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"cache_read"</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">anthropic_usage</span><span class="p">,</span> <span class="s2">"cache_read_input_tokens"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
         <span class="s2">"cache_creation"</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">anthropic_usage</span><span class="p">,</span> <span class="s2">"cache_creation_input_tokens"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
     <span class="p">}</span>
-    <span class="c1"># Add (beta) cache TTL information if available</span>
+
+    <span class="c1"># Add cache TTL information if provided (5-minute and 1-hour ephemeral cache)</span>
     <span class="n">cache_creation</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">anthropic_usage</span><span class="p">,</span> <span class="s2">"cache_creation"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="n">cache_creation_keys</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"ephemeral_1h_input_tokens"</span><span class="p">,</span> <span class="s2">"ephemeral_5m_input_tokens"</span><span class="p">)</span>
+
+    <span class="c1"># Currently just copying over the 5m and 1h keys, but if more are added in the</span>
+    <span class="c1"># future we'll need to expand this tuple</span>
+    <span class="n">cache_creation_keys</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"ephemeral_5m_input_tokens"</span><span class="p">,</span> <span class="s2">"ephemeral_1h_input_tokens"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">cache_creation</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cache_creation</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">):</span>
             <span class="n">cache_creation</span> <span class="o">=</span> <span class="n">cache_creation</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">cache_creation_keys</span><span class="p">:</span>
             <span class="n">input_token_details</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">cache_creation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
 
-    <span class="c1"># Anthropic input_tokens exclude cached token counts.</span>
+    <span class="c1"># Calculate total input tokens: Anthropic's `input_tokens` excludes cached tokens,</span>
+    <span class="c1"># so we need to add them back to get the true total input token count</span>
     <span class="n">input_tokens</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">anthropic_usage</span><span class="p">,</span> <span class="s2">"input_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="o">+</span> <span class="p">(</span><span class="n">input_token_details</span><span class="p">[</span><span class="s2">"cache_read"</span><span class="p">]</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="o">+</span> <span class="p">(</span><span class="n">input_token_details</span><span class="p">[</span><span class="s2">"cache_creation"</span><span class="p">]</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">anthropic_usage</span><span class="p">,</span> <span class="s2">"input_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># Base input tokens</span>
+        <span class="o">+</span> <span class="p">(</span><span class="n">input_token_details</span><span class="p">[</span><span class="s2">"cache_read"</span><span class="p">]</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># Tokens read from cache</span>
+        <span class="o">+</span> <span class="p">(</span><span class="n">input_token_details</span><span class="p">[</span><span class="s2">"cache_creation"</span><span class="p">]</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># Tokens used to create cache</span>
     <span class="p">)</span>
     <span class="n">output_tokens</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">anthropic_usage</span><span class="p">,</span> <span class="s2">"output_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span>
+
     <span class="k">return</span> <span class="n">UsageMetadata</span><span class="p">(</span>
         <span class="n">input_tokens</span><span class="o">=</span><span class="n">input_tokens</span><span class="p">,</span>
         <span class="n">output_tokens</span><span class="o">=</span><span class="n">output_tokens</span><span class="p">,</span>

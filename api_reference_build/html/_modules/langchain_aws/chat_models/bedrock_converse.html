@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 18, 2025" name="docbuild:last-update"/>
+<meta content="Aug 19, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -221,6 +221,7 @@
 <article class="bd-article">
 <h1>Source code for langchain_aws.chat_models.bedrock_converse</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
@@ -282,6 +283,33 @@
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="n">_BM</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"_BM"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">BaseModel</span><span class="p">)</span>
+
+<span class="n">MIME_TO_FORMAT</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># Image formats</span>
+    <span class="s2">"image/png"</span><span class="p">:</span> <span class="s2">"png"</span><span class="p">,</span>
+    <span class="s2">"image/jpeg"</span><span class="p">:</span> <span class="s2">"jpeg"</span><span class="p">,</span> 
+    <span class="s2">"image/gif"</span><span class="p">:</span> <span class="s2">"gif"</span><span class="p">,</span>
+    <span class="s2">"image/webp"</span><span class="p">:</span> <span class="s2">"webp"</span><span class="p">,</span>
+    <span class="c1"># File formats</span>
+    <span class="s2">"application/pdf"</span><span class="p">:</span> <span class="s2">"pdf"</span><span class="p">,</span>
+    <span class="s2">"text/csv"</span><span class="p">:</span> <span class="s2">"csv"</span><span class="p">,</span>
+    <span class="s2">"application/msword"</span><span class="p">:</span> <span class="s2">"doc"</span><span class="p">,</span>
+    <span class="s2">"application/vnd.openxmlformats-officedocument.wordprocessingml.document"</span><span class="p">:</span> <span class="s2">"docx"</span><span class="p">,</span>
+    <span class="s2">"application/vnd.ms-excel"</span><span class="p">:</span> <span class="s2">"xls"</span><span class="p">,</span>
+    <span class="s2">"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"</span><span class="p">:</span> <span class="s2">"xlsx"</span><span class="p">,</span>
+    <span class="s2">"text/html"</span><span class="p">:</span> <span class="s2">"html"</span><span class="p">,</span>
+    <span class="s2">"text/plain"</span><span class="p">:</span> <span class="s2">"txt"</span><span class="p">,</span>
+    <span class="s2">"text/markdown"</span><span class="p">:</span> <span class="s2">"md"</span><span class="p">,</span>
+    <span class="c1"># Video formats</span>
+    <span class="s2">"video/x-matroska"</span><span class="p">:</span> <span class="s2">"mkv"</span><span class="p">,</span>
+    <span class="s2">"video/quicktime"</span><span class="p">:</span> <span class="s2">"mov"</span><span class="p">,</span>
+    <span class="s2">"video/mp4"</span><span class="p">:</span> <span class="s2">"mp4"</span><span class="p">,</span>
+    <span class="s2">"video/webm"</span><span class="p">:</span> <span class="s2">"webm"</span><span class="p">,</span>
+    <span class="s2">"video/x-flv"</span><span class="p">:</span> <span class="s2">"flv"</span><span class="p">,</span>
+    <span class="s2">"video/mpeg"</span><span class="p">:</span> <span class="s2">"mpeg"</span><span class="p">,</span>
+    <span class="s2">"video/x-ms-wmv"</span><span class="p">:</span> <span class="s2">"wmv"</span><span class="p">,</span>
+    <span class="s2">"video/3gpp"</span><span class="p">:</span> <span class="s2">"three_gp"</span><span class="p">,</span>
+<span class="p">}</span>
 
 <span class="n">_DictOrPydanticClass</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Type</span><span class="p">[</span><span class="n">_BM</span><span class="p">],</span> <span class="n">Type</span><span class="p">]</span>
 
@@ -1434,6 +1462,27 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Received unsupported stream event:</span><span class="se">\n\n</span><span class="si">{</span><span class="n">event</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
+<span class="nd">@functools</span><span class="o">.</span><span class="n">cache</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_mime_type_to_format</span><span class="p">(</span><span class="n">mime_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s2">"/"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">mime_type</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Invalid MIME type format: </span><span class="si">{</span><span class="n">mime_type</span><span class="si">}</span><span class="s2">. Expected format: 'type/subtype'"</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">mime_type</span> <span class="ow">in</span> <span class="n">MIME_TO_FORMAT</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">MIME_TO_FORMAT</span><span class="p">[</span><span class="n">mime_type</span><span class="p">]</span>
+    
+    <span class="c1"># Fallback to original method of splitting on "/" for simple cases</span>
+    <span class="n">all_formats</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">MIME_TO_FORMAT</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="n">format_part</span> <span class="o">=</span> <span class="n">mime_type</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">format_part</span> <span class="ow">in</span> <span class="n">all_formats</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">format_part</span>
+    
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Unsupported MIME type: </span><span class="si">{</span><span class="n">mime_type</span><span class="si">}</span><span class="s2">. Please refer to the Bedrock Converse API documentation for supported formats."</span>
+    <span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_data_content_block</span><span class="p">(</span><span class="n">block</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Format standard data content block to format expected by Converse API."""</span>
     <span class="k">if</span> <span class="n">block</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"image"</span><span class="p">:</span>
@@ -1443,7 +1492,7 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
             <span class="n">formatted_block</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">"image"</span><span class="p">:</span> <span class="p">{</span>
-                    <span class="s2">"format"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"mimeType"</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="s2">"format"</span><span class="p">:</span> <span class="n">_mime_type_to_format</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"mimeType"</span><span class="p">]),</span>
                     <span class="s2">"source"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"bytes"</span><span class="p">:</span> <span class="n">_b64str_to_bytes</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"data"</span><span class="p">])},</span>
                 <span class="p">}</span>
             <span class="p">}</span>
@@ -1458,7 +1507,7 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
             <span class="n">formatted_block</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">"document"</span><span class="p">:</span> <span class="p">{</span>
-                    <span class="s2">"format"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"mimeType"</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="s2">"format"</span><span class="p">:</span> <span class="n">_mime_type_to_format</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"mimeType"</span><span class="p">]),</span>
                     <span class="s2">"source"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"bytes"</span><span class="p">:</span> <span class="n">_b64str_to_bytes</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"data"</span><span class="p">])},</span>
                 <span class="p">}</span>
             <span class="p">}</span>
@@ -1508,7 +1557,7 @@
                 <span class="n">bedrock_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="p">{</span>
                         <span class="s2">"image"</span><span class="p">:</span> <span class="p">{</span>
-                            <span class="s2">"format"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"mediaType"</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
+                            <span class="s2">"format"</span><span class="p">:</span> <span class="n">_mime_type_to_format</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"mediaType"</span><span class="p">]),</span>
                             <span class="s2">"source"</span><span class="p">:</span> <span class="p">{</span>
                                 <span class="s2">"bytes"</span><span class="p">:</span> <span class="n">_b64str_to_bytes</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"data"</span><span class="p">])</span>
                             <span class="p">},</span>
@@ -1529,7 +1578,7 @@
                     <span class="n">bedrock_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                         <span class="p">{</span>
                             <span class="s2">"video"</span><span class="p">:</span> <span class="p">{</span>
-                                <span class="s2">"format"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"mediaType"</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
+                                <span class="s2">"format"</span><span class="p">:</span> <span class="n">_mime_type_to_format</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"mediaType"</span><span class="p">]),</span>
                                 <span class="s2">"source"</span><span class="p">:</span> <span class="p">{</span>
                                     <span class="s2">"bytes"</span><span class="p">:</span> <span class="n">_b64str_to_bytes</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"data"</span><span class="p">])</span>
                                 <span class="p">},</span>
@@ -1540,7 +1589,7 @@
                     <span class="n">bedrock_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                         <span class="p">{</span>
                             <span class="s2">"video"</span><span class="p">:</span> <span class="p">{</span>
-                                <span class="s2">"format"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"mediaType"</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
+                                <span class="s2">"format"</span><span class="p">:</span> <span class="n">_mime_type_to_format</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"mediaType"</span><span class="p">]),</span>
                                 <span class="s2">"source"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"s3Location"</span><span class="p">:</span> <span class="n">block</span><span class="p">[</span><span class="s2">"source"</span><span class="p">][</span><span class="s2">"data"</span><span class="p">]},</span>
                             <span class="p">}</span>
                         <span class="p">}</span>

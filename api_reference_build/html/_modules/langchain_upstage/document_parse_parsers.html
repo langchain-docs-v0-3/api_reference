@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 18, 2025" name="docbuild:last-update"/>
+<meta content="Aug 19, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -226,11 +226,12 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.document_loaders</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseBlobParser</span><span class="p">,</span> <span class="n">Blob</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pypdf</span><span class="w"> </span><span class="kn">import</span> <span class="n">PdfReader</span><span class="p">,</span> <span class="n">PdfWriter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pypdf.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">PdfReadError</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_upstage.tools.response_generator</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_request</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"pypdf"</span><span class="p">)</span>
 <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
@@ -243,18 +244,18 @@
 <span class="n">OCR</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"force"</span><span class="p">]</span>
 <span class="n">SplitType</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"none"</span><span class="p">,</span> <span class="s2">"page"</span><span class="p">,</span> <span class="s2">"element"</span><span class="p">]</span>
 <span class="n">Category</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span>
-    <span class="s2">"paragraph"</span><span class="p">,</span>
     <span class="s2">"table"</span><span class="p">,</span>
     <span class="s2">"figure"</span><span class="p">,</span>
+    <span class="s2">"chart"</span><span class="p">,</span>
+    <span class="s2">"heading1"</span><span class="p">,</span>
     <span class="s2">"header"</span><span class="p">,</span>
     <span class="s2">"footer"</span><span class="p">,</span>
     <span class="s2">"caption"</span><span class="p">,</span>
+    <span class="s2">"paragraph"</span><span class="p">,</span>
     <span class="s2">"equation"</span><span class="p">,</span>
-    <span class="s2">"heading1"</span><span class="p">,</span>
     <span class="s2">"list"</span><span class="p">,</span>
     <span class="s2">"index"</span><span class="p">,</span>
     <span class="s2">"footnote"</span><span class="p">,</span>
-    <span class="s2">"chart"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -335,10 +336,11 @@
         <span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DOCUMENT_PARSE_BASE_URL</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DOCUMENT_PARSE_DEFAULT_MODEL</span><span class="p">,</span>
         <span class="n">split</span><span class="p">:</span> <span class="n">SplitType</span> <span class="o">=</span> <span class="s2">"none"</span><span class="p">,</span>
+        <span class="n">chart_recognition</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">ocr</span><span class="p">:</span> <span class="n">OCR</span> <span class="o">=</span> <span class="s2">"auto"</span><span class="p">,</span>
         <span class="n">output_format</span><span class="p">:</span> <span class="n">OutputFormat</span> <span class="o">=</span> <span class="s2">"html"</span><span class="p">,</span>
         <span class="n">coordinates</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">base64_encoding</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Category</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+        <span class="n">base64_encoding</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Category</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Initializes an instance of the Upstage class.</span>
@@ -375,10 +377,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span> <span class="o">=</span> <span class="n">base_url</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">split</span> <span class="o">=</span> <span class="n">split</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chart_recognition</span> <span class="o">=</span> <span class="n">chart_recognition</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ocr</span> <span class="o">=</span> <span class="n">ocr</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output_format</span> <span class="o">=</span> <span class="n">output_format</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coordinates</span> <span class="o">=</span> <span class="n">coordinates</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">base64_encoding</span> <span class="o">=</span> <span class="n">base64_encoding</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base64_encoding</span> <span class="o">=</span> <span class="n">base64_encoding</span> <span class="k">if</span> <span class="n">base64_encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
@@ -407,34 +410,23 @@
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If there is an error in the API call.</span>
 <span class="sd">        """</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">headers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_headers</span><span class="p">()</span>
-            <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">,</span>
-                <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
-                <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span>
-                <span class="n">data</span><span class="o">=</span><span class="p">{</span>
-                    <span class="s2">"ocr"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ocr</span><span class="p">,</span>
-                    <span class="s2">"model"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
-                    <span class="s2">"output_formats"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"['</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output_format</span><span class="si">}</span><span class="s2">']"</span><span class="p">,</span>
-                    <span class="s2">"coordinates"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinates</span><span class="p">,</span>
-                    <span class="s2">"base64_encoding"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base64_encoding</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-                <span class="p">},</span>
-            <span class="p">)</span>
-            <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"elements"</span><span class="p">,</span> <span class="p">[])</span>
-            <span class="k">return</span> <span class="n">result</span>
-        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"HTTP error: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">RequestException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="c1"># Handle any request-related exceptions</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to send request: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="c1"># Handle JSON decode errors</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to decode JSON response: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="c1"># Handle any other exceptions</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"An error occurred: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">make_request</span><span class="p">(</span>
+            <span class="s2">"POST"</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_headers</span><span class="p">(),</span>
+            <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"model"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                <span class="s2">"chart_recognition"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">chart_recognition</span><span class="p">,</span>
+                <span class="s2">"ocr"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ocr</span><span class="p">,</span>
+                <span class="s2">"output_formats"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"['</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output_format</span><span class="si">}</span><span class="s2">']"</span><span class="p">,</span>
+                <span class="s2">"coordinates"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinates</span><span class="p">,</span>
+                <span class="s2">"base64_encoding"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base64_encoding</span><span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"elements"</span><span class="p">,</span> <span class="p">[])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_split_and_request</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
