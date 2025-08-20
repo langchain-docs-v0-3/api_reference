@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 19, 2025" name="docbuild:last-update"/>
+<meta content="Aug 20, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -226,7 +226,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">bson</span><span class="w"> </span><span class="kn">import</span> <span class="n">ObjectId</span>
@@ -448,16 +448,34 @@
                 <span class="n">doc</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="p">[:</span> <span class="n">MAX_STRING_LENGTH_OF_SAMPLE_DOCUMENT_VALUE</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="c1"># Convert a JavaScript command to a python object.</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Extracts and parses the aggregation pipeline from a JavaScript-style MongoDB command.</span>
+<span class="sd">        Handles ObjectId(), ISODate(), new Date() and converts them into Python constructs.</span>
+<span class="sd">        """</span>
         <span class="n">command</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\s+"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">,</span> <span class="n">command</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
-        <span class="c1"># Handle missing closing parens.</span>
         <span class="k">if</span> <span class="n">command</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"]"</span><span class="p">):</span>
             <span class="n">command</span> <span class="o">+=</span> <span class="s2">")"</span>
-        <span class="n">agg_command</span> <span class="o">=</span> <span class="n">command</span><span class="p">[</span><span class="n">command</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"["</span><span class="p">)</span> <span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">agg_command</span><span class="p">)</span>
+            <span class="n">agg_str</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">".aggregate("</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">")"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cannot execute command </span><span class="si">{</span><span class="n">command</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not extract aggregation pipeline: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+
+        <span class="c1"># Convert JavaScript-style constructs to Python syntax</span>
+        <span class="n">agg_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_mongo_js_to_python</span><span class="p">(</span><span class="n">agg_str</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">eval_globals</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"ObjectId"</span><span class="p">:</span> <span class="n">ObjectId</span><span class="p">,</span>
+                <span class="s2">"datetime"</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span>
+                <span class="s2">"timezone"</span><span class="p">:</span> <span class="n">timezone</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="n">agg_pipeline</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">agg_str</span><span class="p">,</span> <span class="n">eval_globals</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">agg_pipeline</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Aggregation pipeline must be a list."</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">agg_pipeline</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to parse aggregation pipeline: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
 <div class="viewcode-block" id="MongoDBDatabase.run">
 <a class="viewcode-back" href="../../../mongodb/agent_toolkit/langchain_mongodb.agent_toolkit.database.MongoDBDatabase.html#langchain_mongodb.agent_toolkit.database.MongoDBDatabase.run">[docs]</a>
@@ -471,14 +489,29 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">command</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"db."</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cannot run command </span><span class="si">{</span><span class="n">command</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">col_name</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">col_name</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Invalid command format. Could not extract collection name."</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+
         <span class="k">if</span> <span class="n">col_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_usable_collection_names</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Collection </span><span class="si">{</span><span class="n">col_name</span><span class="si">}</span><span class="s2"> does not exist!"</span><span class="p">)</span>
-        <span class="n">coll</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span>
+
         <span class="k">if</span> <span class="s2">".aggregate("</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">command</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cannot execute command </span><span class="si">{</span><span class="n">command</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">agg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_command</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">dumps</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">coll</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">agg</span><span class="p">)),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Only aggregate(...) queries are currently supported."</span><span class="p">)</span>
+
+        <span class="c1"># Parse pipeline using helper</span>
+        <span class="n">agg_pipeline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_command</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">coll</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">coll</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">agg_pipeline</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">dumps</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">result</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error executing aggregation: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span></div>
 
 
 <div class="viewcode-block" id="MongoDBDatabase.get_collection_info_no_throw">
@@ -530,7 +563,43 @@
             <span class="s2">"collection_info"</span><span class="p">:</span> <span class="n">collection_info</span><span class="p">,</span>
             <span class="s2">"collection_names"</span><span class="p">:</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">collection_names</span><span class="p">),</span>
         <span class="p">}</span></div>
-</div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_convert_mongo_js_to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Convert JavaScript-style MongoDB syntax into Python-safe code."""</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_handle_iso_date</span><span class="p">(</span><span class="n">match</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">date_str</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">date_str</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"ISODate must contain a date string."</span><span class="p">)</span>
+            <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">date_str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"Z"</span><span class="p">,</span> <span class="s2">"+00:00"</span><span class="p">))</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"datetime(</span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">year</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">month</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">day</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">hour</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">minute</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">second</span><span class="si">}</span><span class="s2">, tzinfo=timezone.utc)"</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_handle_new_date</span><span class="p">(</span><span class="n">match</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">date_str</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">date_str</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"new Date() without arguments is not allowed. Please pass an explicit date string."</span>
+                <span class="p">)</span>
+            <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">date_str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"Z"</span><span class="p">,</span> <span class="s2">"+00:00"</span><span class="p">))</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"datetime(</span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">year</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">month</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">day</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">hour</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">minute</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">second</span><span class="si">}</span><span class="s2">, tzinfo=timezone.utc)"</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_handle_object_id</span><span class="p">(</span><span class="n">match</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">oid_str</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">oid_str</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"ObjectId must contain a value."</span><span class="p">)</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"ObjectId('</span><span class="si">{</span><span class="n">oid_str</span><span class="si">}</span><span class="s2">')"</span>
+
+        <span class="n">patterns</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="sa">r</span><span class="s1">'ISODate\(\s*["</span><span class="se">\'</span><span class="s1">]([^"</span><span class="se">\'</span><span class="s1">]*)["</span><span class="se">\'</span><span class="s1">]\s*\)'</span><span class="p">,</span> <span class="n">_handle_iso_date</span><span class="p">),</span>
+            <span class="p">(</span><span class="sa">r</span><span class="s1">'new\s+Date\(\s*["</span><span class="se">\'</span><span class="s1">]([^"</span><span class="se">\'</span><span class="s1">]*)["</span><span class="se">\'</span><span class="s1">]\s*\)'</span><span class="p">,</span> <span class="n">_handle_new_date</span><span class="p">),</span>
+            <span class="p">(</span><span class="sa">r</span><span class="s1">'ObjectId\(\s*["</span><span class="se">\'</span><span class="s1">]([^"</span><span class="se">\'</span><span class="s1">]*)["</span><span class="se">\'</span><span class="s1">]\s*\)'</span><span class="p">,</span> <span class="n">_handle_object_id</span><span class="p">),</span>
+        <span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">replacer</span> <span class="ow">in</span> <span class="n">patterns</span><span class="p">:</span>
+            <span class="n">code</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">replacer</span><span class="p">,</span> <span class="n">code</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">code</span></div>
 
 </pre></div>
 </article>
