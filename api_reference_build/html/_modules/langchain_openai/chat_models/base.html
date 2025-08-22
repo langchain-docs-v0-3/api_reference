@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 21, 2025" name="docbuild:last-update"/>
+<meta content="Aug 22, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -940,7 +940,8 @@
 <span class="w">        </span><span class="sd">"""Validate temperature parameter for different models.</span>
 
 <span class="sd">        - o1 models only allow temperature=1</span>
-<span class="sd">        - gpt-5 models only allow temperature=1 or unset (defaults to 1)</span>
+<span class="sd">        - gpt-5 models (excluding gpt-5-chat) only allow temperature=1 or unset</span>
+<span class="sd">          (defaults to 1)</span>
 <span class="sd">        """</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model_name"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span>
 
@@ -949,10 +950,12 @@
             <span class="n">values</span><span class="p">[</span><span class="s2">"temperature"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
         <span class="c1"># For gpt-5 models, handle temperature restrictions</span>
-        <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"gpt-5"</span><span class="p">):</span>
+        <span class="c1"># Note that gpt-5-chat models do support temperature</span>
+        <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"gpt-5"</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"chat"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">model</span><span class="p">:</span>
             <span class="n">temperature</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"temperature"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">temperature</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">temperature</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="c1"># For gpt-5, only temperature=1 is supported, so remove non-defaults</span>
+                <span class="c1"># For gpt-5 (non-chat), only temperature=1 is supported</span>
+                <span class="c1"># So we remove any non-defaults</span>
                 <span class="n">values</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"temperature"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">values</span>
@@ -3769,7 +3772,7 @@
 
     <span class="c1"># Remove temperature parameter for models that don't support it in responses API</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"gpt-5"</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"gpt-5"</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"chat"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">model</span><span class="p">:</span>  <span class="c1"># gpt-5-chat supports</span>
         <span class="n">payload</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"temperature"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="n">payload</span><span class="p">[</span><span class="s2">"input"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_construct_responses_api_input</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
@@ -3998,7 +4001,13 @@
                     <span class="p">{</span>
                         <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"message"</span><span class="p">,</span>
                         <span class="s2">"role"</span><span class="p">:</span> <span class="s2">"assistant"</span><span class="p">,</span>
-                        <span class="s2">"content"</span><span class="p">:</span> <span class="p">[{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"output_text"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="n">msg</span><span class="p">[</span><span class="s2">"content"</span><span class="p">]}],</span>
+                        <span class="s2">"content"</span><span class="p">:</span> <span class="p">[</span>
+                            <span class="p">{</span>
+                                <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"output_text"</span><span class="p">,</span>
+                                <span class="s2">"text"</span><span class="p">:</span> <span class="n">msg</span><span class="p">[</span><span class="s2">"content"</span><span class="p">],</span>
+                                <span class="s2">"annotations"</span><span class="p">:</span> <span class="p">[],</span>
+                            <span class="p">}</span>
+                        <span class="p">],</span>
                     <span class="p">}</span>
                 <span class="p">)</span>
 
@@ -4124,7 +4133,9 @@
                         <span class="s2">"annotations"</span><span class="p">:</span> <span class="p">[</span>
                             <span class="n">annotation</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
                             <span class="k">for</span> <span class="n">annotation</span> <span class="ow">in</span> <span class="n">content</span><span class="o">.</span><span class="n">annotations</span>
-                        <span class="p">],</span>
+                        <span class="p">]</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">annotations</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+                        <span class="k">else</span> <span class="p">[],</span>
                         <span class="s2">"id"</span><span class="p">:</span> <span class="n">output</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
                     <span class="p">}</span>
                     <span class="n">content_blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
