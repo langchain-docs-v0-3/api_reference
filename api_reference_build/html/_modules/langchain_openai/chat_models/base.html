@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 26, 2025" name="docbuild:last-update"/>
+<meta content="Aug 27, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -1366,42 +1366,51 @@
             <span class="k">return</span> <span class="n">generate_from_stream</span><span class="p">(</span><span class="n">stream_iter</span><span class="p">)</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_request_payload</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">generation_info</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="s2">"response_format"</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_response_headers</span><span class="p">:</span>
-                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                    <span class="s2">"Cannot currently include response headers when response_format is "</span>
-                    <span class="s2">"specified."</span>
-                <span class="p">)</span>
-            <span class="n">payload</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"stream"</span><span class="p">)</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_client</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
-            <span class="k">except</span> <span class="n">openai</span><span class="o">.</span><span class="n">BadRequestError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">_handle_openai_bad_request</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_responses_api</span><span class="p">(</span><span class="n">payload</span><span class="p">):</span>
-            <span class="n">original_schema_obj</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"response_format"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">original_schema_obj</span> <span class="ow">and</span> <span class="n">_is_pydantic_class</span><span class="p">(</span><span class="n">original_schema_obj</span><span class="p">):</span>
-                <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_response_headers</span><span class="p">:</span>
-                    <span class="n">raw_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_client</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-                        <span class="o">**</span><span class="n">payload</span>
+        <span class="n">raw_response</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"response_format"</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">:</span>
+                <span class="n">payload</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"stream"</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">raw_response</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">root_client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span>
+                            <span class="o">**</span><span class="n">payload</span>
+                        <span class="p">)</span>
                     <span class="p">)</span>
                     <span class="n">response</span> <span class="o">=</span> <span class="n">raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
-                    <span class="n">generation_info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"headers"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw_response</span><span class="o">.</span><span class="n">headers</span><span class="p">)}</span>
+                <span class="k">except</span> <span class="n">openai</span><span class="o">.</span><span class="n">BadRequestError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">_handle_openai_bad_request</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_responses_api</span><span class="p">(</span><span class="n">payload</span><span class="p">):</span>
+                <span class="n">original_schema_obj</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"response_format"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">original_schema_obj</span> <span class="ow">and</span> <span class="n">_is_pydantic_class</span><span class="p">(</span><span class="n">original_schema_obj</span><span class="p">):</span>
+                    <span class="n">raw_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span>
+                        <span class="o">**</span><span class="n">payload</span>
+                    <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">_construct_lc_result_from_responses_api</span><span class="p">(</span>
-                <span class="n">response</span><span class="p">,</span>
-                <span class="n">schema</span><span class="o">=</span><span class="n">original_schema_obj</span><span class="p">,</span>
-                <span class="n">metadata</span><span class="o">=</span><span class="n">generation_info</span><span class="p">,</span>
-                <span class="n">output_version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_version</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_response_headers</span><span class="p">:</span>
-            <span class="n">raw_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
-            <span class="n">response</span> <span class="o">=</span> <span class="n">raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+                    <span class="n">raw_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                        <span class="o">**</span><span class="n">payload</span>
+                    <span class="p">)</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="n">raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_response_headers</span><span class="p">:</span>
+                    <span class="n">generation_info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"headers"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw_response</span><span class="o">.</span><span class="n">headers</span><span class="p">)}</span>
+                <span class="k">return</span> <span class="n">_construct_lc_result_from_responses_api</span><span class="p">(</span>
+                    <span class="n">response</span><span class="p">,</span>
+                    <span class="n">schema</span><span class="o">=</span><span class="n">original_schema_obj</span><span class="p">,</span>
+                    <span class="n">metadata</span><span class="o">=</span><span class="n">generation_info</span><span class="p">,</span>
+                    <span class="n">output_version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_version</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">raw_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="n">raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">raw_response</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">raw_response</span><span class="p">,</span> <span class="s2">"http_response"</span><span class="p">):</span>
+                <span class="n">e</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="n">raw_response</span><span class="o">.</span><span class="n">http_response</span>  <span class="c1"># type: ignore[attr-defined]</span>
+            <span class="k">raise</span> <span class="n">e</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">include_response_headers</span>
+            <span class="ow">and</span> <span class="n">raw_response</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">raw_response</span><span class="p">,</span> <span class="s2">"headers"</span><span class="p">)</span>
+        <span class="p">):</span>
             <span class="n">generation_info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"headers"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw_response</span><span class="o">.</span><span class="n">headers</span><span class="p">)}</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_chat_result</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">generation_info</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_use_responses_api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -1599,46 +1608,55 @@
             <span class="k">return</span> <span class="k">await</span> <span class="n">agenerate_from_stream</span><span class="p">(</span><span class="n">stream_iter</span><span class="p">)</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_request_payload</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">generation_info</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="s2">"response_format"</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_response_headers</span><span class="p">:</span>
-                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                    <span class="s2">"Cannot currently include response headers when response_format is "</span>
-                    <span class="s2">"specified."</span>
-                <span class="p">)</span>
-            <span class="n">payload</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"stream"</span><span class="p">)</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_async_client</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span>
-                    <span class="o">**</span><span class="n">payload</span>
-                <span class="p">)</span>
-            <span class="k">except</span> <span class="n">openai</span><span class="o">.</span><span class="n">BadRequestError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">_handle_openai_bad_request</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_responses_api</span><span class="p">(</span><span class="n">payload</span><span class="p">):</span>
-            <span class="n">original_schema_obj</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"response_format"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">original_schema_obj</span> <span class="ow">and</span> <span class="n">_is_pydantic_class</span><span class="p">(</span><span class="n">original_schema_obj</span><span class="p">):</span>
-                <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_async_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_response_headers</span><span class="p">:</span>
+        <span class="n">raw_response</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"response_format"</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">:</span>
+                <span class="n">payload</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"stream"</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">raw_response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_async_client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span>  <span class="c1"># noqa: E501</span>
+                        <span class="o">**</span><span class="n">payload</span>
+                    <span class="p">)</span>
+                    <span class="n">response</span> <span class="o">=</span> <span class="n">raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+                <span class="k">except</span> <span class="n">openai</span><span class="o">.</span><span class="n">BadRequestError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">_handle_openai_bad_request</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_responses_api</span><span class="p">(</span><span class="n">payload</span><span class="p">):</span>
+                <span class="n">original_schema_obj</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"response_format"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">original_schema_obj</span> <span class="ow">and</span> <span class="n">_is_pydantic_class</span><span class="p">(</span><span class="n">original_schema_obj</span><span class="p">):</span>
                     <span class="n">raw_response</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_async_client</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_async_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span>
                             <span class="o">**</span><span class="n">payload</span>
                         <span class="p">)</span>
                     <span class="p">)</span>
-                    <span class="n">response</span> <span class="o">=</span> <span class="n">raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
-                    <span class="n">generation_info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"headers"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw_response</span><span class="o">.</span><span class="n">headers</span><span class="p">)}</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_async_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">_construct_lc_result_from_responses_api</span><span class="p">(</span>
-                <span class="n">response</span><span class="p">,</span>
-                <span class="n">schema</span><span class="o">=</span><span class="n">original_schema_obj</span><span class="p">,</span>
-                <span class="n">metadata</span><span class="o">=</span><span class="n">generation_info</span><span class="p">,</span>
-                <span class="n">output_version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_version</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_response_headers</span><span class="p">:</span>
-            <span class="n">raw_response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
-            <span class="n">response</span> <span class="o">=</span> <span class="n">raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+                    <span class="n">raw_response</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_async_client</span><span class="o">.</span><span class="n">responses</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                            <span class="o">**</span><span class="n">payload</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="n">raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_response_headers</span><span class="p">:</span>
+                    <span class="n">generation_info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"headers"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw_response</span><span class="o">.</span><span class="n">headers</span><span class="p">)}</span>
+                <span class="k">return</span> <span class="n">_construct_lc_result_from_responses_api</span><span class="p">(</span>
+                    <span class="n">response</span><span class="p">,</span>
+                    <span class="n">schema</span><span class="o">=</span><span class="n">original_schema_obj</span><span class="p">,</span>
+                    <span class="n">metadata</span><span class="o">=</span><span class="n">generation_info</span><span class="p">,</span>
+                    <span class="n">output_version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_version</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">raw_response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="o">.</span><span class="n">with_raw_response</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                    <span class="o">**</span><span class="n">payload</span>
+                <span class="p">)</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="n">raw_response</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">raw_response</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">raw_response</span><span class="p">,</span> <span class="s2">"http_response"</span><span class="p">):</span>
+                <span class="n">e</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="n">raw_response</span><span class="o">.</span><span class="n">http_response</span>  <span class="c1"># type: ignore[attr-defined]</span>
+            <span class="k">raise</span> <span class="n">e</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">include_response_headers</span>
+            <span class="ow">and</span> <span class="n">raw_response</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">raw_response</span><span class="p">,</span> <span class="s2">"headers"</span><span class="p">)</span>
+        <span class="p">):</span>
             <span class="n">generation_info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"headers"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw_response</span><span class="o">.</span><span class="n">headers</span><span class="p">)}</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="o">**</span><span class="n">payload</span><span class="p">)</span>
         <span class="k">return</span> <span class="k">await</span> <span class="n">run_in_executor</span><span class="p">(</span>
             <span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_chat_result</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">generation_info</span>
         <span class="p">)</span>

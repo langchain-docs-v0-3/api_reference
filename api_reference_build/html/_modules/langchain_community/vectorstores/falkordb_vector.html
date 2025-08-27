@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 26, 2025" name="docbuild:last-update"/>
+<meta content="Aug 27, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -374,6 +374,7 @@
                 <span class="s2">"CALL db.idx.vector.queryNodes($entity_label, "</span>
                 <span class="s2">"$entity_property, $k, vecf32($embedding)) "</span>
                 <span class="s2">"YIELD node, score "</span>
+                <span class="s2">"WITH node, (2 - score) / 2 AS score "</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">search_type</span> <span class="o">==</span> <span class="n">SearchType</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">(</span>
@@ -1528,8 +1529,8 @@
                 <span class="sa">f</span><span class="s2">"MATCH (n:`</span><span class="si">{</span><span class="n">node_label</span><span class="si">}</span><span class="s2">`) "</span>
                 <span class="sa">f</span><span class="s2">"WHERE n.`</span><span class="si">{</span><span class="n">embedding_node_property</span><span class="si">}</span><span class="s2">` IS null "</span>
                 <span class="s2">"AND any(k IN $props WHERE n[k] IS NOT null) "</span>
-                <span class="s2">"RETURN id(n) AS id, "</span>
-                <span class="s2">"coalesce(n.text, '') AS text "</span>
+                <span class="s2">"RETURN id(n) AS id, reduce(str='',"</span>
+                <span class="s2">"k IN $props | str + '</span><span class="se">\\</span><span class="s2">n' + k + ':' + coalesce(n[k], '')) AS text "</span>
                 <span class="s2">"LIMIT 1000"</span>
             <span class="p">)</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">_query</span><span class="p">(</span><span class="n">fetch_query</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"props"</span><span class="p">:</span> <span class="n">text_node_properties</span><span class="p">})</span>
