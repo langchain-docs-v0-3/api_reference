@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 27, 2025" name="docbuild:last-update"/>
+<meta content="Aug 28, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -225,7 +225,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">ibm_watsonx_ai</span><span class="w"> </span><span class="kn">import</span> <span class="n">Credentials</span>  <span class="c1"># type: ignore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ibm_watsonx_ai</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIClient</span><span class="p">,</span> <span class="n">Credentials</span>  <span class="c1"># type: ignore</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ibm_watsonx_ai.foundation_models.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseSchema</span>  <span class="c1"># type: ignore</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ibm_watsonx_ai.wml_client_error</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApiRequestFailure</span>  <span class="c1"># type: ignore</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">SecretStr</span>
@@ -353,7 +353,7 @@
 <div class="viewcode-block" id="resolve_watsonx_credentials">
 <a class="viewcode-back" href="../../ibm/utils/langchain_ibm.utils.resolve_watsonx_credentials.html#langchain_ibm.utils.resolve_watsonx_credentials">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve_watsonx_credentials</span><span class="p">(</span>
-    <span class="n">url</span><span class="p">:</span> <span class="n">SecretStr</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">url</span><span class="p">:</span> <span class="n">SecretStr</span><span class="p">,</span>
     <span class="n">apikey</span><span class="p">:</span> <span class="n">SecretStr</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">token</span><span class="p">:</span> <span class="n">SecretStr</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">password</span><span class="p">:</span> <span class="n">SecretStr</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -364,7 +364,7 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Credentials</span><span class="p">:</span>
     <span class="n">check_for_attribute</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="s2">"url"</span><span class="p">,</span> <span class="s2">"WATSONX_URL"</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">url</span> <span class="ow">and</span> <span class="s2">"cloud.ibm.com"</span> <span class="ow">in</span> <span class="n">url</span><span class="o">.</span><span class="n">get_secret_value</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">url</span><span class="o">.</span><span class="n">get_secret_value</span><span class="p">()</span> <span class="ow">in</span> <span class="n">APIClient</span><span class="o">.</span><span class="n">PLATFORM_URLS_MAP</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">token</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">apikey</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"Did not find 'apikey' or 'token',"</span>
@@ -392,9 +392,6 @@
         <span class="k">elif</span> <span class="n">apikey</span><span class="p">:</span>
             <span class="n">check_for_attribute</span><span class="p">(</span><span class="n">apikey</span><span class="p">,</span> <span class="s2">"apikey"</span><span class="p">,</span> <span class="s2">"WATSONX_APIKEY"</span><span class="p">)</span>
             <span class="n">check_for_attribute</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="s2">"username"</span><span class="p">,</span> <span class="s2">"WATSONX_USERNAME"</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">instance_id</span><span class="p">:</span>
-            <span class="n">check_for_attribute</span><span class="p">(</span><span class="n">instance_id</span><span class="p">,</span> <span class="s2">"instance_id"</span><span class="p">,</span> <span class="s2">"WATSONX_INSTANCE_ID"</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">Credentials</span><span class="p">(</span>
         <span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="o">.</span><span class="n">get_secret_value</span><span class="p">()</span> <span class="k">if</span> <span class="n">url</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>

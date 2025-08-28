@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 27, 2025" name="docbuild:last-update"/>
+<meta content="Aug 28, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -233,14 +233,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">TYPE_CHECKING</span><span class="p">,</span>
     <span class="n">Any</span><span class="p">,</span>
-    <span class="n">AsyncIterable</span><span class="p">,</span>
-    <span class="n">Awaitable</span><span class="p">,</span>
     <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">Dict</span><span class="p">,</span>
-    <span class="n">Iterable</span><span class="p">,</span>
     <span class="n">Literal</span><span class="p">,</span>
     <span class="n">NamedTuple</span><span class="p">,</span>
-    <span class="n">Sequence</span><span class="p">,</span>
     <span class="n">TypeVar</span><span class="p">,</span>
     <span class="n">Union</span><span class="p">,</span>
     <span class="n">cast</span><span class="p">,</span>
@@ -255,8 +250,6 @@
     <span class="n">CollectionRerankOptions</span><span class="p">,</span>
     <span class="n">VectorServiceOptions</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.vectorstores.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">maximal_marginal_relevance</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">gather_with_concurrency</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.vectorstores</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorStore</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
@@ -284,7 +277,17 @@
     <span class="n">_DefaultVSDocumentCodec</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="n">is_simd_available</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">simsimd</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">simd</span>
+
+    <span class="n">is_simd_available</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">pass</span>
+
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncIterable</span><span class="p">,</span> <span class="n">Awaitable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span>
+
     <span class="kn">from</span><span class="w"> </span><span class="nn">astrapy.api_options</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIOptions</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">astrapy.authentication</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
         <span class="n">EmbeddingHeadersProvider</span><span class="p">,</span>
@@ -294,11 +297,12 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">astrapy.cursors</span><span class="w"> </span><span class="kn">import</span> <span class="n">RerankedResult</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">astrapy.info</span><span class="w"> </span><span class="kn">import</span> <span class="n">RerankServiceOptions</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">astrapy.results</span><span class="w"> </span><span class="kn">import</span> <span class="n">CollectionUpdateResult</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">Embeddings</span>
 
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T"</span><span class="p">)</span>
 <span class="n">U</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"U"</span><span class="p">)</span>
-<span class="n">DocDict</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>  <span class="c1"># dicts expressing entries to insert</span>
+<span class="n">DocDict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>  <span class="c1"># dicts expressing entries to insert</span>
 
 <span class="c1"># error code to check for during bulk insertions</span>
 <span class="n">DOCUMENT_ALREADY_EXISTS_API_ERROR_CODE</span> <span class="o">=</span> <span class="s2">"DOCUMENT_ALREADY_EXISTS"</span>
@@ -539,6 +543,75 @@
         <span class="sa">f</span><span class="s2">": ignore '</span><span class="si">{</span><span class="n">DOCUMENT_ALREADY_EXISTS_API_ERROR_CODE</span><span class="si">}</span><span class="s2">'.)"</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">err_msg</span>
+
+
+<span class="n">_Matrix</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cosine_similarity</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">_Matrix</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">_Matrix</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Row-wise cosine similarity between two equal-width matrices."""</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Number of columns in X and Y must be the same. X has shape </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> "</span>
+            <span class="sa">f</span><span class="s2">"and Y has shape </span><span class="si">{</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">."</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">is_simd_available</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">simd</span><span class="o">.</span><span class="n">cdist</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">"cosine"</span><span class="p">))</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+        <span class="s2">"Unable to use simsimd, defaulting to NumPy implementation. If you want "</span>
+        <span class="s2">"to use simsimd please install with `pip install simsimd`."</span>
+    <span class="p">)</span>
+    <span class="n">x_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">y_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># Ignore divide by zero errors run time warnings as those are handled below.</span>
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+        <span class="n">similarity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">x_norm</span><span class="p">,</span> <span class="n">y_norm</span><span class="p">)</span>
+    <span class="n">similarity</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">similarity</span><span class="p">)</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">similarity</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="n">similarity</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_maximal_marginal_relevance</span><span class="p">(</span>
+    <span class="n">query_embedding</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">embedding_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+    <span class="n">lambda_mult</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Calculate maximal marginal relevance."""</span>
+    <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">embedding_list</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">query_embedding</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">query_embedding</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">query_embedding</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">similarity_to_query</span> <span class="o">=</span> <span class="n">_cosine_similarity</span><span class="p">(</span><span class="n">query_embedding</span><span class="p">,</span> <span class="n">embedding_list</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">most_similar</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">similarity_to_query</span><span class="p">))</span>
+    <span class="n">idxs</span> <span class="o">=</span> <span class="p">[</span><span class="n">most_similar</span><span class="p">]</span>
+    <span class="n">selected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">embedding_list</span><span class="p">[</span><span class="n">most_similar</span><span class="p">]])</span>
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">idxs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">min</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">embedding_list</span><span class="p">)):</span>
+        <span class="n">best_score</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="n">idx_to_add</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">similarity_to_selected</span> <span class="o">=</span> <span class="n">_cosine_similarity</span><span class="p">(</span><span class="n">embedding_list</span><span class="p">,</span> <span class="n">selected</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">query_score</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">similarity_to_query</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idxs</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">redundant_score</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">similarity_to_selected</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">equation_score</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">lambda_mult</span> <span class="o">*</span> <span class="n">query_score</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">lambda_mult</span><span class="p">)</span> <span class="o">*</span> <span class="n">redundant_score</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">equation_score</span> <span class="o">&gt;</span> <span class="n">best_score</span><span class="p">:</span>
+                <span class="n">best_score</span> <span class="o">=</span> <span class="n">equation_score</span>
+                <span class="n">idx_to_add</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="n">idxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx_to_add</span><span class="p">)</span>
+        <span class="n">selected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">selected</span><span class="p">,</span> <span class="p">[</span><span class="n">embedding_list</span><span class="p">[</span><span class="n">idx_to_add</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">idxs</span>
 
 
 <div class="viewcode-block" id="AstraDBVectorStoreError">
@@ -1100,8 +1173,8 @@
             <span class="n">bulk_delete_concurrency</span> <span class="ow">or</span> <span class="n">MAX_CONCURRENT_DOCUMENT_DELETIONS</span>
         <span class="p">)</span>
 
-        <span class="n">_setup_mode</span><span class="p">:</span> <span class="n">SetupMode</span>
-        <span class="n">_embedding_dimension</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">Awaitable</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+        <span class="n">setup_mode_</span><span class="p">:</span> <span class="n">SetupMode</span>
+        <span class="n">embedding_dimension</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">Awaitable</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">has_lexical</span><span class="p">:</span> <span class="nb">bool</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">has_hybrid</span><span class="p">:</span> <span class="nb">bool</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search</span><span class="p">:</span> <span class="nb">bool</span>  <span class="c1"># affecting the actual behaviour when running searches</span>
@@ -1112,11 +1185,11 @@
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                 <span class="s2">"vector store default init, collection '</span><span class="si">%s</span><span class="s2">'"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span>
             <span class="p">)</span>
-            <span class="n">_setup_mode</span> <span class="o">=</span> <span class="n">SetupMode</span><span class="o">.</span><span class="n">SYNC</span> <span class="k">if</span> <span class="n">setup_mode</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">setup_mode</span>
-            <span class="n">_embedding_dimension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_embedding_dimension</span><span class="p">(</span><span class="n">_setup_mode</span><span class="p">)</span>
+            <span class="n">setup_mode_</span> <span class="o">=</span> <span class="n">SetupMode</span><span class="o">.</span><span class="n">SYNC</span> <span class="k">if</span> <span class="n">setup_mode</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">setup_mode</span>
+            <span class="n">embedding_dimension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_embedding_dimension</span><span class="p">(</span><span class="n">setup_mode_</span><span class="p">)</span>
             <span class="c1"># determine vectorize/nonvectorize</span>
             <span class="n">has_vectorize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection_vector_service_options</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="n">_content_field</span> <span class="o">=</span> <span class="n">_normalize_content_field</span><span class="p">(</span>
+            <span class="n">content_field_</span> <span class="o">=</span> <span class="n">_normalize_content_field</span><span class="p">(</span>
                 <span class="n">content_field</span><span class="p">,</span>
                 <span class="n">is_autodetect</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                 <span class="n">has_vectorize</span><span class="o">=</span><span class="n">has_vectorize</span><span class="p">,</span>
@@ -1127,12 +1200,12 @@
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">collection_lexical</span><span class="p">,</span> <span class="n">CollectionLexicalOptions</span><span class="p">)</span>
                 <span class="k">else</span> <span class="p">(</span><span class="n">collection_lexical</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
             <span class="p">)</span>
-            <span class="n">_has_reranking</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">has_reranking</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">collection_rerank</span><span class="o">.</span><span class="n">enabled</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">collection_rerank</span><span class="p">,</span> <span class="n">CollectionRerankOptions</span><span class="p">)</span>
                 <span class="k">else</span> <span class="p">(</span><span class="n">collection_rerank</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
             <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">has_hybrid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_lexical</span> <span class="ow">and</span> <span class="n">_has_reranking</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">has_hybrid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_lexical</span> <span class="ow">and</span> <span class="n">has_reranking</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search</span> <span class="o">=</span> <span class="n">_decide_hybrid_search_setting</span><span class="p">(</span>
                 <span class="n">required_hybrid_search</span><span class="o">=</span><span class="n">hybrid_search</span><span class="p">,</span>
@@ -1146,7 +1219,7 @@
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">document_codec</span> <span class="o">=</span> <span class="n">_DefaultVSDocumentCodec</span><span class="p">(</span>
-                    <span class="n">content_field</span><span class="o">=</span><span class="n">_content_field</span><span class="p">,</span>
+                    <span class="n">content_field</span><span class="o">=</span><span class="n">content_field_</span><span class="p">,</span>
                     <span class="n">ignore_invalid_documents</span><span class="o">=</span><span class="n">ignore_invalid_documents</span><span class="p">,</span>
                     <span class="n">has_lexical</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">has_lexical</span><span class="p">,</span>
                 <span class="p">)</span>
@@ -1173,7 +1246,7 @@
                 <span class="n">collection_lexical</span><span class="o">=</span><span class="n">collection_lexical</span><span class="p">,</span>
                 <span class="n">collection_rerank</span><span class="o">=</span><span class="n">collection_rerank</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">_setup_mode</span> <span class="o">=</span> <span class="n">SetupMode</span><span class="o">.</span><span class="n">OFF</span>
+            <span class="n">setup_mode_</span> <span class="o">=</span> <span class="n">SetupMode</span><span class="o">.</span><span class="n">OFF</span>
 
             <span class="c1"># fetch collection intelligence</span>
             <span class="n">c_descriptor</span><span class="p">,</span> <span class="n">c_documents</span> <span class="o">=</span> <span class="n">_survey_collection</span><span class="p">(</span>
@@ -1194,7 +1267,7 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">c_vector_options</span><span class="p">:</span>
                 <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Non-vector collection detected."</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-            <span class="n">_embedding_dimension</span> <span class="o">=</span> <span class="n">c_vector_options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"dimension"</span><span class="p">)</span>
+            <span class="n">embedding_dimension</span> <span class="o">=</span> <span class="n">c_vector_options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"dimension"</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">collection_vector_service_options</span> <span class="o">=</span> <span class="n">c_vector_options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"service"</span><span class="p">)</span>
             <span class="n">has_vectorize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">collection_vector_service_options</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"vector store autodetect: has_vectorize = </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">has_vectorize</span><span class="p">)</span>
@@ -1223,11 +1296,11 @@
                 <span class="n">document_codec</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">document_codec</span><span class="p">,</span>
             <span class="p">)</span>
 
-            <span class="n">_has_reranking</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">has_reranking</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">c_descriptor</span><span class="o">.</span><span class="n">definition</span><span class="o">.</span><span class="n">rerank</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                 <span class="ow">and</span> <span class="n">c_descriptor</span><span class="o">.</span><span class="n">definition</span><span class="o">.</span><span class="n">rerank</span><span class="o">.</span><span class="n">enabled</span>
             <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">has_hybrid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_lexical</span> <span class="ow">and</span> <span class="n">_has_reranking</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">has_hybrid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_lexical</span> <span class="ow">and</span> <span class="n">has_reranking</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">hybrid_search</span> <span class="o">=</span> <span class="n">_decide_hybrid_search_setting</span><span class="p">(</span>
                 <span class="n">required_hybrid_search</span><span class="o">=</span><span class="n">hybrid_search</span><span class="p">,</span>
@@ -1254,9 +1327,9 @@
             <span class="n">api_endpoint</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">api_endpoint</span><span class="p">,</span>
             <span class="n">keyspace</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">namespace</span><span class="p">,</span>
             <span class="n">environment</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span>
-            <span class="n">setup_mode</span><span class="o">=</span><span class="n">_setup_mode</span><span class="p">,</span>
+            <span class="n">setup_mode</span><span class="o">=</span><span class="n">setup_mode_</span><span class="p">,</span>
             <span class="n">pre_delete_collection</span><span class="o">=</span><span class="n">pre_delete_collection</span><span class="p">,</span>
-            <span class="n">embedding_dimension</span><span class="o">=</span><span class="n">_embedding_dimension</span><span class="p">,</span>
+            <span class="n">embedding_dimension</span><span class="o">=</span><span class="n">embedding_dimension</span><span class="p">,</span>
             <span class="n">metric</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span>
             <span class="n">requested_indexing_policy</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">indexing_policy</span><span class="p">,</span>
             <span class="n">default_indexing_policy</span><span class="o">=</span><span class="p">(</span>
@@ -1505,8 +1578,8 @@
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">"No ids provided to delete."</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
-        <span class="n">_max_workers</span> <span class="o">=</span> <span class="n">concurrency</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_delete_concurrency</span>
-        <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">_max_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">tpe</span><span class="p">:</span>
+        <span class="n">max_workers</span> <span class="o">=</span> <span class="n">concurrency</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_delete_concurrency</span>
+        <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">tpe</span><span class="p">:</span>
             <span class="n">_</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
                 <span class="n">tpe</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">delete_by_document_id</span><span class="p">,</span>
@@ -1548,9 +1621,9 @@
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">"No ids provided to delete."</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
-        <span class="n">_max_workers</span> <span class="o">=</span> <span class="n">concurrency</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_delete_concurrency</span>
+        <span class="n">max_workers</span> <span class="o">=</span> <span class="n">concurrency</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_delete_concurrency</span>
         <span class="k">await</span> <span class="n">gather_with_concurrency</span><span class="p">(</span>
-            <span class="n">_max_workers</span><span class="p">,</span> <span class="o">*</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">adelete_by_document_id</span><span class="p">(</span><span class="n">doc_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc_id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
+            <span class="n">max_workers</span><span class="p">,</span> <span class="o">*</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">adelete_by_document_id</span><span class="p">(</span><span class="n">doc_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc_id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span></div>
 
@@ -1763,7 +1836,7 @@
             <span class="c1"># here, assume all in err.exceptions is a DataAPIResponseException:</span>
             <span class="n">error_codes</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="n">err_desc</span><span class="o">.</span><span class="n">error_code</span>
-                <span class="k">for</span> <span class="n">in_err</span> <span class="ow">in</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">DataAPIResponseException</span><span class="p">],</span> <span class="n">err</span><span class="o">.</span><span class="n">exceptions</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">in_err</span> <span class="ow">in</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"list[DataAPIResponseException]"</span><span class="p">,</span> <span class="n">err</span><span class="o">.</span><span class="n">exceptions</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">err_desc</span> <span class="ow">in</span> <span class="n">in_err</span><span class="o">.</span><span class="n">error_descriptors</span>
             <span class="p">}</span>
             <span class="k">if</span> <span class="n">error_codes</span> <span class="o">==</span> <span class="p">{</span><span class="n">DOCUMENT_ALREADY_EXISTS_API_ERROR_CODE</span><span class="p">}:</span>
@@ -1787,11 +1860,11 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_codec</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">document</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ids_to_replace</span>
             <span class="p">]</span>
 
-            <span class="n">_max_workers</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">max_workers</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">overwrite_concurrency</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_insert_overwrite_concurrency</span>
             <span class="p">)</span>
             <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span>
-                <span class="n">max_workers</span><span class="o">=</span><span class="n">_max_workers</span><span class="p">,</span>
+                <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
             <span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
 
                 <span class="k">def</span><span class="w"> </span><span class="nf">_replace_document</span><span class="p">(</span>
@@ -1909,7 +1982,7 @@
             <span class="c1"># here, assume all in err.exceptions is a DataAPIResponseException:</span>
             <span class="n">error_codes</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="n">err_desc</span><span class="o">.</span><span class="n">error_code</span>
-                <span class="k">for</span> <span class="n">in_err</span> <span class="ow">in</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">DataAPIResponseException</span><span class="p">],</span> <span class="n">err</span><span class="o">.</span><span class="n">exceptions</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">in_err</span> <span class="ow">in</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"list[DataAPIResponseException]"</span><span class="p">,</span> <span class="n">err</span><span class="o">.</span><span class="n">exceptions</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">err_desc</span> <span class="ow">in</span> <span class="n">in_err</span><span class="o">.</span><span class="n">error_descriptors</span>
             <span class="p">}</span>
             <span class="k">if</span> <span class="n">error_codes</span> <span class="o">==</span> <span class="p">{</span><span class="n">DOCUMENT_ALREADY_EXISTS_API_ERROR_CODE</span><span class="p">}:</span>
@@ -1937,14 +2010,14 @@
                 <span class="n">overwrite_concurrency</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_insert_overwrite_concurrency</span><span class="p">,</span>
             <span class="p">)</span>
 
-            <span class="n">_async_collection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">astra_env</span><span class="o">.</span><span class="n">async_collection</span>
+            <span class="n">async_collection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">astra_env</span><span class="o">.</span><span class="n">async_collection</span>
 
             <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_replace_document</span><span class="p">(</span>
                 <span class="n">document</span><span class="p">:</span> <span class="n">DocDict</span><span class="p">,</span>
             <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CollectionUpdateResult</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
                 <span class="k">async</span> <span class="k">with</span> <span class="n">sem</span><span class="p">:</span>
                     <span class="n">doc_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">document_codec</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">document</span><span class="p">)</span>
-                    <span class="k">return</span> <span class="k">await</span> <span class="n">_async_collection</span><span class="o">.</span><span class="n">replace_one</span><span class="p">(</span>
+                    <span class="k">return</span> <span class="k">await</span> <span class="n">async_collection</span><span class="o">.</span><span class="n">replace_one</span><span class="p">(</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">document_codec</span><span class="o">.</span><span class="n">encode_query</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="n">doc_id</span><span class="p">]),</span>
                         <span class="n">document</span><span class="p">,</span>
                     <span class="p">),</span> <span class="n">doc_id</span>
@@ -1998,9 +2071,9 @@
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">astra_env</span><span class="o">.</span><span class="n">ensure_db_setup</span><span class="p">()</span>
 
-        <span class="n">_max_workers</span> <span class="o">=</span> <span class="n">overwrite_concurrency</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_insert_overwrite_concurrency</span>
+        <span class="n">max_workers</span> <span class="o">=</span> <span class="n">overwrite_concurrency</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_insert_overwrite_concurrency</span>
         <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span>
-            <span class="n">max_workers</span><span class="o">=</span><span class="n">_max_workers</span><span class="p">,</span>
+            <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
         <span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
 
             <span class="k">def</span><span class="w"> </span><span class="nf">_update_document</span><span class="p">(</span>
@@ -2056,7 +2129,7 @@
             <span class="n">overwrite_concurrency</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">bulk_insert_overwrite_concurrency</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">_async_collection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">astra_env</span><span class="o">.</span><span class="n">async_collection</span>
+        <span class="n">async_collection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">astra_env</span><span class="o">.</span><span class="n">async_collection</span>
 
         <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_update_document</span><span class="p">(</span>
             <span class="n">id_md_pair</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">],</span>
@@ -2064,7 +2137,7 @@
             <span class="n">document_id</span><span class="p">,</span> <span class="n">update_metadata</span> <span class="o">=</span> <span class="n">id_md_pair</span>
             <span class="n">encoded_metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter_to_query</span><span class="p">(</span><span class="n">update_metadata</span><span class="p">)</span>
             <span class="k">async</span> <span class="k">with</span> <span class="n">sem</span><span class="p">:</span>
-                <span class="k">return</span> <span class="k">await</span> <span class="n">_async_collection</span><span class="o">.</span><span class="n">update_one</span><span class="p">(</span>
+                <span class="k">return</span> <span class="k">await</span> <span class="n">async_collection</span><span class="o">.</span><span class="n">update_one</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">document_codec</span><span class="o">.</span><span class="n">encode_query</span><span class="p">(</span><span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="n">document_id</span><span class="p">]),</span>
                     <span class="p">{</span><span class="s2">"$set"</span><span class="p">:</span> <span class="n">encoded_metadata</span><span class="p">},</span>
                 <span class="p">)</span>
@@ -2283,7 +2356,7 @@
         <span class="k">if</span> <span class="n">include_sort_vector</span><span class="p">:</span>
             <span class="c1"># the codec option in the AstraDBEnv class disables DataAPIVectors here:</span>
             <span class="n">sort_vector</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
-                <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="kc">None</span><span class="p">],</span>
+                <span class="s2">"Union[list[float], None]"</span><span class="p">,</span>
                 <span class="p">(</span><span class="n">find_raw_iterator</span><span class="o">.</span><span class="n">get_sort_vector</span><span class="p">()</span> <span class="k">if</span> <span class="n">include_sort_vector</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
             <span class="p">)</span>
             <span class="k">return</span> <span class="n">sort_vector</span><span class="p">,</span> <span class="n">final_doc_iterator</span>
@@ -2543,7 +2616,7 @@
         <span class="k">if</span> <span class="n">include_sort_vector</span><span class="p">:</span>
             <span class="c1"># the codec option in the AstraDBEnv class disables DataAPIVectors here:</span>
             <span class="n">sort_vector</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
-                <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="kc">None</span><span class="p">],</span>
+                <span class="s2">"Union[list[float], None]"</span><span class="p">,</span>
                 <span class="p">(</span>
                     <span class="k">await</span> <span class="n">find_raw_iterator</span><span class="o">.</span><span class="n">get_sort_vector</span><span class="p">()</span>
                     <span class="k">if</span> <span class="n">include_sort_vector</span>
@@ -3039,7 +3112,7 @@
         <span class="p">)</span>
         <span class="c1"># doc is a Document and sim is a float:</span>
         <span class="k">return</span> <span class="p">[</span>
-            <span class="n">cast</span><span class="p">(</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">sim</span><span class="p">,</span> <span class="n">did</span><span class="p">))</span>
+            <span class="n">cast</span><span class="p">(</span><span class="s2">"tuple[Document, float, str]"</span><span class="p">,</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">sim</span><span class="p">,</span> <span class="n">did</span><span class="p">))</span>
             <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">did</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">sim</span> <span class="ow">in</span> <span class="n">hits_ite</span>
         <span class="p">]</span>
 
@@ -3067,7 +3140,7 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">cast</span><span class="p">(</span>
-                <span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+                <span class="s2">"tuple[Document, float, str]"</span><span class="p">,</span>
                 <span class="p">(</span>
                     <span class="n">decoded_tuple</span><span class="o">.</span><span class="n">document</span><span class="p">,</span>
                     <span class="n">decoded_tuple</span><span class="o">.</span><span class="n">similarity</span><span class="p">,</span>
@@ -3356,7 +3429,7 @@
         <span class="p">)</span>
         <span class="c1"># doc is a Document and sim is a float:</span>
         <span class="k">return</span> <span class="p">[</span>
-            <span class="n">cast</span><span class="p">(</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">sim</span><span class="p">,</span> <span class="n">did</span><span class="p">))</span>
+            <span class="n">cast</span><span class="p">(</span><span class="s2">"tuple[Document, float, str]"</span><span class="p">,</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">sim</span><span class="p">,</span> <span class="n">did</span><span class="p">))</span>
             <span class="k">async</span> <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">did</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">sim</span> <span class="ow">in</span> <span class="n">hits_ite</span>
         <span class="p">]</span>
 
@@ -3384,7 +3457,7 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">cast</span><span class="p">(</span>
-                <span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+                <span class="s2">"tuple[Document, float, str]"</span><span class="p">,</span>
                 <span class="p">(</span>
                     <span class="n">decoded_tuple</span><span class="o">.</span><span class="n">document</span><span class="p">,</span>
                     <span class="n">decoded_tuple</span><span class="o">.</span><span class="n">similarity</span><span class="p">,</span>
@@ -3571,7 +3644,7 @@
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">sort_vec</span><span class="p">,</span>
             <span class="p">[</span>
-                <span class="n">cast</span><span class="p">(</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">emb</span><span class="p">))</span>
+                <span class="n">cast</span><span class="p">(</span><span class="s2">"tuple[Document, list[float]]"</span><span class="p">,</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">emb</span><span class="p">))</span>
                 <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">emb</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">hits_ite</span>
             <span class="p">],</span>
         <span class="p">)</span>
@@ -3601,7 +3674,7 @@
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">sort_vec</span><span class="p">,</span>
             <span class="p">[</span>
-                <span class="n">cast</span><span class="p">(</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">emb</span><span class="p">))</span>
+                <span class="n">cast</span><span class="p">(</span><span class="s2">"tuple[Document, list[float]]"</span><span class="p">,</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">emb</span><span class="p">))</span>
                 <span class="k">async</span> <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">emb</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">hits_ite</span>
             <span class="p">],</span>
         <span class="p">)</span>
@@ -3623,7 +3696,7 @@
         <span class="p">)</span>
         <span class="c1"># this is list[tuple[Document, list[float]]]:</span>
         <span class="n">prefetch_hit_pairs</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
-            <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]],</span>
+            <span class="s2">"list[tuple[Document, list[float]]]"</span><span class="p">,</span>
             <span class="p">[(</span><span class="n">doc</span><span class="p">,</span> <span class="n">emb</span><span class="p">)</span> <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">emb</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">hits_ite</span><span class="p">],</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">sort_vec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -3653,7 +3726,7 @@
         <span class="p">)</span>
         <span class="c1"># this is list[tuple[Document, list[float]]]:</span>
         <span class="n">prefetch_hit_pairs</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
-            <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]],</span>
+            <span class="s2">"list[tuple[Document, list[float]]]"</span><span class="p">,</span>
             <span class="p">[(</span><span class="n">doc</span><span class="p">,</span> <span class="n">emb</span><span class="p">)</span> <span class="k">async</span> <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">emb</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">hits_ite</span><span class="p">],</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">sort_vec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -3673,9 +3746,9 @@
         <span class="n">lambda_mult</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">prefetch_hit_pairs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Document</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
-        <span class="n">mmr_chosen_indices</span> <span class="o">=</span> <span class="n">maximal_marginal_relevance</span><span class="p">(</span>
+        <span class="n">mmr_chosen_indices</span> <span class="o">=</span> <span class="n">_maximal_marginal_relevance</span><span class="p">(</span>
             <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">embedding</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
-            <span class="p">[</span><span class="n">hit_pair</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">hit_pair</span> <span class="ow">in</span> <span class="n">prefetch_hit_pairs</span><span class="p">],</span>
+            <span class="p">[</span><span class="n">embedding</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">embedding</span> <span class="ow">in</span> <span class="n">prefetch_hit_pairs</span><span class="p">],</span>
             <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
             <span class="n">lambda_mult</span><span class="o">=</span><span class="n">lambda_mult</span><span class="p">,</span>
         <span class="p">)</span>
@@ -3898,9 +3971,9 @@
         <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">AstraDBVectorStore</span><span class="p">],</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AstraDBVectorStore</span><span class="p">:</span>
-        <span class="n">_args</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfullargspec</span><span class="p">(</span><span class="n">AstraDBVectorStore</span><span class="o">.</span><span class="fm">__init__</span><span class="p">)</span><span class="o">.</span><span class="n">args</span>
-        <span class="n">_kwargs</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfullargspec</span><span class="p">(</span><span class="n">AstraDBVectorStore</span><span class="o">.</span><span class="fm">__init__</span><span class="p">)</span><span class="o">.</span><span class="n">kwonlyargs</span>
-        <span class="n">known_kwarg_keys</span> <span class="o">=</span> <span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">_args</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">_kwargs</span><span class="p">))</span> <span class="o">-</span> <span class="p">{</span><span class="s2">"self"</span><span class="p">}</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfullargspec</span><span class="p">(</span><span class="n">AstraDBVectorStore</span><span class="o">.</span><span class="fm">__init__</span><span class="p">)</span><span class="o">.</span><span class="n">args</span>
+        <span class="n">kwargs_</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfullargspec</span><span class="p">(</span><span class="n">AstraDBVectorStore</span><span class="o">.</span><span class="fm">__init__</span><span class="p">)</span><span class="o">.</span><span class="n">kwonlyargs</span>
+        <span class="n">known_kwarg_keys</span> <span class="o">=</span> <span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">kwargs_</span><span class="p">))</span> <span class="o">-</span> <span class="p">{</span><span class="s2">"self"</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="n">unknown_kwarg_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="n">known_kwarg_keys</span>
             <span class="k">if</span> <span class="n">unknown_kwarg_keys</span><span class="p">:</span>
@@ -3946,22 +4019,21 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            an ``AstraDBVectorStore`` vectorstore.</span>
 <span class="sd">        """</span>
-        <span class="n">_add_texts_inspection</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfullargspec</span><span class="p">(</span><span class="n">AstraDBVectorStore</span><span class="o">.</span><span class="n">add_texts</span><span class="p">)</span>
-        <span class="n">_method_args</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="nb">set</span><span class="p">(</span><span class="n">_add_texts_inspection</span><span class="o">.</span><span class="n">kwonlyargs</span><span class="p">)</span>
-            <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">_add_texts_inspection</span><span class="o">.</span><span class="n">kwonlyargs</span><span class="p">)</span>
+        <span class="n">add_texts_inspection</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfullargspec</span><span class="p">(</span><span class="n">AstraDBVectorStore</span><span class="o">.</span><span class="n">add_texts</span><span class="p">)</span>
+        <span class="n">method_args</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">set</span><span class="p">(</span><span class="n">add_texts_inspection</span><span class="o">.</span><span class="n">kwonlyargs</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">add_texts_inspection</span><span class="o">.</span><span class="n">kwonlyargs</span><span class="p">)</span>
         <span class="p">)</span> <span class="o">-</span> <span class="p">{</span><span class="s2">"self"</span><span class="p">,</span> <span class="s2">"texts"</span><span class="p">,</span> <span class="s2">"metadatas"</span><span class="p">,</span> <span class="s2">"ids"</span><span class="p">}</span>
-        <span class="n">_init_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_method_args</span><span class="p">}</span>
-        <span class="n">_method_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">_method_args</span><span class="p">}</span>
+        <span class="n">init_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">method_args</span><span class="p">}</span>
+        <span class="n">method_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">method_args</span><span class="p">}</span>
         <span class="n">astra_db_store</span> <span class="o">=</span> <span class="n">AstraDBVectorStore</span><span class="o">.</span><span class="n">_from_kwargs</span><span class="p">(</span>
             <span class="n">embedding</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">_init_kwargs</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">init_kwargs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">astra_db_store</span><span class="o">.</span><span class="n">add_texts</span><span class="p">(</span>
             <span class="n">texts</span><span class="o">=</span><span class="n">texts</span><span class="p">,</span>
             <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span>
             <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">_method_kwargs</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">method_kwargs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">astra_db_store</span></div>
 
@@ -3993,22 +4065,22 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            an ``AstraDBVectorStore`` vectorstore.</span>
 <span class="sd">        """</span>
-        <span class="n">_aadd_texts_inspection</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfullargspec</span><span class="p">(</span><span class="n">AstraDBVectorStore</span><span class="o">.</span><span class="n">aadd_texts</span><span class="p">)</span>
-        <span class="n">_method_args</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="nb">set</span><span class="p">(</span><span class="n">_aadd_texts_inspection</span><span class="o">.</span><span class="n">kwonlyargs</span><span class="p">)</span>
-            <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">_aadd_texts_inspection</span><span class="o">.</span><span class="n">kwonlyargs</span><span class="p">)</span>
+        <span class="n">aadd_texts_inspection</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfullargspec</span><span class="p">(</span><span class="n">AstraDBVectorStore</span><span class="o">.</span><span class="n">aadd_texts</span><span class="p">)</span>
+        <span class="n">method_args</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">set</span><span class="p">(</span><span class="n">aadd_texts_inspection</span><span class="o">.</span><span class="n">kwonlyargs</span><span class="p">)</span>
+            <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">aadd_texts_inspection</span><span class="o">.</span><span class="n">kwonlyargs</span><span class="p">)</span>
         <span class="p">)</span> <span class="o">-</span> <span class="p">{</span><span class="s2">"self"</span><span class="p">,</span> <span class="s2">"texts"</span><span class="p">,</span> <span class="s2">"metadatas"</span><span class="p">,</span> <span class="s2">"ids"</span><span class="p">}</span>
-        <span class="n">_init_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_method_args</span><span class="p">}</span>
-        <span class="n">_method_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">_method_args</span><span class="p">}</span>
+        <span class="n">init_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">method_args</span><span class="p">}</span>
+        <span class="n">method_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">method_args</span><span class="p">}</span>
         <span class="n">astra_db_store</span> <span class="o">=</span> <span class="n">AstraDBVectorStore</span><span class="o">.</span><span class="n">_from_kwargs</span><span class="p">(</span>
             <span class="n">embedding</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">_init_kwargs</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">init_kwargs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">await</span> <span class="n">astra_db_store</span><span class="o">.</span><span class="n">aadd_texts</span><span class="p">(</span>
             <span class="n">texts</span><span class="o">=</span><span class="n">texts</span><span class="p">,</span>
             <span class="n">metadatas</span><span class="o">=</span><span class="n">metadatas</span><span class="p">,</span>
             <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">_method_kwargs</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">method_kwargs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">astra_db_store</span></div>
 
@@ -4056,8 +4128,8 @@
             <span class="p">)</span>
             <span class="n">ids</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"ids"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
-            <span class="n">ids</span> <span class="o">=</span> <span class="n">_ids</span> <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">the_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">the_id</span> <span class="ow">in</span> <span class="n">_ids</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">ids_</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
+            <span class="n">ids</span> <span class="o">=</span> <span class="n">ids_</span> <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">the_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">the_id</span> <span class="ow">in</span> <span class="n">ids_</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_texts</span><span class="p">(</span>
             <span class="n">texts</span><span class="p">,</span>
             <span class="n">embedding</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
@@ -4102,8 +4174,8 @@
             <span class="p">)</span>
             <span class="n">ids</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"ids"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
-            <span class="n">ids</span> <span class="o">=</span> <span class="n">_ids</span> <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">the_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">the_id</span> <span class="ow">in</span> <span class="n">_ids</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">ids_</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
+            <span class="n">ids</span> <span class="o">=</span> <span class="n">ids_</span> <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">the_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">the_id</span> <span class="ow">in</span> <span class="n">ids_</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="k">await</span> <span class="bp">cls</span><span class="o">.</span><span class="n">afrom_texts</span><span class="p">(</span>
             <span class="n">texts</span><span class="p">,</span>
             <span class="n">embedding</span><span class="o">=</span><span class="n">embedding</span><span class="p">,</span>
