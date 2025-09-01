@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 31, 2025" name="docbuild:last-update"/>
+<meta content="Sep 01, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -273,7 +273,120 @@
 <div class="viewcode-block" id="BaseOpenAI">
 <a class="viewcode-back" href="../../../openai/llms/langchain_openai.llms.base.BaseOpenAI.html#langchain_openai.llms.azure.BaseOpenAI">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseOpenAI</span><span class="p">(</span><span class="n">BaseLLM</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Base OpenAI large language model class."""</span>
+<span class="w">    </span><span class="sd">"""Base OpenAI large language model class.</span>
+
+<span class="sd">    Setup:</span>
+<span class="sd">        Install ``langchain-openai`` and set environment variable ``OPENAI_API_KEY``.</span>
+
+<span class="sd">        .. code-block:: bash</span>
+
+<span class="sd">            pip install -U langchain-openai</span>
+<span class="sd">            export OPENAI_API_KEY="your-api-key"</span>
+
+<span class="sd">    Key init args — completion params:</span>
+<span class="sd">        model_name: str</span>
+<span class="sd">            Name of OpenAI model to use.</span>
+<span class="sd">        temperature: float</span>
+<span class="sd">            Sampling temperature.</span>
+<span class="sd">        max_tokens: int</span>
+<span class="sd">            Max number of tokens to generate.</span>
+<span class="sd">        top_p: float</span>
+<span class="sd">            Total probability mass of tokens to consider at each step.</span>
+<span class="sd">        frequency_penalty: float</span>
+<span class="sd">            Penalizes repeated tokens according to frequency.</span>
+<span class="sd">        presence_penalty: float</span>
+<span class="sd">            Penalizes repeated tokens.</span>
+<span class="sd">        n: int</span>
+<span class="sd">            How many completions to generate for each prompt.</span>
+<span class="sd">        best_of: int</span>
+<span class="sd">            Generates best_of completions server-side and returns the "best".</span>
+<span class="sd">        logit_bias: Optional[dict[str, float]]</span>
+<span class="sd">            Adjust the probability of specific tokens being generated.</span>
+<span class="sd">        seed: Optional[int]</span>
+<span class="sd">            Seed for generation.</span>
+<span class="sd">        logprobs: Optional[int]</span>
+<span class="sd">            Include the log probabilities on the logprobs most likely output tokens.</span>
+<span class="sd">        streaming: bool</span>
+<span class="sd">            Whether to stream the results or not.</span>
+
+<span class="sd">    Key init args — client params:</span>
+<span class="sd">        openai_api_key: Optional[SecretStr]</span>
+<span class="sd">            OpenAI API key. If not passed in will be read from env var</span>
+<span class="sd">            ``OPENAI_API_KEY``.</span>
+<span class="sd">        openai_api_base: Optional[str]</span>
+<span class="sd">            Base URL path for API requests, leave blank if not using a proxy or</span>
+<span class="sd">            service emulator.</span>
+<span class="sd">        openai_organization: Optional[str]</span>
+<span class="sd">            OpenAI organization ID. If not passed in will be read from env</span>
+<span class="sd">            var ``OPENAI_ORG_ID``.</span>
+<span class="sd">        request_timeout: Union[float, tuple[float, float], Any, None]</span>
+<span class="sd">            Timeout for requests to OpenAI completion API.</span>
+<span class="sd">        max_retries: int</span>
+<span class="sd">            Maximum number of retries to make when generating.</span>
+<span class="sd">        batch_size: int</span>
+<span class="sd">            Batch size to use when passing multiple documents to generate.</span>
+
+<span class="sd">    See full list of supported init args and their descriptions in the params section.</span>
+
+<span class="sd">    Instantiate:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from langchain_openai.llms.base import BaseOpenAI</span>
+
+<span class="sd">            llm = BaseOpenAI(</span>
+<span class="sd">                model_name="gpt-3.5-turbo-instruct",</span>
+<span class="sd">                temperature=0.7,</span>
+<span class="sd">                max_tokens=256,</span>
+<span class="sd">                top_p=1,</span>
+<span class="sd">                frequency_penalty=0,</span>
+<span class="sd">                presence_penalty=0,</span>
+<span class="sd">                # openai_api_key="...",</span>
+<span class="sd">                # openai_api_base="...",</span>
+<span class="sd">                # openai_organization="...",</span>
+<span class="sd">                # other params...</span>
+<span class="sd">            )</span>
+
+<span class="sd">    Invoke:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            input_text = "The meaning of life is "</span>
+<span class="sd">            response = llm.invoke(input_text)</span>
+<span class="sd">            print(response)</span>
+
+<span class="sd">        .. code-block:: none</span>
+
+<span class="sd">            "a philosophical question that has been debated by thinkers and</span>
+<span class="sd">            scholars for centuries."</span>
+
+<span class="sd">    Stream:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            for chunk in llm.stream(input_text):</span>
+<span class="sd">                print(chunk, end="")</span>
+
+<span class="sd">        .. code-block:: none</span>
+
+<span class="sd">            a philosophical question that has been debated by thinkers and</span>
+<span class="sd">            scholars for centuries.</span>
+
+<span class="sd">    Async:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            response = await llm.ainvoke(input_text)</span>
+
+<span class="sd">            # stream:</span>
+<span class="sd">            # async for chunk in llm.astream(input_text):</span>
+<span class="sd">            #     print(chunk, end="")</span>
+
+<span class="sd">            # batch:</span>
+<span class="sd">            # await llm.abatch([input_text])</span>
+
+<span class="sd">        .. code-block:: none</span>
+
+<span class="sd">            "a philosophical question that has been debated by thinkers and</span>
+<span class="sd">            scholars for centuries."</span>
+
+<span class="sd">    """</span>
 
     <span class="n">client</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1">#: :meta private:</span>
     <span class="n">async_client</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1">#: :meta private:</span>
@@ -304,7 +417,7 @@
     <span class="n">openai_api_base</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">alias</span><span class="o">=</span><span class="s2">"base_url"</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="n">from_env</span><span class="p">(</span><span class="s2">"OPENAI_API_BASE"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="p">)</span>
-<span class="w">    </span><span class="sd">"""Base URL path for API requests, leave blank if not using a proxy or service </span>
+<span class="w">    </span><span class="sd">"""Base URL path for API requests, leave blank if not using a proxy or service</span>
 <span class="sd">        emulator."""</span>
     <span class="n">openai_organization</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">alias</span><span class="o">=</span><span class="s2">"organization"</span><span class="p">,</span>
@@ -340,26 +453,26 @@
     <span class="n">disallowed_special</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"all"</span><span class="p">],</span> <span class="n">Collection</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">"all"</span>
 <span class="w">    </span><span class="sd">"""Set of special tokens that are not allowed。"""</span>
     <span class="n">tiktoken_model_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">"""The model name to pass to tiktoken when using this class. </span>
-<span class="sd">    Tiktoken is used to count the number of tokens in documents to constrain </span>
-<span class="sd">    them to be under a certain limit. By default, when set to None, this will </span>
-<span class="sd">    be the same as the embedding model name. However, there are some cases </span>
-<span class="sd">    where you may want to use this Embedding class with a model name not </span>
-<span class="sd">    supported by tiktoken. This can include when using Azure embeddings or </span>
-<span class="sd">    when using one of the many model providers that expose an OpenAI-like </span>
-<span class="sd">    API but with different models. In those cases, in order to avoid erroring </span>
+<span class="w">    </span><span class="sd">"""The model name to pass to tiktoken when using this class.</span>
+<span class="sd">    Tiktoken is used to count the number of tokens in documents to constrain</span>
+<span class="sd">    them to be under a certain limit. By default, when set to None, this will</span>
+<span class="sd">    be the same as the embedding model name. However, there are some cases</span>
+<span class="sd">    where you may want to use this Embedding class with a model name not</span>
+<span class="sd">    supported by tiktoken. This can include when using Azure embeddings or</span>
+<span class="sd">    when using one of the many model providers that expose an OpenAI-like</span>
+<span class="sd">    API but with different models. In those cases, in order to avoid erroring</span>
 <span class="sd">    when tiktoken is called, you can specify a model name to use here."""</span>
     <span class="n">default_headers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">default_query</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1"># Configure a custom httpx client. See the</span>
     <span class="c1"># [httpx documentation](https://www.python-httpx.org/api/#client) for more details.</span>
     <span class="n">http_client</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">"""Optional ``httpx.Client``. Only used for sync invocations. Must specify </span>
+<span class="w">    </span><span class="sd">"""Optional ``httpx.Client``. Only used for sync invocations. Must specify</span>
 <span class="sd">        ``http_async_client`` as well if you'd like a custom client for async</span>
 <span class="sd">        invocations.</span>
 <span class="sd">    """</span>
     <span class="n">http_async_client</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">"""Optional ``httpx.AsyncClient``. Only used for async invocations. Must specify </span>
+<span class="w">    </span><span class="sd">"""Optional ``httpx.AsyncClient``. Only used for async invocations. Must specify</span>
 <span class="sd">        ``http_client`` as well if you'd like a custom client for sync invocations."""</span>
     <span class="n">extra_body</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Optional additional JSON properties to include in the request parameters when</span>

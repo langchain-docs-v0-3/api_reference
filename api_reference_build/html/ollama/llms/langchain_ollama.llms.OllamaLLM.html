@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Aug 31, 2025" name="docbuild:last-update"/>
+<meta content="Sep 01, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -303,14 +303,88 @@
 <dt class="sig sig-object py" id="langchain_ollama.llms.OllamaLLM">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">langchain_ollama.llms.</span></span><span class="sig-name descname"><span class="pre">OllamaLLM</span></span><a class="reference internal" href="../../_modules/langchain_ollama/llms.html#OllamaLLM"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_ollama.llms.OllamaLLM" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="../../core/language_models/langchain_core.language_models.llms.BaseLLM.html#langchain_core.language_models.llms.BaseLLM" title="langchain_core.language_models.llms.BaseLLM"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLLM</span></code></a></p>
-<p>OllamaLLM large language models.</p>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_ollama</span><span class="w"> </span><span class="kn">import</span> <span class="n">OllamaLLM</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">OllamaLLM</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"llama3"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"Come up with 10 names for a song about parrots"</span><span class="p">))</span>
+<p>Ollama large language models.</p>
+<dl>
+<dt>Setup:</dt><dd><p>Install <code class="docutils literal notranslate"><span class="pre">langchain-ollama</span></code> and install/run the Ollama server locally:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>langchain-ollama
+<span class="c1"># Visit https://ollama.com/download to download and install Ollama</span>
+<span class="c1"># (Linux users): start the server with ``ollama serve``</span>
 </pre></div>
 </div>
+<p>Download a model to use:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ollama<span class="w"> </span>pull<span class="w"> </span>llama3.1
+</pre></div>
+</div>
+</dd>
+<dt>Key init args — generation params:</dt><dd><dl class="simple">
+<dt>model: str</dt><dd><p>Name of the Ollama model to use (e.g. <code class="docutils literal notranslate"><span class="pre">'llama4'</span></code>).</p>
+</dd>
+<dt>temperature: Optional[float]</dt><dd><p>Sampling temperature. Higher values make output more creative.</p>
+</dd>
+<dt>num_predict: Optional[int]</dt><dd><p>Maximum number of tokens to predict.</p>
+</dd>
+<dt>top_k: Optional[int]</dt><dd><p>Limits the next token selection to the K most probable tokens.</p>
+</dd>
+<dt>top_p: Optional[float]</dt><dd><p>Nucleus sampling parameter. Higher values lead to more diverse text.</p>
+</dd>
+<dt>mirostat: Optional[int]</dt><dd><p>Enable Mirostat sampling for controlling perplexity.</p>
+</dd>
+<dt>seed: Optional[int]</dt><dd><p>Random number seed for generation reproducibility.</p>
+</dd>
+</dl>
+</dd>
+<dt>Key init args — client params:</dt><dd><dl class="simple">
+<dt>base_url: Optional[str]</dt><dd><p>Base URL where Ollama server is hosted.</p>
+</dd>
+<dt>keep_alive: Optional[Union[int, str]]</dt><dd><p>How long the model stays loaded into memory.</p>
+</dd>
+<dt>format: Literal[“”, “json”]</dt><dd><p>Specify the format of the output.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>See full list of supported init args and their descriptions in the params section.</p>
+<dl>
+<dt>Instantiate:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_ollama</span><span class="w"> </span><span class="kn">import</span> <span class="n">OllamaLLM</span>
+
+<span class="n">llm</span> <span class="o">=</span> <span class="n">OllamaLLM</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">"llama3.1"</span><span class="p">,</span>
+    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+    <span class="n">num_predict</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+    <span class="c1"># base_url="http://localhost:11434",</span>
+    <span class="c1"># other params...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+<dt>Invoke:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">input_text</span> <span class="o">=</span> <span class="s2">"The meaning of life is "</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">input_text</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>"a philosophical question that has been contemplated by humans for
+centuries..."
+</pre></div>
+</div>
+</dd>
+<dt>Stream:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">llm</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">input_text</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>a philosophical question that has been contemplated by humans for
+centuries...
+</pre></div>
+</div>
+</dd>
+<dt>Async:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span><span class="n">input_text</span><span class="p">)</span>
+
+<span class="c1"># stream:</span>
+<span class="c1"># async for chunk in llm.astream(input_text):</span>
+<span class="c1">#     print(chunk, end="")</span>
+</pre></div>
+</div>
+</dd>
+</dl>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>OllamaLLM implements the standard <a class="reference internal" href="../../core/runnables/langchain_core.runnables.base.Runnable.html#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Runnable</span> <span class="pre">Interface</span></code></a>. 🏃</p>
