@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 04, 2025" name="docbuild:last-update"/>
+<meta content="Sep 05, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -314,13 +314,7 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils.pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_basemodel_subclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_build_model_kwargs</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">BaseModel</span><span class="p">,</span>
-    <span class="n">ConfigDict</span><span class="p">,</span>
-    <span class="n">Field</span><span class="p">,</span>
-    <span class="n">SecretStr</span><span class="p">,</span>
-    <span class="n">model_validator</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">SecretStr</span><span class="p">,</span> <span class="n">model_validator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic.v1</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span> <span class="k">as</span> <span class="n">BaseModelV1</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tenacity</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">before_sleep_log</span><span class="p">,</span>
@@ -889,9 +883,15 @@
             <span class="n">function_call</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">part</span><span class="o">.</span><span class="n">function_call</span><span class="o">.</span><span class="n">name</span><span class="p">}</span>
             <span class="c1"># dump to match other function calling llm for now</span>
             <span class="n">function_call_args_dict</span> <span class="o">=</span> <span class="n">proto</span><span class="o">.</span><span class="n">Message</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">function_call</span><span class="p">)[</span><span class="s2">"args"</span><span class="p">]</span>
-            <span class="n">function_call</span><span class="p">[</span><span class="s2">"arguments"</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
-                <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">function_call_args_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">function_call_args_dict</span><span class="p">}</span>
-            <span class="p">)</span>
+
+            <span class="c1"># Fix: Correct integer-like floats from protobuf conversion</span>
+            <span class="c1"># The protobuf library sometimes converts integers to floats</span>
+            <span class="n">corrected_args</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">is_integer</span><span class="p">()</span> <span class="k">else</span> <span class="n">v</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">function_call_args_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+
+            <span class="n">function_call</span><span class="p">[</span><span class="s2">"arguments"</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">corrected_args</span><span class="p">)</span>
             <span class="n">additional_kwargs</span><span class="p">[</span><span class="s2">"function_call"</span><span class="p">]</span> <span class="o">=</span> <span class="n">function_call</span>
 
             <span class="k">if</span> <span class="n">streaming</span><span class="p">:</span>
@@ -1771,18 +1771,21 @@
                 <span class="s2">"response_modalities"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_modalities</span><span class="p">,</span>
                 <span class="s2">"thinking_config"</span><span class="p">:</span> <span class="p">(</span>
                     <span class="p">(</span>
-                        <span class="p">{</span><span class="s2">"thinking_budget"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking_budget</span><span class="p">}</span>
-                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking_budget</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                        <span class="k">else</span> <span class="p">{}</span>
+                        <span class="p">(</span>
+                            <span class="p">{</span><span class="s2">"thinking_budget"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking_budget</span><span class="p">}</span>
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking_budget</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                            <span class="k">else</span> <span class="p">{}</span>
+                        <span class="p">)</span>
+                        <span class="o">|</span> <span class="p">(</span>
+                            <span class="p">{</span><span class="s2">"include_thoughts"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_thoughts</span><span class="p">}</span>
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_thoughts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                            <span class="k">else</span> <span class="p">{}</span>
+                        <span class="p">)</span>
                     <span class="p">)</span>
-                    <span class="o">|</span> <span class="p">(</span>
-                        <span class="p">{</span><span class="s2">"include_thoughts"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_thoughts</span><span class="p">}</span>
-                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_thoughts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                        <span class="k">else</span> <span class="p">{}</span>
-                    <span class="p">)</span>
-                <span class="p">)</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking_budget</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_thoughts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thinking_budget</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_thoughts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="kc">None</span>
+                <span class="p">),</span>
             <span class="p">}</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="p">}</span>
