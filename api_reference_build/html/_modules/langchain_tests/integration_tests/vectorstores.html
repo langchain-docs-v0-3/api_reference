@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -226,7 +226,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.embeddings.fake</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeterministicFakeEmbedding</span><span class="p">,</span> <span class="n">Embeddings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeterministicFakeEmbedding</span><span class="p">,</span> <span class="n">Embeddings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.vectorstores</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorStore</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_tests.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseStandardTests</span>
@@ -234,6 +234,10 @@
 <span class="c1"># Arbitrarily chosen. Using a small embedding size</span>
 <span class="c1"># so tests are faster and easier to debug.</span>
 <span class="n">EMBEDDING_SIZE</span> <span class="o">=</span> <span class="mi">6</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sort_by_id</span><span class="p">(</span><span class="n">documents</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">documents</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">doc</span><span class="p">:</span> <span class="n">doc</span><span class="o">.</span><span class="n">id</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="VectorStoreIntegrationTests">
@@ -307,13 +311,13 @@
 <span class="sd">    .. code-block:: python</span>
 
 <span class="sd">       class TestParrotVectorStore(VectorStoreIntegrationTests):</span>
-<span class="sd">            @pytest.fixture()</span>
-<span class="sd">            def vectorstore(self) -&gt; Generator[VectorStore, None, None]:  # type: ignore</span>
-<span class="sd">                ...</span>
+<span class="sd">           @pytest.fixture()</span>
+<span class="sd">           def vectorstore(self) -&gt; Generator[VectorStore, None, None]:  # type: ignore</span>
+<span class="sd">               ...</span>
 
-<span class="sd">            @property</span>
-<span class="sd">            def has_async(self) -&gt; bool:</span>
-<span class="sd">                return False</span>
+<span class="sd">           @property</span>
+<span class="sd">           def has_async(self) -&gt; bool:</span>
+<span class="sd">               return False</span>
 
 <span class="sd">    .. note::</span>
 <span class="sd">          API references for individual test methods include troubleshooting tips.</span>
@@ -385,10 +389,13 @@
 
 <span class="sd">            If this test fails, check that:</span>
 
-<span class="sd">            1. We correctly initialize an empty vector store in the ``vectorestore`` fixture.</span>
-<span class="sd">            2. Calling ``.similarity_search`` for the top ``k`` similar documents does not threshold by score.</span>
-<span class="sd">            3. We do not mutate the original document object when adding it to the vector store (e.g., by adding an ID).</span>
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">            1. We correctly initialize an empty vector store in the ``vectorestore``</span>
+<span class="sd">               fixture.</span>
+<span class="sd">            2. Calling ``.similarity_search`` for the top ``k`` similar documents does</span>
+<span class="sd">               not threshold by score.</span>
+<span class="sd">            3. We do not mutate the original document object when adding it to the</span>
+<span class="sd">               vector store (e.g., by adding an ID).</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_sync</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Sync tests not supported."</span><span class="p">)</span>
 
@@ -603,10 +610,12 @@
         <span class="p">]</span>
         <span class="n">ids</span> <span class="o">=</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">add_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="s2">"1"</span><span class="p">,</span> <span class="s2">"2"</span><span class="p">])</span>
         <span class="n">retrieved_documents</span> <span class="o">=</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">get_by_ids</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="n">retrieved_documents</span> <span class="o">==</span> <span class="p">[</span>
-            <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
-            <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
-        <span class="p">]</span></div>
+        <span class="k">assert</span> <span class="n">_sort_by_id</span><span class="p">(</span><span class="n">retrieved_documents</span><span class="p">)</span> <span class="o">==</span> <span class="n">_sort_by_id</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="VectorStoreIntegrationTests.test_get_by_ids_missing">
@@ -660,10 +669,12 @@
 <span class="sd">                .. code-block:: python</span>
 
 <span class="sd">                    @pytest.mark.xfail(reason=("get_by_ids not implemented."))</span>
-<span class="sd">                    def test_add_documents_documents(self, vectorstore: VectorStore) -&gt; None:</span>
+<span class="sd">                    def test_add_documents_documents(</span>
+<span class="sd">                        self, vectorstore: VectorStore</span>
+<span class="sd">                    ) -&gt; None:</span>
 <span class="sd">                        super().test_add_documents_documents(vectorstore)</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_sync</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Sync tests not supported."</span><span class="p">)</span>
 
@@ -672,10 +683,12 @@
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
         <span class="p">]</span>
         <span class="n">ids</span> <span class="o">=</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">add_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">get_by_ids</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="o">==</span> <span class="p">[</span>
-            <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
-            <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
-        <span class="p">]</span></div>
+        <span class="k">assert</span> <span class="n">_sort_by_id</span><span class="p">(</span><span class="n">vectorstore</span><span class="o">.</span><span class="n">get_by_ids</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span> <span class="o">==</span> <span class="n">_sort_by_id</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="VectorStoreIntegrationTests.test_add_documents_with_existing_ids">
@@ -690,8 +703,10 @@
 
 <span class="sd">            This test also verifies that:</span>
 
-<span class="sd">            1. IDs specified in the ``Document.id`` field are assigned when adding documents.</span>
-<span class="sd">            2. If some documents include IDs and others don't string IDs are generated for the latter.</span>
+<span class="sd">            1. IDs specified in the ``Document.id`` field are assigned when adding</span>
+<span class="sd">               documents.</span>
+<span class="sd">            2. If some documents include IDs and others don't string IDs are generated</span>
+<span class="sd">               for the latter.</span>
 
 <span class="sd">            .. note::</span>
 <span class="sd">                ``get_by_ids`` was added to the ``VectorStore`` interface in</span>
@@ -701,10 +716,12 @@
 <span class="sd">                .. code-block:: python</span>
 
 <span class="sd">                    @pytest.mark.xfail(reason=("get_by_ids not implemented."))</span>
-<span class="sd">                    def test_add_documents_with_existing_ids(self, vectorstore: VectorStore) -&gt; None:</span>
+<span class="sd">                    def test_add_documents_with_existing_ids(</span>
+<span class="sd">                        self, vectorstore: VectorStore</span>
+<span class="sd">                    ) -&gt; None:</span>
 <span class="sd">                        super().test_add_documents_with_existing_ids(vectorstore)</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_sync</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Sync tests not supported."</span><span class="p">)</span>
 
@@ -714,10 +731,12 @@
         <span class="p">]</span>
         <span class="n">ids</span> <span class="o">=</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">add_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
         <span class="k">assert</span> <span class="s2">"foo"</span> <span class="ow">in</span> <span class="n">ids</span>
-        <span class="k">assert</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">get_by_ids</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="o">==</span> <span class="p">[</span>
-            <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">),</span>
-            <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
-        <span class="p">]</span></div>
+        <span class="k">assert</span> <span class="n">_sort_by_id</span><span class="p">(</span><span class="n">vectorstore</span><span class="o">.</span><span class="n">get_by_ids</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span> <span class="o">==</span> <span class="n">_sort_by_id</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">),</span>
+                <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="VectorStoreIntegrationTests.test_vectorstore_is_empty_async">
@@ -746,10 +765,13 @@
 
 <span class="sd">            If this test fails, check that:</span>
 
-<span class="sd">            1. We correctly initialize an empty vector store in the ``vectorestore`` fixture.</span>
-<span class="sd">            2. Calling ``.asimilarity_search`` for the top ``k`` similar documents does not threshold by score.</span>
-<span class="sd">            3. We do not mutate the original document object when adding it to the vector store (e.g., by adding an ID).</span>
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">            1. We correctly initialize an empty vector store in the ``vectorestore``</span>
+<span class="sd">               fixture.</span>
+<span class="sd">            2. Calling ``.asimilarity_search`` for the top ``k`` similar documents does</span>
+<span class="sd">               not threshold by score.</span>
+<span class="sd">            3. We do not mutate the original document object when adding it to the</span>
+<span class="sd">               vector store (e.g., by adding an ID).</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_async</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Async tests not supported."</span><span class="p">)</span>
 
@@ -971,10 +993,12 @@
         <span class="p">]</span>
         <span class="n">ids</span> <span class="o">=</span> <span class="k">await</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">aadd_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="s2">"1"</span><span class="p">,</span> <span class="s2">"2"</span><span class="p">])</span>
         <span class="n">retrieved_documents</span> <span class="o">=</span> <span class="k">await</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">aget_by_ids</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="n">retrieved_documents</span> <span class="o">==</span> <span class="p">[</span>
-            <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
-            <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
-        <span class="p">]</span></div>
+        <span class="k">assert</span> <span class="n">_sort_by_id</span><span class="p">(</span><span class="n">retrieved_documents</span><span class="p">)</span> <span class="o">==</span> <span class="n">_sort_by_id</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="VectorStoreIntegrationTests.test_get_by_ids_missing_async">
@@ -995,10 +1019,12 @@
 <span class="sd">                .. code-block:: python</span>
 
 <span class="sd">                    @pytest.mark.xfail(reason=("get_by_ids not implemented."))</span>
-<span class="sd">                    async def test_get_by_ids_missing(self, vectorstore: VectorStore) -&gt; None:</span>
+<span class="sd">                    async def test_get_by_ids_missing(</span>
+<span class="sd">                        self, vectorstore: VectorStore</span>
+<span class="sd">                    ) -&gt; None:</span>
 <span class="sd">                        await super().test_get_by_ids_missing(vectorstore)</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_async</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Async tests not supported."</span><span class="p">)</span>
 
@@ -1029,10 +1055,12 @@
 <span class="sd">                .. code-block:: python</span>
 
 <span class="sd">                    @pytest.mark.xfail(reason=("get_by_ids not implemented."))</span>
-<span class="sd">                    async def test_add_documents_documents(self, vectorstore: VectorStore) -&gt; None:</span>
+<span class="sd">                    async def test_add_documents_documents(</span>
+<span class="sd">                        self, vectorstore: VectorStore</span>
+<span class="sd">                    ) -&gt; None:</span>
 <span class="sd">                        await super().test_add_documents_documents(vectorstore)</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_async</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Async tests not supported."</span><span class="p">)</span>
 
@@ -1041,10 +1069,12 @@
             <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}),</span>
         <span class="p">]</span>
         <span class="n">ids</span> <span class="o">=</span> <span class="k">await</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">aadd_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="k">await</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">aget_by_ids</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="o">==</span> <span class="p">[</span>
-            <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
-            <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
-        <span class="p">]</span></div>
+        <span class="k">assert</span> <span class="n">_sort_by_id</span><span class="p">(</span><span class="k">await</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">aget_by_ids</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span> <span class="o">==</span> <span class="n">_sort_by_id</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="VectorStoreIntegrationTests.test_add_documents_with_existing_ids_async">
@@ -1061,8 +1091,10 @@
 
 <span class="sd">            This test also verifies that:</span>
 
-<span class="sd">            1. IDs specified in the ``Document.id`` field are assigned when adding documents.</span>
-<span class="sd">            2. If some documents include IDs and others don't string IDs are generated for the latter.</span>
+<span class="sd">            1. IDs specified in the ``Document.id`` field are assigned when adding</span>
+<span class="sd">               documents.</span>
+<span class="sd">            2. If some documents include IDs and others don't string IDs are generated</span>
+<span class="sd">               for the latter.</span>
 
 <span class="sd">            .. note::</span>
 <span class="sd">                ``get_by_ids`` was added to the ``VectorStore`` interface in</span>
@@ -1072,10 +1104,12 @@
 <span class="sd">                .. code-block:: python</span>
 
 <span class="sd">                    @pytest.mark.xfail(reason=("get_by_ids not implemented."))</span>
-<span class="sd">                    async def test_add_documents_with_existing_ids(self, vectorstore: VectorStore) -&gt; None:</span>
+<span class="sd">                    async def test_add_documents_with_existing_ids(</span>
+<span class="sd">                        self, vectorstore: VectorStore</span>
+<span class="sd">                    ) -&gt; None:</span>
 <span class="sd">                        await super().test_add_documents_with_existing_ids(vectorstore)</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_async</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Async tests not supported."</span><span class="p">)</span>
 
@@ -1085,10 +1119,12 @@
         <span class="p">]</span>
         <span class="n">ids</span> <span class="o">=</span> <span class="k">await</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">aadd_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
         <span class="k">assert</span> <span class="s2">"foo"</span> <span class="ow">in</span> <span class="n">ids</span>
-        <span class="k">assert</span> <span class="k">await</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">aget_by_ids</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="o">==</span> <span class="p">[</span>
-            <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">),</span>
-            <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
-        <span class="p">]</span></div>
+        <span class="k">assert</span> <span class="n">_sort_by_id</span><span class="p">(</span><span class="k">await</span> <span class="n">vectorstore</span><span class="o">.</span><span class="n">aget_by_ids</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span> <span class="o">==</span> <span class="n">_sort_by_id</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="s2">"foo"</span><span class="p">),</span>
+                <span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="s2">"bar"</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="nb">id</span><span class="o">=</span><span class="n">ids</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div>
 </div>
 
 </pre></div>

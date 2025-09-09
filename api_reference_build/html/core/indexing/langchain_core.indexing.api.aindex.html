@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -392,28 +392,19 @@ need to parallelize the indexing process regardless.</p></li>
 updated.</p></li>
 <li><p><strong>vector_store</strong> (<a class="reference internal" href="../vectorstores/langchain_core.vectorstores.base.VectorStore.html#langchain_core.vectorstores.base.VectorStore" title="langchain_core.vectorstores.base.VectorStore"><em>VectorStore</em></a><em> | </em><a class="reference internal" href="langchain_core.indexing.base.DocumentIndex.html#langchain_core.indexing.base.DocumentIndex" title="langchain_core.indexing.base.DocumentIndex"><em>DocumentIndex</em></a>) – VectorStore or DocumentIndex to index the documents into.</p></li>
 <li><p><strong>batch_size</strong> (<em>int</em>) – Batch size to use when indexing. Default is 100.</p></li>
-<li><p><strong>cleanup</strong> (<em>Literal</em><em>[</em><em>'incremental'</em><em>, </em><em>'full'</em><em>, </em><em>'scoped_full'</em><em>] </em><em>| </em><em>None</em>) – <p>How to handle clean up of documents. Default is None.
-- incremental: Cleans up all documents that haven’t been updated AND</p>
-<blockquote>
-<div><p>that are associated with source ids that were seen
-during indexing.
-Clean up is done continuously during indexing helping
-to minimize the probability of users seeing duplicated
-content.</p>
-</div></blockquote>
+<li><p><strong>cleanup</strong> (<em>Literal</em><em>[</em><em>'incremental'</em><em>, </em><em>'full'</em><em>, </em><em>'scoped_full'</em><em>] </em><em>| </em><em>None</em>) – <p>How to handle clean up of documents. Default is None.</p>
 <ul>
-<li><dl class="simple">
-<dt>full: Delete all documents that haven to been returned by the loader.</dt><dd><p>Clean up runs after all documents have been indexed.
-This means that users may see duplicated content during indexing.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>scoped_full: Similar to Full, but only deletes all documents</dt><dd><p>that haven’t been updated AND that are associated with
-source ids that were seen during indexing.</p>
-</dd>
-</dl>
-</li>
+<li><p>incremental: Cleans up all documents that haven’t been updated AND
+that are associated with source ids that were seen during indexing.
+Clean up is done continuously during indexing helping to minimize the
+probability of users seeing duplicated content.</p></li>
+<li><p>full: Delete all documents that have not been returned by the loader
+during this run of indexing.
+Clean up runs after all documents have been indexed.
+This means that users may see duplicated content during indexing.</p></li>
+<li><p>scoped_full: Similar to Full, but only deletes all documents
+that haven’t been updated AND that are associated with
+source ids that were seen during indexing.</p></li>
 <li><p>None: Do not delete any documents.</p></li>
 </ul>
 </p></li>
@@ -424,7 +415,14 @@ Default is 1_000.</p></li>
 <li><p><strong>force_update</strong> (<em>bool</em>) – Force update documents even if they are present in the
 record manager. Useful if you are re-indexing with updated embeddings.
 Default is False.</p></li>
-<li><p><strong>key_encoder</strong> (<em>Literal</em><em>[</em><em>'sha1'</em><em>, </em><em>'sha256'</em><em>, </em><em>'sha512'</em><em>, </em><em>'blake2b'</em><em>] </em><em>| </em><em>~typing.Callable</em><em>[</em><em>[</em><em>~langchain_core.documents.base.Document</em><em>]</em><em>, </em><em>str</em><em>]</em>) – <p>Hashing algorithm to use for hashing the document.
+<li><p><strong>key_encoder</strong> (<em>Literal</em><em>[</em><em>'sha1'</em><em>, </em><em>'sha256'</em><em>, </em><em>'sha512'</em><em>, </em><em>'blake2b'</em><em>] </em><em>| </em><em>~typing.Callable</em><em>[</em><em>[</em><em>~langchain_core.documents.base.Document</em><em>]</em><em>, </em><em>str</em><em>]</em>) – <p>Hashing algorithm to use for hashing the document content and
+metadata. Default is “sha1”.
+Other options include “blake2b”, “sha256”, and “sha512”.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">Added in version 0.3.66.</span></p>
+</div>
+</p></li>
+<li><p><strong>key_encoder</strong> – <p>Hashing algorithm to use for hashing the document.
 If not provided, a default encoder using SHA-1 will be used.
 SHA-1 is not collision-resistant, and a motivated attacker
 could craft two different texts that hash to the
@@ -434,17 +432,11 @@ or provide a custom and strong key encoder function to avoid this risk.</p>
 <p>When changing the key encoder, you must change the
 index as well to avoid duplicated documents in the cache.</p>
 </p></li>
-<li><p><strong>upsert_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – <dl class="simple">
-<dt>Additional keyword arguments to pass to the aadd_documents</dt><dd><p>method of the VectorStore or the aupsert method of the
-DocumentIndex. For example, you can use this to
-specify a custom vector_field:
-upsert_kwargs={“vector_field”: “embedding”}</p>
-</dd>
-</dl>
-<div class="versionadded">
-<p><span class="versionmodified added">Added in version 0.3.10.</span></p>
-</div>
-</p></li>
+<li><p><strong>upsert_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Additional keyword arguments to pass to the add_documents
+method of the VectorStore or the upsert method of the DocumentIndex.
+For example, you can use this to specify a custom vector_field:
+upsert_kwargs={“vector_field”: “embedding”}
+.. versionadded:: 0.3.10</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -458,6 +450,9 @@ were added, updated, deleted, or skipped.</p>
 <li><p><strong>ValueError</strong> – If vectorstore does not have
     “adelete” and “aadd_documents” required methods.</p></li>
 <li><p><strong>ValueError</strong> – If source_id_key is not None, but is not a string or callable.</p></li>
+<li><p><strong>TypeError</strong> – If <code class="docutils literal notranslate"><span class="pre">vector_store</span></code> is not a VectorStore or DocumentIndex.</p></li>
+<li><p><strong>AssertionError</strong> – If <code class="docutils literal notranslate"><span class="pre">source_id_key</span></code> is None when cleanup mode is
+    incremental or <code class="docutils literal notranslate"><span class="pre">scoped_full</span></code> (should be unreachable).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

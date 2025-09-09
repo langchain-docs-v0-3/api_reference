@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -225,12 +225,24 @@
 <span class="sd">Adapted from https://github.com/iterative/dvc/blob/main/dvc/dagascii.py.</span>
 <span class="sd">"""</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Edge</span> <span class="k">as</span> <span class="n">LangEdge</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">grandalf.graphs</span><span class="w"> </span><span class="kn">import</span> <span class="n">Edge</span><span class="p">,</span> <span class="n">Graph</span><span class="p">,</span> <span class="n">Vertex</span>  <span class="c1"># type: ignore[import-untyped]</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">grandalf.layouts</span><span class="w"> </span><span class="kn">import</span> <span class="n">SugiyamaLayout</span>  <span class="c1"># type: ignore[import-untyped]</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">grandalf.routing</span><span class="w"> </span><span class="kn">import</span> <span class="n">route_with_lines</span>  <span class="c1"># type: ignore[import-untyped]</span>
+
+    <span class="n">_HAS_GRANDALF</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_HAS_GRANDALF</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Edge</span> <span class="k">as</span> <span class="n">LangEdge</span>
 
 
 <div class="viewcode-block" id="VertexViewer">
@@ -282,8 +294,11 @@
 <span class="w">        </span><span class="sd">"""Create an ASCII canvas.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            cols (int): number of columns in the canvas. Should be &gt; 1.</span>
-<span class="sd">            lines (int): number of lines in the canvas. Should be &gt; 1.</span>
+<span class="sd">            cols: number of columns in the canvas. Should be ``&gt; 1``.</span>
+<span class="sd">            lines: number of lines in the canvas. Should be ``&gt; 1``.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: if canvas dimensions are invalid.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">cols</span> <span class="o">&lt;=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">lines</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Canvas dimensions should be &gt; 1"</span>
@@ -298,7 +313,11 @@
 <div class="viewcode-block" id="AsciiCanvas.draw">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.graph_ascii.AsciiCanvas.html#langchain_core.runnables.graph_ascii.AsciiCanvas.draw">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Draws ASCII canvas on the screen."""</span>
+<span class="w">        </span><span class="sd">"""Draws ASCII canvas on the screen.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The ASCII canvas string.</span>
+<span class="sd">        """</span>
         <span class="n">lines</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">linesep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
 
@@ -309,12 +328,16 @@
 <span class="w">        </span><span class="sd">"""Create a point on ASCII canvas.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            x (int): x coordinate. Should be &gt;= 0 and &lt; number of columns in</span>
+<span class="sd">            x: x coordinate. Should be ``&gt;= 0`` and ``&lt;`` number of columns in</span>
 <span class="sd">                the canvas.</span>
-<span class="sd">            y (int): y coordinate. Should be &gt;= 0 an &lt; number of lines in the</span>
+<span class="sd">            y: y coordinate. Should be ``&gt;= 0`` an ``&lt;`` number of lines in the</span>
 <span class="sd">                canvas.</span>
-<span class="sd">            char (str): character to place in the specified point on the</span>
+<span class="sd">            char: character to place in the specified point on the</span>
 <span class="sd">                canvas.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: if char is not a single character or if</span>
+<span class="sd">                coordinates are out of bounds.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">char</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">"char should be a single character"</span>
@@ -423,13 +446,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_sugiyama_layout</span><span class="p">(</span>
     <span class="n">vertices</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">edges</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">LangEdge</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">grandalf.graphs</span><span class="w"> </span><span class="kn">import</span> <span class="n">Edge</span><span class="p">,</span> <span class="n">Graph</span><span class="p">,</span> <span class="n">Vertex</span>  <span class="c1"># type: ignore[import-untyped]</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">grandalf.layouts</span><span class="w"> </span><span class="kn">import</span> <span class="n">SugiyamaLayout</span>  <span class="c1"># type: ignore[import-untyped]</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">grandalf.routing</span><span class="w"> </span><span class="kn">import</span> <span class="n">route_with_lines</span>  <span class="c1"># type: ignore[import-untyped]</span>
-    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_HAS_GRANDALF</span><span class="p">:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Install grandalf to draw graphs: `pip install grandalf`."</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="c1">#</span>
     <span class="c1"># Just a reminder about naming conventions:</span>
@@ -476,11 +495,15 @@
 <span class="w">    </span><span class="sd">"""Build a DAG and draw it in ASCII.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        vertices (list): list of graph vertices.</span>
-<span class="sd">        edges (list): list of graph edges.</span>
+<span class="sd">        vertices: list of graph vertices.</span>
+<span class="sd">        edges: list of graph edges.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: if the canvas dimensions are invalid or if</span>
+<span class="sd">            edge coordinates are invalid.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        str: ASCII representation</span>
+<span class="sd">        ASCII representation</span>
 
 <span class="sd">    Example:</span>
 

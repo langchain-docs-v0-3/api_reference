@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,13 +220,16 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_text_splitters.html</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">"""HTML text splitters."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">io</span><span class="w"> </span><span class="kn">import</span> <span class="n">StringIO</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">IO</span><span class="p">,</span>
     <span class="n">TYPE_CHECKING</span><span class="p">,</span>
     <span class="n">Any</span><span class="p">,</span>
     <span class="n">Callable</span><span class="p">,</span>
@@ -240,13 +243,36 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core._api</span><span class="w"> </span><span class="kn">import</span> <span class="n">beta</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseDocumentTransformer</span><span class="p">,</span> <span class="n">Document</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_text_splitters.character</span><span class="w"> </span><span class="kn">import</span> <span class="n">RecursiveCharacterTextSplitter</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Sequence</span>
 
-    <span class="kn">from</span><span class="w"> </span><span class="nn">bs4.element</span><span class="w"> </span><span class="kn">import</span> <span class="n">PageElement</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">bs4.element</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResultSet</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">nltk</span>
+
+    <span class="n">_HAS_NLTK</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_HAS_NLTK</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">bs4</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeautifulSoup</span><span class="p">,</span> <span class="n">Tag</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">bs4.element</span><span class="w"> </span><span class="kn">import</span> <span class="n">NavigableString</span><span class="p">,</span> <span class="n">PageElement</span>
+
+    <span class="n">_HAS_BS4</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_HAS_BS4</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">lxml</span><span class="w"> </span><span class="kn">import</span> <span class="n">etree</span>
+
+    <span class="n">_HAS_LXML</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_HAS_LXML</span> <span class="o">=</span> <span class="kc">False</span>
 
 
 <div class="viewcode-block" id="ElementType">
@@ -259,6 +285,29 @@
     <span class="n">content</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span></div>
 
+
+
+<span class="c1"># Unfortunately, BeautifulSoup doesn't define overloads for Tag.find_all.</span>
+<span class="c1"># So doing the type resolution ourselves.</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_find_all_strings</span><span class="p">(</span>
+    <span class="n">tag</span><span class="p">:</span> <span class="n">Tag</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">recursive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultSet</span><span class="p">[</span><span class="n">NavigableString</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span>
+        <span class="s2">"ResultSet[NavigableString]"</span><span class="p">,</span> <span class="n">tag</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="n">string</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="n">recursive</span><span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_find_all_tags</span><span class="p">(</span>
+    <span class="n">tag</span><span class="p">:</span> <span class="n">Tag</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">recursive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultSet</span><span class="p">[</span><span class="n">Tag</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"ResultSet[Tag]"</span><span class="p">,</span> <span class="n">tag</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="n">recursive</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="HTMLHeaderTextSplitter">
@@ -392,19 +441,14 @@
 <span class="sd">        Raises:</span>
 <span class="sd">            requests.RequestException: If the HTTP request fails.</span>
 <span class="sd">        """</span>
-        <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"timeout"</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="n">url</span><span class="p">,</span>
-            <span class="n">timeout</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"timeout"</span><span class="p">,</span> <span class="n">timeout</span><span class="p">),</span>
-            <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"timeout"</span><span class="p">},</span>
-        <span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_text</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="HTMLHeaderTextSplitter.split_text_from_file">
 <a class="viewcode-back" href="../../text_splitters/html/langchain_text_splitters.html.HTMLHeaderTextSplitter.html#langchain_text_splitters.html.HTMLHeaderTextSplitter.split_text_from_file">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">split_text_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">split_text_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">IO</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Split HTML content from a file into a list of Document objects.</span>
 
 <span class="sd">        Args:</span>
@@ -416,14 +460,13 @@
 <span class="sd">            the header hierarchy to their corresponding titles.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                <span class="n">html_content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="n">html_content</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">html_content</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_generate_documents</span><span class="p">(</span><span class="n">html_content</span><span class="p">))</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_documents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">html_content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_documents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">html_content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Private method that performs a DFS traversal over the DOM and yields.</span>
 
 <span class="sd">        Document objects on-the-fly. This approach maintains the same splitting</span>
@@ -436,20 +479,18 @@
 <span class="sd">        Yields:</span>
 <span class="sd">            Document objects as they are created.</span>
 <span class="sd">        """</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">bs4</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeautifulSoup</span>
-        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_HAS_BS4</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Unable to import BeautifulSoup. Please install via `pip install bs4`."</span>
             <span class="p">)</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="n">soup</span> <span class="o">=</span> <span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">html_content</span><span class="p">,</span> <span class="s2">"html.parser"</span><span class="p">)</span>
-        <span class="n">body</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">body</span> <span class="k">if</span> <span class="n">soup</span><span class="o">.</span><span class="n">body</span> <span class="k">else</span> <span class="n">soup</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">body</span> <span class="ow">or</span> <span class="n">soup</span>
 
         <span class="c1"># Dictionary of active headers:</span>
         <span class="c1">#   key = user-defined header name (e.g. "Header 1")</span>
-        <span class="c1">#   value = (header_text, level, dom_depth)</span>
+        <span class="c1">#   value = tuple of header_text, level, dom_depth</span>
         <span class="n">active_headers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">current_chunk</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -471,7 +512,6 @@
         <span class="k">while</span> <span class="n">stack</span><span class="p">:</span>
             <span class="n">node</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
             <span class="n">children</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">bs4.element</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tag</span>
 
             <span class="n">stack</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
                 <span class="n">child</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">children</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">Tag</span><span class="p">)</span>
@@ -482,8 +522,7 @@
                 <span class="k">continue</span>
 
             <span class="n">text_elements</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="nb">str</span><span class="p">(</span><span class="n">child</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-                <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="n">string</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">child</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">_find_all_strings</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
             <span class="p">]</span>
             <span class="n">node_text</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">elem</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">text_elements</span> <span class="k">if</span> <span class="n">elem</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">node_text</span><span class="p">:</span>
@@ -606,11 +645,11 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">texts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">metadatas</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Create documents from a list of texts."""</span>
-        <span class="n">_metadatas</span> <span class="o">=</span> <span class="n">metadatas</span> <span class="ow">or</span> <span class="p">[{}]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span>
+        <span class="n">metadatas_</span> <span class="o">=</span> <span class="n">metadatas</span> <span class="ow">or</span> <span class="p">[{}]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span>
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">texts</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_text</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
-                <span class="n">metadata</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">_metadatas</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">metadata</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">metadatas_</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
 
                 <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">chunk</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">chunk</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"#TITLE#"</span><span class="p">:</span>
@@ -642,38 +681,35 @@
 <span class="sd">            * 'content': The content under the header.</span>
 <span class="sd">            * 'tag_name': The name of the header tag (e.g., "h1", "h2").</span>
 <span class="sd">        """</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">bs4</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeautifulSoup</span>
-        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_HAS_BS4</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Unable to import BeautifulSoup/PageElement, </span><span class="se">\</span>
 <span class="s2">                    please install with `pip install </span><span class="se">\</span>
 <span class="s2">                    bs4`."</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="n">soup</span> <span class="o">=</span> <span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">html_doc</span><span class="p">,</span> <span class="s2">"html.parser"</span><span class="p">)</span>
-        <span class="n">headers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">headers_to_split_on</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">header_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">headers_to_split_on</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="n">sections</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="n">headers</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">([</span><span class="s2">"body"</span><span class="p">,</span> <span class="o">*</span><span class="n">headers</span><span class="p">])</span>  <span class="c1"># type: ignore[assignment]</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="n">_find_all_tags</span><span class="p">(</span><span class="n">soup</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="p">[</span><span class="s2">"body"</span><span class="p">,</span> <span class="o">*</span><span class="n">header_names</span><span class="p">])</span>
 
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">header</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">headers</span><span class="p">):</span>
-            <span class="n">header_element</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"PageElement"</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">current_header</span> <span class="o">=</span> <span class="s2">"#TITLE#"</span>
                 <span class="n">current_header_tag</span> <span class="o">=</span> <span class="s2">"h1"</span>
                 <span class="n">section_content</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">current_header</span> <span class="o">=</span> <span class="n">header_element</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-                <span class="n">current_header_tag</span> <span class="o">=</span> <span class="n">header_element</span><span class="o">.</span><span class="n">name</span>  <span class="c1"># type: ignore[attr-defined]</span>
+                <span class="n">current_header</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">current_header_tag</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">name</span>
                 <span class="n">section_content</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">header_element</span><span class="o">.</span><span class="n">next_elements</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span> <span class="ow">and</span> <span class="n">element</span> <span class="o">==</span> <span class="n">headers</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]:</span>  <span class="c1"># type: ignore[comparison-overlap]</span>
+            <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">header</span><span class="o">.</span><span class="n">next_elements</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span> <span class="ow">and</span> <span class="n">element</span> <span class="o">==</span> <span class="n">headers</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]:</span>
                     <span class="k">break</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
                     <span class="n">section_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
             <span class="n">content</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">section_content</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 
-            <span class="k">if</span> <span class="n">content</span> <span class="o">!=</span> <span class="s2">""</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">content</span><span class="p">:</span>
                 <span class="n">sections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="p">{</span>
                         <span class="s2">"header"</span><span class="p">:</span> <span class="n">current_header</span><span class="p">,</span>
@@ -700,11 +736,9 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            str: The transformed HTML content as a string.</span>
 <span class="sd">        """</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">lxml</span><span class="w"> </span><span class="kn">import</span> <span class="n">etree</span>
-        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_HAS_LXML</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Unable to import lxml, please install with `pip install lxml`."</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="c1"># use lxml library to parse html document and return xml ElementTree</span>
         <span class="c1"># Create secure parsers to prevent XXE attacks</span>
         <span class="n">html_parser</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">HTMLParser</span><span class="p">(</span><span class="n">no_network</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -726,7 +760,7 @@
 
 <div class="viewcode-block" id="HTMLSectionSplitter.split_text_from_file">
 <a class="viewcode-back" href="../../text_splitters/html/langchain_text_splitters.html.HTMLSectionSplitter.html#langchain_text_splitters.html.HTMLSectionSplitter.split_text_from_file">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">split_text_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">split_text_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">:</span> <span class="n">StringIO</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Split HTML content from a file into a list of Document objects.</span>
 
 <span class="sd">        Args:</span>
@@ -814,7 +848,7 @@
         <span class="n">preserve_images</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">preserve_videos</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">preserve_audio</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">custom_handlers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">custom_handlers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tag</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">stopword_removal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">stopword_lang</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"english"</span><span class="p">,</span>
         <span class="n">normalize_text</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -860,17 +894,12 @@
 <span class="sd">            keep_separator: Whether separators</span>
 <span class="sd">                should be at the beginning of a chunk, at the end, or not at all.</span>
 <span class="sd">        """</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">bs4</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeautifulSoup</span><span class="p">,</span> <span class="n">Tag</span>
-
-            <span class="bp">self</span><span class="o">.</span><span class="n">_BeautifulSoup</span> <span class="o">=</span> <span class="n">BeautifulSoup</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_Tag</span> <span class="o">=</span> <span class="n">Tag</span>
-        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_HAS_BS4</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"Could not import BeautifulSoup. "</span>
                 <span class="s2">"Please install it with 'pip install bs4'."</span>
             <span class="p">)</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_headers_to_split_on</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">headers_to_split_on</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_max_chunk_size</span> <span class="o">=</span> <span class="n">max_chunk_size</span>
@@ -913,16 +942,13 @@
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stopword_removal</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="kn">import</span><span class="w"> </span><span class="nn">nltk</span>
-
-                <span class="n">nltk</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="s2">"stopwords"</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_stopwords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">nltk</span><span class="o">.</span><span class="n">corpus</span><span class="o">.</span><span class="n">stopwords</span><span class="o">.</span><span class="n">words</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stopword_lang</span><span class="p">))</span>
-            <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_HAS_NLTK</span><span class="p">:</span>
                 <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="s2">"Could not import nltk. Please install it with 'pip install nltk'."</span>
                 <span class="p">)</span>
-                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span></div>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">nltk</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="s2">"stopwords"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_stopwords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">nltk</span><span class="o">.</span><span class="n">corpus</span><span class="o">.</span><span class="n">stopwords</span><span class="o">.</span><span class="n">words</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stopword_lang</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="HTMLSemanticPreservingSplitter.split_text">
@@ -936,7 +962,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            List[Document]: A list of Document objects containing the split content.</span>
 <span class="sd">        """</span>
-        <span class="n">soup</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_BeautifulSoup</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="s2">"html.parser"</span><span class="p">)</span>
+        <span class="n">soup</span> <span class="o">=</span> <span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="s2">"html.parser"</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_process_media</span><span class="p">(</span><span class="n">soup</span><span class="p">)</span>
 
@@ -951,6 +977,7 @@
 
 <div class="viewcode-block" id="HTMLSemanticPreservingSplitter.transform_documents">
 <a class="viewcode-back" href="../../text_splitters/html/langchain_text_splitters.html.HTMLSemanticPreservingSplitter.html#langchain_text_splitters.html.HTMLSemanticPreservingSplitter.transform_documents">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform_documents</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">documents</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Document</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
@@ -970,17 +997,17 @@
         <span class="k">return</span> <span class="n">transformed</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_process_media</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">soup</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_media</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">soup</span><span class="p">:</span> <span class="n">BeautifulSoup</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Processes the media elements.</span>
 
 <span class="sd">        Process elements in the HTML content by wrapping them in a &lt;media-wrapper&gt; tag</span>
 <span class="sd">        and converting them to Markdown format.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            soup (Any): Parsed HTML content using BeautifulSoup.</span>
+<span class="sd">            soup: Parsed HTML content using BeautifulSoup.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preserve_images</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">img_tag</span> <span class="ow">in</span> <span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s2">"img"</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">img_tag</span> <span class="ow">in</span> <span class="n">_find_all_tags</span><span class="p">(</span><span class="n">soup</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"img"</span><span class="p">):</span>
                 <span class="n">img_src</span> <span class="o">=</span> <span class="n">img_tag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"src"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
                 <span class="n">markdown_img</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"![image:</span><span class="si">{</span><span class="n">img_src</span><span class="si">}</span><span class="s2">](</span><span class="si">{</span><span class="n">img_src</span><span class="si">}</span><span class="s2">)"</span>
                 <span class="n">wrapper</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">new_tag</span><span class="p">(</span><span class="s2">"media-wrapper"</span><span class="p">)</span>
@@ -988,7 +1015,7 @@
                 <span class="n">img_tag</span><span class="o">.</span><span class="n">replace_with</span><span class="p">(</span><span class="n">wrapper</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preserve_videos</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">video_tag</span> <span class="ow">in</span> <span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s2">"video"</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">video_tag</span> <span class="ow">in</span> <span class="n">_find_all_tags</span><span class="p">(</span><span class="n">soup</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"video"</span><span class="p">):</span>
                 <span class="n">video_src</span> <span class="o">=</span> <span class="n">video_tag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"src"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
                 <span class="n">markdown_video</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"![video:</span><span class="si">{</span><span class="n">video_src</span><span class="si">}</span><span class="s2">](</span><span class="si">{</span><span class="n">video_src</span><span class="si">}</span><span class="s2">)"</span>
                 <span class="n">wrapper</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">new_tag</span><span class="p">(</span><span class="s2">"media-wrapper"</span><span class="p">)</span>
@@ -996,40 +1023,40 @@
                 <span class="n">video_tag</span><span class="o">.</span><span class="n">replace_with</span><span class="p">(</span><span class="n">wrapper</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preserve_audio</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">audio_tag</span> <span class="ow">in</span> <span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s2">"audio"</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">audio_tag</span> <span class="ow">in</span> <span class="n">_find_all_tags</span><span class="p">(</span><span class="n">soup</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"audio"</span><span class="p">):</span>
                 <span class="n">audio_src</span> <span class="o">=</span> <span class="n">audio_tag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"src"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
                 <span class="n">markdown_audio</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"![audio:</span><span class="si">{</span><span class="n">audio_src</span><span class="si">}</span><span class="s2">](</span><span class="si">{</span><span class="n">audio_src</span><span class="si">}</span><span class="s2">)"</span>
                 <span class="n">wrapper</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">new_tag</span><span class="p">(</span><span class="s2">"media-wrapper"</span><span class="p">)</span>
                 <span class="n">wrapper</span><span class="o">.</span><span class="n">string</span> <span class="o">=</span> <span class="n">markdown_audio</span>
                 <span class="n">audio_tag</span><span class="o">.</span><span class="n">replace_with</span><span class="p">(</span><span class="n">wrapper</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_process_links</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">soup</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_links</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">soup</span><span class="p">:</span> <span class="n">BeautifulSoup</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Processes the links in the HTML content.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            soup (Any): Parsed HTML content using BeautifulSoup.</span>
+<span class="sd">            soup: Parsed HTML content using BeautifulSoup.</span>
 <span class="sd">        """</span>
-        <span class="k">for</span> <span class="n">a_tag</span> <span class="ow">in</span> <span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s2">"a"</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">a_tag</span> <span class="ow">in</span> <span class="n">_find_all_tags</span><span class="p">(</span><span class="n">soup</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"a"</span><span class="p">):</span>
             <span class="n">a_href</span> <span class="o">=</span> <span class="n">a_tag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"href"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
             <span class="n">a_text</span> <span class="o">=</span> <span class="n">a_tag</span><span class="o">.</span><span class="n">get_text</span><span class="p">(</span><span class="n">strip</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">markdown_link</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">a_text</span><span class="si">}</span><span class="s2">](</span><span class="si">{</span><span class="n">a_href</span><span class="si">}</span><span class="s2">)"</span>
             <span class="n">wrapper</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">new_tag</span><span class="p">(</span><span class="s2">"link-wrapper"</span><span class="p">)</span>
             <span class="n">wrapper</span><span class="o">.</span><span class="n">string</span> <span class="o">=</span> <span class="n">markdown_link</span>
-            <span class="n">a_tag</span><span class="o">.</span><span class="n">replace_with</span><span class="p">(</span><span class="n">markdown_link</span><span class="p">)</span>
+            <span class="n">a_tag</span><span class="o">.</span><span class="n">replace_with</span><span class="p">(</span><span class="n">NavigableString</span><span class="p">(</span><span class="n">markdown_link</span><span class="p">))</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_filter_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">soup</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_filter_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">soup</span><span class="p">:</span> <span class="n">BeautifulSoup</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Filters the HTML content based on the allowlist and denylist tags.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            soup (Any): Parsed HTML content using BeautifulSoup.</span>
+<span class="sd">            soup: Parsed HTML content using BeautifulSoup.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allowlist_tags</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">_find_all_tags</span><span class="p">(</span><span class="n">soup</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">tag</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allowlist_tags</span><span class="p">:</span>
                     <span class="n">tag</span><span class="o">.</span><span class="n">decompose</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_denylist_tags</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_denylist_tags</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">_find_all_tags</span><span class="p">(</span><span class="n">soup</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_denylist_tags</span><span class="p">):</span>
                 <span class="n">tag</span><span class="o">.</span><span class="n">decompose</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_and_clean_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1053,14 +1080,14 @@
 
         <span class="k">return</span> <span class="n">text</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_process_html</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">soup</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_html</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">soup</span><span class="p">:</span> <span class="n">BeautifulSoup</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Processes the HTML content using BeautifulSoup and splits it using headers.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            soup (Any): Parsed HTML content using BeautifulSoup.</span>
+<span class="sd">            soup: Parsed HTML content using BeautifulSoup.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            List[Document]: A list of Document objects containing the split content.</span>
+<span class="sd">            A list of Document objects containing the split content.</span>
 <span class="sd">        """</span>
         <span class="n">documents</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">current_headers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1068,17 +1095,18 @@
         <span class="n">preserved_elements</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">placeholder_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">_get_element_text</span><span class="p">(</span><span class="n">element</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_get_element_text</span><span class="p">(</span><span class="n">element</span><span class="p">:</span> <span class="n">PageElement</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">            </span><span class="sd">"""Recursively extracts and processes the text of an element.</span>
 
 <span class="sd">            Applies custom handlers where applicable, and ensures correct spacing.</span>
 
 <span class="sd">            Args:</span>
-<span class="sd">                element (Any): The HTML element to process.</span>
+<span class="sd">                element: The HTML element to process.</span>
 
 <span class="sd">            Returns:</span>
-<span class="sd">                str: The processed text of the element.</span>
+<span class="sd">                The processed text of the element.</span>
 <span class="sd">            """</span>
+            <span class="n">element</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"Union[Tag, NavigableString]"</span><span class="p">,</span> <span class="n">element</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_handlers</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_handlers</span><span class="p">[</span><span class="n">element</span><span class="o">.</span><span class="n">name</span><span class="p">](</span><span class="n">element</span><span class="p">)</span>
 
@@ -1095,10 +1123,10 @@
 
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_and_clean_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
 
-        <span class="n">elements</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">elements</span> <span class="o">=</span> <span class="n">_find_all_tags</span><span class="p">(</span><span class="n">soup</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">_process_element</span><span class="p">(</span>
-            <span class="n">element</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+            <span class="n">element</span><span class="p">:</span> <span class="n">ResultSet</span><span class="p">[</span><span class="n">Tag</span><span class="p">],</span>
             <span class="n">documents</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">],</span>
             <span class="n">current_headers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
             <span class="n">current_content</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
@@ -1106,8 +1134,8 @@
             <span class="n">placeholder_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
             <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">element</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">elem</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"html"</span><span class="p">,</span> <span class="s2">"body"</span><span class="p">,</span> <span class="s2">"div"</span><span class="p">,</span> <span class="s2">"main"</span><span class="p">]:</span>
-                    <span class="n">children</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">elem</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"html"</span><span class="p">,</span> <span class="s2">"body"</span><span class="p">,</span> <span class="s2">"div"</span><span class="p">,</span> <span class="s2">"main"</span><span class="p">}:</span>
+                    <span class="n">children</span> <span class="o">=</span> <span class="n">_find_all_tags</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
                     <span class="p">(</span>
                         <span class="n">documents</span><span class="p">,</span>
                         <span class="n">current_headers</span><span class="p">,</span>
@@ -1122,7 +1150,7 @@
                         <span class="n">preserved_elements</span><span class="p">,</span>
                         <span class="n">placeholder_count</span><span class="p">,</span>
                     <span class="p">)</span>
-                    <span class="n">content</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="n">string</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+                    <span class="n">content</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_find_all_strings</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
                     <span class="k">if</span> <span class="n">content</span><span class="p">:</span>
                         <span class="n">content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_and_clean_text</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
                         <span class="n">current_content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>

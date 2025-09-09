@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -253,6 +253,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core._api</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecated</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callbacks</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncCallbackManager</span><span class="p">,</span> <span class="n">CallbackManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Runnable</span><span class="p">,</span>
@@ -336,6 +337,7 @@
 
 <span class="sd">            from sklearn.metrics.pairwise import cosine_similarity</span>
 
+
 <span class="sd">            class TFIDFRetriever(BaseRetriever, BaseModel):</span>
 <span class="sd">                vectorizer: Any</span>
 <span class="sd">                docs: list[Document]</span>
@@ -349,10 +351,12 @@
 <span class="sd">                    # Ip -- (n_docs,x), Op -- (n_docs,n_Feats)</span>
 <span class="sd">                    query_vec = self.vectorizer.transform([query])</span>
 <span class="sd">                    # Op -- (n_docs,1) -- Cosine Sim with each doc</span>
-<span class="sd">                    results = cosine_similarity(self.tfidf_array, query_vec).reshape((-1,))</span>
+<span class="sd">                    results = cosine_similarity(self.tfidf_array, query_vec).reshape(</span>
+<span class="sd">                        (-1,)</span>
+<span class="sd">                    )</span>
 <span class="sd">                    return [self.docs[i] for i in results.argsort()[-self.k :][::-1]]</span>
 
-<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span>
         <span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -462,8 +466,6 @@
 <span class="sd">            retriever.invoke("query")</span>
 
 <span class="sd">        """</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">CallbackManager</span>
-
         <span class="n">config</span> <span class="o">=</span> <span class="n">ensure_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="n">inheritable_metadata</span> <span class="o">=</span> <span class="p">{</span>
             <span class="o">**</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"metadata"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}),</span>
@@ -530,8 +532,6 @@
 <span class="sd">            await retriever.ainvoke("query")</span>
 
 <span class="sd">        """</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncCallbackManager</span>
-
         <span class="n">config</span> <span class="o">=</span> <span class="n">ensure_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="n">inheritable_metadata</span> <span class="o">=</span> <span class="p">{</span>
             <span class="o">**</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"metadata"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}),</span>
@@ -592,6 +592,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            query: String to find relevant documents for</span>
 <span class="sd">            run_manager: The callback handler to use</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            List of relevant documents</span>
 <span class="sd">        """</span>

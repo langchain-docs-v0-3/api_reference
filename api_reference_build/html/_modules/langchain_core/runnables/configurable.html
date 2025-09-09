@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -275,17 +275,15 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">DynamicRunnable</span><span class="p">(</span><span class="n">RunnableSerializable</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">"""Serializable Runnable that can be dynamically configured.</span>
 
-<span class="sd">    A DynamicRunnable should be initiated using the `configurable_fields` or</span>
-<span class="sd">    `configurable_alternatives` method of a Runnable.</span>
-
-<span class="sd">    Parameters:</span>
-<span class="sd">        default: The default Runnable to use.</span>
-<span class="sd">        config: The configuration to use.</span>
+<span class="sd">    A DynamicRunnable should be initiated using the ``configurable_fields`` or</span>
+<span class="sd">    ``configurable_alternatives`` method of a Runnable.</span>
 <span class="sd">    """</span>
 
     <span class="n">default</span><span class="p">:</span> <span class="n">RunnableSerializable</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">"""The default Runnable to use."""</span>
 
     <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">"""The configuration to use."""</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span>
         <span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -294,11 +292,17 @@
     <span class="nd">@classmethod</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return True as this class is serializable."""</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="nd">@classmethod</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``["langchain", "schema", "runnable"]``</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
@@ -573,9 +577,6 @@
 <span class="sd">    A RunnableConfigurableFields should be initiated using the</span>
 <span class="sd">    `configurable_fields` method of a Runnable.</span>
 
-<span class="sd">    Parameters:</span>
-<span class="sd">        fields: The configurable fields to use.</span>
-
 <span class="sd">    Here is an example of using a RunnableConfigurableFields with LLMs:</span>
 
 <span class="sd">        .. code-block:: python</span>
@@ -633,6 +634,7 @@
 <span class="sd">    """</span>
 
     <span class="n">fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">AnyConfigurableField</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">"""The configurable fields to use."""</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">config_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ConfigurableFieldSpec</span><span class="p">]:</span>
@@ -761,7 +763,7 @@
 <span class="sd">            ).configurable_alternatives(</span>
 <span class="sd">                ConfigurableField(id="prompt"),</span>
 <span class="sd">                default_key="joke",</span>
-<span class="sd">                poem=PromptTemplate.from_template("Write a short poem about {topic}")</span>
+<span class="sd">                poem=PromptTemplate.from_template("Write a short poem about {topic}"),</span>
 <span class="sd">            )</span>
 
 <span class="sd">            # When invoking the created RunnableSequence, you can pass in the</span>
@@ -771,7 +773,9 @@
 
 <span class="sd">            # The `with_config` method brings in the desired Prompt Runnable in your</span>
 <span class="sd">            # Runnable Sequence.</span>
-<span class="sd">            chain.with_config(configurable={"prompt": "poem"}).invoke({"topic": "bears"})</span>
+<span class="sd">            chain.with_config(configurable={"prompt": "poem"}).invoke(</span>
+<span class="sd">                {"topic": "bears"}</span>
+<span class="sd">            )</span>
 
 
 <span class="sd">    Equivalently, you can initialize RunnableConfigurableAlternatives directly</span>
@@ -780,20 +784,28 @@
 <span class="sd">        .. code-block:: python</span>
 
 <span class="sd">            from langchain_core.runnables import ConfigurableField</span>
-<span class="sd">            from langchain_core.runnables.configurable import RunnableConfigurableAlternatives</span>
+<span class="sd">            from langchain_core.runnables.configurable import (</span>
+<span class="sd">                RunnableConfigurableAlternatives,</span>
+<span class="sd">            )</span>
 <span class="sd">            from langchain_openai import ChatOpenAI</span>
 
 <span class="sd">            prompt = RunnableConfigurableAlternatives(</span>
-<span class="sd">                which=ConfigurableField(id='prompt'),</span>
+<span class="sd">                which=ConfigurableField(id="prompt"),</span>
 <span class="sd">                default=PromptTemplate.from_template("Tell me a joke about {topic}"),</span>
-<span class="sd">                default_key='joke',</span>
+<span class="sd">                default_key="joke",</span>
 <span class="sd">                prefix_keys=False,</span>
-<span class="sd">                alternatives={"poem":PromptTemplate.from_template("Write a short poem about {topic}")}</span>
+<span class="sd">                alternatives={</span>
+<span class="sd">                    "poem": PromptTemplate.from_template(</span>
+<span class="sd">                        "Write a short poem about {topic}"</span>
+<span class="sd">                    )</span>
+<span class="sd">                },</span>
 <span class="sd">            )</span>
 <span class="sd">            chain = prompt | ChatOpenAI(model="gpt-3.5-turbo-0125", temperature=0)</span>
-<span class="sd">            chain.with_config(configurable={"prompt": "poem"}).invoke({"topic": "bears"})</span>
+<span class="sd">            chain.with_config(configurable={"prompt": "poem"}).invoke(</span>
+<span class="sd">                {"topic": "bears"}</span>
+<span class="sd">            )</span>
 
-<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">    """</span>
 
     <span class="n">which</span><span class="p">:</span> <span class="n">ConfigurableField</span>
 <span class="w">    </span><span class="sd">"""The ConfigurableField to use to choose between alternatives."""</span>
@@ -949,7 +961,10 @@
     <span class="n">spec</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ConfigurableFieldSingleOption</span><span class="p">,</span> <span class="n">ConfigurableFieldMultiOption</span><span class="p">],</span>
     <span class="n">description</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConfigurableFieldSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Make a ConfigurableFieldSpec for a ConfigurableFieldSingleOption or ConfigurableFieldMultiOption.</span>
+<span class="w">    </span><span class="sd">"""Make options spec.</span>
+
+<span class="sd">    Make a ConfigurableFieldSpec for a ConfigurableFieldSingleOption or</span>
+<span class="sd">    ConfigurableFieldMultiOption.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        spec: The ConfigurableFieldSingleOption or ConfigurableFieldMultiOption.</span>
@@ -957,7 +972,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The ConfigurableFieldSpec.</span>
-<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">    """</span>
     <span class="k">with</span> <span class="n">_enums_for_spec_lock</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">enum</span> <span class="o">:=</span> <span class="n">_enums_for_spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">spec</span><span class="p">):</span>
             <span class="k">pass</span>

@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -410,6 +410,9 @@
 <span class="sd">            When changing the key encoder, you must change the</span>
 <span class="sd">            index as well to avoid duplicated documents in the cache.</span>
 
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the metadata cannot be serialized using json.</span>
+
 <span class="sd">    Returns:</span>
 <span class="sd">        Document with a unique identifier based on the hash of the content and metadata.</span>
 <span class="sd">    """</span>
@@ -521,21 +524,21 @@
 <span class="sd">    documents were deleted, which documents should be skipped.</span>
 
 <span class="sd">    For the time being, documents are indexed using their hashes, and users</span>
-<span class="sd">     are not able to specify the uid of the document.</span>
+<span class="sd">    are not able to specify the uid of the document.</span>
 
 <span class="sd">    Important:</span>
-<span class="sd">       * In full mode, the loader should be returning</span>
-<span class="sd">         the entire dataset, and not just a subset of the dataset.</span>
-<span class="sd">         Otherwise, the auto_cleanup will remove documents that it is not</span>
-<span class="sd">         supposed to.</span>
-<span class="sd">       * In incremental mode, if documents associated with a particular</span>
-<span class="sd">         source id appear across different batches, the indexing API</span>
-<span class="sd">         will do some redundant work. This will still result in the</span>
-<span class="sd">         correct end state of the index, but will unfortunately not be</span>
-<span class="sd">         100% efficient. For example, if a given document is split into 15</span>
-<span class="sd">         chunks, and we index them using a batch size of 5, we'll have 3 batches</span>
-<span class="sd">         all with the same source id. In general, to avoid doing too much</span>
-<span class="sd">         redundant work select as big a batch size as possible.</span>
+<span class="sd">        * In full mode, the loader should be returning</span>
+<span class="sd">          the entire dataset, and not just a subset of the dataset.</span>
+<span class="sd">          Otherwise, the auto_cleanup will remove documents that it is not</span>
+<span class="sd">          supposed to.</span>
+<span class="sd">        * In incremental mode, if documents associated with a particular</span>
+<span class="sd">          source id appear across different batches, the indexing API</span>
+<span class="sd">          will do some redundant work. This will still result in the</span>
+<span class="sd">          correct end state of the index, but will unfortunately not be</span>
+<span class="sd">          100% efficient. For example, if a given document is split into 15</span>
+<span class="sd">          chunks, and we index them using a batch size of 5, we'll have 3 batches</span>
+<span class="sd">          all with the same source id. In general, to avoid doing too much</span>
+<span class="sd">          redundant work select as big a batch size as possible.</span>
 <span class="sd">        * The `scoped_full` mode is suitable if determining an appropriate batch size</span>
 <span class="sd">          is challenging or if your data loader cannot return the entire dataset at</span>
 <span class="sd">          once. This mode keeps track of source IDs in memory, which should be fine</span>
@@ -545,23 +548,22 @@
 <span class="sd">    Args:</span>
 <span class="sd">        docs_source: Data loader or iterable of documents to index.</span>
 <span class="sd">        record_manager: Timestamped set to keep track of which documents were</span>
-<span class="sd">                         updated.</span>
+<span class="sd">            updated.</span>
 <span class="sd">        vector_store: VectorStore or DocumentIndex to index the documents into.</span>
 <span class="sd">        batch_size: Batch size to use when indexing. Default is 100.</span>
 <span class="sd">        cleanup: How to handle clean up of documents. Default is None.</span>
+
 <span class="sd">            - incremental: Cleans up all documents that haven't been updated AND</span>
-<span class="sd">                           that are associated with source ids that were seen</span>
-<span class="sd">                           during indexing.</span>
-<span class="sd">                           Clean up is done continuously during indexing helping</span>
-<span class="sd">                           to minimize the probability of users seeing duplicated</span>
-<span class="sd">                           content.</span>
+<span class="sd">              that are associated with source ids that were seen during indexing.</span>
+<span class="sd">              Clean up is done continuously during indexing helping to minimize the</span>
+<span class="sd">              probability of users seeing duplicated content.</span>
 <span class="sd">            - full: Delete all documents that have not been returned by the loader</span>
-<span class="sd">                    during this run of indexing.</span>
-<span class="sd">                    Clean up runs after all documents have been indexed.</span>
-<span class="sd">                    This means that users may see duplicated content during indexing.</span>
+<span class="sd">              during this run of indexing.</span>
+<span class="sd">              Clean up runs after all documents have been indexed.</span>
+<span class="sd">              This means that users may see duplicated content during indexing.</span>
 <span class="sd">            - scoped_full: Similar to Full, but only deletes all documents</span>
-<span class="sd">                           that haven't been updated AND that are associated with</span>
-<span class="sd">                           source ids that were seen during indexing.</span>
+<span class="sd">              that haven't been updated AND that are associated with</span>
+<span class="sd">              source ids that were seen during indexing.</span>
 <span class="sd">            - None: Do not delete any documents.</span>
 <span class="sd">        source_id_key: Optional key that helps identify the original source</span>
 <span class="sd">            of the document. Default is None.</span>
@@ -588,10 +590,9 @@
 <span class="sd">            When changing the key encoder, you must change the</span>
 <span class="sd">            index as well to avoid duplicated documents in the cache.</span>
 <span class="sd">        upsert_kwargs: Additional keyword arguments to pass to the add_documents</span>
-<span class="sd">                       method of the VectorStore or the upsert method of the</span>
-<span class="sd">                       DocumentIndex. For example, you can use this to</span>
-<span class="sd">                       specify a custom vector_field:</span>
-<span class="sd">                       upsert_kwargs={"vector_field": "embedding"}</span>
+<span class="sd">            method of the VectorStore or the upsert method of the DocumentIndex.</span>
+<span class="sd">            For example, you can use this to specify a custom vector_field:</span>
+<span class="sd">            upsert_kwargs={"vector_field": "embedding"}</span>
 <span class="sd">            .. versionadded:: 0.3.10</span>
 
 <span class="sd">    Returns:</span>
@@ -604,6 +605,9 @@
 <span class="sd">        ValueError: If vectorstore does not have</span>
 <span class="sd">            "delete" and "add_documents" required methods.</span>
 <span class="sd">        ValueError: If source_id_key is not None, but is not a string or callable.</span>
+<span class="sd">        TypeError: If ``vectorstore`` is not a VectorStore or a DocumentIndex.</span>
+<span class="sd">        AssertionError: If ``source_id`` is None when cleanup mode is incremental.</span>
+<span class="sd">            (should be unreachable code).</span>
 
 <span class="sd">    .. version_modified:: 0.3.25</span>
 
@@ -889,22 +893,22 @@
 <span class="sd">    Args:</span>
 <span class="sd">        docs_source: Data loader or iterable of documents to index.</span>
 <span class="sd">        record_manager: Timestamped set to keep track of which documents were</span>
-<span class="sd">                         updated.</span>
+<span class="sd">            updated.</span>
 <span class="sd">        vector_store: VectorStore or DocumentIndex to index the documents into.</span>
 <span class="sd">        batch_size: Batch size to use when indexing. Default is 100.</span>
 <span class="sd">        cleanup: How to handle clean up of documents. Default is None.</span>
+
 <span class="sd">            - incremental: Cleans up all documents that haven't been updated AND</span>
-<span class="sd">                           that are associated with source ids that were seen</span>
-<span class="sd">                           during indexing.</span>
-<span class="sd">                           Clean up is done continuously during indexing helping</span>
-<span class="sd">                           to minimize the probability of users seeing duplicated</span>
-<span class="sd">                           content.</span>
-<span class="sd">            - full: Delete all documents that haven to been returned by the loader.</span>
-<span class="sd">                    Clean up runs after all documents have been indexed.</span>
-<span class="sd">                    This means that users may see duplicated content during indexing.</span>
+<span class="sd">              that are associated with source ids that were seen during indexing.</span>
+<span class="sd">              Clean up is done continuously during indexing helping to minimize the</span>
+<span class="sd">              probability of users seeing duplicated content.</span>
+<span class="sd">            - full: Delete all documents that have not been returned by the loader</span>
+<span class="sd">              during this run of indexing.</span>
+<span class="sd">              Clean up runs after all documents have been indexed.</span>
+<span class="sd">              This means that users may see duplicated content during indexing.</span>
 <span class="sd">            - scoped_full: Similar to Full, but only deletes all documents</span>
-<span class="sd">                           that haven't been updated AND that are associated with</span>
-<span class="sd">                           source ids that were seen during indexing.</span>
+<span class="sd">              that haven't been updated AND that are associated with</span>
+<span class="sd">              source ids that were seen during indexing.</span>
 <span class="sd">            - None: Do not delete any documents.</span>
 <span class="sd">        source_id_key: Optional key that helps identify the original source</span>
 <span class="sd">            of the document. Default is None.</span>
@@ -913,6 +917,12 @@
 <span class="sd">        force_update: Force update documents even if they are present in the</span>
 <span class="sd">            record manager. Useful if you are re-indexing with updated embeddings.</span>
 <span class="sd">            Default is False.</span>
+<span class="sd">        key_encoder: Hashing algorithm to use for hashing the document content and</span>
+<span class="sd">            metadata. Default is "sha1".</span>
+<span class="sd">            Other options include "blake2b", "sha256", and "sha512".</span>
+
+<span class="sd">            .. versionadded:: 0.3.66</span>
+
 <span class="sd">        key_encoder: Hashing algorithm to use for hashing the document.</span>
 <span class="sd">            If not provided, a default encoder using SHA-1 will be used.</span>
 <span class="sd">            SHA-1 is not collision-resistant, and a motivated attacker</span>
@@ -924,11 +934,10 @@
 
 <span class="sd">            When changing the key encoder, you must change the</span>
 <span class="sd">            index as well to avoid duplicated documents in the cache.</span>
-<span class="sd">        upsert_kwargs: Additional keyword arguments to pass to the aadd_documents</span>
-<span class="sd">                       method of the VectorStore or the aupsert method of the</span>
-<span class="sd">                       DocumentIndex. For example, you can use this to</span>
-<span class="sd">                       specify a custom vector_field:</span>
-<span class="sd">                       upsert_kwargs={"vector_field": "embedding"}</span>
+<span class="sd">        upsert_kwargs: Additional keyword arguments to pass to the add_documents</span>
+<span class="sd">            method of the VectorStore or the upsert method of the DocumentIndex.</span>
+<span class="sd">            For example, you can use this to specify a custom vector_field:</span>
+<span class="sd">            upsert_kwargs={"vector_field": "embedding"}</span>
 <span class="sd">            .. versionadded:: 0.3.10</span>
 
 <span class="sd">    Returns:</span>
@@ -941,6 +950,9 @@
 <span class="sd">        ValueError: If vectorstore does not have</span>
 <span class="sd">            "adelete" and "aadd_documents" required methods.</span>
 <span class="sd">        ValueError: If source_id_key is not None, but is not a string or callable.</span>
+<span class="sd">        TypeError: If ``vector_store`` is not a VectorStore or DocumentIndex.</span>
+<span class="sd">        AssertionError: If ``source_id_key`` is None when cleanup mode is</span>
+<span class="sd">            incremental or ``scoped_full`` (should be unreachable).</span>
 
 <span class="sd">    .. version_modified:: 0.3.25</span>
 

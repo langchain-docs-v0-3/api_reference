@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -237,7 +237,6 @@
     <span class="n">AIMessage</span><span class="p">,</span>
     <span class="n">AIMessageChunk</span><span class="p">,</span>
     <span class="n">BaseMessage</span><span class="p">,</span>
-    <span class="n">BaseMessageChunk</span><span class="p">,</span>
     <span class="n">HumanMessage</span><span class="p">,</span>
     <span class="n">SystemMessage</span><span class="p">,</span>
     <span class="n">ToolMessage</span><span class="p">,</span>
@@ -253,14 +252,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic.v1</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span> <span class="k">as</span> <span class="n">BaseModelV1</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic.v1</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span> <span class="k">as</span> <span class="n">FieldV1</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pytest_benchmark.fixture</span><span class="w"> </span><span class="kn">import</span> <span class="n">BenchmarkFixture</span>  <span class="c1"># type: ignore[import-untyped]</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span><span class="p">,</span> <span class="n">override</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">vcr.cassette</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cassette</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_tests.unit_tests.chat_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatModelTests</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_tests.utils.pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">PYDANTIC_MAJOR_VERSION</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_get_joke_class</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_joke_class</span><span class="p">(</span>  <span class="c1"># noqa: RET503</span>
     <span class="n">schema_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"pydantic"</span><span class="p">,</span> <span class="s2">"typeddict"</span><span class="p">,</span> <span class="s2">"json_schema"</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
     <span class="k">class</span><span class="w"> </span><span class="nc">Joke</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -279,7 +278,7 @@
         <span class="n">punchline</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="s2">"answer to resolve the joke"</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_joke_dict</span><span class="p">(</span><span class="n">result</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"setup"</span><span class="p">,</span> <span class="s2">"punchline"</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">key</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"setup"</span><span class="p">,</span> <span class="s2">"punchline"</span><span class="p">}</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">result</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">schema_type</span> <span class="o">==</span> <span class="s2">"pydantic"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Joke</span><span class="p">,</span> <span class="n">validate_joke</span>
@@ -289,8 +288,6 @@
 
     <span class="k">if</span> <span class="n">schema_type</span> <span class="o">==</span> <span class="s2">"json_schema"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Joke</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">(),</span> <span class="n">validate_joke_dict</span>
-    <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Invalid schema type"</span>
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_TestCallbackHandler</span><span class="p">(</span><span class="n">BaseCallbackHandler</span><span class="p">):</span>
@@ -300,6 +297,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="p">[]</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">on_chat_model_start</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">serialized</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -654,7 +652,8 @@
 <span class="sd">        on invoke and streaming responses. Defaults to ``True``.</span>
 
 <span class="sd">        ``usage_metadata`` is an optional dict attribute on ``AIMessage``s that track input</span>
-<span class="sd">        and output tokens. `See more. &lt;https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.UsageMetadata.html&gt;`__</span>
+<span class="sd">        and output tokens.</span>
+<span class="sd">        `See more. &lt;https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.UsageMetadata.html&gt;`__</span>
 
 <span class="sd">        Example:</span>
 
@@ -751,7 +750,8 @@
 <span class="sd">        and stream.</span>
 
 <span class="sd">        ``usage_metadata`` is an optional dict attribute on ``AIMessage``s that track input</span>
-<span class="sd">        and output tokens. `See more. &lt;https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.UsageMetadata.html&gt;`__</span>
+<span class="sd">        and output tokens.</span>
+<span class="sd">        `See more. &lt;https://python.langchain.com/api_reference/core/messages/langchain_core.messages.ai.UsageMetadata.html&gt;`__</span>
 
 <span class="sd">        It includes optional keys ``input_token_details`` and ``output_token_details``</span>
 <span class="sd">        that can track usage details associated with special types of tokens, such as</span>
@@ -775,7 +775,8 @@
 <span class="sd">                def enable_vcr_tests(self) -&gt; bool:</span>
 <span class="sd">                    return True</span>
 
-<span class="sd">        2. Configure VCR to exclude sensitive headers and other information from cassettes.</span>
+<span class="sd">        2. Configure VCR to exclude sensitive headers and other information from</span>
+<span class="sd">           cassettes.</span>
 
 <span class="sd">            .. important::</span>
 <span class="sd">                VCR will by default record authentication headers and other sensitive</span>
@@ -795,7 +796,9 @@
 <span class="sd">                :caption: tests/conftest.py</span>
 
 <span class="sd">                import pytest</span>
-<span class="sd">                from langchain_tests.conftest import _base_vcr_config as _base_vcr_config</span>
+<span class="sd">                from langchain_tests.conftest import (</span>
+<span class="sd">                    _base_vcr_config as _base_vcr_config,</span>
+<span class="sd">                )</span>
 
 <span class="sd">                _EXTRA_HEADERS = [</span>
 <span class="sd">                    # Specify additional headers to redact</span>
@@ -829,8 +832,13 @@
 <span class="sd">                    :caption: tests/conftest.py</span>
 
 <span class="sd">                    import pytest</span>
-<span class="sd">                    from langchain_tests.conftest import CustomPersister, CustomSerializer</span>
-<span class="sd">                    from langchain_tests.conftest import _base_vcr_config as _base_vcr_config</span>
+<span class="sd">                    from langchain_tests.conftest import (</span>
+<span class="sd">                        CustomPersister,</span>
+<span class="sd">                        CustomSerializer,</span>
+<span class="sd">                    )</span>
+<span class="sd">                    from langchain_tests.conftest import (</span>
+<span class="sd">                        _base_vcr_config as _base_vcr_config,</span>
+<span class="sd">                    )</span>
 <span class="sd">                    from vcr import VCR</span>
 
 <span class="sd">                    _EXTRA_HEADERS = [</span>
@@ -874,10 +882,15 @@
 
 <span class="sd">                .. code-block:: python</span>
 
-<span class="sd">                    from langchain_tests.conftest import CustomPersister, CustomSerializer</span>
+<span class="sd">                    from langchain_tests.conftest import (</span>
+<span class="sd">                        CustomPersister,</span>
+<span class="sd">                        CustomSerializer,</span>
+<span class="sd">                    )</span>
 
 <span class="sd">                    cassette_path = "/path/to/tests/cassettes/TestClass_test.yaml.gz"</span>
-<span class="sd">                    requests, responses = CustomPersister().load_cassette(path, CustomSerializer())</span>
+<span class="sd">                    requests, responses = CustomPersister().load_cassette(</span>
+<span class="sd">                        path, CustomSerializer()</span>
+<span class="sd">                    )</span>
 
 <span class="sd">        3. Run tests to generate VCR cassettes.</span>
 
@@ -925,9 +938,9 @@
 <span class="sd">            .. code-block:: python</span>
 
 <span class="sd">                return ChatResult(</span>
-<span class="sd">                    generations=[ChatGeneration(</span>
-<span class="sd">                        message=AIMessage(content="Output text")</span>
-<span class="sd">                    )]</span>
+<span class="sd">                    generations=[</span>
+<span class="sd">                        ChatGeneration(message=AIMessage(content="Output text"))</span>
+<span class="sd">                    ]</span>
 <span class="sd">                )</span>
 
 <span class="sd">        """</span>
@@ -961,9 +974,9 @@
 <span class="sd">            .. code-block:: python</span>
 
 <span class="sd">                return ChatResult(</span>
-<span class="sd">                    generations=[ChatGeneration(</span>
-<span class="sd">                        message=AIMessage(content="Output text")</span>
-<span class="sd">                    )]</span>
+<span class="sd">                    generations=[</span>
+<span class="sd">                        ChatGeneration(message=AIMessage(content="Output text"))</span>
+<span class="sd">                    ]</span>
 <span class="sd">                )</span>
 
 <span class="sd">        """</span>
@@ -997,9 +1010,7 @@
 
 <span class="sd">            .. code-block:: python</span>
 
-<span class="sd">                yield ChatGenerationChunk(</span>
-<span class="sd">                    message=AIMessageChunk(content="chunk text")</span>
-<span class="sd">                )</span>
+<span class="sd">                yield ChatGenerationChunk(message=AIMessageChunk(content="chunk text"))</span>
 
 <span class="sd">        """</span>
         <span class="n">num_chunks</span> <span class="o">=</span> <span class="mi">0</span>
@@ -1037,9 +1048,7 @@
 
 <span class="sd">            .. code-block:: python</span>
 
-<span class="sd">                yield ChatGenerationChunk(</span>
-<span class="sd">                    message=AIMessageChunk(content="chunk text")</span>
-<span class="sd">                )</span>
+<span class="sd">                yield ChatGenerationChunk(message=AIMessageChunk(content="chunk text"))</span>
 
 <span class="sd">        """</span>
         <span class="n">num_chunks</span> <span class="o">=</span> <span class="mi">0</span>
@@ -1169,10 +1178,11 @@
 <span class="sd">            because this test is the "basic case" without double messages.</span>
 
 <span class="sd">            If that test passes those but not this one, you should verify that:</span>
-<span class="sd">            1. Your model API can handle double messages, or the integration should merge messages before sending them to the API.</span>
+<span class="sd">            1. Your model API can handle double messages, or the integration should</span>
+<span class="sd">               merge messages before sending them to the API.</span>
 <span class="sd">            2. The response is a valid :class:`~langchain_core.messages.AIMessage`</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">SystemMessage</span><span class="p">(</span><span class="s2">"hello"</span><span class="p">),</span>
             <span class="n">SystemMessage</span><span class="p">(</span><span class="s2">"hello"</span><span class="p">),</span>
@@ -1254,25 +1264,27 @@
 <span class="sd">            .. code-block:: python</span>
 
 <span class="sd">                return ChatResult(</span>
-<span class="sd">                    generations=[ChatGeneration(</span>
-<span class="sd">                        message=AIMessage(</span>
-<span class="sd">                            content="Output text",</span>
-<span class="sd">                            usage_metadata={</span>
-<span class="sd">                                "input_tokens": 350,</span>
-<span class="sd">                                "output_tokens": 240,</span>
-<span class="sd">                                "total_tokens": 590,</span>
-<span class="sd">                                "input_token_details": {</span>
-<span class="sd">                                    "audio": 10,</span>
-<span class="sd">                                    "cache_creation": 200,</span>
-<span class="sd">                                    "cache_read": 100,</span>
+<span class="sd">                    generations=[</span>
+<span class="sd">                        ChatGeneration(</span>
+<span class="sd">                            message=AIMessage(</span>
+<span class="sd">                                content="Output text",</span>
+<span class="sd">                                usage_metadata={</span>
+<span class="sd">                                    "input_tokens": 350,</span>
+<span class="sd">                                    "output_tokens": 240,</span>
+<span class="sd">                                    "total_tokens": 590,</span>
+<span class="sd">                                    "input_token_details": {</span>
+<span class="sd">                                        "audio": 10,</span>
+<span class="sd">                                        "cache_creation": 200,</span>
+<span class="sd">                                        "cache_read": 100,</span>
+<span class="sd">                                    },</span>
+<span class="sd">                                    "output_token_details": {</span>
+<span class="sd">                                        "audio": 10,</span>
+<span class="sd">                                        "reasoning": 200,</span>
+<span class="sd">                                    },</span>
 <span class="sd">                                },</span>
-<span class="sd">                                "output_token_details": {</span>
-<span class="sd">                                    "audio": 10,</span>
-<span class="sd">                                    "reasoning": 200,</span>
-<span class="sd">                                }</span>
-<span class="sd">                            }</span>
+<span class="sd">                            )</span>
 <span class="sd">                        )</span>
-<span class="sd">                    )]</span>
+<span class="sd">                    ]</span>
 <span class="sd">                )</span>
 
 <span class="sd">            Check also that the response includes a ``'model_name'`` key in its</span>
@@ -1295,7 +1307,7 @@
         <span class="c1"># Needed for langchain_core.callbacks.usage</span>
         <span class="n">model_name</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">response_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model_name"</span><span class="p">)</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="n">model_name</span> <span class="o">!=</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"model_name is empty"</span>
+        <span class="k">assert</span> <span class="n">model_name</span><span class="p">,</span> <span class="s2">"model_name is empty"</span>
 
         <span class="c1"># `input_tokens` is the total, possibly including other unclassified or</span>
         <span class="c1"># system-level tokens.</span>
@@ -1309,10 +1321,9 @@
             <span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_token_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"audio"</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
             <span class="c1"># Asserts that total input tokens are at least the sum of the token counts</span>
-            <span class="n">total_detailed_tokens</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="k">assert</span> <span class="n">usage_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="nb">sum</span><span class="p">(</span>
                 <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">input_token_details</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
             <span class="p">)</span>
-            <span class="k">assert</span> <span class="n">usage_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">total_detailed_tokens</span>
         <span class="k">if</span> <span class="s2">"audio_output"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">supported_usage_metadata_details</span><span class="p">[</span><span class="s2">"invoke"</span><span class="p">]:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invoke_with_audio_output</span><span class="p">()</span>
             <span class="k">assert</span> <span class="p">(</span><span class="n">usage_metadata</span> <span class="o">:=</span> <span class="n">msg</span><span class="o">.</span><span class="n">usage_metadata</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -1321,10 +1332,9 @@
             <span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output_token_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"audio"</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
             <span class="c1"># Asserts that total output tokens are at least the sum of the token counts</span>
-            <span class="n">total_detailed_tokens</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="k">assert</span> <span class="n">usage_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"output_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="nb">sum</span><span class="p">(</span>
                 <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">output_token_details</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
             <span class="p">)</span>
-            <span class="k">assert</span> <span class="n">usage_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"output_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">total_detailed_tokens</span>
         <span class="k">if</span> <span class="s2">"reasoning_output"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">supported_usage_metadata_details</span><span class="p">[</span><span class="s2">"invoke"</span><span class="p">]:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invoke_with_reasoning_output</span><span class="p">()</span>
             <span class="k">assert</span> <span class="p">(</span><span class="n">usage_metadata</span> <span class="o">:=</span> <span class="n">msg</span><span class="o">.</span><span class="n">usage_metadata</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -1333,34 +1343,41 @@
             <span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output_token_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reasoning"</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
             <span class="c1"># Asserts that total output tokens are at least the sum of the token counts</span>
-            <span class="n">total_detailed_tokens</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="k">assert</span> <span class="n">usage_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"output_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="nb">sum</span><span class="p">(</span>
                 <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">output_token_details</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
             <span class="p">)</span>
-            <span class="k">assert</span> <span class="n">usage_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"output_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">total_detailed_tokens</span>
         <span class="k">if</span> <span class="s2">"cache_read_input"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">supported_usage_metadata_details</span><span class="p">[</span><span class="s2">"invoke"</span><span class="p">]:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invoke_with_cache_read_input</span><span class="p">()</span>
-            <span class="k">assert</span> <span class="p">(</span><span class="n">usage_metadata</span> <span class="o">:=</span> <span class="n">msg</span><span class="o">.</span><span class="n">usage_metadata</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">assert</span> <span class="p">(</span>
-                <span class="n">input_token_details</span> <span class="o">:=</span> <span class="n">usage_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_token_details"</span><span class="p">)</span>
-            <span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_token_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cache_read"</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
+            <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">usage_metadata</span>
+            <span class="k">assert</span> <span class="n">usage_metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">input_token_details</span> <span class="o">=</span> <span class="n">usage_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_token_details"</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">input_token_details</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">cache_read_tokens</span> <span class="o">=</span> <span class="n">input_token_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cache_read"</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cache_read_tokens</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">cache_read_tokens</span> <span class="o">&gt;=</span> <span class="mi">0</span>
             <span class="c1"># Asserts that total input tokens are at least the sum of the token counts</span>
             <span class="n">total_detailed_tokens</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
-                <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">input_token_details</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+                <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">input_token_details</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span> <span class="o">&gt;=</span> <span class="mi">0</span>
             <span class="p">)</span>
-            <span class="k">assert</span> <span class="n">usage_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">total_detailed_tokens</span>
+            <span class="n">input_tokens</span> <span class="o">=</span> <span class="n">usage_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_tokens</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">input_tokens</span> <span class="o">&gt;=</span> <span class="n">total_detailed_tokens</span>
         <span class="k">if</span> <span class="s2">"cache_creation_input"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">supported_usage_metadata_details</span><span class="p">[</span><span class="s2">"invoke"</span><span class="p">]:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invoke_with_cache_creation_input</span><span class="p">()</span>
-            <span class="k">assert</span> <span class="p">(</span><span class="n">usage_metadata</span> <span class="o">:=</span> <span class="n">msg</span><span class="o">.</span><span class="n">usage_metadata</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">assert</span> <span class="p">(</span>
-                <span class="n">input_token_details</span> <span class="o">:=</span> <span class="n">usage_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_token_details"</span><span class="p">)</span>
-            <span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_token_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cache_creation"</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
+            <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">usage_metadata</span>
+            <span class="k">assert</span> <span class="n">usage_metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">input_token_details</span> <span class="o">=</span> <span class="n">usage_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_token_details"</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">input_token_details</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">cache_creation_tokens</span> <span class="o">=</span> <span class="n">input_token_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cache_creation"</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cache_creation_tokens</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">cache_creation_tokens</span> <span class="o">&gt;=</span> <span class="mi">0</span>
             <span class="c1"># Asserts that total input tokens are at least the sum of the token counts</span>
             <span class="n">total_detailed_tokens</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
-                <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">input_token_details</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+                <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">input_token_details</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span> <span class="o">&gt;=</span> <span class="mi">0</span>
             <span class="p">)</span>
-            <span class="k">assert</span> <span class="n">usage_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">total_detailed_tokens</span></div>
+            <span class="n">input_tokens</span> <span class="o">=</span> <span class="n">usage_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_tokens"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_tokens</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">input_tokens</span> <span class="o">&gt;=</span> <span class="n">total_detailed_tokens</span></div>
 
 
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_usage_metadata_streaming">
@@ -1433,29 +1450,31 @@
 <span class="sd">            .. code-block:: python</span>
 
 <span class="sd">                yield ChatResult(</span>
-<span class="sd">                    generations=[ChatGeneration(</span>
-<span class="sd">                        message=AIMessage(</span>
-<span class="sd">                            content="Output text",</span>
-<span class="sd">                            usage_metadata={</span>
-<span class="sd">                                "input_tokens": (</span>
-<span class="sd">                                    num_input_tokens if is_first_chunk else 0</span>
-<span class="sd">                                ),</span>
-<span class="sd">                                "output_tokens": 11,</span>
-<span class="sd">                                "total_tokens": (</span>
-<span class="sd">                                    11+num_input_tokens if is_first_chunk else 11</span>
-<span class="sd">                                ),</span>
-<span class="sd">                                "input_token_details": {</span>
-<span class="sd">                                    "audio": 10,</span>
-<span class="sd">                                    "cache_creation": 200,</span>
-<span class="sd">                                    "cache_read": 100,</span>
+<span class="sd">                    generations=[</span>
+<span class="sd">                        ChatGeneration(</span>
+<span class="sd">                            message=AIMessage(</span>
+<span class="sd">                                content="Output text",</span>
+<span class="sd">                                usage_metadata={</span>
+<span class="sd">                                    "input_tokens": (</span>
+<span class="sd">                                        num_input_tokens if is_first_chunk else 0</span>
+<span class="sd">                                    ),</span>
+<span class="sd">                                    "output_tokens": 11,</span>
+<span class="sd">                                    "total_tokens": (</span>
+<span class="sd">                                        11 + num_input_tokens if is_first_chunk else 11</span>
+<span class="sd">                                    ),</span>
+<span class="sd">                                    "input_token_details": {</span>
+<span class="sd">                                        "audio": 10,</span>
+<span class="sd">                                        "cache_creation": 200,</span>
+<span class="sd">                                        "cache_read": 100,</span>
+<span class="sd">                                    },</span>
+<span class="sd">                                    "output_token_details": {</span>
+<span class="sd">                                        "audio": 10,</span>
+<span class="sd">                                        "reasoning": 200,</span>
+<span class="sd">                                    },</span>
 <span class="sd">                                },</span>
-<span class="sd">                                "output_token_details": {</span>
-<span class="sd">                                    "audio": 10,</span>
-<span class="sd">                                    "reasoning": 200,</span>
-<span class="sd">                                }</span>
-<span class="sd">                            }</span>
+<span class="sd">                            )</span>
 <span class="sd">                        )</span>
-<span class="sd">                    )]</span>
+<span class="sd">                    ]</span>
 <span class="sd">                )</span>
 
 <span class="sd">            Check also that the aggregated response includes a ``'model_name'`` key</span>
@@ -1491,7 +1510,7 @@
         <span class="c1"># Needed for langchain_core.callbacks.usage</span>
         <span class="n">model_name</span> <span class="o">=</span> <span class="n">full</span><span class="o">.</span><span class="n">response_metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model_name"</span><span class="p">)</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="n">model_name</span> <span class="o">!=</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"model_name is empty"</span>
+        <span class="k">assert</span> <span class="n">model_name</span><span class="p">,</span> <span class="s2">"model_name is empty"</span>
 
         <span class="k">if</span> <span class="s2">"audio_input"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">supported_usage_metadata_details</span><span class="p">[</span><span class="s2">"stream"</span><span class="p">]:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invoke_with_audio_input</span><span class="p">(</span><span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -1640,7 +1659,7 @@
         <span class="n">_validate_tool_call_message</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
         <span class="c1"># Test stream</span>
-        <span class="n">full</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseMessageChunk</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">full</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">model_with_tools</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
             <span class="n">full</span> <span class="o">=</span> <span class="n">chunk</span> <span class="k">if</span> <span class="n">full</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">full</span> <span class="o">+</span> <span class="n">chunk</span>  <span class="c1"># type: ignore[assignment]</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">full</span><span class="p">,</span> <span class="n">AIMessage</span><span class="p">)</span>
@@ -1705,7 +1724,7 @@
         <span class="n">_validate_tool_call_message</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
         <span class="c1"># Test astream</span>
-        <span class="n">full</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseMessageChunk</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">full</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">async</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">model_with_tools</span><span class="o">.</span><span class="n">astream</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
             <span class="n">full</span> <span class="o">=</span> <span class="n">chunk</span> <span class="k">if</span> <span class="n">full</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">full</span> <span class="o">+</span> <span class="n">chunk</span>  <span class="c1"># type: ignore[assignment]</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">full</span><span class="p">,</span> <span class="n">AIMessage</span><span class="p">)</span>
@@ -1813,9 +1832,12 @@
 
 <span class="sd">            If this test fails, check that:</span>
 
-<span class="sd">            1. The model can correctly handle message histories that include ``AIMessage`` objects with ``""`` content.</span>
-<span class="sd">            2. The ``tool_calls`` attribute on ``AIMessage`` objects is correctly handled and passed to the model in an appropriate format.</span>
-<span class="sd">            3. The model can correctly handle ``ToolMessage`` objects with string content and arbitrary string values for ``tool_call_id``.</span>
+<span class="sd">            1. The model can correctly handle message histories that include</span>
+<span class="sd">               ``AIMessage`` objects with ``""`` content.</span>
+<span class="sd">            2. The ``tool_calls`` attribute on ``AIMessage`` objects is correctly</span>
+<span class="sd">               handled and passed to the model in an appropriate format.</span>
+<span class="sd">            3. The model can correctly handle ``ToolMessage`` objects with string</span>
+<span class="sd">               content and arbitrary string values for ``tool_call_id``.</span>
 
 <span class="sd">            You can ``xfail`` the test if tool calling is implemented but this format</span>
 <span class="sd">            is not supported.</span>
@@ -1823,10 +1845,12 @@
 <span class="sd">            .. code-block:: python</span>
 
 <span class="sd">                @pytest.mark.xfail(reason=("Not implemented."))</span>
-<span class="sd">                def test_tool_message_histories_string_content(self, *args: Any) -&gt; None:</span>
+<span class="sd">                def test_tool_message_histories_string_content(</span>
+<span class="sd">                    self, *args: Any</span>
+<span class="sd">                ) -&gt; None:</span>
 <span class="sd">                    super().test_tool_message_histories_string_content(*args)</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
 
@@ -1903,9 +1927,12 @@
 
 <span class="sd">            If this test fails, check that:</span>
 
-<span class="sd">            1. The model can correctly handle message histories that include ``AIMessage`` objects with list content.</span>
-<span class="sd">            2. The ``tool_calls`` attribute on ``AIMessage`` objects is correctly handled and passed to the model in an appropriate format.</span>
-<span class="sd">            3. The model can correctly handle ToolMessage objects with string content and arbitrary string values for ``tool_call_id``.</span>
+<span class="sd">            1. The model can correctly handle message histories that include</span>
+<span class="sd">               ``AIMessage`` objects with list content.</span>
+<span class="sd">            2. The ``tool_calls`` attribute on ``AIMessage`` objects is correctly</span>
+<span class="sd">               handled and passed to the model in an appropriate format.</span>
+<span class="sd">            3. The model can correctly handle ToolMessage objects with string content</span>
+<span class="sd">               and arbitrary string values for ``tool_call_id``.</span>
 
 <span class="sd">            You can ``xfail`` the test if tool calling is implemented but this format</span>
 <span class="sd">            is not supported.</span>
@@ -1916,7 +1943,7 @@
 <span class="sd">                def test_tool_message_histories_list_content(self, *args: Any) -&gt; None:</span>
 <span class="sd">                    super().test_tool_message_histories_list_content(*args)</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
 
@@ -1997,7 +2024,7 @@
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool choice."</span><span class="p">)</span>
 
         <span class="nd">@tool</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">get_weather</span><span class="p">(</span><span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_weather</span><span class="p">(</span><span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># noqa: ARG001</span>
 <span class="w">            </span><span class="sd">"""Get weather at a location."""</span>
             <span class="k">return</span> <span class="s2">"It's sunny."</span>
 
@@ -2050,13 +2077,15 @@
 <span class="sd">            .. code-block:: python</span>
 
 <span class="sd">                @pytest.mark.xfail(reason=("Does not support tool_choice."))</span>
-<span class="sd">                def test_tool_calling_with_no_arguments(self, model: BaseChatModel) -&gt; None:</span>
+<span class="sd">                def test_tool_calling_with_no_arguments(</span>
+<span class="sd">                    self, model: BaseChatModel</span>
+<span class="sd">                ) -&gt; None:</span>
 <span class="sd">                    super().test_tool_calling_with_no_arguments(model)</span>
 
 <span class="sd">            Otherwise, in the case that only one tool is bound, ensure that</span>
 <span class="sd">            ``tool_choice`` supports the string ``'any'`` to force calling that tool.</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
 
@@ -2068,7 +2097,7 @@
         <span class="n">result</span> <span class="o">=</span> <span class="n">model_with_tools</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
         <span class="n">_validate_tool_call_message_no_args</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
-        <span class="n">full</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseMessageChunk</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">full</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">model_with_tools</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
             <span class="n">full</span> <span class="o">=</span> <span class="n">chunk</span> <span class="k">if</span> <span class="n">full</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">full</span> <span class="o">+</span> <span class="n">chunk</span>  <span class="c1"># type: ignore[assignment]</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">full</span><span class="p">,</span> <span class="n">AIMessage</span><span class="p">)</span>
@@ -2218,7 +2247,11 @@
 <div class="viewcode-block" id="ChatModelIntegrationTests.test_structured_output">
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_structured_output">[docs]</a>
     <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">"schema_type"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"pydantic"</span><span class="p">,</span> <span class="s2">"typeddict"</span><span class="p">,</span> <span class="s2">"json_schema"</span><span class="p">])</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">test_structured_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">,</span> <span class="n">schema_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_structured_output</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">,</span>
+        <span class="n">schema_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"pydantic"</span><span class="p">,</span> <span class="s2">"typeddict"</span><span class="p">,</span> <span class="s2">"json_schema"</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Test to verify structured output is generated both on invoke and stream.</span>
 
 <span class="sd">        This test is optional and should be skipped if the model does not support</span>
@@ -2254,7 +2287,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_structured_output</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires structured output."</span><span class="p">)</span>
 
-        <span class="n">schema</span><span class="p">,</span> <span class="n">validation_function</span> <span class="o">=</span> <span class="n">_get_joke_class</span><span class="p">(</span><span class="n">schema_type</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="n">schema</span><span class="p">,</span> <span class="n">validation_function</span> <span class="o">=</span> <span class="n">_get_joke_class</span><span class="p">(</span><span class="n">schema_type</span><span class="p">)</span>
         <span class="n">chat</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">with_structured_output</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">structured_output_kwargs</span><span class="p">)</span>
         <span class="n">mock_callback</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">()</span>
         <span class="n">mock_callback</span><span class="o">.</span><span class="n">on_chat_model_start</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">()</span>
@@ -2301,7 +2334,9 @@
 <a class="viewcode-back" href="../../../standard_tests/integration_tests/langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.html#langchain_tests.integration_tests.chat_models.ChatModelIntegrationTests.test_structured_output_async">[docs]</a>
     <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">"schema_type"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"pydantic"</span><span class="p">,</span> <span class="s2">"typeddict"</span><span class="p">,</span> <span class="s2">"json_schema"</span><span class="p">])</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_structured_output_async</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">,</span> <span class="n">schema_type</span><span class="p">:</span> <span class="nb">str</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">BaseChatModel</span><span class="p">,</span>
+        <span class="n">schema_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"pydantic"</span><span class="p">,</span> <span class="s2">"typeddict"</span><span class="p">,</span> <span class="s2">"json_schema"</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Test to verify structured output is generated both on invoke and stream.</span>
 
@@ -2338,7 +2373,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_structured_output</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires structured output."</span><span class="p">)</span>
 
-        <span class="n">schema</span><span class="p">,</span> <span class="n">validation_function</span> <span class="o">=</span> <span class="n">_get_joke_class</span><span class="p">(</span><span class="n">schema_type</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="n">schema</span><span class="p">,</span> <span class="n">validation_function</span> <span class="o">=</span> <span class="n">_get_joke_class</span><span class="p">(</span><span class="n">schema_type</span><span class="p">)</span>
 
         <span class="n">chat</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">with_structured_output</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">structured_output_kwargs</span><span class="p">)</span>
         <span class="n">ainvoke_callback</span> <span class="o">=</span> <span class="n">_TestCallbackHandler</span><span class="p">()</span>
@@ -2419,7 +2454,7 @@
 <span class="sd">            See `example implementation &lt;https://python.langchain.com/api_reference/_modules/langchain_openai/chat_models/base.html#BaseChatOpenAI.with_structured_output&gt;`__</span>
 <span class="sd">            of ``with_structured_output``.</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_structured_output</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires structured output."</span><span class="p">)</span>
 
@@ -2557,8 +2592,8 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports_json_mode</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires json mode support."</span><span class="p">)</span>
 
-        <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span> <span class="k">as</span> <span class="n">BaseModelProper</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span> <span class="k">as</span> <span class="n">FieldProper</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span> <span class="k">as</span> <span class="n">BaseModelProper</span>  <span class="c1"># noqa: PLC0415</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span> <span class="k">as</span> <span class="n">FieldProper</span>  <span class="c1"># noqa: PLC0415</span>
 
         <span class="k">class</span><span class="w"> </span><span class="nc">Joke</span><span class="p">(</span><span class="n">BaseModelProper</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">"""Joke to tell user."""</span>
@@ -2567,9 +2602,6 @@
             <span class="n">punchline</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">FieldProper</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"answer to resolve the joke"</span><span class="p">)</span>
 
         <span class="c1"># Pydantic class</span>
-        <span class="c1"># Type ignoring since the interface only officially supports pydantic 1</span>
-        <span class="c1"># or pydantic.v1.BaseModel but not pydantic.BaseModel from pydantic 2.</span>
-        <span class="c1"># We'll need to do a pass updating the type signatures.</span>
         <span class="n">chat</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">with_structured_output</span><span class="p">(</span><span class="n">Joke</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"json_mode"</span><span class="p">)</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">"Tell me a joke about cats. Return the result as a JSON with 'setup' and "</span>
@@ -2622,7 +2654,6 @@
 <span class="sd">            .. code-block:: python</span>
 
 <span class="sd">                class TestMyChatModelIntegration(ChatModelIntegrationTests):</span>
-
 <span class="sd">                    @property</span>
 <span class="sd">                    def supports_pdf_inputs(self) -&gt; bool:</span>
 <span class="sd">                        return False</span>
@@ -2702,7 +2733,6 @@
 <span class="sd">            .. code-block:: python</span>
 
 <span class="sd">                class TestMyChatModelIntegration(ChatModelIntegrationTests):</span>
-
 <span class="sd">                    @property</span>
 <span class="sd">                    def supports_audio_inputs(self) -&gt; bool:</span>
 <span class="sd">                        return False</span>
@@ -3021,7 +3051,8 @@
 <span class="sd">                        "content": [</span>
 <span class="sd">                            {</span>
 <span class="sd">                                "type": "text",</span>
-<span class="sd">                                "text": "green is a great pick! that's my sister's favorite color",  # noqa: E501</span>
+<span class="sd">                                "text": "green is a great pick! "</span>
+<span class="sd">                                "that's my sister's favorite color",</span>
 <span class="sd">                            }</span>
 <span class="sd">                        ],</span>
 <span class="sd">                        "is_error": False,</span>
@@ -3049,14 +3080,17 @@
 
 <span class="sd">            If this test fails, check that:</span>
 
-<span class="sd">            1. The model can correctly handle message histories that include message objects with list content.</span>
-<span class="sd">            2. The ``tool_calls`` attribute on AIMessage objects is correctly handled and passed to the model in an appropriate format.</span>
-<span class="sd">            3. ``HumanMessage``s with "tool_result" content blocks are correctly handled.</span>
+<span class="sd">            1. The model can correctly handle message histories that include message</span>
+<span class="sd">               objects with list content.</span>
+<span class="sd">            2. The ``tool_calls`` attribute on AIMessage objects is correctly handled</span>
+<span class="sd">               and passed to the model in an appropriate format.</span>
+<span class="sd">            3. ``HumanMessage``s with "tool_result" content blocks are correctly</span>
+<span class="sd">               handled.</span>
 
 <span class="sd">            Otherwise, if Anthropic tool call and result formats are not supported,</span>
 <span class="sd">            set the ``supports_anthropic_inputs`` property to False.</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports_anthropic_inputs</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Model does not explicitly support Anthropic inputs."</span><span class="p">)</span>
 
@@ -3231,7 +3265,7 @@
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling."</span><span class="p">)</span>
 
         <span class="nd">@tool</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">get_weather</span><span class="p">(</span><span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_weather</span><span class="p">(</span><span class="n">location</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># noqa: ARG001</span>
 <span class="w">            </span><span class="sd">"""Call to surf the web."""</span>
             <span class="k">return</span> <span class="s2">"It's sunny."</span>
 
@@ -3346,13 +3380,15 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: The chat model to test</span>
-<span class="sd">            tool_choice: Tool choice parameter to pass to ``bind_tools()`` (provider-specific)</span>
-<span class="sd">            force_tool_call: Whether to force a tool call (use ``tool_choice=True`` if None)</span>
+<span class="sd">            tool_choice: Tool choice parameter to pass to ``bind_tools()``</span>
+<span class="sd">                (provider-specific)</span>
+<span class="sd">            force_tool_call: Whether to force a tool call</span>
+<span class="sd">                (use ``tool_choice=True`` if None)</span>
 
 <span class="sd">        Tests that Unicode characters in tool call arguments are preserved correctly,</span>
 <span class="sd">        not escaped as ``\\uXXXX`` sequences.</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_tool_calling</span><span class="p">:</span>
             <span class="n">pytest</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="s2">"Test requires tool calling support."</span><span class="p">)</span>
 

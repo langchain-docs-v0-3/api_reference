@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,11 +220,20 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_text_splitters.nltk</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">"""NLTK text splitter."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_text_splitters.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextSplitter</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">nltk</span>
+
+    <span class="n">_HAS_NLTK</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_HAS_NLTK</span> <span class="o">=</span> <span class="kc">False</span>
 
 
 <div class="viewcode-block" id="NLTKTextSplitter">
@@ -247,19 +256,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span> <span class="o">=</span> <span class="n">separator</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_language</span> <span class="o">=</span> <span class="n">language</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_use_span_tokenize</span> <span class="o">=</span> <span class="n">use_span_tokenize</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_span_tokenize</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span> <span class="o">!=</span> <span class="s2">""</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_span_tokenize</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_separator</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">"When use_span_tokenize is True, separator should be ''"</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">import</span><span class="w"> </span><span class="nn">nltk</span>
-
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_span_tokenize</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_tokenizer</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">tokenize</span><span class="o">.</span><span class="n">_get_punkt_tokenizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_language</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_tokenizer</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">tokenize</span><span class="o">.</span><span class="n">sent_tokenize</span>
-        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_HAS_NLTK</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">"NLTK is not installed, please install it with `pip install nltk`."</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span></div>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_span_tokenize</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_tokenizer</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">tokenize</span><span class="o">.</span><span class="n">_get_punkt_tokenizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_language</span><span class="p">)</span>  <span class="c1"># noqa: SLF001</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_tokenizer</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">tokenize</span><span class="o">.</span><span class="n">sent_tokenize</span></div>
 
 
 <div class="viewcode-block" id="NLTKTextSplitter.split_text">

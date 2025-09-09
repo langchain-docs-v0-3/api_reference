@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -466,9 +466,10 @@ instead be wrapped in a <code class="docutils literal notranslate"><span class="
     <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"Have"</span><span class="p">,</span> <span class="s2">" a"</span><span class="p">,</span> <span class="s2">" nice"</span><span class="p">,</span> <span class="s2">" day"</span><span class="p">]:</span>
         <span class="k">yield</span> <span class="n">token</span>
 
+
 <span class="n">runnable</span> <span class="o">=</span> <span class="n">RunnableGenerator</span><span class="p">(</span><span class="n">agen</span><span class="p">)</span>
 <span class="k">await</span> <span class="n">runnable</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># "Have a nice day"</span>
-<span class="p">[</span><span class="n">p</span> <span class="k">async</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">runnable</span><span class="o">.</span><span class="n">astream</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span> <span class="c1"># ["Have", " a", " nice", " day"]</span>
+<span class="p">[</span><span class="n">p</span> <span class="k">async</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">runnable</span><span class="o">.</span><span class="n">astream</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span>  <span class="c1"># ["Have", " a", " nice", " day"]</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -488,6 +489,7 @@ context. Below we show an example:</p>
     <span class="o">|</span> <span class="n">StrOutputParser</span><span class="p">()</span>
 <span class="p">)</span>
 
+
 <span class="k">def</span><span class="w"> </span><span class="nf">character_generator</span><span class="p">(</span><span class="nb">input</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
     <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="nb">input</span><span class="p">:</span>
         <span class="k">if</span> <span class="s2">","</span> <span class="ow">in</span> <span class="n">token</span> <span class="ow">or</span> <span class="s2">"."</span> <span class="ow">in</span> <span class="n">token</span><span class="p">:</span>
@@ -498,7 +500,10 @@ context. Below we show an example:</p>
 
 <span class="n">runnable</span> <span class="o">=</span> <span class="n">chant_chain</span> <span class="o">|</span> <span class="n">character_generator</span>
 <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">runnable</span><span class="o">.</span><span class="n">last</span><span class="p">)</span> <span class="ow">is</span> <span class="n">RunnableGenerator</span>
-<span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">runnable</span><span class="o">.</span><span class="n">stream</span><span class="p">({</span><span class="s2">"topic"</span><span class="p">:</span> <span class="s2">"waste"</span><span class="p">}))</span> <span class="c1"># Reduce👏, Reuse👏, Recycle👏.</span>
+<span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+    <span class="n">runnable</span><span class="o">.</span><span class="n">stream</span><span class="p">({</span><span class="s2">"topic"</span><span class="p">:</span> <span class="s2">"waste"</span><span class="p">})</span>
+<span class="p">)</span>  <span class="c1"># Reduce👏, Reuse👏, Recycle👏.</span>
+
 
 <span class="c1"># Note that RunnableLambda can be used to delay streaming of one step in a</span>
 <span class="c1"># sequence until the previous step is finished:</span>
@@ -506,6 +511,7 @@ context. Below we show an example:</p>
     <span class="c1"># Yield characters of input in reverse order.</span>
     <span class="k">for</span> <span class="n">character</span> <span class="ow">in</span> <span class="nb">input</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
         <span class="k">yield</span> <span class="n">character</span>
+
 
 <span class="n">runnable</span> <span class="o">=</span> <span class="n">chant_chain</span> <span class="o">|</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="n">reverse_generator</span><span class="p">)</span>
 <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">runnable</span><span class="o">.</span><span class="n">stream</span><span class="p">({</span><span class="s2">"topic"</span><span class="p">:</span> <span class="s2">"waste"</span><span class="p">}))</span>  <span class="c1"># ".elcycer ,esuer ,ecudeR"</span>

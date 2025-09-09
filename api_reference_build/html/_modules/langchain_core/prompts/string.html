@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -237,6 +237,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils.formatting</span><span class="w"> </span><span class="kn">import</span> <span class="n">formatter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils.interactive_env</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_interactive_env</span>
 
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">jinja2</span><span class="w"> </span><span class="kn">import</span> <span class="n">Environment</span><span class="p">,</span> <span class="n">meta</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">jinja2.sandbox</span><span class="w"> </span><span class="kn">import</span> <span class="n">SandboxedEnvironment</span>
+
+    <span class="n">_HAS_JINJA2</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_HAS_JINJA2</span> <span class="o">=</span> <span class="kc">False</span>
+
 <span class="n">PromptTemplateFormat</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"f-string"</span><span class="p">,</span> <span class="s2">"mustache"</span><span class="p">,</span> <span class="s2">"jinja2"</span><span class="p">]</span>
 
 
@@ -264,9 +272,7 @@
 <span class="sd">    Raises:</span>
 <span class="sd">        ImportError: If jinja2 is not installed.</span>
 <span class="sd">    """</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">jinja2.sandbox</span><span class="w"> </span><span class="kn">import</span> <span class="n">SandboxedEnvironment</span>
-    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_HAS_JINJA2</span><span class="p">:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">"jinja2 not installed, which is needed to use the jinja2_formatter. "</span>
             <span class="s2">"Please install it with `pip install jinja2`."</span>
@@ -274,7 +280,7 @@
             <span class="s2">"Do not expand jinja2 templates using unverified or user-controlled "</span>
             <span class="s2">"inputs as that can result in arbitrary Python code execution."</span>
         <span class="p">)</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="c1"># This uses a sandboxed environment to prevent arbitrary code execution.</span>
     <span class="c1"># Jinja2 uses an opt-out rather than opt-in approach for sand-boxing.</span>
@@ -316,14 +322,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_jinja2_variables_from_template</span><span class="p">(</span><span class="n">template</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">jinja2</span><span class="w"> </span><span class="kn">import</span> <span class="n">Environment</span><span class="p">,</span> <span class="n">meta</span>
-    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_HAS_JINJA2</span><span class="p">:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">"jinja2 not installed, which is needed to use the jinja2_formatter. "</span>
             <span class="s2">"Please install it with `pip install jinja2`."</span>
         <span class="p">)</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="n">env</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">()</span>  <span class="c1"># noqa: S701</span>
     <span class="n">ast</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">template</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">meta</span><span class="o">.</span><span class="n">find_undeclared_variables</span><span class="p">(</span><span class="n">ast</span><span class="p">)</span>
@@ -402,7 +406,7 @@
                 <span class="n">prefix</span> <span class="o">=</span> <span class="n">section_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
         <span class="k">elif</span> <span class="n">type_</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"section"</span><span class="p">,</span> <span class="s2">"inverted section"</span><span class="p">}:</span>
             <span class="n">section_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
-            <span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">))</span>
+            <span class="n">prefix</span> <span class="o">+=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">))</span>
             <span class="n">fields</span><span class="p">[</span><span class="n">prefix</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">elif</span> <span class="n">type_</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"variable"</span><span class="p">,</span> <span class="s2">"no escape"</span><span class="p">}:</span>
             <span class="n">fields</span><span class="p">[</span><span class="n">prefix</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">))]</span> <span class="o">=</span> <span class="kc">True</span>
@@ -513,7 +517,11 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
+<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``["langchain", "prompts", "base"]``</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"prompts"</span><span class="p">,</span> <span class="s2">"base"</span><span class="p">]</span>
 
 <div class="viewcode-block" id="StringPromptTemplate.format_prompt">

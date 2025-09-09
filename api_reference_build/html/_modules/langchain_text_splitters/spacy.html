@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -220,11 +220,22 @@
 <div id="searchbox"></div>
 <article class="bd-article">
 <h1>Source code for langchain_text_splitters.spacy</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">"""Spacy text splitter."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_text_splitters.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextSplitter</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">spacy.lang.en</span><span class="w"> </span><span class="kn">import</span> <span class="n">English</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">spacy.language</span><span class="w"> </span><span class="kn">import</span> <span class="n">Language</span>
+
+    <span class="n">_HAS_SPACY</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_HAS_SPACY</span> <span class="o">=</span> <span class="kc">False</span>
 
 
 <div class="viewcode-block" id="SpacyTextSplitter">
@@ -273,16 +284,12 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_make_spacy_pipeline_for_splitting</span><span class="p">(</span>
     <span class="n">pipeline</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_000_000</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># avoid importing spacy</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
-    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Language</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_HAS_SPACY</span><span class="p">:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Spacy is not installed, please install it with `pip install spacy`."</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">pipeline</span> <span class="o">==</span> <span class="s2">"sentencizer"</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">spacy.lang.en</span><span class="w"> </span><span class="kn">import</span> <span class="n">English</span>
-
-        <span class="n">sentencizer</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">English</span><span class="p">()</span>
+        <span class="n">sentencizer</span><span class="p">:</span> <span class="n">Language</span> <span class="o">=</span> <span class="n">English</span><span class="p">()</span>
         <span class="n">sentencizer</span><span class="o">.</span><span class="n">add_pipe</span><span class="p">(</span><span class="s2">"sentencizer"</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">sentencizer</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pipeline</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">[</span><span class="s2">"ner"</span><span class="p">,</span> <span class="s2">"tagger"</span><span class="p">])</span>

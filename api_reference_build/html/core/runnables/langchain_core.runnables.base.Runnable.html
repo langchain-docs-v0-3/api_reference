@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -428,12 +428,13 @@
 <li><p><strong>``invoke``/``ainvoke``</strong>: Transforms a single input into an output.</p></li>
 <li><p><strong>``batch``/``abatch``</strong>: Efficiently transforms multiple inputs into outputs.</p></li>
 <li><p><strong>``stream``/``astream``</strong>: Streams output from a single input as it’s produced.</p></li>
-<li><p><strong>``astream_log``</strong>: Streams output and selected intermediate results from an input.</p></li>
+<li><p><strong>``astream_log``</strong>: Streams output and selected intermediate results from an
+input.</p></li>
 </ul>
 <p>Built-in optimizations:</p>
 <ul class="simple">
-<li><p><strong>Batch</strong>: By default, batch runs invoke() in parallel using a thread pool executor.
-Override to optimize batching.</p></li>
+<li><p><strong>Batch</strong>: By default, batch runs invoke() in parallel using a thread pool
+executor. Override to optimize batching.</p></li>
 <li><p><strong>Async</strong>: Methods with <code class="docutils literal notranslate"><span class="pre">'a'</span></code> suffix are asynchronous. By default, they execute
 the sync counterpart using asyncio’s thread pool.
 Override for native async.</p></li>
@@ -441,13 +442,15 @@ Override for native async.</p></li>
 <p>All methods accept an optional config argument, which can be used to configure
 execution, add tags and metadata for tracing and debugging etc.</p>
 <p>Runnables expose schematic information about their input, output and config via
-the <code class="docutils literal notranslate"><span class="pre">input_schema</span></code> property, the <code class="docutils literal notranslate"><span class="pre">output_schema</span></code> property and <code class="docutils literal notranslate"><span class="pre">config_schema</span></code> method.</p>
+the <code class="docutils literal notranslate"><span class="pre">input_schema</span></code> property, the <code class="docutils literal notranslate"><span class="pre">output_schema</span></code> property and <code class="docutils literal notranslate"><span class="pre">config_schema</span></code>
+method.</p>
 </section>
 <section id="lcel-and-composition">
 <h2>LCEL and Composition<a class="headerlink" href="#lcel-and-composition" title="Link to this heading">#</a></h2>
-<p>The LangChain Expression Language (LCEL) is a declarative way to compose <code class="docutils literal notranslate"><span class="pre">Runnables</span></code>
-into chains. Any chain constructed this way will automatically have sync, async,
-batch, and streaming support.</p>
+<p>The LangChain Expression Language (LCEL) is a declarative way to compose
+<a href="#id1"><span class="problematic" id="id2">``</span></a>Runnables``into chains.
+Any chain constructed this way will automatically have sync, async, batch, and
+streaming support.</p>
 <p>The main composition primitives are <code class="docutils literal notranslate"><span class="pre">RunnableSequence</span></code> and <code class="docutils literal notranslate"><span class="pre">RunnableParallel</span></code>.</p>
 <p><strong>``RunnableSequence``</strong> invokes a series of runnables sequentially, with
 one Runnable’s output serving as the next’s input. Construct using
@@ -460,25 +463,27 @@ dict to <code class="docutils literal notranslate"><span class="pre">RunnablePar
 
 <span class="c1"># A RunnableSequence constructed using the `|` operator</span>
 <span class="n">sequence</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">|</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">sequence</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># 4</span>
-<span class="n">sequence</span><span class="o">.</span><span class="n">batch</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span> <span class="c1"># [4, 6, 8]</span>
+<span class="n">sequence</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># 4</span>
+<span class="n">sequence</span><span class="o">.</span><span class="n">batch</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>  <span class="c1"># [4, 6, 8]</span>
 
 
 <span class="c1"># A sequence that contains a RunnableParallel constructed using a dict literal</span>
 <span class="n">sequence</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">|</span> <span class="p">{</span>
-    <span class="s1">'mul_2'</span><span class="p">:</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span>
-    <span class="s1">'mul_5'</span><span class="p">:</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">5</span><span class="p">)</span>
+    <span class="s2">"mul_2"</span><span class="p">:</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span>
+    <span class="s2">"mul_5"</span><span class="p">:</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">5</span><span class="p">),</span>
 <span class="p">}</span>
-<span class="n">sequence</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># {'mul_2': 4, 'mul_5': 10}</span>
+<span class="n">sequence</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># {'mul_2': 4, 'mul_5': 10}</span>
 </pre></div>
 </div>
 </section>
 <section id="standard-methods">
 <h2>Standard Methods<a class="headerlink" href="#standard-methods" title="Link to this heading">#</a></h2>
-<p>All <a href="#id1"><span class="problematic" id="id2">``</span></a>Runnable``s expose additional methods that can be used to modify their behavior
-(e.g., add a retry policy, add lifecycle listeners, make them configurable, etc.).</p>
-<p>These methods will work on any <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>, including <code class="docutils literal notranslate"><span class="pre">Runnable</span></code> chains constructed
-by composing other <a href="#id3"><span class="problematic" id="id4">``</span></a>Runnable``s. See the individual methods for details.</p>
+<p>All <a href="#id3"><span class="problematic" id="id4">``</span></a>Runnable``s expose additional methods that can be used to modify their
+behavior (e.g., add a retry policy, add lifecycle listeners, make them
+configurable, etc.).</p>
+<p>These methods will work on any <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>, including <code class="docutils literal notranslate"><span class="pre">Runnable</span></code> chains
+constructed by composing other <a href="#id5"><span class="problematic" id="id6">``</span></a>Runnable``s.
+See the individual methods for details.</p>
 <p>For example,</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableLambda</span>
 
@@ -516,6 +521,7 @@ to debug and trace the chain.</p>
 <p>You can set the global debug flag to True to enable debug output for all chains:</p>
 <blockquote>
 <div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.globals</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_debug</span>
+
 <span class="n">set_debug</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -524,10 +530,7 @@ to debug and trace the chain.</p>
 <blockquote>
 <div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConsoleCallbackHandler</span>
 
-<span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
-    <span class="o">...</span><span class="p">,</span>
-    <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s1">'callbacks'</span><span class="p">:</span> <span class="p">[</span><span class="n">ConsoleCallbackHandler</span><span class="p">()]}</span>
-<span class="p">)</span>
+<span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">"callbacks"</span><span class="p">:</span> <span class="p">[</span><span class="n">ConsoleCallbackHandler</span><span class="p">()]})</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -536,10 +539,10 @@ to debug and trace the chain.</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">InputType</span></code></p></td>
-<td><p>The type of input this <code class="docutils literal notranslate"><span class="pre">Runnable</span></code> accepts specified as a type annotation.</p></td>
+<td><p>Input type.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">OutputType</span></code></p></td>
-<td><p>The type of output this <code class="docutils literal notranslate"><span class="pre">Runnable</span></code> produces specified as a type annotation.</p></td>
+<td><p>Output Type.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">config_specs</span></code></p></td>
 <td><p>List configurable fields for this <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p></td>
@@ -548,7 +551,7 @@ to debug and trace the chain.</p>
 <td><p>The type of input this <code class="docutils literal notranslate"><span class="pre">Runnable</span></code> accepts specified as a pydantic model.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">output_schema</span></code></p></td>
-<td><p>The type of output this <code class="docutils literal notranslate"><span class="pre">Runnable</span></code> produces specified as a pydantic model.</p></td>
+<td><p>Output schema.</p></td>
 </tr>
 </tbody>
 </table>
@@ -563,7 +566,7 @@ to debug and trace the chain.</p>
 <td><p>Run <code class="docutils literal notranslate"><span class="pre">ainvoke</span></code> in parallel on a list of inputs.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.runnables.base.Runnable.ainvoke" title="langchain_core.runnables.base.Runnable.ainvoke"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ainvoke</span></code></a>(input[, config])</p></td>
-<td><p>Default implementation of <code class="docutils literal notranslate"><span class="pre">ainvoke</span></code>, calls <code class="docutils literal notranslate"><span class="pre">invoke</span></code> from a thread.</p></td>
+<td><p>Transform a single input into an output.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.runnables.base.Runnable.as_tool" title="langchain_core.runnables.base.Runnable.as_tool"><code class="xref py py-obj docutils literal notranslate"><span class="pre">as_tool</span></code></a>([args_schema, name, description, ...])</p></td>
 <td><p></p></td>
@@ -581,7 +584,7 @@ to debug and trace the chain.</p>
 <td><p>Stream all output from a <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>, as reported to the callback system.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.runnables.base.Runnable.atransform" title="langchain_core.runnables.base.Runnable.atransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">atransform</span></code></a>(input[, config])</p></td>
-<td><p>Default implementation of atransform, which buffers input and calls <code class="docutils literal notranslate"><span class="pre">astream</span></code>.</p></td>
+<td><p>Transform inputs to outputs.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.runnables.base.Runnable.batch" title="langchain_core.runnables.base.Runnable.batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">batch</span></code></a>(inputs[, config, return_exceptions])</p></td>
 <td><p>Default implementation runs invoke in parallel using a thread pool executor.</p></td>
@@ -629,16 +632,16 @@ to debug and trace the chain.</p>
 <td><p>Pick keys from the output dict of this <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.runnables.base.Runnable.pipe" title="langchain_core.runnables.base.Runnable.pipe"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pipe</span></code></a>(*others[, name])</p></td>
-<td><p>Compose this <code class="docutils literal notranslate"><span class="pre">Runnable</span></code> with <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>-like objects to make a <code class="docutils literal notranslate"><span class="pre">RunnableSequence</span></code>.</p></td>
+<td><p>Pipe runnables.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.runnables.base.Runnable.stream" title="langchain_core.runnables.base.Runnable.stream"><code class="xref py py-obj docutils literal notranslate"><span class="pre">stream</span></code></a>(input[, config])</p></td>
 <td><p>Default implementation of <code class="docutils literal notranslate"><span class="pre">stream</span></code>, which calls <code class="docutils literal notranslate"><span class="pre">invoke</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.runnables.base.Runnable.transform" title="langchain_core.runnables.base.Runnable.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a>(input[, config])</p></td>
-<td><p>Default implementation of transform, which buffers input and calls <code class="docutils literal notranslate"><span class="pre">astream</span></code>.</p></td>
+<td><p>Transform inputs to outputs.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#langchain_core.runnables.base.Runnable.with_alisteners" title="langchain_core.runnables.base.Runnable.with_alisteners"><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_alisteners</span></code></a>(*[, on_start, on_end, on_error])</p></td>
-<td><p>Bind async lifecycle listeners to a <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>, returning a new <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p></td>
+<td><p>Bind async lifecycle listeners to a <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#langchain_core.runnables.base.Runnable.with_config" title="langchain_core.runnables.base.Runnable.with_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_config</span></code></a>([config])</p></td>
 <td><p>Bind config to a <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>, returning a new <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p></td>
@@ -684,7 +687,7 @@ do in parallel, and other keys. Please refer to the <code class="docutils litera
 for more details. Defaults to None.</p></li>
 <li><p><strong>return_exceptions</strong> (<em>bool</em>) – Whether to return exceptions instead of raising them.
 Defaults to False.</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em><em> | </em><em>None</em>) – Additional keyword arguments to pass to the <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em><em> | </em><em>None</em>) – Additional keyword arguments to pass to the <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -746,20 +749,24 @@ Defaults to False.</p></li>
 <dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Output</span></span></span><a class="reference internal" href="../../_modules/langchain_core/runnables/base.html#Runnable.ainvoke"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.runnables.base.Runnable.ainvoke" title="Link to this definition">#</a></dt>
-<dd><p>Default implementation of <code class="docutils literal notranslate"><span class="pre">ainvoke</span></code>, calls <code class="docutils literal notranslate"><span class="pre">invoke</span></code> from a thread.</p>
-<p>The default implementation allows usage of async code even if
-the <code class="docutils literal notranslate"><span class="pre">Runnable</span></code> did not implement a native async version of <code class="docutils literal notranslate"><span class="pre">invoke</span></code>.</p>
-<p>Subclasses should override this method if they can run asynchronously.</p>
+<dd><p>Transform a single input into an output.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input</strong> (<em>Input</em>)</p></li>
-<li><p><strong>config</strong> (<a class="reference internal" href="langchain_core.runnables.config.RunnableConfig.html#langchain_core.runnables.config.RunnableConfig" title="langchain_core.runnables.config.RunnableConfig"><em>RunnableConfig</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>input</strong> (<em>Input</em>) – The input to the <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="langchain_core.runnables.config.RunnableConfig.html#langchain_core.runnables.config.RunnableConfig" title="langchain_core.runnables.config.RunnableConfig"><em>RunnableConfig</em></a><em> | </em><em>None</em>) – A config to use when invoking the <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.
+The config supports standard keys like <code class="docutils literal notranslate"><span class="pre">'tags'</span></code>, <code class="docutils literal notranslate"><span class="pre">'metadata'</span></code> for
+tracing purposes, <code class="docutils literal notranslate"><span class="pre">'max_concurrency'</span></code> for controlling how much work to
+do in parallel, and other keys. Please refer to the <code class="docutils literal notranslate"><span class="pre">RunnableConfig</span></code>
+for more details. Defaults to None.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Output</em></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The output of the <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Output</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -820,12 +827,15 @@ pass <code class="docutils literal notranslate"><span class="pre">arg_types</spa
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableLambda</span>
 
+
 <span class="k">class</span><span class="w"> </span><span class="nc">Args</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
     <span class="n">a</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">b</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
 
+
 <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">"a"</span><span class="p">]</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">"b"</span><span class="p">]))</span>
+
 
 <span class="n">runnable</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 <span class="n">as_tool</span> <span class="o">=</span> <span class="n">runnable</span><span class="o">.</span><span class="n">as_tool</span><span class="p">()</span>
@@ -855,8 +865,10 @@ pass <code class="docutils literal notranslate"><span class="pre">arg_types</spa
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableLambda</span>
 
+
 <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">"a"</span><span class="p">]</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">"b"</span><span class="p">]))</span>
+
 
 <span class="n">runnable</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 <span class="n">as_tool</span> <span class="o">=</span> <span class="n">runnable</span><span class="o">.</span><span class="n">as_tool</span><span class="p">(</span><span class="n">arg_types</span><span class="o">=</span><span class="p">{</span><span class="s2">"a"</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]})</span>
@@ -866,11 +878,14 @@ pass <code class="docutils literal notranslate"><span class="pre">arg_types</spa
 <p>String input:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableLambda</span>
 
+
 <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="s2">"a"</span>
 
+
 <span class="k">def</span><span class="w"> </span><span class="nf">g</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="s2">"z"</span>
+
 
 <span class="n">runnable</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">|</span> <span class="n">g</span>
 <span class="n">as_tool</span> <span class="o">=</span> <span class="n">runnable</span><span class="o">.</span><span class="n">as_tool</span><span class="p">()</span>
@@ -889,7 +904,6 @@ pass <code class="docutils literal notranslate"><span class="pre">arg_types</spa
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="langchain_core.runnables.base.RunnableSerializable.html#langchain_core.runnables.base.RunnableSerializable" title="langchain_core.runnables.base.RunnableSerializable"><span class="pre">RunnableSerializable</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/langchain_core/runnables/base.html#Runnable.assign"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.runnables.base.Runnable.assign" title="Link to this definition">#</a></dt>
 <dd><p>Assigns new fields to the dict output of this <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p>
-<p>Returns a new <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_community.llms.fake</span><span class="w"> </span><span class="kn">import</span> <span class="n">FakeStreamingListLLM</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.output_parsers</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrOutputParser</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompts</span><span class="w"> </span><span class="kn">import</span> <span class="n">SystemMessagePromptTemplate</span>
@@ -917,10 +931,14 @@ pass <code class="docutils literal notranslate"><span class="pre">arg_types</spa
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> (<a class="reference internal" href="#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><em>Runnable</em></a><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>Callable</em><em>[</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>Mapping</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><em>Runnable</em></a><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>Callable</em><em>[</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em><em>, </em><em>Any</em><em>]</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>**kwargs</strong> (<a class="reference internal" href="#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><em>Runnable</em></a><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>Callable</em><em>[</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>Mapping</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><em>Runnable</em></a><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>Callable</em><em>[</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – A mapping of keys to <code class="docutils literal notranslate"><span class="pre">Runnable</span></code> or <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>-like objects
+that will be invoked with the entire output dict of this <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="langchain_core.runnables.base.RunnableSerializable.html#langchain_core.runnables.base.RunnableSerializable" title="langchain_core.runnables.base.RunnableSerializable"><em>RunnableSerializable</em></a>[Any, Any]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="langchain_core.runnables.base.RunnableSerializable.html#langchain_core.runnables.base.RunnableSerializable" title="langchain_core.runnables.base.RunnableSerializable"><em>RunnableSerializable</em></a>[Any, Any]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1034,7 +1052,7 @@ Chain definitions have been included after the table.</p>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">on_llm_stream</span></code></p></td>
 <td><p>[model name]</p></td>
-<td><p><a href="#id5"><span class="problematic" id="id6">``</span></a>’Hello’ ``</p></td>
+<td><p><a href="#id7"><span class="problematic" id="id8">``</span></a>’Hello’ ``</p></td>
 <td></td>
 <td></td>
 </tr>
@@ -1129,6 +1147,7 @@ Chain definitions have been included after the table.</p>
 <span class="w">    </span><span class="sd">'''Format the docs.'''</span>
     <span class="k">return</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">doc</span><span class="o">.</span><span class="n">page_content</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">])</span>
 
+
 <span class="n">format_docs</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="n">format_docs</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -1148,8 +1167,10 @@ Chain definitions have been included after the table.</p>
 <p>Example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableLambda</span>
 
+
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">reverse</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">s</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
 
 <span class="n">chain</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">reverse</span><span class="p">)</span>
 
@@ -1319,7 +1340,8 @@ step, and the final state of the run.</p>
 <dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">AsyncIterator</span><span class="p"><span class="pre">[</span></span><span class="pre">Output</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/langchain_core/runnables/base.html#Runnable.atransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.runnables.base.Runnable.atransform" title="Link to this definition">#</a></dt>
-<dd><p>Default implementation of atransform, which buffers input and calls <code class="docutils literal notranslate"><span class="pre">astream</span></code>.</p>
+<dd><p>Transform inputs to outputs.</p>
+<p>Default implementation of atransform, which buffers input and calls <code class="docutils literal notranslate"><span class="pre">astream</span></code>.</p>
 <p>Subclasses should override this method if they can start producing output while
 input is still being generated.</p>
 <dl class="field-list simple">
@@ -1356,14 +1378,22 @@ e.g., if the underlying <code class="docutils literal notranslate"><span class="
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>inputs</strong> (<em>list</em><em>[</em><em>Input</em><em>]</em>)</p></li>
-<li><p><strong>config</strong> (<a class="reference internal" href="langchain_core.runnables.config.RunnableConfig.html#langchain_core.runnables.config.RunnableConfig" title="langchain_core.runnables.config.RunnableConfig"><em>RunnableConfig</em></a><em> | </em><em>list</em><em>[</em><a class="reference internal" href="langchain_core.runnables.config.RunnableConfig.html#langchain_core.runnables.config.RunnableConfig" title="langchain_core.runnables.config.RunnableConfig"><em>RunnableConfig</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
-<li><p><strong>return_exceptions</strong> (<em>bool</em>)</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>inputs</strong> (<em>list</em><em>[</em><em>Input</em><em>]</em>) – A list of inputs to the <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="langchain_core.runnables.config.RunnableConfig.html#langchain_core.runnables.config.RunnableConfig" title="langchain_core.runnables.config.RunnableConfig"><em>RunnableConfig</em></a><em> | </em><em>list</em><em>[</em><a class="reference internal" href="langchain_core.runnables.config.RunnableConfig.html#langchain_core.runnables.config.RunnableConfig" title="langchain_core.runnables.config.RunnableConfig"><em>RunnableConfig</em></a><em>] </em><em>| </em><em>None</em>) – A config to use when invoking the <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.
+The config supports standard keys like <code class="docutils literal notranslate"><span class="pre">'tags'</span></code>, <code class="docutils literal notranslate"><span class="pre">'metadata'</span></code> for
+tracing purposes, <code class="docutils literal notranslate"><span class="pre">'max_concurrency'</span></code> for controlling how much work
+to do in parallel, and other keys. Please refer to the
+<code class="docutils literal notranslate"><span class="pre">RunnableConfig</span></code> for more details. Defaults to None.</p></li>
+<li><p><strong>return_exceptions</strong> (<em>bool</em>) – Whether to return exceptions instead of raising them.
+Defaults to False.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em><em> | </em><em>None</em>) – Additional keyword arguments to pass to the <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[<em>Output</em>]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of outputs from the <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<em>Output</em>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1390,6 +1420,24 @@ e.g., if the underlying <code class="docutils literal notranslate"><span class="
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Output</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Exception</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span></dt>
 <dd><p>Run <code class="docutils literal notranslate"><span class="pre">invoke</span></code> in parallel on a list of inputs.</p>
 <p>Yields results as they complete.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputs</strong> – A list of inputs to the <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p></li>
+<li><p><strong>config</strong> – A config to use when invoking the <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.
+The config supports standard keys like <code class="docutils literal notranslate"><span class="pre">'tags'</span></code>, <code class="docutils literal notranslate"><span class="pre">'metadata'</span></code> for
+tracing purposes, <code class="docutils literal notranslate"><span class="pre">'max_concurrency'</span></code> for controlling how much work to
+do in parallel, and other keys. Please refer to the <code class="docutils literal notranslate"><span class="pre">RunnableConfig</span></code>
+for more details. Defaults to None.</p></li>
+<li><p><strong>return_exceptions</strong> – Whether to return exceptions instead of raising them.
+Defaults to False.</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments to pass to the <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuples of the index of the input and the output from the <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p>
+</dd>
+</dl>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="langchain_core.runnables.base.Runnable.bind">
@@ -1416,22 +1464,16 @@ in the output of the previous <code class="docutils literal notranslate"><span c
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_ollama</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatOllama</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.output_parsers</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrOutputParser</span>
 
-<span class="n">llm</span> <span class="o">=</span> <span class="n">ChatOllama</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">'llama2'</span><span class="p">)</span>
+<span class="n">llm</span> <span class="o">=</span> <span class="n">ChatOllama</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"llama2"</span><span class="p">)</span>
 
 <span class="c1"># Without bind.</span>
-<span class="n">chain</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">llm</span>
-    <span class="o">|</span> <span class="n">StrOutputParser</span><span class="p">()</span>
-<span class="p">)</span>
+<span class="n">chain</span> <span class="o">=</span> <span class="n">llm</span> <span class="o">|</span> <span class="n">StrOutputParser</span><span class="p">()</span>
 
 <span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"Repeat quoted words exactly: 'One two three four five.'"</span><span class="p">)</span>
 <span class="c1"># Output is 'One two three four five.'</span>
 
 <span class="c1"># With bind.</span>
-<span class="n">chain</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">llm</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="p">[</span><span class="s2">"three"</span><span class="p">])</span>
-    <span class="o">|</span> <span class="n">StrOutputParser</span><span class="p">()</span>
-<span class="p">)</span>
+<span class="n">chain</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="p">[</span><span class="s2">"three"</span><span class="p">])</span> <span class="o">|</span> <span class="n">StrOutputParser</span><span class="p">()</span>
 
 <span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"Repeat quoted words exactly: 'One two three four five.'"</span><span class="p">)</span>
 <span class="c1"># Output is 'One two'</span>
@@ -1495,10 +1537,10 @@ and <code class="docutils literal notranslate"><span class="pre">configurable_al
 <dd><p>Return a graph representation of this <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="langchain_core.runnables.config.RunnableConfig.html#langchain_core.runnables.config.RunnableConfig" title="langchain_core.runnables.config.RunnableConfig"><em>RunnableConfig</em></a><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>config</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="langchain_core.runnables.config.RunnableConfig.html#langchain_core.runnables.config.RunnableConfig" title="langchain_core.runnables.config.RunnableConfig"><em>RunnableConfig</em></a><em>]</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="langchain_core.runnables.graph.Graph.html#langchain_core.runnables.graph.Graph" title="langchain_core.runnables.graph.Graph"><em>Graph</em></a></p>
+<dd class="field-even"><p><a class="reference internal" href="langchain_core.runnables.graph.Graph.html#langchain_core.runnables.graph.Graph" title="langchain_core.runnables.graph.Graph">Graph</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1524,8 +1566,10 @@ and <code class="docutils literal notranslate"><span class="pre">configurable_al
 <p class="rubric">Example</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableLambda</span>
 
+
 <span class="k">def</span><span class="w"> </span><span class="nf">add_one</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span>
+
 
 <span class="n">runnable</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="n">add_one</span><span class="p">)</span>
 
@@ -1573,12 +1617,15 @@ depends on which configuration the <code class="docutils literal notranslate"><s
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>suffix</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>name</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>suffix</strong> (<em>str</em><em> | </em><em>None</em>) – An optional suffix to append to the name.</p></li>
+<li><p><strong>name</strong> (<em>str</em><em> | </em><em>None</em>) – An optional name to use instead of the <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>’s name.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The name of the <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1604,8 +1651,10 @@ depends on which configuration the <code class="docutils literal notranslate"><s
 <p class="rubric">Example</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableLambda</span>
 
+
 <span class="k">def</span><span class="w"> </span><span class="nf">add_one</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span>
+
 
 <span class="n">runnable</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="n">add_one</span><span class="p">)</span>
 
@@ -1703,11 +1752,13 @@ for more details. Defaults to None.</p></li>
 <p class="rubric">Example</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableLambda</span>
 
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_lambda</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span>
 
+
 <span class="n">runnable</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="n">_lambda</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">runnable</span><span class="o">.</span><span class="n">map</span><span class="p">()</span><span class="o">.</span><span class="n">invoke</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]))</span> <span class="c1"># [2, 3, 4]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">runnable</span><span class="o">.</span><span class="n">map</span><span class="p">()</span><span class="o">.</span><span class="n">invoke</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]))</span>  <span class="c1"># [2, 3, 4]</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -1719,8 +1770,9 @@ for more details. Defaults to None.</p></li>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="langchain_core.runnables.base.RunnableSerializable.html#langchain_core.runnables.base.RunnableSerializable" title="langchain_core.runnables.base.RunnableSerializable"><span class="pre">RunnableSerializable</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/langchain_core/runnables/base.html#Runnable.pick"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.runnables.base.Runnable.pick" title="Link to this definition">#</a></dt>
 <dd><p>Pick keys from the output dict of this <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p>
-<dl>
-<dt>Pick single key:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<p>Pick single key:</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableLambda</span><span class="p">,</span> <span class="n">RunnableMap</span>
 
@@ -1736,8 +1788,10 @@ for more details. Defaults to None.</p></li>
 <span class="c1"># -&gt; [1, 2, 3]</span>
 </pre></div>
 </div>
-</dd>
-<dt>Pick list of keys:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+</div></blockquote>
+<p>Pick list of keys:</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 
@@ -1745,13 +1799,14 @@ for more details. Defaults to None.</p></li>
 
 <span class="n">as_str</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
 <span class="n">as_json</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">as_bytes</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
     <span class="k">return</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">"utf-8"</span><span class="p">)</span>
 
+
 <span class="n">chain</span> <span class="o">=</span> <span class="n">RunnableMap</span><span class="p">(</span>
-    <span class="nb">str</span><span class="o">=</span><span class="n">as_str</span><span class="p">,</span>
-    <span class="n">json</span><span class="o">=</span><span class="n">as_json</span><span class="p">,</span>
-    <span class="nb">bytes</span><span class="o">=</span><span class="n">RunnableLambda</span><span class="p">(</span><span class="n">as_bytes</span><span class="p">)</span>
+    <span class="nb">str</span><span class="o">=</span><span class="n">as_str</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">as_json</span><span class="p">,</span> <span class="nb">bytes</span><span class="o">=</span><span class="n">RunnableLambda</span><span class="p">(</span><span class="n">as_bytes</span><span class="p">)</span>
 <span class="p">)</span>
 
 <span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"[1, 2, 3]"</span><span class="p">)</span>
@@ -1762,14 +1817,16 @@ for more details. Defaults to None.</p></li>
 <span class="c1"># -&gt; {"json": [1, 2, 3], "bytes": b"[1, 2, 3]"}</span>
 </pre></div>
 </div>
-</dd>
-</dl>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>keys</strong> (<em>str</em><em> | </em><em>list</em><em>[</em><em>str</em><em>]</em>)</p>
+<dd class="field-odd"><p><strong>keys</strong> (<em>str</em><em> | </em><em>list</em><em>[</em><em>str</em><em>]</em>) – A key or list of keys to pick from the output dict.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="langchain_core.runnables.base.RunnableSerializable.html#langchain_core.runnables.base.RunnableSerializable" title="langchain_core.runnables.base.RunnableSerializable"><em>RunnableSerializable</em></a>[Any, Any]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>a new <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="langchain_core.runnables.base.RunnableSerializable.html#langchain_core.runnables.base.RunnableSerializable" title="langchain_core.runnables.base.RunnableSerializable"><em>RunnableSerializable</em></a>[Any, Any]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1781,16 +1838,21 @@ for more details. Defaults to None.</p></li>
 <dd><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="langchain_core.runnables.base.RunnableSerializable.html#langchain_core.runnables.base.RunnableSerializable" title="langchain_core.runnables.base.RunnableSerializable"><span class="pre">RunnableSerializable</span></a><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">-</span></span><span class="pre">Input</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Other</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/langchain_core/runnables/base.html#Runnable.pipe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.runnables.base.Runnable.pipe" title="Link to this definition">#</a></dt>
-<dd><p>Compose this <code class="docutils literal notranslate"><span class="pre">Runnable</span></code> with <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>-like objects to make a <code class="docutils literal notranslate"><span class="pre">RunnableSequence</span></code>.</p>
+<dd><p>Pipe runnables.</p>
+<p>Compose this <code class="docutils literal notranslate"><span class="pre">Runnable</span></code> with <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>-like objects to make a
+<code class="docutils literal notranslate"><span class="pre">RunnableSequence</span></code>.</p>
 <p>Equivalent to <code class="docutils literal notranslate"><span class="pre">RunnableSequence(self,</span> <span class="pre">*others)</span></code> or <code class="docutils literal notranslate"><span class="pre">self</span> <span class="pre">|</span> <span class="pre">others[0]</span> <span class="pre">|</span> <span class="pre">...</span></code></p>
 <p class="rubric">Example</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableLambda</span>
 
+
 <span class="k">def</span><span class="w"> </span><span class="nf">add_one</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span>
 
+
 <span class="k">def</span><span class="w"> </span><span class="nf">mul_two</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="mi">2</span>
+
 
 <span class="n">runnable_1</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="n">add_one</span><span class="p">)</span>
 <span class="n">runnable_2</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="n">mul_two</span><span class="p">)</span>
@@ -1810,12 +1872,15 @@ for more details. Defaults to None.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>others</strong> (<a class="reference internal" href="#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><em>Runnable</em></a><em>[</em><em>Any</em><em>, </em><em>Other</em><em>] </em><em>| </em><em>Callable</em><em>[</em><em>[</em><em>Any</em><em>]</em><em>, </em><em>Other</em><em>]</em>)</p></li>
-<li><p><strong>name</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>*others</strong> (<a class="reference internal" href="#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><em>Runnable</em></a><em>[</em><em>Any</em><em>, </em><em>Other</em><em>] </em><em>| </em><em>Callable</em><em>[</em><em>[</em><em>Any</em><em>]</em><em>, </em><em>Other</em><em>]</em>) – Other <code class="docutils literal notranslate"><span class="pre">Runnable</span></code> or <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>-like objects to compose</p></li>
+<li><p><strong>name</strong> (<em>str</em><em> | </em><em>None</em>) – An optional name for the resulting <code class="docutils literal notranslate"><span class="pre">RunnableSequence</span></code>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="langchain_core.runnables.base.RunnableSerializable.html#langchain_core.runnables.base.RunnableSerializable" title="langchain_core.runnables.base.RunnableSerializable"><em>RunnableSerializable</em></a>[-Input, ~Other]</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="langchain_core.runnables.base.RunnableSerializable.html#langchain_core.runnables.base.RunnableSerializable" title="langchain_core.runnables.base.RunnableSerializable"><em>RunnableSerializable</em></a>[-Input, ~Other]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1855,7 +1920,8 @@ for more details. Defaults to None.</p></li>
 <dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">Output</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/langchain_core/runnables/base.html#Runnable.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.runnables.base.Runnable.transform" title="Link to this definition">#</a></dt>
-<dd><p>Default implementation of transform, which buffers input and calls <code class="docutils literal notranslate"><span class="pre">astream</span></code>.</p>
+<dd><p>Transform inputs to outputs.</p>
+<p>Default implementation of transform, which buffers input and calls <code class="docutils literal notranslate"><span class="pre">astream</span></code>.</p>
 <p>Subclasses should override this method if they can start producing output while
 input is still being generated.</p>
 <dl class="field-list simple">
@@ -1884,7 +1950,8 @@ input is still being generated.</p>
 <dd><em class="sig-param"><span class="n"><span class="pre">on_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AsyncListener</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><span class="pre">Runnable</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Input</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Output</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/langchain_core/runnables/base.html#Runnable.with_alisteners"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.runnables.base.Runnable.with_alisteners" title="Link to this definition">#</a></dt>
-<dd><p>Bind async lifecycle listeners to a <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>, returning a new <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p>
+<dd><p>Bind async lifecycle listeners to a <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p>
+<p>Returns a new <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>.</p>
 <p>The Run object contains information about the run, including its <code class="docutils literal notranslate"><span class="pre">id</span></code>,
 <code class="docutils literal notranslate"><span class="pre">type</span></code>, <code class="docutils literal notranslate"><span class="pre">input</span></code>, <code class="docutils literal notranslate"><span class="pre">output</span></code>, <code class="docutils literal notranslate"><span class="pre">error</span></code>, <code class="docutils literal notranslate"><span class="pre">start_time</span></code>, <code class="docutils literal notranslate"><span class="pre">end_time</span></code>, and
 any tags or metadata added to the run.</p>
@@ -1987,13 +2054,15 @@ in order, upon failures.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fallbacks</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><em>Runnable</em></a><em>[</em><em>Input</em><em>, </em><em>Output</em><em>]</em><em>]</em>) – A sequence of runnables to try if the original <code class="docutils literal notranslate"><span class="pre">Runnable</span></code> fails.</p></li>
+<li><p><strong>fallbacks</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><em>Runnable</em></a><em>[</em><em>Input</em><em>, </em><em>Output</em><em>]</em><em>]</em>) – A sequence of runnables to try if the original <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>
+fails.</p></li>
 <li><p><strong>exceptions_to_handle</strong> (<em>tuple</em><em>[</em><em>type</em><em>[</em><em>BaseException</em><em>]</em><em>, </em><em>...</em><em>]</em>) – A tuple of exception types to handle.
 Defaults to <code class="docutils literal notranslate"><span class="pre">(Exception,)</span></code>.</p></li>
 <li><p><strong>exception_key</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – If string is specified then handled exceptions will be passed
-to fallbacks as part of the input under the specified key. If None,
-exceptions will not be passed to fallbacks. If used, the base <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>
-and its fallbacks must accept a dictionary as input. Defaults to None.</p></li>
+to fallbacks as part of the input under the specified key.
+If None, exceptions will not be passed to fallbacks.
+If used, the base <code class="docutils literal notranslate"><span class="pre">Runnable</span></code> and its fallbacks must accept a
+dictionary as input. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2021,19 +2090,21 @@ fallback in order, upon failures.</p>
 
 <span class="n">runnable</span> <span class="o">=</span> <span class="n">RunnableGenerator</span><span class="p">(</span><span class="n">_generate_immediate_error</span><span class="p">)</span><span class="o">.</span><span class="n">with_fallbacks</span><span class="p">(</span>
     <span class="p">[</span><span class="n">RunnableGenerator</span><span class="p">(</span><span class="n">_generate</span><span class="p">)]</span>
-    <span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">runnable</span><span class="o">.</span><span class="n">stream</span><span class="p">({})))</span> <span class="c1">#foo bar</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">runnable</span><span class="o">.</span><span class="n">stream</span><span class="p">({})))</span>  <span class="c1"># foo bar</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fallbacks</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><em>Runnable</em></a><em>[</em><em>Input</em><em>, </em><em>Output</em><em>]</em><em>]</em>) – A sequence of runnables to try if the original <code class="docutils literal notranslate"><span class="pre">Runnable</span></code> fails.</p></li>
+<li><p><strong>fallbacks</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#langchain_core.runnables.base.Runnable" title="langchain_core.runnables.base.Runnable"><em>Runnable</em></a><em>[</em><em>Input</em><em>, </em><em>Output</em><em>]</em><em>]</em>) – A sequence of runnables to try if the original <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>
+fails.</p></li>
 <li><p><strong>exceptions_to_handle</strong> (<em>tuple</em><em>[</em><em>type</em><em>[</em><em>BaseException</em><em>]</em><em>, </em><em>...</em><em>]</em>) – A tuple of exception types to handle.</p></li>
 <li><p><strong>exception_key</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – If string is specified then handled exceptions will be passed
-to fallbacks as part of the input under the specified key. If None,
-exceptions will not be passed to fallbacks. If used, the base <code class="docutils literal notranslate"><span class="pre">Runnable</span></code>
-and its fallbacks must accept a dictionary as input.</p></li>
+to fallbacks as part of the input under the specified key.
+If None, exceptions will not be passed to fallbacks.
+If used, the base <code class="docutils literal notranslate"><span class="pre">Runnable</span></code> and its fallbacks must accept a
+dictionary as input.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2083,18 +2154,21 @@ object. Defaults to None.</p></li>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">test_runnable</span><span class="p">(</span><span class="n">time_to_sleep</span> <span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_runnable</span><span class="p">(</span><span class="n">time_to_sleep</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
     <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">time_to_sleep</span><span class="p">)</span>
+
 
 <span class="k">def</span><span class="w"> </span><span class="nf">fn_start</span><span class="p">(</span><span class="n">run_obj</span><span class="p">:</span> <span class="n">Run</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"start_time:"</span><span class="p">,</span> <span class="n">run_obj</span><span class="o">.</span><span class="n">start_time</span><span class="p">)</span>
 
+
 <span class="k">def</span><span class="w"> </span><span class="nf">fn_end</span><span class="p">(</span><span class="n">run_obj</span><span class="p">:</span> <span class="n">Run</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"end_time:"</span><span class="p">,</span> <span class="n">run_obj</span><span class="o">.</span><span class="n">end_time</span><span class="p">)</span>
 
+
 <span class="n">chain</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="n">test_runnable</span><span class="p">)</span><span class="o">.</span><span class="n">with_listeners</span><span class="p">(</span>
-    <span class="n">on_start</span><span class="o">=</span><span class="n">fn_start</span><span class="p">,</span>
-    <span class="n">on_end</span><span class="o">=</span><span class="n">fn_end</span>
+    <span class="n">on_start</span><span class="o">=</span><span class="n">fn_start</span><span class="p">,</span> <span class="n">on_end</span><span class="o">=</span><span class="n">fn_end</span>
 <span class="p">)</span>
 <span class="n">chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
@@ -2137,7 +2211,7 @@ giving up. Defaults to 3.</p></li>
     <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"x is 1"</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-         <span class="k">pass</span>
+        <span class="k">pass</span>
 
 
 <span class="n">runnable</span> <span class="o">=</span> <span class="n">RunnableLambda</span><span class="p">(</span><span class="n">_lambda</span><span class="p">)</span>
@@ -2149,7 +2223,7 @@ giving up. Defaults to 3.</p></li>
 <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
     <span class="k">pass</span>
 
-<span class="k">assert</span> <span class="p">(</span><span class="n">count</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">2</span>
 </pre></div>
 </div>
 </dd></dl>

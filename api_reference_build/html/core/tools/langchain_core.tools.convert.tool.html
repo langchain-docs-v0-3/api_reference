@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -409,25 +409,23 @@ converted to a tool. Must be provided as a positional argument.</p></li>
 positional argument.</p></li>
 <li><p><strong>description</strong> – <p>Optional description for the tool.
 Precedence for the tool description value is as follows:</p>
-<blockquote>
-<div><ul>
+<ul>
 <li><dl class="simple">
-<dt><cite>description</cite> argument</dt><dd><p>(used even if docstring and/or <cite>args_schema</cite> are provided)</p>
+<dt><code class="docutils literal notranslate"><span class="pre">description</span></code> argument</dt><dd><p>(used even if docstring and/or <code class="docutils literal notranslate"><span class="pre">args_schema</span></code> are provided)</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>tool function docstring</dt><dd><p>(used even if <cite>args_schema</cite> is provided)</p>
+<dt>tool function docstring</dt><dd><p>(used even if <code class="docutils literal notranslate"><span class="pre">args_schema</span></code> is provided)</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt><cite>args_schema</cite> description</dt><dd><p>(used only if <cite>description</cite> / docstring are not provided)</p>
+<dt><code class="docutils literal notranslate"><span class="pre">args_schema</span></code> description</dt><dd><p>(used only if <cite>description</cite> / docstring are not provided)</p>
 </dd>
 </dl>
 </li>
 </ul>
-</div></blockquote>
 </p></li>
 <li><p><strong>*args</strong> – Extra positional arguments. Must be empty.</p></li>
 <li><p><strong>return_direct</strong> – Whether to return directly from the tool rather
@@ -451,8 +449,21 @@ whether to raise ValueError on invalid Google Style docstrings.
 Defaults to True.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The tool.</p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If too many positional arguments are provided.</p></li>
+<li><p><strong>ValueError</strong> – If a runnable is provided without a string name.</p></li>
+<li><p><strong>ValueError</strong> – If the first argument is not a string or callable with
+    a <code class="docutils literal notranslate"><span class="pre">__name__</span></code> attribute.</p></li>
+<li><p><strong>ValueError</strong> – If the function does not have a docstring and description
+    is not provided and <code class="docutils literal notranslate"><span class="pre">infer_schema</span></code> is False.</p></li>
+<li><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">parse_docstring</span></code> is True and the function has an invalid
+    Google-style docstring and <code class="docutils literal notranslate"><span class="pre">error_on_invalid_docstring</span></code> is True.</p></li>
+<li><p><strong>ValueError</strong> – If a Runnable is provided that does not have an object schema.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The tool.</p>
 </dd>
 </dl>
 <dl class="simple">
@@ -468,10 +479,12 @@ Defaults to True.</p></li>
     <span class="c1"># Searches the API for the query.</span>
     <span class="k">return</span>
 
+
 <span class="nd">@tool</span><span class="p">(</span><span class="s2">"search"</span><span class="p">,</span> <span class="n">return_direct</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">search_api</span><span class="p">(</span><span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="c1"># Searches the API for the query.</span>
     <span class="k">return</span>
+
 
 <span class="nd">@tool</span><span class="p">(</span><span class="n">response_format</span><span class="o">=</span><span class="s2">"content_and_artifact"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">search_api</span><span class="p">(</span><span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
@@ -501,18 +514,15 @@ Defaults to True.</p></li>
         <span class="s2">"bar"</span><span class="p">:</span> <span class="p">{</span>
             <span class="s2">"title"</span><span class="p">:</span> <span class="s2">"Bar"</span><span class="p">,</span>
             <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"The bar."</span><span class="p">,</span>
-            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span>
+            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span>
         <span class="p">},</span>
         <span class="s2">"baz"</span><span class="p">:</span> <span class="p">{</span>
             <span class="s2">"title"</span><span class="p">:</span> <span class="s2">"Baz"</span><span class="p">,</span>
             <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"The baz."</span><span class="p">,</span>
-            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"integer"</span>
-        <span class="p">}</span>
+            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"integer"</span><span class="p">,</span>
+        <span class="p">},</span>
     <span class="p">},</span>
-    <span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span>
-        <span class="s2">"bar"</span><span class="p">,</span>
-        <span class="s2">"baz"</span>
-    <span class="p">]</span>
+    <span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"bar"</span><span class="p">,</span> <span class="s2">"baz"</span><span class="p">],</span>
 <span class="p">}</span>
 </pre></div>
 </div>

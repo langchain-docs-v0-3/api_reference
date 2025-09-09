@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -312,7 +312,7 @@
 <span class="sd">    """</span>
     <span class="c1"># If there is a newline, or the previous tag was a standalone</span>
     <span class="k">if</span> <span class="n">literal</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">is_standalone</span><span class="p">:</span>
-        <span class="n">padding</span> <span class="o">=</span> <span class="n">literal</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">padding</span> <span class="o">=</span> <span class="n">literal</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">maxsplit</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
         <span class="c1"># If all the characters since the last newline are spaces</span>
         <span class="c1"># Then the next tag could be a standalone</span>
@@ -453,17 +453,22 @@
 <span class="sd">        def_rdel: The default right delimiter</span>
 <span class="sd">            ("}}" by default, as in spec compliant mustache)</span>
 
-<span class="sd">    Returns:</span>
-<span class="sd">        A generator of mustache tags in the form of a tuple (tag_type, tag_key)</span>
-<span class="sd">            Where tag_type is one of:</span>
-<span class="sd">             * literal</span>
-<span class="sd">             * section</span>
-<span class="sd">             * inverted section</span>
-<span class="sd">             * end</span>
-<span class="sd">             * partial</span>
-<span class="sd">             * no escape</span>
-<span class="sd">            And tag_key is either the key or in the case of a literal tag,</span>
-<span class="sd">            the literal itself.</span>
+<span class="sd">    Yields:</span>
+<span class="sd">        Mustache tags in the form of a tuple (tag_type, tag_key)</span>
+<span class="sd">        where tag_type is one of:</span>
+
+<span class="sd">        * literal</span>
+<span class="sd">        * section</span>
+<span class="sd">        * inverted section</span>
+<span class="sd">        * end</span>
+<span class="sd">        * partial</span>
+<span class="sd">        * no escape</span>
+
+<span class="sd">        and tag_key is either the key or in the case of a literal tag,</span>
+<span class="sd">        the literal itself.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ChevronError: If there is a syntax error in the template.</span>
 <span class="sd">    """</span>
     <span class="k">global</span> <span class="n">_CURRENT_LINE</span><span class="p">,</span> <span class="n">_LAST_TAG_LINE</span>
     <span class="n">_CURRENT_LINE</span> <span class="o">=</span> <span class="mi">1</span>
@@ -566,7 +571,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_html_escape</span><span class="p">(</span><span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""HTML escape all of these " &amp; &lt; &gt;."""</span>
+<span class="w">    </span><span class="sd">"""Return the HTML-escaped string with these characters escaped: ``" &amp; &lt; &gt;``."""</span>
     <span class="n">html_codes</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">'"'</span><span class="p">:</span> <span class="s2">"&amp;quot;"</span><span class="p">,</span>
         <span class="s2">"&lt;"</span><span class="p">:</span> <span class="s2">"&amp;lt;"</span><span class="p">,</span>
@@ -589,7 +594,7 @@
     <span class="n">def_ldel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">def_rdel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Get a key from the current scope."""</span>
+<span class="w">    </span><span class="sd">"""Return a key from the current scope."""</span>
     <span class="c1"># If the key is a dot</span>
     <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"."</span><span class="p">:</span>
         <span class="c1"># Then just return the current scope</span>
@@ -647,7 +652,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_partial</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">partials_dict</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Load a partial."""</span>
+<span class="w">    </span><span class="sd">"""Load a partial.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The partial.</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="c1"># Maybe the partial is in the dictionary</span>
         <span class="k">return</span> <span class="n">partials_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>

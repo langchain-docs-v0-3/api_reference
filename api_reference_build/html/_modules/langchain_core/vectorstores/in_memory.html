@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -249,6 +249,13 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">Embeddings</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.indexing</span><span class="w"> </span><span class="kn">import</span> <span class="n">UpsertResponse</span>
 
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="n">_HAS_NUMPY</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_HAS_NUMPY</span> <span class="o">=</span> <span class="kc">False</span>
+
 
 <div class="viewcode-block" id="InMemoryVectorStore">
 <a class="viewcode-back" href="../../../core/vectorstores/langchain_core.vectorstores.in_memory.InMemoryVectorStore.html#langchain_core.vectorstores.in_memory.InMemoryVectorStore">[docs]</a>
@@ -307,7 +314,7 @@
 <span class="sd">    Search:</span>
 <span class="sd">        .. code-block:: python</span>
 
-<span class="sd">            results = vector_store.similarity_search(query="thud",k=1)</span>
+<span class="sd">            results = vector_store.similarity_search(query="thud", k=1)</span>
 <span class="sd">            for doc in results:</span>
 <span class="sd">                print(f"* {doc.page_content} [{doc.metadata}]")</span>
 
@@ -320,6 +327,7 @@
 
 <span class="sd">            def _filter_function(doc: Document) -&gt; bool:</span>
 <span class="sd">                return doc.metadata.get("bar") == "baz"</span>
+
 
 <span class="sd">            results = vector_store.similarity_search(</span>
 <span class="sd">                query="thud", k=1, filter=_filter_function</span>
@@ -335,9 +343,7 @@
 <span class="sd">    Search with score:</span>
 <span class="sd">        .. code-block:: python</span>
 
-<span class="sd">            results = vector_store.similarity_search_with_score(</span>
-<span class="sd">                query="qux", k=1</span>
-<span class="sd">            )</span>
+<span class="sd">            results = vector_store.similarity_search_with_score(query="qux", k=1)</span>
 <span class="sd">            for doc, score in results:</span>
 <span class="sd">                print(f"* [SIM={score:3f}] {doc.page_content} [{doc.metadata}]")</span>
 
@@ -359,7 +365,7 @@
 
 <span class="sd">            # search with score</span>
 <span class="sd">            results = await vector_store.asimilarity_search_with_score(query="qux", k=1)</span>
-<span class="sd">            for doc,score in results:</span>
+<span class="sd">            for doc, score in results:</span>
 <span class="sd">                print(f"* [SIM={score:3f}] {doc.page_content} [{doc.metadata}]")</span>
 
 <span class="sd">        .. code-block:: none</span>
@@ -425,7 +431,6 @@
         <span class="n">ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Add documents to the store."""</span>
         <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">page_content</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
         <span class="n">vectors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span><span class="o">.</span><span class="n">embed_documents</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span>
 
@@ -462,7 +467,6 @@
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">aadd_documents</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">documents</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">],</span> <span class="n">ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Add documents to the store."""</span>
         <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">page_content</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
         <span class="n">vectors</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span><span class="o">.</span><span class="n">aembed_documents</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span>
 
@@ -623,7 +627,11 @@
             <span class="n">docs</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">doc</span>
                 <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">docs</span>
-                <span class="k">if</span> <span class="nb">filter</span><span class="p">(</span><span class="n">Document</span><span class="p">(</span><span class="n">page_content</span><span class="o">=</span><span class="n">doc</span><span class="p">[</span><span class="s2">"text"</span><span class="p">],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">doc</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">]))</span>
+                <span class="k">if</span> <span class="nb">filter</span><span class="p">(</span>
+                    <span class="n">Document</span><span class="p">(</span>
+                        <span class="nb">id</span><span class="o">=</span><span class="n">doc</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span> <span class="n">page_content</span><span class="o">=</span><span class="n">doc</span><span class="p">[</span><span class="s2">"text"</span><span class="p">],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">doc</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
             <span class="p">]</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">docs</span><span class="p">:</span>
@@ -773,14 +781,12 @@
             <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_HAS_NUMPY</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="s2">"numpy must be installed to use max_marginal_relevance_search "</span>
                 <span class="s2">"pip install numpy"</span>
             <span class="p">)</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="n">mmr_chosen_indices</span> <span class="o">=</span> <span class="n">maximal_marginal_relevance</span><span class="p">(</span>
             <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">embedding</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>

@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -264,11 +264,16 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.messages.tool</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolCall</span><span class="p">,</span> <span class="n">ToolMessage</span><span class="p">,</span> <span class="n">ToolMessageChunk</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_text_splitters</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextSplitter</span>
-
     <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.language_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseLanguageModel</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompt_values</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptValue</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Runnable</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_text_splitters</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextSplitter</span>
+
+    <span class="n">_HAS_LANGCHAIN_TEXT_SPLITTERS</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_HAS_LANGCHAIN_TEXT_SPLITTERS</span> <span class="o">=</span> <span class="kc">False</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -412,7 +417,7 @@
 
 <div class="viewcode-block" id="message_chunk_to_message">
 <a class="viewcode-back" href="../../../core/messages/langchain_core.messages.utils.message_chunk_to_message.html#langchain_core.messages.utils.message_chunk_to_message">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">message_chunk_to_message</span><span class="p">(</span><span class="n">chunk</span><span class="p">:</span> <span class="n">BaseMessageChunk</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseMessage</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">message_chunk_to_message</span><span class="p">(</span><span class="n">chunk</span><span class="p">:</span> <span class="n">BaseMessage</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseMessage</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Convert a message chunk to a message.</span>
 
 <span class="sd">    Args:</span>
@@ -594,7 +599,7 @@
 <span class="sd">        list of messages (BaseMessages).</span>
 <span class="sd">    """</span>
     <span class="c1"># Import here to avoid circular imports</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompt_values</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptValue</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompt_values</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptValue</span>  <span class="c1"># noqa: PLC0415</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">PromptValue</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">messages</span><span class="o">.</span><span class="n">to_messages</span><span class="p">()</span>
@@ -620,7 +625,8 @@
         <span class="nb">list</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">],</span>
         <span class="n">Runnable</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">MessageLikeRepresentation</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]],</span>
     <span class="p">]:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableLambda</span>
+        <span class="c1"># Import locally to prevent circular import.</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableLambda</span>  <span class="c1"># noqa: PLC0415</span>
 
         <span class="k">if</span> <span class="n">messages</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -660,11 +666,16 @@
 <span class="sd">        exclude_ids: Message IDs to exclude. Default is None.</span>
 <span class="sd">        exclude_tool_calls: Tool call IDs to exclude. Default is None.</span>
 <span class="sd">            Can be one of the following:</span>
-<span class="sd">            - `True`: all AIMessages with tool calls and all ToolMessages will be excluded.</span>
+
+<span class="sd">            - ``True``: Each ``AIMessages`` with tool calls and all ``ToolMessages``</span>
+<span class="sd">              will be excluded.</span>
 <span class="sd">            - a sequence of tool call IDs to exclude:</span>
+
 <span class="sd">              - ToolMessages with the corresponding tool call ID will be excluded.</span>
-<span class="sd">              - The `tool_calls` in the AIMessage will be updated to exclude matching tool calls.</span>
-<span class="sd">                If all tool_calls are filtered from an AIMessage, the whole message is excluded.</span>
+<span class="sd">              - The ``tool_calls`` in the AIMessage will be updated to exclude matching</span>
+<span class="sd">                tool calls.</span>
+<span class="sd">                If all tool_calls are filtered from an AIMessage,</span>
+<span class="sd">                the whole message is excluded.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A list of Messages that meets at least one of the incl_* conditions and none</span>
@@ -677,14 +688,25 @@
 <span class="sd">    Example:</span>
 <span class="sd">        .. code-block:: python</span>
 
-<span class="sd">            from langchain_core.messages import filter_messages, AIMessage, HumanMessage, SystemMessage</span>
+<span class="sd">            from langchain_core.messages import (</span>
+<span class="sd">                filter_messages,</span>
+<span class="sd">                AIMessage,</span>
+<span class="sd">                HumanMessage,</span>
+<span class="sd">                SystemMessage,</span>
+<span class="sd">            )</span>
 
 <span class="sd">            messages = [</span>
 <span class="sd">                SystemMessage("you're a good assistant."),</span>
 <span class="sd">                HumanMessage("what's your name", id="foo", name="example_user"),</span>
 <span class="sd">                AIMessage("steve-o", id="bar", name="example_assistant"),</span>
-<span class="sd">                HumanMessage("what's your favorite color", id="baz",),</span>
-<span class="sd">                AIMessage("silicon blue", id="blah",),</span>
+<span class="sd">                HumanMessage(</span>
+<span class="sd">                    "what's your favorite color",</span>
+<span class="sd">                    id="baz",</span>
+<span class="sd">                ),</span>
+<span class="sd">                AIMessage(</span>
+<span class="sd">                    "silicon blue",</span>
+<span class="sd">                    id="blah",</span>
+<span class="sd">                ),</span>
 <span class="sd">            ]</span>
 
 <span class="sd">            filter_messages(</span>
@@ -701,7 +723,7 @@
 <span class="sd">                HumanMessage("what's your name", id="foo", name="example_user"),</span>
 <span class="sd">            ]</span>
 
-<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">    """</span>
     <span class="n">messages</span> <span class="o">=</span> <span class="n">convert_to_messages</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
     <span class="n">filtered</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">:</span>
@@ -783,12 +805,14 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        list of BaseMessages with consecutive runs of message types merged into single</span>
 <span class="sd">        messages. By default, if two messages being merged both have string contents,</span>
-<span class="sd">        the merged content is a concatenation of the two strings with a new-line separator.</span>
+<span class="sd">        the merged content is a concatenation of the two strings with a new-line</span>
+<span class="sd">        separator.</span>
 <span class="sd">        The separator inserted between message chunks can be controlled by specifying</span>
-<span class="sd">        any string with ``chunk_separator``. If at least one of the messages has a list of</span>
-<span class="sd">        content blocks, the merged content is a list of content blocks.</span>
+<span class="sd">        any string with ``chunk_separator``. If at least one of the messages has a list</span>
+<span class="sd">        of content blocks, the merged content is a list of content blocks.</span>
 
 <span class="sd">    Example:</span>
+
 <span class="sd">        .. code-block:: python</span>
 
 <span class="sd">            from langchain_core.messages import (</span>
@@ -801,16 +825,33 @@
 
 <span class="sd">            messages = [</span>
 <span class="sd">                SystemMessage("you're a good assistant."),</span>
-<span class="sd">                HumanMessage("what's your favorite color", id="foo",),</span>
-<span class="sd">                HumanMessage("wait your favorite food", id="bar",),</span>
+<span class="sd">                HumanMessage(</span>
+<span class="sd">                    "what's your favorite color",</span>
+<span class="sd">                    id="foo",</span>
+<span class="sd">                ),</span>
+<span class="sd">                HumanMessage(</span>
+<span class="sd">                    "wait your favorite food",</span>
+<span class="sd">                    id="bar",</span>
+<span class="sd">                ),</span>
 <span class="sd">                AIMessage(</span>
 <span class="sd">                    "my favorite colo",</span>
-<span class="sd">                    tool_calls=[ToolCall(name="blah_tool", args={"x": 2}, id="123", type="tool_call")],</span>
+<span class="sd">                    tool_calls=[</span>
+<span class="sd">                        ToolCall(</span>
+<span class="sd">                            name="blah_tool", args={"x": 2}, id="123", type="tool_call"</span>
+<span class="sd">                        )</span>
+<span class="sd">                    ],</span>
 <span class="sd">                    id="baz",</span>
 <span class="sd">                ),</span>
 <span class="sd">                AIMessage(</span>
 <span class="sd">                    [{"type": "text", "text": "my favorite dish is lasagna"}],</span>
-<span class="sd">                    tool_calls=[ToolCall(name="blah_tool", args={"x": -10}, id="456", type="tool_call")],</span>
+<span class="sd">                    tool_calls=[</span>
+<span class="sd">                        ToolCall(</span>
+<span class="sd">                            name="blah_tool",</span>
+<span class="sd">                            args={"x": -10},</span>
+<span class="sd">                            id="456",</span>
+<span class="sd">                            type="tool_call",</span>
+<span class="sd">                        )</span>
+<span class="sd">                    ],</span>
 <span class="sd">                    id="blur",</span>
 <span class="sd">                ),</span>
 <span class="sd">            ]</span>
@@ -821,21 +862,34 @@
 
 <span class="sd">            [</span>
 <span class="sd">                SystemMessage("you're a good assistant."),</span>
-<span class="sd">                HumanMessage("what's your favorite color\\nwait your favorite food", id="foo",),</span>
+<span class="sd">                HumanMessage(</span>
+<span class="sd">                    "what's your favorite color\\n"</span>
+<span class="sd">                    "wait your favorite food", id="foo",</span>
+<span class="sd">                ),</span>
 <span class="sd">                AIMessage(</span>
 <span class="sd">                    [</span>
 <span class="sd">                        "my favorite colo",</span>
 <span class="sd">                        {"type": "text", "text": "my favorite dish is lasagna"}</span>
 <span class="sd">                    ],</span>
 <span class="sd">                    tool_calls=[</span>
-<span class="sd">                        ToolCall({"name": "blah_tool", "args": {"x": 2}, "id": "123", "type": "tool_call"}),</span>
-<span class="sd">                        ToolCall({"name": "blah_tool", "args": {"x": -10}, "id": "456", "type": "tool_call"})</span>
+<span class="sd">                        ToolCall({</span>
+<span class="sd">                            "name": "blah_tool",</span>
+<span class="sd">                            "args": {"x": 2},</span>
+<span class="sd">                            "id": "123",</span>
+<span class="sd">                            "type": "tool_call"</span>
+<span class="sd">                        }),</span>
+<span class="sd">                        ToolCall({</span>
+<span class="sd">                            "name": "blah_tool",</span>
+<span class="sd">                            "args": {"x": -10},</span>
+<span class="sd">                            "id": "456",</span>
+<span class="sd">                            "type": "tool_call"</span>
+<span class="sd">                        })</span>
 <span class="sd">                    ]</span>
 <span class="sd">                    id="baz"</span>
 <span class="sd">                ),</span>
 <span class="sd">            ]</span>
 
-<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">messages</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="n">messages</span> <span class="o">=</span> <span class="n">convert_to_messages</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
@@ -898,8 +952,8 @@
 <span class="sd">    properties:</span>
 
 <span class="sd">    1. The resulting chat history should be valid. Most chat models expect that chat</span>
-<span class="sd">       history starts with either (1) a ``HumanMessage`` or (2) a ``SystemMessage`` followed</span>
-<span class="sd">       by a ``HumanMessage``. To achieve this, set ``start_on="human"``.</span>
+<span class="sd">       history starts with either (1) a ``HumanMessage`` or (2) a ``SystemMessage``</span>
+<span class="sd">       followed by a ``HumanMessage``. To achieve this, set ``start_on="human"``.</span>
 <span class="sd">       In addition, generally a ``ToolMessage`` can only appear after an ``AIMessage``</span>
 <span class="sd">       that involved a tool call.</span>
 <span class="sd">       Please see the following link for more information about messages:</span>
@@ -930,9 +984,11 @@
 <span class="sd">                exact token counting is not necessary.</span>
 
 <span class="sd">        strategy: Strategy for trimming.</span>
+
 <span class="sd">            - "first": Keep the first &lt;= n_count tokens of the messages.</span>
 <span class="sd">            - "last": Keep the last &lt;= n_count tokens of the messages.</span>
-<span class="sd">            Default is "last".</span>
+
+<span class="sd">            Default is ``'last'``.</span>
 <span class="sd">        allow_partial: Whether to split a message if only part of the message can be</span>
 <span class="sd">            included. If ``strategy="last"`` then the last partial contents of a message</span>
 <span class="sd">            are included. If ``strategy="first"`` then the first partial contents of a</span>
@@ -990,14 +1046,18 @@
 <span class="sd">            )</span>
 
 <span class="sd">            messages = [</span>
-<span class="sd">                SystemMessage("you're a good assistant, you always respond with a joke."),</span>
+<span class="sd">                SystemMessage(</span>
+<span class="sd">                    "you're a good assistant, you always respond with a joke."</span>
+<span class="sd">                ),</span>
 <span class="sd">                HumanMessage("i wonder why it's called langchain"),</span>
 <span class="sd">                AIMessage(</span>
-<span class="sd">                    'Well, I guess they thought "WordRope" and "SentenceString" just didn\'t have the same ring to it!'</span>
+<span class="sd">                    'Well, I guess they thought "WordRope" and "SentenceString" just '</span>
+<span class="sd">                    "didn't have the same ring to it!"</span>
 <span class="sd">                ),</span>
 <span class="sd">                HumanMessage("and who is harrison chasing anyways"),</span>
 <span class="sd">                AIMessage(</span>
-<span class="sd">                    "Hmmm let me think.\n\nWhy, he's probably chasing after the last cup of coffee in the office!"</span>
+<span class="sd">                    "Hmmm let me think.\n\nWhy, he's probably chasing after the last "</span>
+<span class="sd">                    "cup of coffee in the office!"</span>
 <span class="sd">                ),</span>
 <span class="sd">                HumanMessage("what do you call a speechless parrot"),</span>
 <span class="sd">            ]</span>
@@ -1022,8 +1082,10 @@
 <span class="sd">        .. code-block:: python</span>
 
 <span class="sd">            [</span>
-<span class="sd">                SystemMessage(content="you're a good assistant, you always respond with a joke."),</span>
-<span class="sd">                HumanMessage(content='what do you call a speechless parrot'),</span>
+<span class="sd">                SystemMessage(</span>
+<span class="sd">                    content="you're a good assistant, you always respond with a joke."</span>
+<span class="sd">                ),</span>
+<span class="sd">                HumanMessage(content="what do you call a speechless parrot"),</span>
 <span class="sd">            ]</span>
 
 <span class="sd">        Trim chat history based on the message count, keeping the SystemMessage if</span>
@@ -1053,10 +1115,15 @@
 <span class="sd">        .. code-block:: python</span>
 
 <span class="sd">            [</span>
-<span class="sd">                SystemMessage(content="you're a good assistant, you always respond with a joke."),</span>
-<span class="sd">                HumanMessage(content='and who is harrison chasing anyways'),</span>
-<span class="sd">                AIMessage(content="Hmmm let me think.\n\nWhy, he's probably chasing after the last cup of coffee in the office!"),</span>
-<span class="sd">                HumanMessage(content='what do you call a speechless parrot'),</span>
+<span class="sd">                SystemMessage(</span>
+<span class="sd">                    content="you're a good assistant, you always respond with a joke."</span>
+<span class="sd">                ),</span>
+<span class="sd">                HumanMessage(content="and who is harrison chasing anyways"),</span>
+<span class="sd">                AIMessage(</span>
+<span class="sd">                    content="Hmmm let me think.\n\nWhy, he's probably chasing after "</span>
+<span class="sd">                    "the last cup of coffee in the office!"</span>
+<span class="sd">                ),</span>
+<span class="sd">                HumanMessage(content="what do you call a speechless parrot"),</span>
 <span class="sd">            ]</span>
 
 
@@ -1067,7 +1134,9 @@
 
 <span class="sd">            messages = [</span>
 <span class="sd">                SystemMessage("This is a 4 token text. The full message is 10 tokens."),</span>
-<span class="sd">                HumanMessage("This is a 4 token text. The full message is 10 tokens.", id="first"),</span>
+<span class="sd">                HumanMessage(</span>
+<span class="sd">                    "This is a 4 token text. The full message is 10 tokens.", id="first"</span>
+<span class="sd">                ),</span>
 <span class="sd">                AIMessage(</span>
 <span class="sd">                    [</span>
 <span class="sd">                        {"type": "text", "text": "This is the FIRST 4 token block."},</span>
@@ -1075,9 +1144,15 @@
 <span class="sd">                    ],</span>
 <span class="sd">                    id="second",</span>
 <span class="sd">                ),</span>
-<span class="sd">                HumanMessage("This is a 4 token text. The full message is 10 tokens.", id="third"),</span>
-<span class="sd">                AIMessage("This is a 4 token text. The full message is 10 tokens.", id="fourth"),</span>
+<span class="sd">                HumanMessage(</span>
+<span class="sd">                    "This is a 4 token text. The full message is 10 tokens.", id="third"</span>
+<span class="sd">                ),</span>
+<span class="sd">                AIMessage(</span>
+<span class="sd">                    "This is a 4 token text. The full message is 10 tokens.",</span>
+<span class="sd">                    id="fourth",</span>
+<span class="sd">                ),</span>
 <span class="sd">            ]</span>
+
 
 <span class="sd">            def dummy_token_counter(messages: list[BaseMessage]) -&gt; int:</span>
 <span class="sd">                # treat each message like it adds 3 default tokens at the beginning</span>
@@ -1091,9 +1166,17 @@
 <span class="sd">                count = 0</span>
 <span class="sd">                for msg in messages:</span>
 <span class="sd">                    if isinstance(msg.content, str):</span>
-<span class="sd">                        count += default_msg_prefix_len + default_content_len + default_msg_suffix_len</span>
+<span class="sd">                        count += (</span>
+<span class="sd">                            default_msg_prefix_len</span>
+<span class="sd">                            + default_content_len</span>
+<span class="sd">                            + default_msg_suffix_len</span>
+<span class="sd">                        )</span>
 <span class="sd">                    if isinstance(msg.content, list):</span>
-<span class="sd">                        count += default_msg_prefix_len + len(msg.content) *  default_content_len + default_msg_suffix_len</span>
+<span class="sd">                        count += (</span>
+<span class="sd">                            default_msg_prefix_len</span>
+<span class="sd">                            + len(msg.content) * default_content_len</span>
+<span class="sd">                            + default_msg_suffix_len</span>
+<span class="sd">                        )</span>
 <span class="sd">                return count</span>
 
 <span class="sd">        First 30 tokens, allowing partial messages:</span>
@@ -1110,12 +1193,20 @@
 <span class="sd">            .. code-block:: python</span>
 
 <span class="sd">                [</span>
-<span class="sd">                    SystemMessage("This is a 4 token text. The full message is 10 tokens."),</span>
-<span class="sd">                    HumanMessage("This is a 4 token text. The full message is 10 tokens.", id="first"),</span>
-<span class="sd">                    AIMessage( [{"type": "text", "text": "This is the FIRST 4 token block."}], id="second"),</span>
+<span class="sd">                    SystemMessage(</span>
+<span class="sd">                        "This is a 4 token text. The full message is 10 tokens."</span>
+<span class="sd">                    ),</span>
+<span class="sd">                    HumanMessage(</span>
+<span class="sd">                        "This is a 4 token text. The full message is 10 tokens.",</span>
+<span class="sd">                        id="first",</span>
+<span class="sd">                    ),</span>
+<span class="sd">                    AIMessage(</span>
+<span class="sd">                        [{"type": "text", "text": "This is the FIRST 4 token block."}],</span>
+<span class="sd">                        id="second",</span>
+<span class="sd">                    ),</span>
 <span class="sd">                ]</span>
 
-<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">    """</span>
     <span class="c1"># Validate arguments</span>
     <span class="k">if</span> <span class="n">start_on</span> <span class="ow">and</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">"first"</span><span class="p">:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="s2">"start_on parameter is only valid with strategy='last'"</span>
@@ -1146,17 +1237,12 @@
         <span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
-    <span class="k">try</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_text_splitters</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextSplitter</span>
-    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-        <span class="n">text_splitter_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"Optional[Callable]"</span><span class="p">,</span> <span class="n">text_splitter</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_HAS_LANGCHAIN_TEXT_SPLITTERS</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">text_splitter</span><span class="p">,</span> <span class="n">TextSplitter</span><span class="p">):</span>
+        <span class="n">text_splitter_fn</span> <span class="o">=</span> <span class="n">text_splitter</span><span class="o">.</span><span class="n">split_text</span>
+    <span class="k">elif</span> <span class="n">text_splitter</span><span class="p">:</span>
+        <span class="n">text_splitter_fn</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"Callable"</span><span class="p">,</span> <span class="n">text_splitter</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">text_splitter</span><span class="p">,</span> <span class="n">TextSplitter</span><span class="p">):</span>
-            <span class="n">text_splitter_fn</span> <span class="o">=</span> <span class="n">text_splitter</span><span class="o">.</span><span class="n">split_text</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">text_splitter_fn</span> <span class="o">=</span> <span class="n">text_splitter</span>
-
-    <span class="n">text_splitter_fn</span> <span class="o">=</span> <span class="n">text_splitter_fn</span> <span class="ow">or</span> <span class="n">_default_text_splitter</span>
+        <span class="n">text_splitter_fn</span> <span class="o">=</span> <span class="n">_default_text_splitter</span>
 
     <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">"first"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_first_max_tokens</span><span class="p">(</span>
@@ -1197,25 +1283,30 @@
 <span class="sd">            in OpenAI, Anthropic, Bedrock Converse, or VertexAI formats.</span>
 <span class="sd">        text_format: How to format string or text block contents:</span>
 
-<span class="sd">                - "string":</span>
-<span class="sd">                    If a message has a string content, this is left as a string. If</span>
-<span class="sd">                    a message has content blocks that are all of type 'text', these are</span>
-<span class="sd">                    joined with a newline to make a single string. If a message has</span>
-<span class="sd">                    content blocks and at least one isn't of type 'text', then</span>
-<span class="sd">                    all blocks are left as dicts.</span>
-<span class="sd">                - "block":</span>
-<span class="sd">                    If a message has a string content, this is turned into a list</span>
-<span class="sd">                    with a single content block of type 'text'. If a message has content</span>
-<span class="sd">                    blocks these are left as is.</span>
+<span class="sd">            - ``'string'``:</span>
+<span class="sd">              If a message has a string content, this is left as a string. If</span>
+<span class="sd">              a message has content blocks that are all of type 'text', these are</span>
+<span class="sd">              joined with a newline to make a single string. If a message has</span>
+<span class="sd">              content blocks and at least one isn't of type 'text', then</span>
+<span class="sd">              all blocks are left as dicts.</span>
+<span class="sd">            - ``'block'``:</span>
+<span class="sd">              If a message has a string content, this is turned into a list</span>
+<span class="sd">              with a single content block of type 'text'. If a message has content</span>
+<span class="sd">              blocks these are left as is.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: if an unrecognized ``text_format`` is specified, or if a message</span>
+<span class="sd">            content block is missing expected keys.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The return type depends on the input type:</span>
-<span class="sd">            - dict:</span>
-<span class="sd">                If a single message-like object is passed in, a single OpenAI message</span>
-<span class="sd">                dict is returned.</span>
-<span class="sd">            - list[dict]:</span>
-<span class="sd">                If a sequence of message-like objects are passed in, a list of OpenAI</span>
-<span class="sd">                message dicts is returned.</span>
+
+<span class="sd">        - dict:</span>
+<span class="sd">          If a single message-like object is passed in, a single OpenAI message</span>
+<span class="sd">          dict is returned.</span>
+<span class="sd">        - list[dict]:</span>
+<span class="sd">          If a sequence of message-like objects are passed in, a list of OpenAI</span>
+<span class="sd">          message dicts is returned.</span>
 
 <span class="sd">    Example:</span>
 
@@ -1230,8 +1321,27 @@
 
 <span class="sd">            messages = [</span>
 <span class="sd">                SystemMessage([{"type": "text", "text": "foo"}]),</span>
-<span class="sd">                {"role": "user", "content": [{"type": "text", "text": "whats in this"}, {"type": "image_url", "image_url": {"url": "data:image/png;base64,'/9j/4AAQSk'"}}]},</span>
-<span class="sd">                AIMessage("", tool_calls=[{"name": "analyze", "args": {"baz": "buz"}, "id": "1", "type": "tool_call"}]),</span>
+<span class="sd">                {</span>
+<span class="sd">                    "role": "user",</span>
+<span class="sd">                    "content": [</span>
+<span class="sd">                        {"type": "text", "text": "whats in this"},</span>
+<span class="sd">                        {</span>
+<span class="sd">                            "type": "image_url",</span>
+<span class="sd">                            "image_url": {"url": "data:image/png;base64,'/9j/4AAQSk'"},</span>
+<span class="sd">                        },</span>
+<span class="sd">                    ],</span>
+<span class="sd">                },</span>
+<span class="sd">                AIMessage(</span>
+<span class="sd">                    "",</span>
+<span class="sd">                    tool_calls=[</span>
+<span class="sd">                        {</span>
+<span class="sd">                            "name": "analyze",</span>
+<span class="sd">                            "args": {"baz": "buz"},</span>
+<span class="sd">                            "id": "1",</span>
+<span class="sd">                            "type": "tool_call",</span>
+<span class="sd">                        }</span>
+<span class="sd">                    ],</span>
+<span class="sd">                ),</span>
 <span class="sd">                ToolMessage("foobar", tool_call_id="1", name="bar"),</span>
 <span class="sd">                {"role": "assistant", "content": "thats nice"},</span>
 <span class="sd">            ]</span>

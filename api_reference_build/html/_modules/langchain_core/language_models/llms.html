@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -356,6 +356,7 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_cache</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">cache</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BaseCache</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseCache</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Resolve the cache."""</span>
+    <span class="n">llm_cache</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseCache</span><span class="p">]</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cache</span><span class="p">,</span> <span class="n">BaseCache</span><span class="p">):</span>
         <span class="n">llm_cache</span> <span class="o">=</span> <span class="n">cache</span>
     <span class="k">elif</span> <span class="n">cache</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -920,7 +921,18 @@
         <span class="n">run_manager</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CallbackManagerForLLMRun</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LLMResult</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Run the LLM on the given prompts."""</span>
+<span class="w">        </span><span class="sd">"""Run the LLM on the given prompts.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            prompts: The prompts to generate from.</span>
+<span class="sd">            stop: Stop words to use when generating. Model output is cut off at the</span>
+<span class="sd">                first occurrence of any of the stop substrings.</span>
+<span class="sd">                If stop tokens are not supported consider raising NotImplementedError.</span>
+<span class="sd">            run_manager: Callback manager for the run.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The LLM result.</span>
+<span class="sd">        """</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_agenerate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -929,7 +941,18 @@
         <span class="n">run_manager</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AsyncCallbackManagerForLLMRun</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LLMResult</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Run the LLM on the given prompts."""</span>
+<span class="w">        </span><span class="sd">"""Run the LLM on the given prompts.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            prompts: The prompts to generate from.</span>
+<span class="sd">            stop: Stop words to use when generating. Model output is cut off at the</span>
+<span class="sd">                first occurrence of any of the stop substrings.</span>
+<span class="sd">                If stop tokens are not supported consider raising NotImplementedError.</span>
+<span class="sd">            run_manager: Callback manager for the run.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The LLM result.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="k">await</span> <span class="n">run_in_executor</span><span class="p">(</span>
             <span class="kc">None</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_generate</span><span class="p">,</span>
@@ -962,8 +985,8 @@
 <span class="sd">            **kwargs: Arbitrary additional keyword arguments. These are usually passed</span>
 <span class="sd">                to the model provider API call.</span>
 
-<span class="sd">        Returns:</span>
-<span class="sd">            An iterator of GenerationChunks.</span>
+<span class="sd">        Yields:</span>
+<span class="sd">            Generation chunks.</span>
 <span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
@@ -988,8 +1011,8 @@
 <span class="sd">            **kwargs: Arbitrary additional keyword arguments. These are usually passed</span>
 <span class="sd">                to the model provider API call.</span>
 
-<span class="sd">        Returns:</span>
-<span class="sd">            An async iterator of GenerationChunks.</span>
+<span class="sd">        Yields:</span>
+<span class="sd">            Generation chunks.</span>
 <span class="sd">        """</span>
         <span class="n">iterator</span> <span class="o">=</span> <span class="k">await</span> <span class="n">run_in_executor</span><span class="p">(</span>
             <span class="kc">None</span><span class="p">,</span>
@@ -1087,10 +1110,11 @@
 <span class="sd">        API.</span>
 
 <span class="sd">        Use this method when you want to:</span>
-<span class="sd">            1. take advantage of batched calls,</span>
-<span class="sd">            2. need more output from the model than just the top generated value,</span>
-<span class="sd">            3. are building chains that are agnostic to the underlying language model</span>
-<span class="sd">                type (e.g., pure text completion models vs chat models).</span>
+
+<span class="sd">        1. Take advantage of batched calls,</span>
+<span class="sd">        2. Need more output from the model than just the top generated value,</span>
+<span class="sd">        3. Are building chains that are agnostic to the underlying language model</span>
+<span class="sd">           type (e.g., pure text completion models vs chat models).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            prompts: List of string prompts.</span>
@@ -1109,6 +1133,11 @@
 <span class="sd">                length of the list must match the length of the prompts list.</span>
 <span class="sd">            **kwargs: Arbitrary additional keyword arguments. These are usually passed</span>
 <span class="sd">                to the model provider API call.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If prompts is not a list.</span>
+<span class="sd">            ValueError: If the length of ``callbacks``, ``tags``, ``metadata``, or</span>
+<span class="sd">                ``run_name`` (if provided) does not match the length of prompts.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            An LLMResult, which contains a list of candidate Generations for each input</span>
@@ -1347,10 +1376,11 @@
 <span class="sd">        API.</span>
 
 <span class="sd">        Use this method when you want to:</span>
-<span class="sd">            1. take advantage of batched calls,</span>
-<span class="sd">            2. need more output from the model than just the top generated value,</span>
-<span class="sd">            3. are building chains that are agnostic to the underlying language model</span>
-<span class="sd">                type (e.g., pure text completion models vs chat models).</span>
+
+<span class="sd">        1. Take advantage of batched calls,</span>
+<span class="sd">        2. Need more output from the model than just the top generated value,</span>
+<span class="sd">        3. Are building chains that are agnostic to the underlying language model</span>
+<span class="sd">           type (e.g., pure text completion models vs chat models).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            prompts: List of string prompts.</span>
@@ -1369,6 +1399,10 @@
 <span class="sd">                length of the list must match the length of the prompts list.</span>
 <span class="sd">            **kwargs: Arbitrary additional keyword arguments. These are usually passed</span>
 <span class="sd">                to the model provider API call.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the length of ``callbacks``, ``tags``, ``metadata``, or</span>
+<span class="sd">                ``run_name`` (if provided) does not match the length of prompts.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            An LLMResult, which contains a list of candidate Generations for each input</span>
@@ -1648,7 +1682,7 @@
         <span class="k">return</span> <span class="n">AIMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Get a string representation of the object for printing."""</span>
+<span class="w">        </span><span class="sd">"""Return a string representation of the object for printing."""</span>
         <span class="n">cls_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="se">\033</span><span class="s2">[1m</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="se">\033</span><span class="s2">[0m"</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cls_name</span><span class="si">}</span><span class="se">\n</span><span class="s2">Params: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_identifying_params</span><span class="si">}</span><span class="s2">"</span>
 
@@ -1802,7 +1836,6 @@
         <span class="n">run_manager</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CallbackManagerForLLMRun</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LLMResult</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Run the LLM on the given prompt and input."""</span>
         <span class="c1"># TODO: add caching here.</span>
         <span class="n">generations</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">new_arg_supported</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"run_manager"</span><span class="p">)</span>
@@ -1822,7 +1855,6 @@
         <span class="n">run_manager</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AsyncCallbackManagerForLLMRun</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LLMResult</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Async run the LLM on the given prompt and input."""</span>
         <span class="n">generations</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">new_arg_supported</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_acall</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"run_manager"</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">prompt</span> <span class="ow">in</span> <span class="n">prompts</span><span class="p">:</span>

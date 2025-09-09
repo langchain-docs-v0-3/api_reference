@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -293,7 +293,7 @@
 <span class="sd">                  for streaming events.</span>
 <span class="sd">                - 'original+chat' is a format that is the same as 'original'</span>
 <span class="sd">                  except it does NOT raise an attribute error on_chat_model_start</span>
-<span class="sd">            kwargs: Additional keyword arguments that will be passed to</span>
+<span class="sd">            **kwargs: Additional keyword arguments that will be passed to</span>
 <span class="sd">                the superclass.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -304,7 +304,7 @@
 <span class="w">        </span><span class="sd">"""Map of run ID to (trace_id, dotted_order). Cleared when tracer GCed."""</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_persist_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_persist_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Persist a run."""</span>
 
     <span class="nd">@staticmethod</span>
@@ -330,7 +330,7 @@
         <span class="k">except</span><span class="p">:</span>  <span class="c1"># noqa: E722</span>
             <span class="k">return</span> <span class="n">msg</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_start_trace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># type: ignore[return]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_start_trace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># type: ignore[return]</span>
         <span class="n">current_dotted_order</span> <span class="o">=</span> <span class="n">run</span><span class="o">.</span><span class="n">start_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y%m</span><span class="si">%d</span><span class="s2">T%H%M%S</span><span class="si">%f</span><span class="s2">Z"</span><span class="p">)</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">run</span><span class="o">.</span><span class="n">parent_run_id</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">parent</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">parent_run_id</span><span class="p">):</span>
@@ -753,27 +753,43 @@
         <span class="k">return</span> <span class="n">retrieval_run</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_TracerCore</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Deepcopy the tracer."""</span>
+<span class="w">        </span><span class="sd">"""Return self deepcopied."""</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_TracerCore</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Copy the tracer."""</span>
+<span class="w">        </span><span class="sd">"""Return self copied."""</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_end_trace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">"""End a trace for a run."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_end_trace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">"""End a trace for a run.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The run.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_on_run_create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">"""Process a run upon creation."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_run_create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">"""Process a run upon creation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The created run.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_on_run_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">"""Process a run upon update."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_run_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">"""Process a run upon update.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The updated run.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_on_llm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">"""Process the LLM Run upon start."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_llm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">"""Process the LLM Run upon start.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The LLM run.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_on_llm_new_token</span><span class="p">(</span>
@@ -781,56 +797,110 @@
         <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">,</span>  <span class="c1"># noqa: ARG002</span>
         <span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>  <span class="c1"># noqa: ARG002</span>
         <span class="n">chunk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">GenerationChunk</span><span class="p">,</span> <span class="n">ChatGenerationChunk</span><span class="p">]],</span>  <span class="c1"># noqa: ARG002</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">"""Process new LLM token."""</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Process new LLM token.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The LLM run.</span>
+<span class="sd">            token: The new token.</span>
+<span class="sd">            chunk: Optional chunk.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_on_llm_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">"""Process the LLM Run."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_llm_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">"""Process the LLM Run.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The LLM run.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_on_llm_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">"""Process the LLM Run upon error."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_llm_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">"""Process the LLM Run upon error.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The LLM run.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_on_chain_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">"""Process the Chain Run upon start."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_chain_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">"""Process the Chain Run upon start.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The chain run.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_on_chain_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">"""Process the Chain Run."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_chain_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">"""Process the Chain Run.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The chain run.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_on_chain_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">"""Process the Chain Run upon error."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_chain_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">"""Process the Chain Run upon error.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The chain run.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_on_tool_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">"""Process the Tool Run upon start."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_tool_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">"""Process the Tool Run upon start.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The tool run.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_on_tool_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">"""Process the Tool Run."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_tool_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">"""Process the Tool Run.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The tool run.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_on_tool_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">"""Process the Tool Run upon error."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_tool_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">"""Process the Tool Run upon error.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The tool run.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_on_chat_model_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">"""Process the Chat Model Run upon start."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_chat_model_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">"""Process the Chat Model Run upon start.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The chat model run.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_on_retriever_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">"""Process the Retriever Run upon start."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_retriever_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">"""Process the Retriever Run upon start.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The retriever run.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_on_retriever_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">"""Process the Retriever Run."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_retriever_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">"""Process the Retriever Run.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The retriever run.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_on_retriever_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>  <span class="c1"># noqa: ARG002</span>
-<span class="w">        </span><span class="sd">"""Process the Retriever Run upon error."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_retriever_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Coroutine</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>  <span class="c1"># noqa: ARG002</span>
+<span class="w">        </span><span class="sd">"""Process the Retriever Run upon error.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run: The retriever run.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span>
 </pre></div>
 </article>

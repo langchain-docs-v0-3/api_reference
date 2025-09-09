@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -263,6 +263,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core._api</span><span class="w"> </span><span class="kn">import</span> <span class="n">beta_decorator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncCallbackManager</span><span class="p">,</span> <span class="n">CallbackManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.load.serializable</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Serializable</span><span class="p">,</span>
     <span class="n">SerializedConstructor</span><span class="p">,</span>
@@ -282,7 +283,6 @@
     <span class="n">run_in_executor</span><span class="p">,</span>
     <span class="n">set_config_context</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Graph</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AddableDict</span><span class="p">,</span>
     <span class="n">AnyConfigurableField</span><span class="p">,</span>
@@ -303,6 +303,19 @@
     <span class="n">is_async_callable</span><span class="p">,</span>
     <span class="n">is_async_generator</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers._streaming</span><span class="w"> </span><span class="kn">import</span> <span class="n">_StreamingCallbackHandler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers.event_stream</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_astream_events_implementation_v1</span><span class="p">,</span>
+    <span class="n">_astream_events_implementation_v2</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers.log_stream</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LogStreamCallbackHandler</span><span class="p">,</span>
+    <span class="n">_astream_log_implementation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers.root_listeners</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AsyncRootListenersTracer</span><span class="p">,</span>
+    <span class="n">RootListenersTracer</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils.aiter</span><span class="w"> </span><span class="kn">import</span> <span class="n">aclosing</span><span class="p">,</span> <span class="n">atee</span><span class="p">,</span> <span class="n">py_anext</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils.iter</span><span class="w"> </span><span class="kn">import</span> <span class="n">safetee</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils.pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_model_v2</span>
@@ -316,6 +329,7 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.fallbacks</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
         <span class="n">RunnableWithFallbacks</span> <span class="k">as</span> <span class="n">RunnableWithFallbacksT</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Graph</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.retry</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialJitterParams</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">StreamEvent</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseTool</span>
@@ -338,12 +352,13 @@
 <span class="sd">    - **``invoke``/``ainvoke``**: Transforms a single input into an output.</span>
 <span class="sd">    - **``batch``/``abatch``**: Efficiently transforms multiple inputs into outputs.</span>
 <span class="sd">    - **``stream``/``astream``**: Streams output from a single input as it's produced.</span>
-<span class="sd">    - **``astream_log``**: Streams output and selected intermediate results from an input.</span>
+<span class="sd">    - **``astream_log``**: Streams output and selected intermediate results from an</span>
+<span class="sd">      input.</span>
 
 <span class="sd">    Built-in optimizations:</span>
 
-<span class="sd">    - **Batch**: By default, batch runs invoke() in parallel using a thread pool executor.</span>
-<span class="sd">      Override to optimize batching.</span>
+<span class="sd">    - **Batch**: By default, batch runs invoke() in parallel using a thread pool</span>
+<span class="sd">      executor. Override to optimize batching.</span>
 
 <span class="sd">    - **Async**: Methods with ``'a'`` suffix are asynchronous. By default, they execute</span>
 <span class="sd">      the sync counterpart using asyncio's thread pool.</span>
@@ -353,14 +368,16 @@
 <span class="sd">    execution, add tags and metadata for tracing and debugging etc.</span>
 
 <span class="sd">    Runnables expose schematic information about their input, output and config via</span>
-<span class="sd">    the ``input_schema`` property, the ``output_schema`` property and ``config_schema`` method.</span>
+<span class="sd">    the ``input_schema`` property, the ``output_schema`` property and ``config_schema``</span>
+<span class="sd">    method.</span>
 
 <span class="sd">    LCEL and Composition</span>
 <span class="sd">    ====================</span>
 
-<span class="sd">    The LangChain Expression Language (LCEL) is a declarative way to compose ``Runnables``</span>
-<span class="sd">    into chains. Any chain constructed this way will automatically have sync, async,</span>
-<span class="sd">    batch, and streaming support.</span>
+<span class="sd">    The LangChain Expression Language (LCEL) is a declarative way to compose</span>
+<span class="sd">    ``Runnables``into chains.</span>
+<span class="sd">    Any chain constructed this way will automatically have sync, async, batch, and</span>
+<span class="sd">    streaming support.</span>
 
 <span class="sd">    The main composition primitives are ``RunnableSequence`` and ``RunnableParallel``.</span>
 
@@ -381,25 +398,27 @@
 
 <span class="sd">        # A RunnableSequence constructed using the `|` operator</span>
 <span class="sd">        sequence = RunnableLambda(lambda x: x + 1) | RunnableLambda(lambda x: x * 2)</span>
-<span class="sd">        sequence.invoke(1) # 4</span>
-<span class="sd">        sequence.batch([1, 2, 3]) # [4, 6, 8]</span>
+<span class="sd">        sequence.invoke(1)  # 4</span>
+<span class="sd">        sequence.batch([1, 2, 3])  # [4, 6, 8]</span>
 
 
 <span class="sd">        # A sequence that contains a RunnableParallel constructed using a dict literal</span>
 <span class="sd">        sequence = RunnableLambda(lambda x: x + 1) | {</span>
-<span class="sd">            'mul_2': RunnableLambda(lambda x: x * 2),</span>
-<span class="sd">            'mul_5': RunnableLambda(lambda x: x * 5)</span>
+<span class="sd">            "mul_2": RunnableLambda(lambda x: x * 2),</span>
+<span class="sd">            "mul_5": RunnableLambda(lambda x: x * 5),</span>
 <span class="sd">        }</span>
-<span class="sd">        sequence.invoke(1) # {'mul_2': 4, 'mul_5': 10}</span>
+<span class="sd">        sequence.invoke(1)  # {'mul_2': 4, 'mul_5': 10}</span>
 
 <span class="sd">    Standard Methods</span>
 <span class="sd">    ================</span>
 
-<span class="sd">    All ``Runnable``s expose additional methods that can be used to modify their behavior</span>
-<span class="sd">    (e.g., add a retry policy, add lifecycle listeners, make them configurable, etc.).</span>
+<span class="sd">    All ``Runnable``s expose additional methods that can be used to modify their</span>
+<span class="sd">    behavior (e.g., add a retry policy, add lifecycle listeners, make them</span>
+<span class="sd">    configurable, etc.).</span>
 
-<span class="sd">    These methods will work on any ``Runnable``, including ``Runnable`` chains constructed</span>
-<span class="sd">    by composing other ``Runnable``s. See the individual methods for details.</span>
+<span class="sd">    These methods will work on any ``Runnable``, including ``Runnable`` chains</span>
+<span class="sd">    constructed by composing other ``Runnable``s.</span>
+<span class="sd">    See the individual methods for details.</span>
 
 <span class="sd">    For example,</span>
 
@@ -443,6 +462,7 @@
 <span class="sd">        .. code-block:: python</span>
 
 <span class="sd">            from langchain_core.globals import set_debug</span>
+
 <span class="sd">            set_debug(True)</span>
 
 <span class="sd">    Alternatively, you can pass existing or custom callbacks to any given chain:</span>
@@ -451,14 +471,11 @@
 
 <span class="sd">            from langchain_core.tracers import ConsoleCallbackHandler</span>
 
-<span class="sd">            chain.invoke(</span>
-<span class="sd">                ...,</span>
-<span class="sd">                config={'callbacks': [ConsoleCallbackHandler()]}</span>
-<span class="sd">            )</span>
+<span class="sd">            chain.invoke(..., config={"callbacks": [ConsoleCallbackHandler()]})</span>
 
 <span class="sd">    For a UI (and much more) checkout `LangSmith &lt;https://docs.smith.langchain.com/&gt;`__.</span>
 
-<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
 <span class="w">    </span><span class="sd">"""The name of the ``Runnable``. Used for debugging and tracing."""</span>
@@ -468,7 +485,15 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_name</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">suffix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Get the name of the ``Runnable``."""</span>
+<span class="w">        </span><span class="sd">"""Get the name of the ``Runnable``.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            suffix: An optional suffix to append to the name.</span>
+<span class="sd">            name: An optional name to use instead of the ``Runnable``'s name.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The name of the ``Runnable``.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
             <span class="n">name_</span> <span class="o">=</span> <span class="n">name</span>
         <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
@@ -500,7 +525,13 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">InputType</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Input</span><span class="p">]:</span>  <span class="c1"># noqa: N802</span>
-<span class="w">        </span><span class="sd">"""The type of input this ``Runnable`` accepts specified as a type annotation."""</span>  <span class="c1"># noqa: E501</span>
+<span class="w">        </span><span class="sd">"""Input type.</span>
+
+<span class="sd">        The type of input this ``Runnable`` accepts specified as a type annotation.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            TypeError: If the input type cannot be inferred.</span>
+<span class="sd">        """</span>
         <span class="c1"># First loop through all parent classes and if any of them is</span>
         <span class="c1"># a pydantic model, we will pick up the generic parameterization</span>
         <span class="c1"># from that model via the __pydantic_generic_metadata__ attribute.</span>
@@ -526,7 +557,13 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">OutputType</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>  <span class="c1"># noqa: N802</span>
-<span class="w">        </span><span class="sd">"""The type of output this ``Runnable`` produces specified as a type annotation."""</span>  <span class="c1"># noqa: E501</span>
+<span class="w">        </span><span class="sd">"""Output Type.</span>
+
+<span class="sd">        The type of output this ``Runnable`` produces specified as a type annotation.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            TypeError: If the output type cannot be inferred.</span>
+<span class="sd">        """</span>
         <span class="c1"># First loop through bases -- this will help generic</span>
         <span class="c1"># any pydantic models.</span>
         <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">mro</span><span class="p">():</span>
@@ -613,8 +650,10 @@
 
 <span class="sd">                from langchain_core.runnables import RunnableLambda</span>
 
+
 <span class="sd">                def add_one(x: int) -&gt; int:</span>
 <span class="sd">                    return x + 1</span>
+
 
 <span class="sd">                runnable = RunnableLambda(add_one)</span>
 
@@ -628,7 +667,10 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">output_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The type of output this ``Runnable`` produces specified as a pydantic model."""</span>  <span class="c1"># noqa: E501</span>
+<span class="w">        </span><span class="sd">"""Output schema.</span>
+
+<span class="sd">        The type of output this ``Runnable`` produces specified as a pydantic model.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_output_schema</span><span class="p">()</span>
 
 <div class="viewcode-block" id="Runnable.get_output_schema">
@@ -693,8 +735,10 @@
 
 <span class="sd">                from langchain_core.runnables import RunnableLambda</span>
 
+
 <span class="sd">                def add_one(x: int) -&gt; int:</span>
 <span class="sd">                    return x + 1</span>
+
 
 <span class="sd">                runnable = RunnableLambda(add_one)</span>
 
@@ -782,6 +826,9 @@
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.Runnable.html#langchain_azure_dynamic_sessions.tools.sessions.Runnable.get_graph">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Graph</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return a graph representation of this ``Runnable``."""</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Graph</span>  <span class="c1"># noqa: PLC0415</span>
+
         <span class="n">graph</span> <span class="o">=</span> <span class="n">Graph</span><span class="p">()</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">input_node</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_input_schema</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
@@ -805,7 +852,8 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BasePromptTemplate</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Return a list of prompts used by this ``Runnable``."""</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompts.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasePromptTemplate</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.prompts.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasePromptTemplate</span>  <span class="c1"># noqa: PLC0415</span>
 
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">node</span><span class="o">.</span><span class="n">data</span>
@@ -824,7 +872,17 @@
             <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">Runnable</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Other</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Other</span><span class="p">],</span> <span class="n">Any</span><span class="p">]],</span>
         <span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunnableSerializable</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Other</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Compose this ``Runnable`` with another object to create a ``RunnableSequence``."""</span>  <span class="c1"># noqa: E501</span>
+<span class="w">        </span><span class="sd">"""Runnable "or" operator.</span>
+
+<span class="sd">        Compose this ``Runnable`` with another object to create a</span>
+<span class="sd">        ``RunnableSequence``.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            other: Another ``Runnable`` or a ``Runnable``-like object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A new ``Runnable``.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">RunnableSequence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coerce_to_runnable</span><span class="p">(</span><span class="n">other</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__ror__</span><span class="p">(</span>
@@ -837,7 +895,17 @@
             <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">Runnable</span><span class="p">[</span><span class="n">Other</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Other</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]],</span>
         <span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunnableSerializable</span><span class="p">[</span><span class="n">Other</span><span class="p">,</span> <span class="n">Output</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Compose this ``Runnable`` with another object to create a ``RunnableSequence``."""</span>  <span class="c1"># noqa: E501</span>
+<span class="w">        </span><span class="sd">"""Runnable "reverse-or" operator.</span>
+
+<span class="sd">        Compose this ``Runnable`` with another object to create a</span>
+<span class="sd">        ``RunnableSequence``.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            other: Another ``Runnable`` or a ``Runnable``-like object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A new ``Runnable``.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">RunnableSequence</span><span class="p">(</span><span class="n">coerce_to_runnable</span><span class="p">(</span><span class="n">other</span><span class="p">),</span> <span class="bp">self</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Runnable.pipe">
@@ -847,20 +915,27 @@
         <span class="o">*</span><span class="n">others</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Runnable</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Other</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Other</span><span class="p">]],</span>
         <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunnableSerializable</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Other</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Compose this ``Runnable`` with ``Runnable``-like objects to make a ``RunnableSequence``.</span>
+<span class="w">        </span><span class="sd">"""Pipe runnables.</span>
+
+<span class="sd">        Compose this ``Runnable`` with ``Runnable``-like objects to make a</span>
+<span class="sd">        ``RunnableSequence``.</span>
 
 <span class="sd">        Equivalent to ``RunnableSequence(self, *others)`` or ``self | others[0] | ...``</span>
 
 <span class="sd">        Example:</span>
+
 <span class="sd">            .. code-block:: python</span>
 
 <span class="sd">                from langchain_core.runnables import RunnableLambda</span>
 
+
 <span class="sd">                def add_one(x: int) -&gt; int:</span>
 <span class="sd">                    return x + 1</span>
 
+
 <span class="sd">                def mul_two(x: int) -&gt; int:</span>
 <span class="sd">                    return x * 2</span>
+
 
 <span class="sd">                runnable_1 = RunnableLambda(add_one)</span>
 <span class="sd">                runnable_2 = RunnableLambda(mul_two)</span>
@@ -876,7 +951,13 @@
 <span class="sd">                await sequence.abatch([1, 2, 3])</span>
 <span class="sd">                # -&gt; [4, 6, 8]</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        Args:</span>
+<span class="sd">            *others: Other ``Runnable`` or ``Runnable``-like objects to compose</span>
+<span class="sd">            name: An optional name for the resulting ``RunnableSequence``.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A new ``Runnable``.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">RunnableSequence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">others</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
 
 
@@ -886,6 +967,7 @@
 <span class="w">        </span><span class="sd">"""Pick keys from the output dict of this ``Runnable``.</span>
 
 <span class="sd">        Pick single key:</span>
+
 <span class="sd">            .. code-block:: python</span>
 
 <span class="sd">                import json</span>
@@ -904,6 +986,7 @@
 <span class="sd">                # -&gt; [1, 2, 3]</span>
 
 <span class="sd">        Pick list of keys:</span>
+
 <span class="sd">            .. code-block:: python</span>
 
 <span class="sd">                from typing import Any</span>
@@ -914,13 +997,14 @@
 
 <span class="sd">                as_str = RunnableLambda(str)</span>
 <span class="sd">                as_json = RunnableLambda(json.loads)</span>
+
+
 <span class="sd">                def as_bytes(x: Any) -&gt; bytes:</span>
 <span class="sd">                    return bytes(x, "utf-8")</span>
 
+
 <span class="sd">                chain = RunnableMap(</span>
-<span class="sd">                    str=as_str,</span>
-<span class="sd">                    json=as_json,</span>
-<span class="sd">                    bytes=RunnableLambda(as_bytes)</span>
+<span class="sd">                    str=as_str, json=as_json, bytes=RunnableLambda(as_bytes)</span>
 <span class="sd">                )</span>
 
 <span class="sd">                chain.invoke("[1, 2, 3]")</span>
@@ -930,8 +1014,15 @@
 <span class="sd">                json_and_bytes_chain.invoke("[1, 2, 3]")</span>
 <span class="sd">                # -&gt; {"json": [1, 2, 3], "bytes": b"[1, 2, 3]"}</span>
 
+<span class="sd">        Args:</span>
+<span class="sd">            keys: A key or list of keys to pick from the output dict.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            a new ``Runnable``.</span>
+
 <span class="sd">        """</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.passthrough</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnablePick</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.passthrough</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnablePick</span>  <span class="c1"># noqa: PLC0415</span>
 
         <span class="k">return</span> <span class="bp">self</span> <span class="o">|</span> <span class="n">RunnablePick</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span></div>
 
@@ -950,8 +1041,6 @@
         <span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunnableSerializable</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Assigns new fields to the dict output of this ``Runnable``.</span>
-
-<span class="sd">        Returns a new ``Runnable``.</span>
 
 <span class="sd">        .. code-block:: python</span>
 
@@ -979,8 +1068,16 @@
 <span class="sd">            {'str': {'title': 'Str',</span>
 <span class="sd">            'type': 'string'}, 'hello': {'title': 'Hello', 'type': 'string'}}}</span>
 
+<span class="sd">        Args:</span>
+<span class="sd">            **kwargs: A mapping of keys to ``Runnable`` or ``Runnable``-like objects</span>
+<span class="sd">                that will be invoked with the entire output dict of this ``Runnable``.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A new ``Runnable``.</span>
+
 <span class="sd">        """</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.passthrough</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableAssign</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.passthrough</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableAssign</span>  <span class="c1"># noqa: PLC0415</span>
 
         <span class="k">return</span> <span class="bp">self</span> <span class="o">|</span> <span class="n">RunnableAssign</span><span class="p">(</span><span class="n">RunnableParallel</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]](</span><span class="n">kwargs</span><span class="p">))</span></div>
 
@@ -1020,12 +1117,18 @@
         <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Output</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Default implementation of ``ainvoke``, calls ``invoke`` from a thread.</span>
+<span class="w">        </span><span class="sd">"""Transform a single input into an output.</span>
 
-<span class="sd">        The default implementation allows usage of async code even if</span>
-<span class="sd">        the ``Runnable`` did not implement a native async version of ``invoke``.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            input: The input to the ``Runnable``.</span>
+<span class="sd">            config: A config to use when invoking the ``Runnable``.</span>
+<span class="sd">                The config supports standard keys like ``'tags'``, ``'metadata'`` for</span>
+<span class="sd">                tracing purposes, ``'max_concurrency'`` for controlling how much work to</span>
+<span class="sd">                do in parallel, and other keys. Please refer to the ``RunnableConfig``</span>
+<span class="sd">                for more details. Defaults to None.</span>
 
-<span class="sd">        Subclasses should override this method if they can run asynchronously.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            The output of the ``Runnable``.</span>
 
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="k">await</span> <span class="n">run_in_executor</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">invoke</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
@@ -1047,6 +1150,20 @@
 
 <span class="sd">        Subclasses should override this method if they can batch more efficiently;</span>
 <span class="sd">        e.g., if the underlying ``Runnable`` uses an API which supports a batch mode.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">             inputs: A list of inputs to the ``Runnable``.</span>
+<span class="sd">             config: A config to use when invoking the ``Runnable``.</span>
+<span class="sd">                 The config supports standard keys like ``'tags'``, ``'metadata'`` for</span>
+<span class="sd">                 tracing purposes, ``'max_concurrency'`` for controlling how much work</span>
+<span class="sd">                 to do in parallel, and other keys. Please refer to the</span>
+<span class="sd">                 ``RunnableConfig`` for more details. Defaults to None.</span>
+<span class="sd">             return_exceptions: Whether to return exceptions instead of raising them.</span>
+<span class="sd">                 Defaults to False.</span>
+<span class="sd">             **kwargs: Additional keyword arguments to pass to the ``Runnable``.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">             A list of outputs from the ``Runnable``.</span>
 
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">inputs</span><span class="p">:</span>
@@ -1104,6 +1221,20 @@
 <span class="w">        </span><span class="sd">"""Run ``invoke`` in parallel on a list of inputs.</span>
 
 <span class="sd">        Yields results as they complete.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            inputs: A list of inputs to the ``Runnable``.</span>
+<span class="sd">            config: A config to use when invoking the ``Runnable``.</span>
+<span class="sd">                The config supports standard keys like ``'tags'``, ``'metadata'`` for</span>
+<span class="sd">                tracing purposes, ``'max_concurrency'`` for controlling how much work to</span>
+<span class="sd">                do in parallel, and other keys. Please refer to the ``RunnableConfig``</span>
+<span class="sd">                for more details. Defaults to None.</span>
+<span class="sd">            return_exceptions: Whether to return exceptions instead of raising them.</span>
+<span class="sd">                Defaults to False.</span>
+<span class="sd">            **kwargs: Additional keyword arguments to pass to the ``Runnable``.</span>
+
+<span class="sd">        Yields:</span>
+<span class="sd">            Tuples of the index of the input and the output from the ``Runnable``.</span>
 
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">inputs</span><span class="p">:</span>
@@ -1172,7 +1303,7 @@
 <span class="sd">                for more details. Defaults to None.</span>
 <span class="sd">            return_exceptions: Whether to return exceptions instead of raising them.</span>
 <span class="sd">                Defaults to False.</span>
-<span class="sd">            kwargs: Additional keyword arguments to pass to the ``Runnable``.</span>
+<span class="sd">            **kwargs: Additional keyword arguments to pass to the ``Runnable``.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A list of outputs from the ``Runnable``.</span>
@@ -1406,11 +1537,6 @@
 <span class="sd">            A ``RunLogPatch`` or ``RunLog`` object.</span>
 
 <span class="sd">        """</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers.log_stream</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-            <span class="n">LogStreamCallbackHandler</span><span class="p">,</span>
-            <span class="n">_astream_log_implementation</span><span class="p">,</span>
-        <span class="p">)</span>
-
         <span class="n">stream</span> <span class="o">=</span> <span class="n">LogStreamCallbackHandler</span><span class="p">(</span>
             <span class="n">auto_close</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">include_names</span><span class="o">=</span><span class="n">include_names</span><span class="p">,</span>
@@ -1543,6 +1669,7 @@
 <span class="sd">                '''Format the docs.'''</span>
 <span class="sd">                return ", ".join([doc.page_content for doc in docs])</span>
 
+
 <span class="sd">            format_docs = RunnableLambda(format_docs)</span>
 
 <span class="sd">        ``some_tool``:</span>
@@ -1569,8 +1696,10 @@
 
 <span class="sd">            from langchain_core.runnables import RunnableLambda</span>
 
+
 <span class="sd">            async def reverse(s: str) -&gt; str:</span>
 <span class="sd">                return s[::-1]</span>
+
 
 <span class="sd">            chain = RunnableLambda(func=reverse)</span>
 
@@ -1664,11 +1793,6 @@
 <span class="sd">            NotImplementedError: If the version is not ``'v1'`` or ``'v2'``.</span>
 
 <span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers.event_stream</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-            <span class="n">_astream_events_implementation_v1</span><span class="p">,</span>
-            <span class="n">_astream_events_implementation_v2</span><span class="p">,</span>
-        <span class="p">)</span>
-
         <span class="k">if</span> <span class="n">version</span> <span class="o">==</span> <span class="s2">"v2"</span><span class="p">:</span>
             <span class="n">event_stream</span> <span class="o">=</span> <span class="n">_astream_events_implementation_v2</span><span class="p">(</span>
                 <span class="bp">self</span><span class="p">,</span>
@@ -1714,7 +1838,9 @@
         <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Default implementation of transform, which buffers input and calls ``astream``.</span>
+<span class="w">        </span><span class="sd">"""Transform inputs to outputs.</span>
+
+<span class="sd">        Default implementation of transform, which buffers input and calls ``astream``.</span>
 
 <span class="sd">        Subclasses should override this method if they can start producing output while</span>
 <span class="sd">        input is still being generated.</span>
@@ -1727,7 +1853,7 @@
 <span class="sd">        Yields:</span>
 <span class="sd">            The output of the ``Runnable``.</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="n">final</span><span class="p">:</span> <span class="n">Input</span>
         <span class="n">got_first_val</span> <span class="o">=</span> <span class="kc">False</span>
 
@@ -1760,7 +1886,9 @@
         <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Default implementation of atransform, which buffers input and calls ``astream``.</span>
+<span class="w">        </span><span class="sd">"""Transform inputs to outputs.</span>
+
+<span class="sd">        Default implementation of atransform, which buffers input and calls ``astream``.</span>
 
 <span class="sd">        Subclasses should override this method if they can start producing output while</span>
 <span class="sd">        input is still being generated.</span>
@@ -1773,7 +1901,7 @@
 <span class="sd">        Yields:</span>
 <span class="sd">            The output of the ``Runnable``.</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="n">final</span><span class="p">:</span> <span class="n">Input</span>
         <span class="n">got_first_val</span> <span class="o">=</span> <span class="kc">False</span>
 
@@ -1820,22 +1948,16 @@
 <span class="sd">            from langchain_ollama import ChatOllama</span>
 <span class="sd">            from langchain_core.output_parsers import StrOutputParser</span>
 
-<span class="sd">            llm = ChatOllama(model='llama2')</span>
+<span class="sd">            llm = ChatOllama(model="llama2")</span>
 
 <span class="sd">            # Without bind.</span>
-<span class="sd">            chain = (</span>
-<span class="sd">                llm</span>
-<span class="sd">                | StrOutputParser()</span>
-<span class="sd">            )</span>
+<span class="sd">            chain = llm | StrOutputParser()</span>
 
 <span class="sd">            chain.invoke("Repeat quoted words exactly: 'One two three four five.'")</span>
 <span class="sd">            # Output is 'One two three four five.'</span>
 
 <span class="sd">            # With bind.</span>
-<span class="sd">            chain = (</span>
-<span class="sd">                llm.bind(stop=["three"])</span>
-<span class="sd">                | StrOutputParser()</span>
-<span class="sd">            )</span>
+<span class="sd">            chain = llm.bind(stop=["three"]) | StrOutputParser()</span>
 
 <span class="sd">            chain.invoke("Repeat quoted words exactly: 'One two three four five.'")</span>
 <span class="sd">            # Output is 'One two'</span>
@@ -1913,24 +2035,25 @@
 
 <span class="sd">            import time</span>
 
-<span class="sd">            def test_runnable(time_to_sleep : int):</span>
+
+<span class="sd">            def test_runnable(time_to_sleep: int):</span>
 <span class="sd">                time.sleep(time_to_sleep)</span>
+
 
 <span class="sd">            def fn_start(run_obj: Run):</span>
 <span class="sd">                print("start_time:", run_obj.start_time)</span>
 
+
 <span class="sd">            def fn_end(run_obj: Run):</span>
 <span class="sd">                print("end_time:", run_obj.end_time)</span>
 
+
 <span class="sd">            chain = RunnableLambda(test_runnable).with_listeners(</span>
-<span class="sd">                on_start=fn_start,</span>
-<span class="sd">                on_end=fn_end</span>
+<span class="sd">                on_start=fn_start, on_end=fn_end</span>
 <span class="sd">            )</span>
 <span class="sd">            chain.invoke(2)</span>
 
 <span class="sd">        """</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers.root_listeners</span><span class="w"> </span><span class="kn">import</span> <span class="n">RootListenersTracer</span>
-
         <span class="k">return</span> <span class="n">RunnableBinding</span><span class="p">(</span>
             <span class="n">bound</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
             <span class="n">config_factories</span><span class="o">=</span><span class="p">[</span>
@@ -1957,7 +2080,9 @@
         <span class="n">on_end</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AsyncListener</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">on_error</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AsyncListener</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Runnable</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Bind async lifecycle listeners to a ``Runnable``, returning a new ``Runnable``.</span>
+<span class="w">        </span><span class="sd">"""Bind async lifecycle listeners to a ``Runnable``.</span>
+
+<span class="sd">        Returns a new ``Runnable``.</span>
 
 <span class="sd">        The Run object contains information about the run, including its ``id``,</span>
 <span class="sd">        ``type``, ``input``, ``output``, ``error``, ``start_time``, ``end_time``, and</span>
@@ -2023,9 +2148,7 @@
 <span class="sd">            on end callback ends at 2025-03-01T07:05:29.883893+00:00</span>
 <span class="sd">            on end callback ends at 2025-03-01T07:05:30.884831+00:00</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers.root_listeners</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncRootListenersTracer</span>
-
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">RunnableBinding</span><span class="p">(</span>
             <span class="n">bound</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
             <span class="n">config_factories</span><span class="o">=</span><span class="p">[</span>
@@ -2109,7 +2232,7 @@
 <span class="sd">                if x == 1:</span>
 <span class="sd">                    raise ValueError("x is 1")</span>
 <span class="sd">                else:</span>
-<span class="sd">                     pass</span>
+<span class="sd">                    pass</span>
 
 
 <span class="sd">            runnable = RunnableLambda(_lambda)</span>
@@ -2121,10 +2244,11 @@
 <span class="sd">            except ValueError:</span>
 <span class="sd">                pass</span>
 
-<span class="sd">            assert (count == 2)</span>
+<span class="sd">            assert count == 2</span>
 
 <span class="sd">        """</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.retry</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableRetry</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.retry</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableRetry</span>  <span class="c1"># noqa: PLC0415</span>
 
         <span class="k">return</span> <span class="n">RunnableRetry</span><span class="p">(</span>
             <span class="n">bound</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
@@ -2153,11 +2277,13 @@
 
 <span class="sd">                    from langchain_core.runnables import RunnableLambda</span>
 
+
 <span class="sd">                    def _lambda(x: int) -&gt; int:</span>
 <span class="sd">                        return x + 1</span>
 
+
 <span class="sd">                    runnable = RunnableLambda(_lambda)</span>
-<span class="sd">                    print(runnable.map().invoke([1, 2, 3])) # [2, 3, 4]</span>
+<span class="sd">                    print(runnable.map().invoke([1, 2, 3]))  # [2, 3, 4]</span>
 
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">RunnableEach</span><span class="p">(</span><span class="n">bound</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span></div>
@@ -2178,13 +2304,15 @@
 <span class="sd">        in order, upon failures.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            fallbacks: A sequence of runnables to try if the original ``Runnable`` fails.</span>
+<span class="sd">            fallbacks: A sequence of runnables to try if the original ``Runnable``</span>
+<span class="sd">                fails.</span>
 <span class="sd">            exceptions_to_handle: A tuple of exception types to handle.</span>
 <span class="sd">                Defaults to ``(Exception,)``.</span>
 <span class="sd">            exception_key: If string is specified then handled exceptions will be passed</span>
-<span class="sd">                to fallbacks as part of the input under the specified key. If None,</span>
-<span class="sd">                exceptions will not be passed to fallbacks. If used, the base ``Runnable``</span>
-<span class="sd">                and its fallbacks must accept a dictionary as input. Defaults to None.</span>
+<span class="sd">                to fallbacks as part of the input under the specified key.</span>
+<span class="sd">                If None, exceptions will not be passed to fallbacks.</span>
+<span class="sd">                If used, the base ``Runnable`` and its fallbacks must accept a</span>
+<span class="sd">                dictionary as input. Defaults to None.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A new ``Runnable`` that will try the original ``Runnable``, and then each</span>
@@ -2210,23 +2338,28 @@
 
 <span class="sd">                runnable = RunnableGenerator(_generate_immediate_error).with_fallbacks(</span>
 <span class="sd">                    [RunnableGenerator(_generate)]</span>
-<span class="sd">                    )</span>
-<span class="sd">                print(''.join(runnable.stream({}))) #foo bar</span>
+<span class="sd">                )</span>
+<span class="sd">                print("".join(runnable.stream({})))  # foo bar</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            fallbacks: A sequence of runnables to try if the original ``Runnable`` fails.</span>
+<span class="sd">            fallbacks: A sequence of runnables to try if the original ``Runnable``</span>
+<span class="sd">                fails.</span>
 <span class="sd">            exceptions_to_handle: A tuple of exception types to handle.</span>
 <span class="sd">            exception_key: If string is specified then handled exceptions will be passed</span>
-<span class="sd">                to fallbacks as part of the input under the specified key. If None,</span>
-<span class="sd">                exceptions will not be passed to fallbacks. If used, the base ``Runnable``</span>
-<span class="sd">                and its fallbacks must accept a dictionary as input.</span>
+<span class="sd">                to fallbacks as part of the input under the specified key.</span>
+<span class="sd">                If None, exceptions will not be passed to fallbacks.</span>
+<span class="sd">                If used, the base ``Runnable`` and its fallbacks must accept a</span>
+<span class="sd">                dictionary as input.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A new ``Runnable`` that will try the original ``Runnable``, and then each</span>
 <span class="sd">            fallback in order, upon failures.</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.fallbacks</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableWithFallbacks</span>
+<span class="sd">        """</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.fallbacks</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: PLC0415</span>
+            <span class="n">RunnableWithFallbacks</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">RunnableWithFallbacks</span><span class="p">(</span>
             <span class="n">runnable</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
@@ -2251,11 +2384,14 @@
         <span class="n">serialized</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Output</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Helper method to transform an ``Input`` value to an ``Output`` value, with callbacks.</span>
+<span class="w">        </span><span class="sd">"""Call with config.</span>
+
+<span class="sd">        Helper method to transform an ``Input`` value to an ``Output`` value,</span>
+<span class="sd">        with callbacks.</span>
 
 <span class="sd">        Use this method to implement ``invoke`` in subclasses.</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">ensure_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="n">callback_manager</span> <span class="o">=</span> <span class="n">get_callback_manager_for_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="n">run_manager</span> <span class="o">=</span> <span class="n">callback_manager</span><span class="o">.</span><span class="n">on_chain_start</span><span class="p">(</span>
@@ -2302,10 +2438,13 @@
         <span class="n">serialized</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Output</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Helper method to transform an ``Input`` value to an ``Output`` value, with callbacks.</span>
+<span class="w">        </span><span class="sd">"""Async call with config.</span>
+
+<span class="sd">        Helper method to transform an ``Input`` value to an ``Output`` value,</span>
+<span class="sd">        with callbacks.</span>
 
 <span class="sd">        Use this method to implement ``ainvoke`` in subclasses.</span>
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">ensure_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="n">callback_manager</span> <span class="o">=</span> <span class="n">get_async_callback_manager_for_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="n">run_manager</span> <span class="o">=</span> <span class="k">await</span> <span class="n">callback_manager</span><span class="o">.</span><span class="n">on_chain_start</span><span class="p">(</span>
@@ -2507,9 +2646,6 @@
 <span class="sd">        Use this to implement ``stream`` or ``transform`` in ``Runnable`` subclasses.</span>
 
 <span class="sd">        """</span>
-        <span class="c1"># Mixin that is used by both astream log and astream events implementation</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers._streaming</span><span class="w"> </span><span class="kn">import</span> <span class="n">_StreamingCallbackHandler</span>
-
         <span class="c1"># tee the input so we can iterate over it twice</span>
         <span class="n">input_for_tracing</span><span class="p">,</span> <span class="n">input_for_transform</span> <span class="o">=</span> <span class="n">tee</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
         <span class="c1"># Start the input iterator to ensure the input Runnable starts before this one</span>
@@ -2613,9 +2749,6 @@
 <span class="sd">        Use this to implement ``astream`` or ``atransform`` in ``Runnable`` subclasses.</span>
 
 <span class="sd">        """</span>
-        <span class="c1"># Mixin that is used by both astream log and astream events implementation</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers._streaming</span><span class="w"> </span><span class="kn">import</span> <span class="n">_StreamingCallbackHandler</span>
-
         <span class="c1"># tee the input so we can iterate over it twice</span>
         <span class="n">input_for_tracing</span><span class="p">,</span> <span class="n">input_for_transform</span> <span class="o">=</span> <span class="n">atee</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
         <span class="c1"># Start the input iterator to ensure the input Runnable starts before this one</span>
@@ -2733,12 +2866,15 @@
 <span class="sd">            from typing_extensions import TypedDict</span>
 <span class="sd">            from langchain_core.runnables import RunnableLambda</span>
 
+
 <span class="sd">            class Args(TypedDict):</span>
 <span class="sd">                a: int</span>
 <span class="sd">                b: list[int]</span>
 
+
 <span class="sd">            def f(x: Args) -&gt; str:</span>
 <span class="sd">                return str(x["a"] * max(x["b"]))</span>
+
 
 <span class="sd">            runnable = RunnableLambda(f)</span>
 <span class="sd">            as_tool = runnable.as_tool()</span>
@@ -2772,8 +2908,10 @@
 <span class="sd">            from typing import Any</span>
 <span class="sd">            from langchain_core.runnables import RunnableLambda</span>
 
+
 <span class="sd">            def f(x: dict[str, Any]) -&gt; str:</span>
 <span class="sd">                return str(x["a"] * max(x["b"]))</span>
+
 
 <span class="sd">            runnable = RunnableLambda(f)</span>
 <span class="sd">            as_tool = runnable.as_tool(arg_types={"a": int, "b": list[int]})</span>
@@ -2785,11 +2923,14 @@
 
 <span class="sd">            from langchain_core.runnables import RunnableLambda</span>
 
+
 <span class="sd">            def f(x: str) -&gt; str:</span>
 <span class="sd">                return x + "a"</span>
 
+
 <span class="sd">            def g(x: str) -&gt; str:</span>
 <span class="sd">                return x + "z"</span>
+
 
 <span class="sd">            runnable = RunnableLambda(f) | g</span>
 <span class="sd">            as_tool = runnable.as_tool()</span>
@@ -2799,7 +2940,7 @@
 
 <span class="sd">        """</span>
         <span class="c1"># Avoid circular import</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert_runnable_to_tool</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert_runnable_to_tool</span>  <span class="c1"># noqa: PLC0415</span>
 
         <span class="k">return</span> <span class="n">convert_runnable_to_tool</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
@@ -2848,6 +2989,9 @@
 <span class="sd">        Args:</span>
 <span class="sd">            **kwargs: A dictionary of ``ConfigurableField`` instances to configure.</span>
 
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If a configuration key is not found in the ``Runnable``.</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            A new ``Runnable`` with the fields configured.</span>
 
@@ -2866,18 +3010,22 @@
 
 <span class="sd">            # max_tokens = 20</span>
 <span class="sd">            print(</span>
-<span class="sd">                "max_tokens_20: ",</span>
-<span class="sd">                model.invoke("tell me something about chess").content</span>
+<span class="sd">                "max_tokens_20: ", model.invoke("tell me something about chess").content</span>
 <span class="sd">            )</span>
 
 <span class="sd">            # max_tokens = 200</span>
-<span class="sd">            print("max_tokens_200: ", model.with_config(</span>
-<span class="sd">                configurable={"output_token_number": 200}</span>
-<span class="sd">                ).invoke("tell me something about chess").content</span>
+<span class="sd">            print(</span>
+<span class="sd">                "max_tokens_200: ",</span>
+<span class="sd">                model.with_config(configurable={"output_token_number": 200})</span>
+<span class="sd">                .invoke("tell me something about chess")</span>
+<span class="sd">                .content,</span>
 <span class="sd">            )</span>
 
 <span class="sd">        """</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.configurable</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableConfigurableFields</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.configurable</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: PLC0415</span>
+            <span class="n">RunnableConfigurableFields</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="n">model_fields</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">model_fields</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
@@ -2927,7 +3075,7 @@
 <span class="sd">            ).configurable_alternatives(</span>
 <span class="sd">                ConfigurableField(id="llm"),</span>
 <span class="sd">                default_key="anthropic",</span>
-<span class="sd">                openai=ChatOpenAI()</span>
+<span class="sd">                openai=ChatOpenAI(),</span>
 <span class="sd">            )</span>
 
 <span class="sd">            # uses the default model ChatAnthropic</span>
@@ -2935,13 +3083,14 @@
 
 <span class="sd">            # uses ChatOpenAI</span>
 <span class="sd">            print(</span>
-<span class="sd">                model.with_config(</span>
-<span class="sd">                    configurable={"llm": "openai"}</span>
-<span class="sd">                ).invoke("which organization created you?").content</span>
+<span class="sd">                model.with_config(configurable={"llm": "openai"})</span>
+<span class="sd">                .invoke("which organization created you?")</span>
+<span class="sd">                .content</span>
 <span class="sd">            )</span>
 
 <span class="sd">        """</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.configurable</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.configurable</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: PLC0415</span>
             <span class="n">RunnableConfigurableAlternatives</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -2959,7 +3108,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_seq_input_schema</span><span class="p">(</span>
     <span class="n">steps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Runnable</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.passthrough</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableAssign</span><span class="p">,</span> <span class="n">RunnablePick</span>
+    <span class="c1"># Import locally to prevent circular import</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.passthrough</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: PLC0415</span>
+        <span class="n">RunnableAssign</span><span class="p">,</span>
+        <span class="n">RunnablePick</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">first</span> <span class="o">=</span> <span class="n">steps</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">steps</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -2985,7 +3138,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_seq_output_schema</span><span class="p">(</span>
     <span class="n">steps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Runnable</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.passthrough</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableAssign</span><span class="p">,</span> <span class="n">RunnablePick</span>
+    <span class="c1"># Import locally to prevent circular import</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.passthrough</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: PLC0415</span>
+        <span class="n">RunnableAssign</span><span class="p">,</span>
+        <span class="n">RunnablePick</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">last</span> <span class="o">=</span> <span class="n">steps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">steps</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -3074,11 +3231,14 @@
 
 <span class="sd">            from langchain_core.runnables import RunnableLambda</span>
 
+
 <span class="sd">            def add_one(x: int) -&gt; int:</span>
 <span class="sd">                return x + 1</span>
 
+
 <span class="sd">            def mul_two(x: int) -&gt; int:</span>
 <span class="sd">                return x * 2</span>
+
 
 <span class="sd">            runnable_1 = RunnableLambda(add_one)</span>
 <span class="sd">            runnable_2 = RunnableLambda(mul_two)</span>
@@ -3099,17 +3259,17 @@
 <span class="sd">            from langchain_openai import ChatOpenAI</span>
 
 <span class="sd">            prompt = PromptTemplate.from_template(</span>
-<span class="sd">                'In JSON format, give me a list of {topic} and their '</span>
-<span class="sd">                'corresponding names in French, Spanish and in a '</span>
-<span class="sd">                'Cat Language.'</span>
+<span class="sd">                "In JSON format, give me a list of {topic} and their "</span>
+<span class="sd">                "corresponding names in French, Spanish and in a "</span>
+<span class="sd">                "Cat Language."</span>
 <span class="sd">            )</span>
 
 <span class="sd">            model = ChatOpenAI()</span>
 <span class="sd">            chain = prompt | model | SimpleJsonOutputParser()</span>
 
-<span class="sd">            async for chunk in chain.astream({'topic': 'colors'}):</span>
-<span class="sd">                print('-')  # noqa: T201</span>
-<span class="sd">                print(chunk, sep='', flush=True)  # noqa: T201</span>
+<span class="sd">            async for chunk in chain.astream({"topic": "colors"}):</span>
+<span class="sd">                print("-")  # noqa: T201</span>
+<span class="sd">                print(chunk, sep="", flush=True)  # noqa: T201</span>
 
 <span class="sd">    """</span>
 
@@ -3164,6 +3324,11 @@
     <span class="nd">@classmethod</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``["langchain", "schema", "runnable"]``</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
@@ -3178,14 +3343,7 @@
     <span class="nd">@classmethod</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Check if the object is serializable.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            True if the object is serializable, False otherwise.</span>
-
-<span class="sd">            Defaults to True.</span>
-
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""Return True as this class is serializable."""</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span>
@@ -3243,7 +3401,8 @@
 <span class="sd">            The config specs of the ``Runnable``.</span>
 
 <span class="sd">        """</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.beta.runnables.context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.beta.runnables.context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: PLC0415</span>
             <span class="n">CONTEXT_CONFIG_PREFIX</span><span class="p">,</span>
             <span class="n">_key_from_id</span><span class="p">,</span>
         <span class="p">)</span>
@@ -3301,7 +3460,8 @@
 <span class="sd">            ValueError: If a ``Runnable`` has no first or last node.</span>
 
 <span class="sd">        """</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Graph</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Graph</span>  <span class="c1"># noqa: PLC0415</span>
 
         <span class="n">graph</span> <span class="o">=</span> <span class="n">Graph</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">:</span>
@@ -3391,7 +3551,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Output</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.beta.runnables.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">config_with_context</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.beta.runnables.context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: PLC0415</span>
+            <span class="n">config_with_context</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="c1"># setup callbacks and context</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">config_with_context</span><span class="p">(</span><span class="n">ensure_config</span><span class="p">(</span><span class="n">config</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span>
@@ -3435,7 +3598,10 @@
         <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Output</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.beta.runnables.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">aconfig_with_context</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.beta.runnables.context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: PLC0415</span>
+            <span class="n">aconfig_with_context</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="c1"># setup callbacks and context</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">aconfig_with_context</span><span class="p">(</span><span class="n">ensure_config</span><span class="p">(</span><span class="n">config</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span>
@@ -3482,8 +3648,10 @@
         <span class="n">return_exceptions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.beta.runnables.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">config_with_context</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">CallbackManager</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.beta.runnables.context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: PLC0415</span>
+            <span class="n">config_with_context</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">inputs</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
@@ -3615,8 +3783,10 @@
         <span class="n">return_exceptions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.beta.runnables.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">aconfig_with_context</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncCallbackManager</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.beta.runnables.context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: PLC0415</span>
+            <span class="n">aconfig_with_context</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">inputs</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
@@ -3747,7 +3917,10 @@
         <span class="n">config</span><span class="p">:</span> <span class="n">RunnableConfig</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.beta.runnables.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">config_with_context</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.beta.runnables.context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: PLC0415</span>
+            <span class="n">config_with_context</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="n">steps</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">first</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">middle</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="p">]</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">config_with_context</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span>
@@ -3774,7 +3947,10 @@
         <span class="n">config</span><span class="p">:</span> <span class="n">RunnableConfig</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Output</span><span class="p">]:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.beta.runnables.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">aconfig_with_context</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.beta.runnables.context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: PLC0415</span>
+            <span class="n">aconfig_with_context</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="n">steps</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">first</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">middle</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="p">]</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">aconfig_with_context</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span>
@@ -3876,14 +4052,18 @@
 
 <span class="sd">            from langchain_core.runnables import RunnableLambda</span>
 
+
 <span class="sd">            def add_one(x: int) -&gt; int:</span>
 <span class="sd">                return x + 1</span>
+
 
 <span class="sd">            def mul_two(x: int) -&gt; int:</span>
 <span class="sd">                return x * 2</span>
 
+
 <span class="sd">            def mul_three(x: int) -&gt; int:</span>
 <span class="sd">                return x * 3</span>
+
 
 <span class="sd">            runnable_1 = RunnableLambda(add_one)</span>
 <span class="sd">            runnable_2 = RunnableLambda(mul_two)</span>
@@ -3920,8 +4100,7 @@
 
 <span class="sd">            model = ChatOpenAI()</span>
 <span class="sd">            joke_chain = (</span>
-<span class="sd">                ChatPromptTemplate.from_template("tell me a joke about {topic}")</span>
-<span class="sd">                | model</span>
+<span class="sd">                ChatPromptTemplate.from_template("tell me a joke about {topic}") | model</span>
 <span class="sd">            )</span>
 <span class="sd">            poem_chain = (</span>
 <span class="sd">                ChatPromptTemplate.from_template("write a 2-line poem about {topic}")</span>
@@ -3975,11 +4154,17 @@
     <span class="nd">@classmethod</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return True as this class is serializable."""</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="nd">@classmethod</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``["langchain", "schema", "runnable"]``</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span>
@@ -4087,7 +4272,8 @@
 <span class="sd">            ValueError: If a ``Runnable`` has no first or last node.</span>
 
 <span class="sd">        """</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Graph</span>
+        <span class="c1"># Import locally to prevent circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Graph</span>  <span class="c1"># noqa: PLC0415</span>
 
         <span class="n">graph</span> <span class="o">=</span> <span class="n">Graph</span><span class="p">()</span>
         <span class="n">input_node</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_input_schema</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
@@ -4125,8 +4311,6 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">CallbackManager</span>
-
         <span class="c1"># setup callbacks</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">ensure_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="n">callback_manager</span> <span class="o">=</span> <span class="n">CallbackManager</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span>
@@ -4439,9 +4623,10 @@
 <span class="sd">                for token in ["Have", " a", " nice", " day"]:</span>
 <span class="sd">                    yield token</span>
 
+
 <span class="sd">            runnable = RunnableGenerator(agen)</span>
 <span class="sd">            await runnable.ainvoke(None)  # "Have a nice day"</span>
-<span class="sd">            [p async for p in runnable.astream(None)] # ["Have", " a", " nice", " day"]</span>
+<span class="sd">            [p async for p in runnable.astream(None)]  # ["Have", " a", " nice", " day"]</span>
 
 <span class="sd">    ``RunnableGenerator`` makes it easy to implement custom behavior within a streaming</span>
 <span class="sd">    context. Below we show an example:</span>
@@ -4461,6 +4646,7 @@
 <span class="sd">                | StrOutputParser()</span>
 <span class="sd">            )</span>
 
+
 <span class="sd">            def character_generator(input: Iterator[str]) -&gt; Iterator[str]:</span>
 <span class="sd">                for token in input:</span>
 <span class="sd">                    if "," in token or "." in token:</span>
@@ -4471,7 +4657,10 @@
 
 <span class="sd">            runnable = chant_chain | character_generator</span>
 <span class="sd">            assert type(runnable.last) is RunnableGenerator</span>
-<span class="sd">            "".join(runnable.stream({"topic": "waste"})) # Reduce👏, Reuse👏, Recycle👏.</span>
+<span class="sd">            "".join(</span>
+<span class="sd">                runnable.stream({"topic": "waste"})</span>
+<span class="sd">            )  # Reduce👏, Reuse👏, Recycle👏.</span>
+
 
 <span class="sd">            # Note that RunnableLambda can be used to delay streaming of one step in a</span>
 <span class="sd">            # sequence until the previous step is finished:</span>
@@ -4479,6 +4668,7 @@
 <span class="sd">                # Yield characters of input in reverse order.</span>
 <span class="sd">                for character in input[::-1]:</span>
 <span class="sd">                    yield character</span>
+
 
 <span class="sd">            runnable = chant_chain | RunnableLambda(reverse_generator)</span>
 <span class="sd">            "".join(runnable.stream({"topic": "waste"}))  # ".elcycer ,esuer ,ecudeR"</span>
@@ -4727,26 +4917,29 @@
 <span class="sd">            # This is a RunnableLambda</span>
 <span class="sd">            from langchain_core.runnables import RunnableLambda</span>
 
+
 <span class="sd">            def add_one(x: int) -&gt; int:</span>
 <span class="sd">                return x + 1</span>
 
+
 <span class="sd">            runnable = RunnableLambda(add_one)</span>
 
-<span class="sd">            runnable.invoke(1) # returns 2</span>
-<span class="sd">            runnable.batch([1, 2, 3]) # returns [2, 3, 4]</span>
+<span class="sd">            runnable.invoke(1)  # returns 2</span>
+<span class="sd">            runnable.batch([1, 2, 3])  # returns [2, 3, 4]</span>
 
 <span class="sd">            # Async is supported by default by delegating to the sync implementation</span>
-<span class="sd">            await runnable.ainvoke(1) # returns 2</span>
-<span class="sd">            await runnable.abatch([1, 2, 3]) # returns [2, 3, 4]</span>
+<span class="sd">            await runnable.ainvoke(1)  # returns 2</span>
+<span class="sd">            await runnable.abatch([1, 2, 3])  # returns [2, 3, 4]</span>
 
 
 <span class="sd">            # Alternatively, can provide both synd and sync implementations</span>
 <span class="sd">            async def add_one_async(x: int) -&gt; int:</span>
 <span class="sd">                return x + 1</span>
 
+
 <span class="sd">            runnable = RunnableLambda(add_one, afunc=add_one_async)</span>
-<span class="sd">            runnable.invoke(1) # Uses add_one</span>
-<span class="sd">            await runnable.ainvoke(1) # Uses add_one_async</span>
+<span class="sd">            runnable.invoke(1)  # Uses add_one</span>
+<span class="sd">            await runnable.ainvoke(1)  # Uses add_one_async</span>
 
 <span class="sd">    """</span>
 
@@ -4981,6 +5174,9 @@
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">RunnableConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Graph</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">deps</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deps</span><span class="p">:</span>
+            <span class="c1"># Import locally to prevent circular import</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Graph</span>  <span class="c1"># noqa: PLC0415</span>
+
             <span class="n">graph</span> <span class="o">=</span> <span class="n">Graph</span><span class="p">()</span>
             <span class="n">input_node</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_input_schema</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
             <span class="n">output_node</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_output_schema</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
@@ -5018,7 +5214,7 @@
     <span class="fm">__hash__</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""A string representation of this ``Runnable``."""</span>
+<span class="w">        </span><span class="sd">"""Return a string representation of this ``Runnable``."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_repr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"func"</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">itemgetter</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_repr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"RunnableLambda(</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)[</span><span class="nb">len</span><span class="p">(</span><span class="s1">'operator.'</span><span class="p">)</span><span class="w"> </span><span class="p">:]</span><span class="si">}</span><span class="s2">)"</span>
@@ -5457,13 +5653,16 @@
 <div class="viewcode-block" id="RunnableEachBase">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableEachBase.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableEachBase">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RunnableEachBase</span><span class="p">(</span><span class="n">RunnableSerializable</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Input</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Output</span><span class="p">]]):</span>
-<span class="w">    </span><span class="sd">"""``Runnable`` that calls another ``Runnable`` for each element of the input sequence.</span>
+<span class="w">    </span><span class="sd">"""RunnableEachBase class.</span>
 
-<span class="sd">    Use only if creating a new ``RunnableEach`` subclass with different ``__init__`` args.</span>
+<span class="sd">    ``Runnable`` that calls another ``Runnable`` for each element of the input sequence.</span>
+
+<span class="sd">    Use only if creating a new ``RunnableEach`` subclass with different ``__init__``</span>
+<span class="sd">    args.</span>
 
 <span class="sd">    See documentation for ``RunnableEach`` for more details.</span>
 
-<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">    """</span>
 
     <span class="n">bound</span><span class="p">:</span> <span class="n">Runnable</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">]</span>
 
@@ -5531,11 +5730,17 @@
     <span class="nd">@classmethod</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return True as this class is serializable."""</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="nd">@classmethod</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``["langchain", "schema", "runnable"]``</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_invoke</span><span class="p">(</span>
@@ -5589,10 +5794,13 @@
         <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">StreamEvent</span><span class="p">]:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_error_stream_event</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StreamEvent</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
         <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"RunnableEach does not support astream_events yet."</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-            <span class="k">yield</span></div>
+            <span class="k">yield</span> <span class="n">_error_stream_event</span><span class="p">(</span>
+                <span class="s2">"RunnableEach does not support astream_events yet."</span>
+            <span class="p">)</span></div>
 </div>
 
 
@@ -5600,7 +5808,9 @@
 <div class="viewcode-block" id="RunnableEach">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableEach.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableEach">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RunnableEach</span><span class="p">(</span><span class="n">RunnableEachBase</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">"""``Runnable`` that calls another ``Runnable`` for each element of the input sequence.</span>
+<span class="w">    </span><span class="sd">"""RunnableEach class.</span>
+
+<span class="sd">    ``Runnable`` that calls another ``Runnable`` for each element of the input sequence.</span>
 
 <span class="sd">    It allows you to call multiple inputs with the bounded ``Runnable``.</span>
 
@@ -5625,7 +5835,7 @@
 <span class="sd">                                        {'topic':'Biology'}])</span>
 <span class="sd">            print(output)  # noqa: T201</span>
 
-<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">    """</span>
 
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_name</span><span class="p">(</span>
@@ -5700,7 +5910,9 @@
         <span class="n">on_end</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AsyncListener</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">on_error</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AsyncListener</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunnableEach</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Bind async lifecycle listeners to a ``Runnable``, returning a new ``Runnable``.</span>
+<span class="w">        </span><span class="sd">"""Bind async lifecycle listeners to a ``Runnable``.</span>
+
+<span class="sd">        Returns a new ``Runnable``.</span>
 
 <span class="sd">        The ``Run`` object contains information about the run, including its ``id``,</span>
 <span class="sd">        ``type``, ``input``, ``output``, ``error``, ``start_time``, ``end_time``, and</span>
@@ -5717,7 +5929,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A new ``Runnable`` with the listeners bound.</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">RunnableEach</span><span class="p">(</span>
             <span class="n">bound</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bound</span><span class="o">.</span><span class="n">with_alisteners</span><span class="p">(</span>
                 <span class="n">on_start</span><span class="o">=</span><span class="n">on_start</span><span class="p">,</span> <span class="n">on_end</span><span class="o">=</span><span class="n">on_end</span><span class="p">,</span> <span class="n">on_error</span><span class="o">=</span><span class="n">on_error</span>
@@ -5792,22 +6004,23 @@
 <span class="w">        </span><span class="sd">"""Create a ``RunnableBinding`` from a ``Runnable`` and kwargs.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            bound: The underlying ``Runnable`` that this ``Runnable`` delegates calls to.</span>
+<span class="sd">            bound: The underlying ``Runnable`` that this ``Runnable`` delegates calls</span>
+<span class="sd">                to.</span>
 <span class="sd">            kwargs: optional kwargs to pass to the underlying ``Runnable``, when running</span>
-<span class="sd">                    the underlying ``Runnable`` (e.g., via ``invoke``, ``batch``,</span>
-<span class="sd">                    ``transform``, or ``stream`` or async variants)</span>
-<span class="sd">                    Defaults to None.</span>
+<span class="sd">                the underlying ``Runnable`` (e.g., via ``invoke``, ``batch``,</span>
+<span class="sd">                ``transform``, or ``stream`` or async variants)</span>
+<span class="sd">                Defaults to None.</span>
 <span class="sd">            config: optional config to bind to the underlying ``Runnable``.</span>
-<span class="sd">                    Defaults to None.</span>
+<span class="sd">                Defaults to None.</span>
 <span class="sd">            config_factories: optional list of config factories to apply to the</span>
-<span class="sd">                    config before binding to the underlying ``Runnable``.</span>
-<span class="sd">                    Defaults to None.</span>
+<span class="sd">                config before binding to the underlying ``Runnable``.</span>
+<span class="sd">                Defaults to None.</span>
 <span class="sd">            custom_input_type: Specify to override the input type of the underlying</span>
-<span class="sd">                    ``Runnable`` with a custom type. Defaults to None.</span>
+<span class="sd">                ``Runnable`` with a custom type. Defaults to None.</span>
 <span class="sd">            custom_output_type: Specify to override the output type of the underlying</span>
-<span class="sd">                    ``Runnable`` with a custom type. Defaults to None.</span>
+<span class="sd">                ``Runnable`` with a custom type. Defaults to None.</span>
 <span class="sd">            **other_kwargs: Unpacked into the base class.</span>
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">bound</span><span class="o">=</span><span class="n">bound</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span> <span class="ow">or</span> <span class="p">{},</span>
@@ -5874,6 +6087,7 @@
     <span class="nd">@classmethod</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return True as this class is serializable."""</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="nd">@classmethod</span>
@@ -5881,7 +6095,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Get the namespace of the langchain object.</span>
 
-<span class="sd">        Defaults to ``["langchain", "schema", "runnable"]``.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            ``["langchain", "schema", "runnable"]``</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
 
@@ -6178,9 +6393,11 @@
 <span class="sd">    These methods include:</span>
 
 <span class="sd">    - ``bind``: Bind kwargs to pass to the underlying ``Runnable`` when running it.</span>
-<span class="sd">    - ``with_config``: Bind config to pass to the underlying ``Runnable`` when running it.</span>
+<span class="sd">    - ``with_config``: Bind config to pass to the underlying ``Runnable`` when running</span>
+<span class="sd">      it.</span>
 <span class="sd">    - ``with_listeners``:  Bind lifecycle listeners to the underlying ``Runnable``.</span>
-<span class="sd">    - ``with_types``: Override the input and output types of the underlying ``Runnable``.</span>
+<span class="sd">    - ``with_types``: Override the input and output types of the underlying</span>
+<span class="sd">      ``Runnable``.</span>
 <span class="sd">    - ``with_retry``: Bind a retry policy to the underlying ``Runnable``.</span>
 <span class="sd">    - ``with_fallbacks``: Bind a fallback policy to the underlying ``Runnable``.</span>
 
@@ -6192,12 +6409,13 @@
 <span class="sd">            # Create a Runnable binding that invokes the ChatModel with the</span>
 <span class="sd">            # additional kwarg `stop=['-']` when running it.</span>
 <span class="sd">            from langchain_community.chat_models import ChatOpenAI</span>
+
 <span class="sd">            model = ChatOpenAI()</span>
-<span class="sd">            model.invoke('Say "Parrot-MAGIC"', stop=['-']) # Should return `Parrot`</span>
+<span class="sd">            model.invoke('Say "Parrot-MAGIC"', stop=["-"])  # Should return `Parrot`</span>
 <span class="sd">            # Using it the easy way via `bind` method which returns a new</span>
 <span class="sd">            # RunnableBinding</span>
-<span class="sd">            runnable_binding = model.bind(stop=['-'])</span>
-<span class="sd">            runnable_binding.invoke('Say "Parrot-MAGIC"') # Should return `Parrot`</span>
+<span class="sd">            runnable_binding = model.bind(stop=["-"])</span>
+<span class="sd">            runnable_binding.invoke('Say "Parrot-MAGIC"')  # Should return `Parrot`</span>
 
 <span class="sd">        Can also be done by instantiating a ``RunnableBinding`` directly (not</span>
 <span class="sd">        recommended):</span>
@@ -6205,13 +6423,14 @@
 <span class="sd">        .. code-block:: python</span>
 
 <span class="sd">            from langchain_core.runnables import RunnableBinding</span>
+
 <span class="sd">            runnable_binding = RunnableBinding(</span>
 <span class="sd">                bound=model,</span>
-<span class="sd">                kwargs={'stop': ['-']} # &lt;-- Note the additional kwargs</span>
+<span class="sd">                kwargs={"stop": ["-"]},  # &lt;-- Note the additional kwargs</span>
 <span class="sd">            )</span>
-<span class="sd">            runnable_binding.invoke('Say "Parrot-MAGIC"') # Should return `Parrot`</span>
+<span class="sd">            runnable_binding.invoke('Say "Parrot-MAGIC"')  # Should return `Parrot`</span>
 
-<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="RunnableBinding.bind">
 <a class="viewcode-back" href="../../../core/runnables/langchain_core.runnables.base.RunnableBinding.html#langchain_azure_dynamic_sessions.tools.sessions.RunnableBinding.bind">[docs]</a>
@@ -6289,7 +6508,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A new ``Runnable`` with the listeners bound.</span>
 <span class="sd">        """</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers.root_listeners</span><span class="w"> </span><span class="kn">import</span> <span class="n">RootListenersTracer</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">listener_config_factory</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">RunnableConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunnableConfig</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">{</span>
@@ -6504,6 +6722,7 @@
 <span class="sd">        from langchain_core.runnables import chain</span>
 <span class="sd">        from langchain_core.prompts import PromptTemplate</span>
 <span class="sd">        from langchain_openai import OpenAI</span>
+
 
 <span class="sd">        @chain</span>
 <span class="sd">        def my_func(fields):</span>

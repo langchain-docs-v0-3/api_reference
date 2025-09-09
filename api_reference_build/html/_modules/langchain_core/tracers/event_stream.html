@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -231,21 +231,23 @@
     <span class="n">TYPE_CHECKING</span><span class="p">,</span>
     <span class="n">Any</span><span class="p">,</span>
     <span class="n">Optional</span><span class="p">,</span>
+    <span class="n">TypedDict</span><span class="p">,</span>
     <span class="n">TypeVar</span><span class="p">,</span>
     <span class="n">Union</span><span class="p">,</span>
     <span class="n">cast</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">uuid</span><span class="w"> </span><span class="kn">import</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">uuid4</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotRequired</span><span class="p">,</span> <span class="n">TypedDict</span><span class="p">,</span> <span class="n">override</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotRequired</span><span class="p">,</span> <span class="n">override</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncCallbackHandler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncCallbackHandler</span><span class="p">,</span> <span class="n">BaseCallbackManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.messages</span><span class="w"> </span><span class="kn">import</span> <span class="n">AIMessageChunk</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">,</span> <span class="n">BaseMessageChunk</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.outputs</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ChatGenerationChunk</span><span class="p">,</span>
     <span class="n">GenerationChunk</span><span class="p">,</span>
     <span class="n">LLMResult</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CustomStreamEvent</span><span class="p">,</span>
     <span class="n">EventData</span><span class="p">,</span>
@@ -258,6 +260,11 @@
     <span class="n">_RootEventFilter</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers._streaming</span><span class="w"> </span><span class="kn">import</span> <span class="n">_StreamingCallbackHandler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers.log_stream</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LogStreamCallbackHandler</span><span class="p">,</span>
+    <span class="n">RunLog</span><span class="p">,</span>
+    <span class="n">_astream_log_implementation</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers.memory_stream</span><span class="w"> </span><span class="kn">import</span> <span class="n">_MemoryStream</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils.aiter</span><span class="w"> </span><span class="kn">import</span> <span class="n">aclosing</span><span class="p">,</span> <span class="n">py_anext</span>
 
@@ -277,22 +284,20 @@
 <span class="w">    </span><span class="sd">"""Information about a run.</span>
 
 <span class="sd">    This is used to keep track of the metadata associated with a run.</span>
-
-<span class="sd">    Parameters:</span>
-<span class="sd">        name: The name of the run.</span>
-<span class="sd">        tags: The tags associated with the run.</span>
-<span class="sd">        metadata: The metadata associated with the run.</span>
-<span class="sd">        run_type: The type of the run.</span>
-<span class="sd">        inputs: The inputs to the run.</span>
-<span class="sd">        parent_run_id: The ID of the parent run.</span>
 <span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="w">    </span><span class="sd">"""The name of the run."""</span>
     <span class="n">tags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">"""The tags associated with the run."""</span>
     <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">"""The metadata associated with the run."""</span>
     <span class="n">run_type</span><span class="p">:</span> <span class="nb">str</span>
+<span class="w">    </span><span class="sd">"""The type of the run."""</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="n">NotRequired</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
-    <span class="n">parent_run_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">UUID</span><span class="p">]</span></div>
+<span class="w">    </span><span class="sd">"""The inputs to the run."""</span>
+    <span class="n">parent_run_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">UUID</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">"""The ID of the parent run."""</span></div>
 
 
 
@@ -380,7 +385,11 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">send_stream</span><span class="o">.</span><span class="n">send_nowait</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__aiter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Iterate over the receive stream."""</span>
+<span class="w">        </span><span class="sd">"""Iterate over the receive stream.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            An async iterator over the receive stream.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">receive_stream</span><span class="o">.</span><span class="fm">__aiter__</span><span class="p">()</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">tap_output_aiter</span><span class="p">(</span>
@@ -637,7 +646,6 @@
         <span class="n">parent_run_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">UUID</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Run on new LLM token. Only available when streaming is enabled."""</span>
         <span class="n">run_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">run_id</span><span class="p">)</span>
         <span class="n">chunk_</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">GenerationChunk</span><span class="p">,</span> <span class="n">BaseMessageChunk</span><span class="p">]</span>
 
@@ -683,7 +691,15 @@
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_llm_end</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="n">LLMResult</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">run_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""End a trace for an LLM run."""</span>
+<span class="w">        </span><span class="sd">"""End a trace for an LLM run.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            response (LLMResult): The response which was generated.</span>
+<span class="sd">            run_id (UUID): The run ID. This is the ID of the current run.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the run type is not ``'llm'`` or ``'chat_model'``.</span>
+<span class="sd">        """</span>
         <span class="n">run_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_map</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">run_id</span><span class="p">)</span>
         <span class="n">inputs_</span> <span class="o">=</span> <span class="n">run_info</span><span class="p">[</span><span class="s2">"inputs"</span><span class="p">]</span>
 
@@ -861,7 +877,15 @@
 
     <span class="nd">@override</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_tool_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">run_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""End a trace for a tool run."""</span>
+<span class="w">        </span><span class="sd">"""End a trace for a tool run.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            output: The output of the tool.</span>
+<span class="sd">            run_id: The run ID. This is the ID of the current run.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AssertionError: If the run ID is a tool call and does not have inputs</span>
+<span class="sd">        """</span>
         <span class="n">run_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_map</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">run_id</span><span class="p">)</span>
         <span class="k">if</span> <span class="s2">"inputs"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">run_info</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
@@ -955,11 +979,11 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_AstreamEventsCallbackHandler</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Deepcopy the tracer."""</span>
+<span class="w">        </span><span class="sd">"""Return self."""</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_AstreamEventsCallbackHandler</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Copy the tracer."""</span>
+<span class="w">        </span><span class="sd">"""Return self."""</span>
         <span class="k">return</span> <span class="bp">self</span>
 
 
@@ -976,14 +1000,6 @@
     <span class="n">exclude_tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">StandardStreamEvent</span><span class="p">]:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_config</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_RootEventFilter</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tracers.log_stream</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-        <span class="n">LogStreamCallbackHandler</span><span class="p">,</span>
-        <span class="n">RunLog</span><span class="p">,</span>
-        <span class="n">_astream_log_implementation</span><span class="p">,</span>
-    <span class="p">)</span>
-
     <span class="n">stream</span> <span class="o">=</span> <span class="n">LogStreamCallbackHandler</span><span class="p">(</span>
         <span class="n">auto_close</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">include_names</span><span class="o">=</span><span class="n">include_names</span><span class="p">,</span>
@@ -1161,9 +1177,6 @@
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">StandardStreamEvent</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Implementation of the astream events API for V2 runnables."""</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseCallbackManager</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_config</span>
-
     <span class="n">event_streamer</span> <span class="o">=</span> <span class="n">_AstreamEventsCallbackHandler</span><span class="p">(</span>
         <span class="n">include_names</span><span class="o">=</span><span class="n">include_names</span><span class="p">,</span>
         <span class="n">include_types</span><span class="o">=</span><span class="n">include_types</span><span class="p">,</span>

@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -326,22 +326,22 @@
 <span class="sd">            )</span>
 
 <span class="sd">            runnable = RunnableParallel(</span>
-<span class="sd">                origin=RunnablePassthrough(),</span>
-<span class="sd">                modified=lambda x: x+1</span>
+<span class="sd">                origin=RunnablePassthrough(), modified=lambda x: x + 1</span>
 <span class="sd">            )</span>
 
-<span class="sd">            runnable.invoke(1) # {'origin': 1, 'modified': 2}</span>
+<span class="sd">            runnable.invoke(1)  # {'origin': 1, 'modified': 2}</span>
 
 
-<span class="sd">            def fake_llm(prompt: str) -&gt; str: # Fake LLM for the example</span>
+<span class="sd">            def fake_llm(prompt: str) -&gt; str:  # Fake LLM for the example</span>
 <span class="sd">                return "completion"</span>
 
+
 <span class="sd">            chain = RunnableLambda(fake_llm) | {</span>
-<span class="sd">                'original': RunnablePassthrough(), # Original LLM output</span>
-<span class="sd">                'parsed': lambda text: text[::-1] # Parsing logic</span>
+<span class="sd">                "original": RunnablePassthrough(),  # Original LLM output</span>
+<span class="sd">                "parsed": lambda text: text[::-1],  # Parsing logic</span>
 <span class="sd">            }</span>
 
-<span class="sd">            chain.invoke('hello') # {'original': 'completion', 'parsed': 'noitelpmoc'}</span>
+<span class="sd">            chain.invoke("hello")  # {'original': 'completion', 'parsed': 'noitelpmoc'}</span>
 
 <span class="sd">    In some cases, it may be useful to pass the input through while adding some</span>
 <span class="sd">    keys to the output. In this case, you can use the `assign` method:</span>
@@ -350,17 +350,19 @@
 
 <span class="sd">            from langchain_core.runnables import RunnablePassthrough</span>
 
-<span class="sd">            def fake_llm(prompt: str) -&gt; str: # Fake LLM for the example</span>
+
+<span class="sd">            def fake_llm(prompt: str) -&gt; str:  # Fake LLM for the example</span>
 <span class="sd">                return "completion"</span>
 
+
 <span class="sd">            runnable = {</span>
-<span class="sd">                'llm1':  fake_llm,</span>
-<span class="sd">                'llm2':  fake_llm,</span>
+<span class="sd">                "llm1": fake_llm,</span>
+<span class="sd">                "llm2": fake_llm,</span>
 <span class="sd">            } | RunnablePassthrough.assign(</span>
-<span class="sd">                total_chars=lambda inputs: len(inputs['llm1'] + inputs['llm2'])</span>
+<span class="sd">                total_chars=lambda inputs: len(inputs["llm1"] + inputs["llm2"])</span>
 <span class="sd">            )</span>
 
-<span class="sd">            runnable.invoke('hello')</span>
+<span class="sd">            runnable.invoke("hello")</span>
 <span class="sd">            # {'llm1': 'completion', 'llm2': 'completion', 'total_chars': 20}</span>
 
 <span class="sd">    """</span>
@@ -421,11 +423,16 @@
     <span class="nd">@classmethod</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return True as this class is serializable."""</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="nd">@classmethod</span>
-    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``["langchain", "schema", "runnable"]``</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
 
     <span class="nd">@property</span>
@@ -623,11 +630,15 @@
 <span class="sd">            )</span>
 <span class="sd">            from langchain_core.runnables.base import RunnableLambda</span>
 
+
 <span class="sd">            def add_ten(x: dict[str, int]) -&gt; dict[str, int]:</span>
 <span class="sd">                return {"added": x["input"] + 10}</span>
 
+
 <span class="sd">            mapper = RunnableParallel(</span>
-<span class="sd">                {"add_step": RunnableLambda(add_ten),}</span>
+<span class="sd">                {</span>
+<span class="sd">                    "add_step": RunnableLambda(add_ten),</span>
+<span class="sd">                }</span>
 <span class="sd">            )</span>
 
 <span class="sd">            runnable_assign = RunnableAssign(mapper)</span>
@@ -656,11 +667,17 @@
     <span class="nd">@classmethod</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return True as this class is serializable."""</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="nd">@classmethod</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``["langchain", "schema", "runnable"]``</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
 
     <span class="nd">@override</span>
@@ -948,13 +965,13 @@
 <span class="sd">            from langchain_core.runnables.passthrough import RunnablePick</span>
 
 <span class="sd">            input_data = {</span>
-<span class="sd">                'name': 'John',</span>
-<span class="sd">                'age': 30,</span>
-<span class="sd">                'city': 'New York',</span>
-<span class="sd">                'country': 'USA'</span>
+<span class="sd">                "name": "John",</span>
+<span class="sd">                "age": 30,</span>
+<span class="sd">                "city": "New York",</span>
+<span class="sd">                "country": "USA",</span>
 <span class="sd">            }</span>
 
-<span class="sd">            runnable = RunnablePick(keys=['name', 'age'])</span>
+<span class="sd">            runnable = RunnablePick(keys=["name", "age"])</span>
 
 <span class="sd">            output_data = runnable.invoke(input_data)</span>
 
@@ -975,12 +992,17 @@
     <span class="nd">@classmethod</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return True as this class is serializable."""</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="nd">@classmethod</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object."""</span>
+<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``["langchain", "schema", "runnable"]``</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
 
     <span class="nd">@override</span>
@@ -990,7 +1012,8 @@
         <span class="n">name</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">name</span>
             <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
-            <span class="ow">or</span> <span class="sa">f</span><span class="s2">"RunnablePick&lt;</span><span class="si">{</span><span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">]</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">,</span><span class="w"> </span><span class="nb">str</span><span class="p">)</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">)</span><span class="si">}</span><span class="s2">&gt;"</span>  <span class="c1"># noqa: E501</span>
+            <span class="ow">or</span> <span class="s2">"RunnablePick"</span>
+            <span class="sa">f</span><span class="s2">"&lt;</span><span class="si">{</span><span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">]</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">,</span><span class="w"> </span><span class="nb">str</span><span class="p">)</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">)</span><span class="si">}</span><span class="s2">&gt;"</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_name</span><span class="p">(</span><span class="n">suffix</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 

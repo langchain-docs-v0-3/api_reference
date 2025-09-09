@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -243,8 +243,10 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic.v1</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span> <span class="k">as</span> <span class="n">BaseModelV1</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic.v1</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">create_model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span><span class="p">,</span> <span class="n">is_typeddict</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">langchain_core</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core._api</span><span class="w"> </span><span class="kn">import</span> <span class="n">beta</span><span class="p">,</span> <span class="n">deprecated</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.messages</span><span class="w"> </span><span class="kn">import</span> <span class="n">AIMessage</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">,</span> <span class="n">HumanMessage</span><span class="p">,</span> <span class="n">ToolMessage</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.utils.json_schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">dereference_refs</span>
@@ -374,6 +376,9 @@
 <span class="sd">            of the schema will be used.</span>
 <span class="sd">        rm_titles: Whether to remove titles from the schema. Defaults to True.</span>
 
+<span class="sd">    Raises:</span>
+<span class="sd">        TypeError: If the model is not a Pydantic model.</span>
+
 <span class="sd">    Returns:</span>
 <span class="sd">        The function description.</span>
 <span class="sd">    """</span>
@@ -448,10 +453,8 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        The OpenAI function description.</span>
 <span class="sd">    """</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tools.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_schema_from_function</span>
-
     <span class="n">func_name</span> <span class="o">=</span> <span class="n">_get_python_function_name</span><span class="p">(</span><span class="n">function</span><span class="p">)</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="n">create_schema_from_function</span><span class="p">(</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">langchain_core</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">create_schema_from_function</span><span class="p">(</span>
         <span class="n">func_name</span><span class="p">,</span>
         <span class="n">function</span><span class="p">,</span>
         <span class="n">filter_args</span><span class="o">=</span><span class="p">(),</span>
@@ -492,9 +495,6 @@
     <span class="n">visited</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
     <span class="n">depth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic.v1</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span> <span class="k">as</span> <span class="n">Field_v1</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic.v1</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_model</span> <span class="k">as</span> <span class="n">create_model_v1</span>
-
     <span class="k">if</span> <span class="n">type_</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">visited</span><span class="p">[</span><span class="n">type_</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">depth</span> <span class="o">&gt;=</span> <span class="n">_MAX_TYPED_DICT_RECURSION</span><span class="p">:</span>
@@ -525,7 +525,7 @@
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">arg_desc</span> <span class="o">:=</span> <span class="n">arg_descriptions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
                     <span class="n">field_kwargs</span><span class="p">[</span><span class="s2">"description"</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg_desc</span>
-                <span class="n">fields</span><span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_arg_type</span><span class="p">,</span> <span class="n">Field_v1</span><span class="p">(</span><span class="o">**</span><span class="n">field_kwargs</span><span class="p">))</span>
+                <span class="n">fields</span><span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_arg_type</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="o">**</span><span class="n">field_kwargs</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">new_arg_type</span> <span class="o">=</span> <span class="n">_convert_any_typed_dicts_to_pydantic</span><span class="p">(</span>
                     <span class="n">arg_type</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="n">depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">visited</span><span class="o">=</span><span class="n">visited</span>
@@ -533,8 +533,8 @@
                 <span class="n">field_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"default"</span><span class="p">:</span> <span class="o">...</span><span class="p">}</span>
                 <span class="k">if</span> <span class="n">arg_desc</span> <span class="o">:=</span> <span class="n">arg_descriptions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
                     <span class="n">field_kwargs</span><span class="p">[</span><span class="s2">"description"</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg_desc</span>
-                <span class="n">fields</span><span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_arg_type</span><span class="p">,</span> <span class="n">Field_v1</span><span class="p">(</span><span class="o">**</span><span class="n">field_kwargs</span><span class="p">))</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="n">create_model_v1</span><span class="p">(</span><span class="n">typed_dict</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">)</span>
+                <span class="n">fields</span><span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_arg_type</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="o">**</span><span class="n">field_kwargs</span><span class="p">))</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">create_model</span><span class="p">(</span><span class="n">typed_dict</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">)</span>
         <span class="n">model</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">description</span>
         <span class="n">visited</span><span class="p">[</span><span class="n">typed_dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span>
         <span class="k">return</span> <span class="n">model</span>
@@ -554,12 +554,15 @@
 <span class="sd">    Args:</span>
 <span class="sd">        tool: The tool to format.</span>
 
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the tool call schema is not supported.</span>
+
 <span class="sd">    Returns:</span>
 <span class="sd">        The function description.</span>
 <span class="sd">    """</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">simple</span>
-
-    <span class="n">is_simple_oai_tool</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="n">simple</span><span class="o">.</span><span class="n">Tool</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">tool</span><span class="o">.</span><span class="n">args_schema</span>
+    <span class="n">is_simple_oai_tool</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="n">langchain_core</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">simple</span><span class="o">.</span><span class="n">Tool</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">tool</span><span class="o">.</span><span class="n">args_schema</span>
+    <span class="p">)</span>
     <span class="k">if</span> <span class="n">tool</span><span class="o">.</span><span class="n">tool_call_schema</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_simple_oai_tool</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="o">.</span><span class="n">tool_call_schema</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">_convert_json_schema_to_openai_function</span><span class="p">(</span>
@@ -665,8 +668,6 @@
 <span class="sd">        'description' and 'parameters' keys are now optional. Only 'name' is</span>
 <span class="sd">        required and guaranteed to be part of the output.</span>
 <span class="sd">    """</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseTool</span>
-
     <span class="c1"># an Anthropic format tool</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
         <span class="n">k</span> <span class="ow">in</span> <span class="n">function</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"input_schema"</span><span class="p">)</span>
@@ -706,7 +707,7 @@
         <span class="n">oai_function</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
             <span class="s2">"dict"</span><span class="p">,</span> <span class="n">_convert_typed_dict_to_openai_function</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="s2">"type"</span><span class="p">,</span> <span class="n">function</span><span class="p">))</span>
         <span class="p">)</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="n">BaseTool</span><span class="p">):</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="n">langchain_core</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">BaseTool</span><span class="p">):</span>
         <span class="n">oai_function</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"dict"</span><span class="p">,</span> <span class="n">_format_tool_to_openai_function</span><span class="p">(</span><span class="n">function</span><span class="p">))</span>
     <span class="k">elif</span> <span class="nb">callable</span><span class="p">(</span><span class="n">function</span><span class="p">):</span>
         <span class="n">oai_function</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
@@ -815,7 +816,8 @@
 
 <span class="sd">        Added support for OpenAI's image generation built-in tool.</span>
 <span class="sd">    """</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tool</span>
+    <span class="c1"># Import locally to prevent circular import</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tool</span>  <span class="c1"># noqa: PLC0415</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">tool</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_WellKnownOpenAITools</span><span class="p">:</span>
@@ -844,7 +846,20 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">strict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Convert a schema representation to a JSON schema."""</span>
+<span class="w">    </span><span class="sd">"""Convert a schema representation to a JSON schema.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        schema: The schema to convert.</span>
+<span class="sd">        strict: If True, model output is guaranteed to exactly match the JSON Schema</span>
+<span class="sd">            provided in the function definition. If None, ``strict`` argument will not</span>
+<span class="sd">            be included in function definition.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the input is not a valid OpenAI-format tool.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A JSON schema representation of the input schema.</span>
+<span class="sd">    """</span>
     <span class="n">openai_tool</span> <span class="o">=</span> <span class="n">convert_to_openai_tool</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">)</span>
     <span class="k">if</span> <span class="p">(</span>
         <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">openai_tool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
@@ -917,8 +932,10 @@
 <span class="sd">            from pydantic import BaseModel, Field</span>
 <span class="sd">            from langchain_openai import ChatOpenAI</span>
 
+
 <span class="sd">            class Person(BaseModel):</span>
 <span class="sd">                '''Information about a person.'''</span>
+
 <span class="sd">                name: Optional[str] = Field(..., description="The name of the person")</span>
 <span class="sd">                hair_color: Optional[str] = Field(</span>
 <span class="sd">                    ..., description="The color of the person's hair if known"</span>
@@ -926,6 +943,7 @@
 <span class="sd">                height_in_meters: Optional[str] = Field(</span>
 <span class="sd">                    ..., description="Height in METERS"</span>
 <span class="sd">                )</span>
+
 
 <span class="sd">            examples = [</span>
 <span class="sd">                (</span>
@@ -942,9 +960,7 @@
 <span class="sd">            messages = []</span>
 
 <span class="sd">            for txt, tool_call in examples:</span>
-<span class="sd">                messages.extend(</span>
-<span class="sd">                    tool_example_to_messages(txt, [tool_call])</span>
-<span class="sd">                )</span>
+<span class="sd">                messages.extend(tool_example_to_messages(txt, [tool_call]))</span>
 
 <span class="sd">    """</span>
     <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">HumanMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="nb">input</span><span class="p">)]</span>

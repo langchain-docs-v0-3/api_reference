@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 08, 2025" name="docbuild:last-update"/>
+<meta content="Sep 09, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -234,6 +234,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.beta.runnables.context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CONTEXT_CONFIG_PREFIX</span><span class="p">,</span>
+    <span class="n">CONTEXT_CONFIG_SUFFIX_SET</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Runnable</span><span class="p">,</span>
     <span class="n">RunnableLike</span><span class="p">,</span>
@@ -268,10 +272,6 @@
 
 <span class="sd">    If no condition evaluates to True, the default branch is run on the input.</span>
 
-<span class="sd">    Parameters:</span>
-<span class="sd">        branches: A list of (condition, Runnable) pairs.</span>
-<span class="sd">        default: A Runnable to run if no condition is met.</span>
-
 <span class="sd">    Examples:</span>
 
 <span class="sd">        .. code-block:: python</span>
@@ -285,13 +285,15 @@
 <span class="sd">                lambda x: "goodbye",</span>
 <span class="sd">            )</span>
 
-<span class="sd">            branch.invoke("hello") # "HELLO"</span>
-<span class="sd">            branch.invoke(None) # "goodbye"</span>
+<span class="sd">            branch.invoke("hello")  # "HELLO"</span>
+<span class="sd">            branch.invoke(None)  # "goodbye"</span>
 
 <span class="sd">    """</span>
 
     <span class="n">branches</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Runnable</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="nb">bool</span><span class="p">],</span> <span class="n">Runnable</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">]]]</span>
+<span class="w">    </span><span class="sd">"""A list of (condition, Runnable) pairs."""</span>
     <span class="n">default</span><span class="p">:</span> <span class="n">Runnable</span><span class="p">[</span><span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">"""A Runnable to run if no condition is met."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -368,12 +370,17 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_lc_serializable</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""RunnableBranch is serializable if all its branches are serializable."""</span>
+<span class="w">        </span><span class="sd">"""Return True as this class is serializable."""</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="nd">@classmethod</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lc_namespace</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get the namespace of the langchain object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ``["langchain", "schema", "runnable"]``</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span><span class="s2">"langchain"</span><span class="p">,</span> <span class="s2">"schema"</span><span class="p">,</span> <span class="s2">"runnable"</span><span class="p">]</span>
 
     <span class="nd">@override</span>
@@ -398,11 +405,6 @@
     <span class="nd">@property</span>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">config_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ConfigurableFieldSpec</span><span class="p">]:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.beta.runnables.context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-            <span class="n">CONTEXT_CONFIG_PREFIX</span><span class="p">,</span>
-            <span class="n">CONTEXT_CONFIG_SUFFIX_SET</span><span class="p">,</span>
-        <span class="p">)</span>
-
         <span class="n">specs</span> <span class="o">=</span> <span class="n">get_unique_config_specs</span><span class="p">(</span>
             <span class="n">spec</span>
             <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="p">(</span>
@@ -489,7 +491,6 @@
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ainvoke</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">Input</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RunnableConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Output</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Async version of invoke."""</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">ensure_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="n">callback_manager</span> <span class="o">=</span> <span class="n">get_async_callback_manager_for_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="n">run_manager</span> <span class="o">=</span> <span class="k">await</span> <span class="n">callback_manager</span><span class="o">.</span><span class="n">on_chain_start</span><span class="p">(</span>
@@ -553,9 +554,6 @@
 
 <span class="sd">        Yields:</span>
 <span class="sd">            The output of the branch that was run.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            BaseException: If an error occurs during the execution of the Runnable.</span>
 <span class="sd">        """</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">ensure_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="n">callback_manager</span> <span class="o">=</span> <span class="n">get_callback_manager_for_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
@@ -643,9 +641,6 @@
 
 <span class="sd">        Yields:</span>
 <span class="sd">            The output of the branch that was run.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            BaseException: If an error occurs during the execution of the Runnable.</span>
 <span class="sd">        """</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">ensure_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="n">callback_manager</span> <span class="o">=</span> <span class="n">get_async_callback_manager_for_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
