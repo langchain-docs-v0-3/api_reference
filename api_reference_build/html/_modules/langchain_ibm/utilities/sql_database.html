@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 09, 2025" name="docbuild:last-update"/>
+<meta content="Sep 10, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -283,34 +283,68 @@
         <span class="n">native_type</span> <span class="o">=</span> <span class="n">field_metadata_type</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"native_type"</span><span class="p">)</span>
         <span class="n">nullable</span> <span class="o">=</span> <span class="n">field_metadata_type</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"nullable"</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">native_type</span><span class="si">}{</span><span class="s1">''</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">nullable</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">' NOT NULL'</span><span class="si">}</span><span class="s2">,"</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">native_type</span><span class="si">}{</span><span class="s1">''</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">nullable</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">' NOT NULL'</span><span class="si">}</span><span class="s2">"</span>
 
     <span class="n">create_table_template</span> <span class="o">=</span> <span class="s2">"""</span>
 <span class="s2">CREATE TABLE </span><span class="si">{schema}</span><span class="s2">.</span><span class="si">{table_name}</span><span class="s2"> (</span>
-<span class="se">\t</span><span class="si">{column_definitions}{primary_key}</span>
+<span class="se">\t</span><span class="si">{column_definitions}{primary_key}{foreign_key}</span>
 <span class="se">\t</span><span class="s2">)"""</span>
 
-    <span class="n">primary_key</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
-        <span class="nb">filter</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">el</span><span class="p">:</span> <span class="n">el</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"primary_key"</span><span class="p">,</span>
-            <span class="n">table_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"extended_metadata"</span><span class="p">,</span> <span class="p">[{}]),</span>
-        <span class="p">),</span>
-        <span class="p">{},</span>
-    <span class="p">)</span>
-    <span class="n">key_columns</span> <span class="o">=</span> <span class="n">primary_key</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"value"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"key_columns"</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">extended_metadata</span> <span class="o">=</span> <span class="n">table_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"extended_metadata"</span><span class="p">,</span> <span class="p">[{}])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_retrieve_field_data</span><span class="p">(</span><span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="nb">filter</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">el</span><span class="p">:</span> <span class="n">el</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span> <span class="o">==</span> <span class="n">field_name</span><span class="p">,</span>
+                <span class="n">extended_metadata</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="p">{},</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Primary Key</span>
+    <span class="n">primary_key</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">_retrieve_field_data</span><span class="p">(</span><span class="s2">"primary_key"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">primary_key</span><span class="p">:</span>
+        <span class="n">key_columns</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">primary_key</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"value"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"key_columns"</span><span class="p">,</span> <span class="p">[]))</span>
+        <span class="n">primary_key_text</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">",</span><span class="se">\n\t</span><span class="s2">CONSTRAINT </span><span class="si">{</span><span class="n">primary_key</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2"> PRIMARY KEY (</span><span class="si">{</span><span class="n">key_columns</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">primary_key_text</span> <span class="o">=</span> <span class="s2">""</span>
+
+    <span class="c1"># Foreign keys</span>
+    <span class="n">foreign_keys</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">_retrieve_field_data</span><span class="p">(</span><span class="s2">"foreign_keys"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">foreign_keys</span><span class="p">:</span>
+        <span class="n">foreign_keys_text</span> <span class="o">=</span> <span class="s2">""</span>
+        <span class="n">foreign_key_text_template</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"CONSTRAINT </span><span class="si">{fk_name}</span><span class="s2"> FOREIGN KEY (</span><span class="si">{col_name}</span><span class="s2">) "</span>
+            <span class="s2">"REFERENCES </span><span class="si">{external_table_name}</span><span class="s2">(</span><span class="si">{external_col_name}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">foreign_key</span> <span class="ow">in</span> <span class="n">foreign_keys</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"value"</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="n">foreign_keys_text</span> <span class="o">+=</span> <span class="s2">",</span><span class="se">\n\t</span><span class="s2">"</span>
+            <span class="n">join_condition</span> <span class="o">=</span> <span class="n">foreign_key</span><span class="p">[</span><span class="s2">"join_condition"</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">)</span>
+            <span class="n">foreign_keys_text</span> <span class="o">+=</span> <span class="n">foreign_key_text_template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">fk_name</span><span class="o">=</span><span class="n">foreign_key</span><span class="p">[</span><span class="s2">"name"</span><span class="p">],</span>
+                <span class="n">col_name</span><span class="o">=</span><span class="n">join_condition</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">external_table_name</span><span class="o">=</span><span class="n">join_condition</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">external_col_name</span><span class="o">=</span><span class="n">join_condition</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="mi">2</span><span class="p">],</span>
+            <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">foreign_keys_text</span> <span class="o">=</span> <span class="s2">""</span>
 
     <span class="k">return</span> <span class="n">create_table_template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">,</span>
         <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span>
         <span class="n">column_definitions</span><span class="o">=</span><span class="s2">"</span><span class="se">\n\t</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
             <span class="p">[</span>
-                <span class="n">convert_column_data</span><span class="p">(</span><span class="n">field_metadata</span><span class="o">=</span><span class="n">field_metadata</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">field_metadata</span> <span class="ow">in</span> <span class="n">table_info</span><span class="p">[</span><span class="s2">"fields"</span><span class="p">]</span>
+                <span class="c1"># Do not add comma for the last column</span>
+                <span class="n">convert_column_data</span><span class="p">(</span><span class="n">field_metadata</span><span class="o">=</span><span class="n">field_metadata</span><span class="p">)</span> <span class="o">+</span> <span class="s2">","</span>
+                <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">table_info</span><span class="p">[</span><span class="s2">"fields"</span><span class="p">])</span>
+                <span class="k">else</span> <span class="n">convert_column_data</span><span class="p">(</span><span class="n">field_metadata</span><span class="o">=</span><span class="n">field_metadata</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">field_metadata</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">table_info</span><span class="p">[</span><span class="s2">"fields"</span><span class="p">],</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
             <span class="p">]</span>
         <span class="p">),</span>
-        <span class="n">primary_key</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n\t</span><span class="s2">PRIMARY KEY (</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">key_columns</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
-        <span class="k">if</span> <span class="n">primary_key</span>
-        <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="n">primary_key</span><span class="o">=</span><span class="n">primary_key_text</span><span class="p">,</span>
+        <span class="n">foreign_key</span><span class="o">=</span><span class="n">foreign_keys_text</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -532,7 +566,10 @@
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_meta_all_tables</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="n">table_name</span><span class="p">:</span> <span class="n">flight_sql_client</span><span class="o">.</span><span class="n">get_table_info</span><span class="p">(</span>
-                    <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span>
+                    <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span>
+                    <span class="n">schema</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">,</span>
+                    <span class="n">extended_metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">interaction_properties</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">for</span> <span class="n">table_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_all_tables</span>
                 <span class="k">if</span> <span class="n">table_name</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_include_tables</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_all_tables</span><span class="p">)</span>
@@ -629,7 +666,7 @@
                         <span class="n">schema</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">,</span>
                         <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span>
                         <span class="n">n</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_sample_rows_in_table_info</span><span class="p">,</span>
-                    <span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
                     <span class="k">for</span> <span class="n">table_name</span> <span class="ow">in</span> <span class="n">table_names</span>
                 <span class="p">]</span>
             <span class="p">)</span></div>

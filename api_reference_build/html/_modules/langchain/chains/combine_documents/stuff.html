@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 09, 2025" name="docbuild:last-update"/>
+<meta content="Sep 10, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -260,7 +260,8 @@
 <span class="sd">    Args:</span>
 <span class="sd">        llm: Language model.</span>
 <span class="sd">        prompt: Prompt template. Must contain input variable "context" (override by</span>
-<span class="sd">            setting document_variable), which will be used for passing in the formatted documents.</span>
+<span class="sd">            setting document_variable), which will be used for passing in the formatted</span>
+<span class="sd">            documents.</span>
 <span class="sd">        output_parser: Output parser. Defaults to StrOutputParser.</span>
 <span class="sd">        document_prompt: Prompt used for formatting each document into a string. Input</span>
 <span class="sd">            variables can be "page_content" or any metadata keys that are in all</span>
@@ -269,8 +270,8 @@
 <span class="sd">            automatically retrieved from the `Document.metadata` dictionary. Default to</span>
 <span class="sd">            a prompt that only contains `Document.page_content`.</span>
 <span class="sd">        document_separator: String separator to use between formatted document strings.</span>
-<span class="sd">        document_variable_name: Variable name to use for the formatted documents in the prompt.</span>
-<span class="sd">            Defaults to "context".</span>
+<span class="sd">        document_variable_name: Variable name to use for the formatted documents in the</span>
+<span class="sd">            prompt. Defaults to "context".</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        An LCEL Runnable. The input is a dictionary that must have a "context" key that</span>
@@ -295,12 +296,14 @@
 
 <span class="sd">            docs = [</span>
 <span class="sd">                Document(page_content="Jesse loves red but not yellow"),</span>
-<span class="sd">                Document(page_content = "Jamal loves green but not as much as he loves orange")</span>
+<span class="sd">                Document(</span>
+<span class="sd">                    page_content="Jamal loves green but not as much as he loves orange"</span>
+<span class="sd">                ),</span>
 <span class="sd">            ]</span>
 
 <span class="sd">            chain.invoke({"context": docs})</span>
 
-<span class="sd">    """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">    """</span>
     <span class="n">_validate_prompt</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">document_variable_name</span><span class="p">)</span>
     <span class="n">_document_prompt</span> <span class="o">=</span> <span class="n">document_prompt</span> <span class="ow">or</span> <span class="n">DEFAULT_DOCUMENT_PROMPT</span>
     <span class="n">_output_parser</span> <span class="o">=</span> <span class="n">output_parser</span> <span class="ow">or</span> <span class="n">StrOutputParser</span><span class="p">()</span>
@@ -353,21 +356,18 @@
 <span class="sd">            # it will be passed to `format_document` - see that function for more</span>
 <span class="sd">            # details.</span>
 <span class="sd">            document_prompt = PromptTemplate(</span>
-<span class="sd">                input_variables=["page_content"],</span>
-<span class="sd">                template="{page_content}"</span>
+<span class="sd">                input_variables=["page_content"], template="{page_content}"</span>
 <span class="sd">            )</span>
 <span class="sd">            document_variable_name = "context"</span>
 <span class="sd">            llm = OpenAI()</span>
 <span class="sd">            # The prompt here should take as an input variable the</span>
 <span class="sd">            # `document_variable_name`</span>
-<span class="sd">            prompt = PromptTemplate.from_template(</span>
-<span class="sd">                "Summarize this content: {context}"</span>
-<span class="sd">            )</span>
+<span class="sd">            prompt = PromptTemplate.from_template("Summarize this content: {context}")</span>
 <span class="sd">            llm_chain = LLMChain(llm=llm, prompt=prompt)</span>
 <span class="sd">            chain = StuffDocumentsChain(</span>
 <span class="sd">                llm_chain=llm_chain,</span>
 <span class="sd">                document_prompt=document_prompt,</span>
-<span class="sd">                document_variable_name=document_variable_name</span>
+<span class="sd">                document_variable_name=document_variable_name,</span>
 <span class="sd">            )</span>
 
 <span class="sd">    """</span>

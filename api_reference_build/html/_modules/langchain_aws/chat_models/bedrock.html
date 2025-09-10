@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 09, 2025" name="docbuild:last-update"/>
+<meta content="Sep 10, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -280,6 +280,7 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_aws.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">anthropic_tokens_supported</span><span class="p">,</span>
+    <span class="n">create_aws_client</span><span class="p">,</span>
     <span class="n">get_num_tokens_anthropic</span><span class="p">,</span>
     <span class="n">get_token_ids_anthropic</span><span class="p">,</span>
 <span class="p">)</span>
@@ -1008,9 +1009,36 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_beta_use_converse_api</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">model_id</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model_id"</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model"</span><span class="p">))</span>
+        <span class="n">base_model_id</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"base_model_id"</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"base_model"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
 
-        <span class="k">if</span> <span class="n">model_id</span> <span class="ow">and</span> <span class="s2">"beta_use_converse_api"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
-            <span class="n">values</span><span class="p">[</span><span class="s2">"beta_use_converse_api"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"nova"</span> <span class="ow">in</span> <span class="n">model_id</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">model_id</span> <span class="ow">or</span> <span class="s2">"beta_use_converse_api"</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">values</span>
+
+        <span class="n">nova_id</span> <span class="o">=</span> <span class="s2">"amazon.nova"</span>
+        <span class="n">values</span><span class="p">[</span><span class="s2">"beta_use_converse_api"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">nova_id</span> <span class="ow">in</span> <span class="n">model_id</span> <span class="ow">or</span> <span class="n">nova_id</span> <span class="ow">in</span> <span class="n">base_model_id</span><span class="p">:</span>
+            <span class="n">values</span><span class="p">[</span><span class="s2">"beta_use_converse_api"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">base_model_id</span> <span class="ow">and</span> <span class="s2">"application-inference-profile"</span> <span class="ow">in</span> <span class="n">model_id</span><span class="p">:</span>
+            <span class="n">bedrock_client</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"bedrock_client"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">bedrock_client</span><span class="p">:</span>
+                <span class="n">bedrock_client</span> <span class="o">=</span> <span class="n">create_aws_client</span><span class="p">(</span>
+                    <span class="n">region_name</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"region_name"</span><span class="p">),</span>
+                    <span class="n">credentials_profile_name</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"credentials_profile_name"</span><span class="p">),</span>
+                    <span class="n">aws_access_key_id</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"aws_access_key_id"</span><span class="p">),</span>
+                    <span class="n">aws_secret_access_key</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"aws_secret_access_key"</span><span class="p">),</span>
+                    <span class="n">aws_session_token</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"aws_session_token"</span><span class="p">),</span>
+                    <span class="n">endpoint_url</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"endpoint_url"</span><span class="p">),</span>
+                    <span class="n">config</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"config"</span><span class="p">),</span>
+                    <span class="n">service_name</span><span class="o">=</span><span class="s2">"bedrock"</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">bedrock_client</span><span class="o">.</span><span class="n">get_inference_profile</span><span class="p">(</span>
+                <span class="n">inferenceProfileIdentifier</span><span class="o">=</span><span class="n">model_id</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="s1">'models'</span> <span class="ow">in</span> <span class="n">response</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s1">'models'</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">model_arn</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s1">'models'</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">'modelArn'</span><span class="p">]</span>
+                <span class="n">resolved_base_model</span> <span class="o">=</span> <span class="n">model_arn</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">values</span><span class="p">[</span><span class="s2">"beta_use_converse_api"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"nova"</span> <span class="ow">in</span> <span class="n">resolved_base_model</span>
         <span class="k">return</span> <span class="n">values</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>

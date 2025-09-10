@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 09, 2025" name="docbuild:last-update"/>
+<meta content="Sep 10, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -230,7 +230,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">uuid</span><span class="w"> </span><span class="kn">import</span> <span class="n">UUID</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">langsmith</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langsmith</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span><span class="p">,</span> <span class="n">get_tracing_context</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langsmith</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_trees</span> <span class="k">as</span> <span class="n">rt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langsmith</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span> <span class="k">as</span> <span class="n">ls_utils</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tenacity</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -349,6 +349,8 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_start_trace</span><span class="p">(</span><span class="n">run</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">run</span><span class="o">.</span><span class="n">ls_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">run</span><span class="o">.</span><span class="n">ls_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span>
+        <span class="k">if</span> <span class="n">get_tracing_context</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"enabled"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">run</span><span class="o">.</span><span class="n">extra</span><span class="p">[</span><span class="s2">"__disabled"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 
 <div class="viewcode-block" id="LangChainTracer.on_chat_model_start">
 <a class="viewcode-back" href="../../../core/tracers/langchain_core.tracers.langchain.LangChainTracer.html#langchain_core.tracers.langchain.LangChainTracer.on_chat_model_start">[docs]</a>
@@ -447,6 +449,8 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_persist_run_single</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Persist a run."""</span>
+        <span class="k">if</span> <span class="n">run</span><span class="o">.</span><span class="n">extra</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"__disabled"</span><span class="p">):</span>
+            <span class="k">return</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">run</span><span class="o">.</span><span class="n">extra</span><span class="p">[</span><span class="s2">"runtime"</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_runtime_environment</span><span class="p">()</span>
             <span class="n">run</span><span class="o">.</span><span class="n">tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_tags</span><span class="p">(</span><span class="n">run</span><span class="p">)</span>
@@ -460,6 +464,8 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_update_run_single</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">:</span> <span class="n">Run</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Update a run."""</span>
+        <span class="k">if</span> <span class="n">run</span><span class="o">.</span><span class="n">extra</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"__disabled"</span><span class="p">):</span>
+            <span class="k">return</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">run</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="n">exclude_inputs</span><span class="o">=</span><span class="n">run</span><span class="o">.</span><span class="n">extra</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"inputs_is_truthy"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>

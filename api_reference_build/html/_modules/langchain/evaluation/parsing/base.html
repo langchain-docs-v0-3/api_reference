@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 09, 2025" name="docbuild:last-update"/>
+<meta content="Sep 10, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -223,6 +223,7 @@
 <span></span><span class="sd">"""Evaluators for parsing strings."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">eq</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">cast</span>
 
@@ -230,6 +231,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain.evaluation.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">StringEvaluator</span>
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="JsonValidityEvaluator">
@@ -302,7 +305,10 @@
 <span class="sd">        """</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">parse_json_markdown</span><span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">parser</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">"score"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"reasoning"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)}</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">"Passing JSON failed with unexpected error."</span><span class="p">)</span>
             <span class="k">return</span> <span class="p">{</span><span class="s2">"score"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"reasoning"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)}</span>
         <span class="k">return</span> <span class="p">{</span><span class="s2">"score"</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span></div>
 
@@ -335,7 +341,7 @@
 <span class="sd">        &gt;&gt;&gt; evaluator.evaluate_strings('{"a": 1}', reference='{"a": 2}')</span>
 <span class="sd">        {'score': False}</span>
 
-<span class="sd">        &gt;&gt;&gt; evaluator = JsonEqualityEvaluator(operator=lambda x, y: x['a'] == y['a'])</span>
+<span class="sd">        &gt;&gt;&gt; evaluator = JsonEqualityEvaluator(operator=lambda x, y: x["a"] == y["a"])</span>
 <span class="sd">        &gt;&gt;&gt; evaluator.evaluate_strings('{"a": 1}', reference='{"a": 1}')</span>
 <span class="sd">        {'score': True}</span>
 <span class="sd">        &gt;&gt;&gt; evaluator.evaluate_strings('{"a": 1}', reference='{"a": 2}')</span>

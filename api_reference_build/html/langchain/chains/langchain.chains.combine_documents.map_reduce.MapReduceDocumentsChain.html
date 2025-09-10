@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 09, 2025" name="docbuild:last-update"/>
+<meta content="Sep 10, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -442,16 +442,13 @@ likely be a ReduceDocumentsChain.</p>
 <span class="c1"># it will be passed to `format_document` - see that function for more</span>
 <span class="c1"># details.</span>
 <span class="n">document_prompt</span> <span class="o">=</span> <span class="n">PromptTemplate</span><span class="p">(</span>
-    <span class="n">input_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">"page_content"</span><span class="p">],</span>
-     <span class="n">template</span><span class="o">=</span><span class="s2">"</span><span class="si">{page_content}</span><span class="s2">"</span>
+    <span class="n">input_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">"page_content"</span><span class="p">],</span> <span class="n">template</span><span class="o">=</span><span class="s2">"</span><span class="si">{page_content}</span><span class="s2">"</span>
 <span class="p">)</span>
 <span class="n">document_variable_name</span> <span class="o">=</span> <span class="s2">"context"</span>
 <span class="n">llm</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 <span class="c1"># The prompt here should take as an input variable the</span>
 <span class="c1"># `document_variable_name`</span>
-<span class="n">prompt</span> <span class="o">=</span> <span class="n">PromptTemplate</span><span class="o">.</span><span class="n">from_template</span><span class="p">(</span>
-    <span class="s2">"Summarize this content: </span><span class="si">{context}</span><span class="s2">"</span>
-<span class="p">)</span>
+<span class="n">prompt</span> <span class="o">=</span> <span class="n">PromptTemplate</span><span class="o">.</span><span class="n">from_template</span><span class="p">(</span><span class="s2">"Summarize this content: </span><span class="si">{context}</span><span class="s2">"</span><span class="p">)</span>
 <span class="n">llm_chain</span> <span class="o">=</span> <span class="n">LLMChain</span><span class="p">(</span><span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">)</span>
 <span class="c1"># We now define how to combine these summaries</span>
 <span class="n">reduce_prompt</span> <span class="o">=</span> <span class="n">PromptTemplate</span><span class="o">.</span><span class="n">from_template</span><span class="p">(</span>
@@ -461,7 +458,7 @@ likely be a ReduceDocumentsChain.</p>
 <span class="n">combine_documents_chain</span> <span class="o">=</span> <span class="n">StuffDocumentsChain</span><span class="p">(</span>
     <span class="n">llm_chain</span><span class="o">=</span><span class="n">reduce_llm_chain</span><span class="p">,</span>
     <span class="n">document_prompt</span><span class="o">=</span><span class="n">document_prompt</span><span class="p">,</span>
-    <span class="n">document_variable_name</span><span class="o">=</span><span class="n">document_variable_name</span>
+    <span class="n">document_variable_name</span><span class="o">=</span><span class="n">document_variable_name</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">reduce_documents_chain</span> <span class="o">=</span> <span class="n">ReduceDocumentsChain</span><span class="p">(</span>
     <span class="n">combine_documents_chain</span><span class="o">=</span><span class="n">combine_documents_chain</span><span class="p">,</span>
@@ -473,14 +470,12 @@ likely be a ReduceDocumentsChain.</p>
 <span class="c1"># If we wanted to, we could also pass in collapse_documents_chain</span>
 <span class="c1"># which is specifically aimed at collapsing documents BEFORE</span>
 <span class="c1"># the final call.</span>
-<span class="n">prompt</span> <span class="o">=</span> <span class="n">PromptTemplate</span><span class="o">.</span><span class="n">from_template</span><span class="p">(</span>
-    <span class="s2">"Collapse this content: </span><span class="si">{context}</span><span class="s2">"</span>
-<span class="p">)</span>
+<span class="n">prompt</span> <span class="o">=</span> <span class="n">PromptTemplate</span><span class="o">.</span><span class="n">from_template</span><span class="p">(</span><span class="s2">"Collapse this content: </span><span class="si">{context}</span><span class="s2">"</span><span class="p">)</span>
 <span class="n">llm_chain</span> <span class="o">=</span> <span class="n">LLMChain</span><span class="p">(</span><span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">)</span>
 <span class="n">collapse_documents_chain</span> <span class="o">=</span> <span class="n">StuffDocumentsChain</span><span class="p">(</span>
     <span class="n">llm_chain</span><span class="o">=</span><span class="n">llm_chain</span><span class="p">,</span>
     <span class="n">document_prompt</span><span class="o">=</span><span class="n">document_prompt</span><span class="p">,</span>
-    <span class="n">document_variable_name</span><span class="o">=</span><span class="n">document_variable_name</span>
+    <span class="n">document_variable_name</span><span class="o">=</span><span class="n">document_variable_name</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">reduce_documents_chain</span> <span class="o">=</span> <span class="n">ReduceDocumentsChain</span><span class="p">(</span>
     <span class="n">combine_documents_chain</span><span class="o">=</span><span class="n">combine_documents_chain</span><span class="p">,</span>
