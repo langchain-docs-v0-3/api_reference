@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 10, 2025" name="docbuild:last-update"/>
+<meta content="Sep 11, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -470,20 +470,52 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Embeddings</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Embeddings</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Get the dense embeddings instance that is being used.</span>
 
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If embeddings are ``None``.</span>
-
 <span class="sd">        Returns:</span>
-<span class="sd">            Embeddings: An instance of ``Embeddings``.</span>
+<span class="sd">            Embeddings: An instance of ``Embeddings``, or None for SPARSE mode.</span>
 
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embeddings</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"Embeddings are `None`. Please set using the `embedding` parameter."</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embeddings</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_retriever_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get tags for retriever.</span>
+
+<span class="sd">        Override the base class method to handle SPARSE mode where embeddings can be</span>
+<span class="sd">        None. In SPARSE mode, embeddings is None, so we don't include embeddings class</span>
+<span class="sd">        name in tags. In DENSE/HYBRID modes, embeddings is not None, so we include</span>
+<span class="sd">        embeddings class name.</span>
+<span class="sd">        """</span>
+        <span class="n">tags</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span>
+
+        <span class="c1"># Handle different retrieval modes</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieval_mode</span> <span class="o">==</span> <span class="n">RetrievalMode</span><span class="o">.</span><span class="n">SPARSE</span><span class="p">:</span>
+            <span class="c1"># SPARSE mode: no dense embeddings, so no embeddings class name in tags</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># DENSE/HYBRID modes: include embeddings class name if available</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">tags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">tags</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_require_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operation</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Embeddings</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Require embeddings for operations that need them.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            operation: Description of the operation requiring embeddings.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The embeddings instance.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If embeddings are None and required for the operation.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Embeddings are required for </span><span class="si">{</span><span class="n">operation</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">sparse_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SparseEmbeddings</span><span class="p">:</span>
@@ -764,7 +796,8 @@
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieval_mode</span> <span class="o">==</span> <span class="n">RetrievalMode</span><span class="o">.</span><span class="n">DENSE</span><span class="p">:</span>
-            <span class="n">query_dense_embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+            <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_embeddings</span><span class="p">(</span><span class="s2">"DENSE mode"</span><span class="p">)</span>
+            <span class="n">query_dense_embedding</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
             <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query_points</span><span class="p">(</span>
                 <span class="n">query</span><span class="o">=</span><span class="n">query_dense_embedding</span><span class="p">,</span>
                 <span class="n">using</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">vector_name</span><span class="p">,</span>
@@ -783,7 +816,8 @@
             <span class="p">)</span><span class="o">.</span><span class="n">points</span>
 
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieval_mode</span> <span class="o">==</span> <span class="n">RetrievalMode</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">:</span>
-            <span class="n">query_dense_embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+            <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_embeddings</span><span class="p">(</span><span class="s2">"HYBRID mode"</span><span class="p">)</span>
+            <span class="n">query_dense_embedding</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
             <span class="n">query_sparse_embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_embeddings</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
             <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query_points</span><span class="p">(</span>
                 <span class="n">prefetch</span><span class="o">=</span><span class="p">[</span>
@@ -946,7 +980,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">query_embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_embeddings</span><span class="p">(</span><span class="s2">"max_marginal_relevance_search"</span><span class="p">)</span>
+        <span class="n">query_embedding</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">embed_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_marginal_relevance_search_by_vector</span><span class="p">(</span>
             <span class="n">query_embedding</span><span class="p">,</span>
             <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
@@ -1313,7 +1348,8 @@
         <span class="n">texts</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">models</span><span class="o">.</span><span class="n">VectorStruct</span><span class="p">]:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieval_mode</span> <span class="o">==</span> <span class="n">RetrievalMode</span><span class="o">.</span><span class="n">DENSE</span><span class="p">:</span>
-            <span class="n">batch_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">embed_documents</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">texts</span><span class="p">))</span>
+            <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_embeddings</span><span class="p">(</span><span class="s2">"DENSE mode"</span><span class="p">)</span>
+            <span class="n">batch_embeddings</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">embed_documents</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">texts</span><span class="p">))</span>
             <span class="k">return</span> <span class="p">[</span>
                 <span class="p">{</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">vector_name</span><span class="p">:</span> <span class="n">vector</span><span class="p">,</span>
@@ -1335,7 +1371,8 @@
             <span class="p">]</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieval_mode</span> <span class="o">==</span> <span class="n">RetrievalMode</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">:</span>
-            <span class="n">dense_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">embed_documents</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">texts</span><span class="p">))</span>
+            <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_embeddings</span><span class="p">(</span><span class="s2">"HYBRID mode"</span><span class="p">)</span>
+            <span class="n">dense_embeddings</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">embed_documents</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">texts</span><span class="p">))</span>
             <span class="n">sparse_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_embeddings</span><span class="o">.</span><span class="n">embed_documents</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">texts</span><span class="p">))</span>
 
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dense_embeddings</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sparse_embeddings</span><span class="p">):</span>

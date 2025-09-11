@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 10, 2025" name="docbuild:last-update"/>
+<meta content="Sep 11, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -449,7 +449,7 @@
                 <span class="k">yield</span> <span class="n">chunk</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">tap_output_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Tap the output aiter.</span>
+<span class="w">        </span><span class="sd">"""Tap the output iter.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            run_id: The ID of the run.</span>
@@ -540,7 +540,7 @@
         <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Start a trace for an LLM run."""</span>
+<span class="w">        </span><span class="sd">"""Start a trace for a chat model run."""</span>
         <span class="n">name_</span> <span class="o">=</span> <span class="n">_assign_name</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">serialized</span><span class="p">)</span>
         <span class="n">run_type</span> <span class="o">=</span> <span class="s2">"chat_model"</span>
 
@@ -582,7 +582,7 @@
         <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Start a trace for an LLM run."""</span>
+<span class="w">        </span><span class="sd">"""Start a trace for a (non-chat model) LLM run."""</span>
         <span class="n">name_</span> <span class="o">=</span> <span class="n">_assign_name</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">serialized</span><span class="p">)</span>
         <span class="n">run_type</span> <span class="o">=</span> <span class="s2">"llm"</span>
 
@@ -646,6 +646,10 @@
         <span class="n">parent_run_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">UUID</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Run on new output token. Only available when streaming is enabled.</span>
+
+<span class="sd">        For both chat models and non-chat models (legacy LLMs).</span>
+<span class="sd">        """</span>
         <span class="n">run_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">run_id</span><span class="p">)</span>
         <span class="n">chunk_</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">GenerationChunk</span><span class="p">,</span> <span class="n">BaseMessageChunk</span><span class="p">]</span>
 
@@ -691,17 +695,15 @@
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_llm_end</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="n">LLMResult</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">run_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""End a trace for an LLM run.</span>
+<span class="w">        </span><span class="sd">"""End a trace for a model run.</span>
 
-<span class="sd">        Args:</span>
-<span class="sd">            response (LLMResult): The response which was generated.</span>
-<span class="sd">            run_id (UUID): The run ID. This is the ID of the current run.</span>
+<span class="sd">        For both chat models and non-chat models (legacy LLMs).</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If the run type is not ``'llm'`` or ``'chat_model'``.</span>
 <span class="sd">        """</span>
         <span class="n">run_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_map</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">run_id</span><span class="p">)</span>
-        <span class="n">inputs_</span> <span class="o">=</span> <span class="n">run_info</span><span class="p">[</span><span class="s2">"inputs"</span><span class="p">]</span>
+        <span class="n">inputs_</span> <span class="o">=</span> <span class="n">run_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"inputs"</span><span class="p">)</span>
 
         <span class="n">generations</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">GenerationChunk</span><span class="p">]],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ChatGenerationChunk</span><span class="p">]]]</span>
         <span class="n">output</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">BaseMessage</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -879,10 +881,6 @@
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_tool_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">run_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""End a trace for a tool run.</span>
 
-<span class="sd">        Args:</span>
-<span class="sd">            output: The output of the tool.</span>
-<span class="sd">            run_id: The run ID. This is the ID of the current run.</span>
-
 <span class="sd">        Raises:</span>
 <span class="sd">            AssertionError: If the run ID is a tool call and does not have inputs</span>
 <span class="sd">        """</span>
@@ -967,7 +965,7 @@
                 <span class="s2">"event"</span><span class="p">:</span> <span class="s2">"on_retriever_end"</span><span class="p">,</span>
                 <span class="s2">"data"</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s2">"output"</span><span class="p">:</span> <span class="n">documents</span><span class="p">,</span>
-                    <span class="s2">"input"</span><span class="p">:</span> <span class="n">run_info</span><span class="p">[</span><span class="s2">"inputs"</span><span class="p">],</span>
+                    <span class="s2">"input"</span><span class="p">:</span> <span class="n">run_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"inputs"</span><span class="p">),</span>
                 <span class="p">},</span>
                 <span class="s2">"run_id"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">run_id</span><span class="p">),</span>
                 <span class="s2">"name"</span><span class="p">:</span> <span class="n">run_info</span><span class="p">[</span><span class="s2">"name"</span><span class="p">],</span>
@@ -1079,12 +1077,12 @@
                 <span class="c1"># Usually they will NOT be available for components that operate</span>
                 <span class="c1"># on streams, since those components stream the input and</span>
                 <span class="c1"># don't know its final value until the end of the stream.</span>
-                <span class="n">inputs</span> <span class="o">=</span> <span class="n">log_entry</span><span class="p">[</span><span class="s2">"inputs"</span><span class="p">]</span>
+                <span class="n">inputs</span> <span class="o">=</span> <span class="n">log_entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"inputs"</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">inputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">data</span><span class="p">[</span><span class="s2">"input"</span><span class="p">]</span> <span class="o">=</span> <span class="n">inputs</span>
 
             <span class="k">if</span> <span class="n">event_type</span> <span class="o">==</span> <span class="s2">"end"</span><span class="p">:</span>
-                <span class="n">inputs</span> <span class="o">=</span> <span class="n">log_entry</span><span class="p">[</span><span class="s2">"inputs"</span><span class="p">]</span>
+                <span class="n">inputs</span> <span class="o">=</span> <span class="n">log_entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"inputs"</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">inputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">data</span><span class="p">[</span><span class="s2">"input"</span><span class="p">]</span> <span class="o">=</span> <span class="n">inputs</span>
 
