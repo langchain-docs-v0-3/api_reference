@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 11, 2025" name="docbuild:last-update"/>
+<meta content="Sep 12, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -308,7 +308,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../langchain/index.html">Langchain</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../text_splitters/index.html">Text Splitters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../community/index.html">Community</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../experimental/index.html">Experimental</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../standard_tests/index.html">Standard Tests</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Integrations</span></p>
@@ -326,6 +325,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../deepseek/index.html">Deepseek</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../elasticsearch/index.html">Elasticsearch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../exa/index.html">Exa</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../experimental/index.html">Experimental</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../fireworks/index.html">Fireworks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../google_community/index.html">Google Community</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../google_genai/index.html">Google GenAI</a></li>
@@ -405,28 +405,78 @@
 <dd><em class="sig-param"><span class="n"><span class="pre">skip_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>,</dd>
 </dl>
 <span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../_modules/langchain_core/utils/json_schema.html#dereference_refs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#langchain_core.utils.json_schema.dereference_refs" title="Link to this definition">#</a></dt>
-<dd><p>Try to substitute $refs in JSON Schema.</p>
+<dd><p>Resolve and inline JSON Schema $ref references in a schema object.</p>
+<p>This function processes a JSON Schema and resolves all $ref references by replacing
+them with the actual referenced content. It handles both simple references and
+complex cases like circular references and mixed $ref objects that contain
+additional properties alongside the $ref.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>schema_obj</strong> (<em>dict</em>) – The fragment to dereference.</p></li>
-<li><p><strong>full_schema</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – The complete schema (defaults to schema_obj).</p></li>
-<li><p><strong>skip_keys</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>str</em><em>]</em><em>]</em>) – <ul>
-<li><p>If None (the default), we skip recursion under ‘$defs’ <em>and</em> only
-shallow-inline refs.</p></li>
-<li><p>If provided (even as an empty list), we will recurse under every key and
-deep-inline all refs.</p></li>
+<li><p><strong>schema_obj</strong> (<em>dict</em>) – The JSON Schema object or fragment to process. This can be a
+complete schema or just a portion of one.</p></li>
+<li><p><strong>full_schema</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – The complete schema containing all definitions that $refs might
+point to. If not provided, defaults to schema_obj (useful when the
+schema is self-contained).</p></li>
+<li><p><strong>skip_keys</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>str</em><em>]</em><em>]</em>) – <p>Controls recursion behavior and reference resolution depth:
+- If None (default): Only recurse under ‘$defs’ and use shallow reference</p>
+<blockquote>
+<div><p>resolution (break cycles but don’t deep-inline nested refs)</p>
+</div></blockquote>
+<ul>
+<li><p>If provided (even as []): Recurse under all keys and use deep reference
+resolution (fully inline all nested references)</p></li>
 </ul>
 </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The schema with refs dereferenced.</p>
+<dd class="field-even"><p>A new dictionary with all $ref references resolved and inlined. The original
+schema_obj is not modified.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
+<p class="rubric">Examples</p>
+<p>Basic reference resolution:
+&gt;&gt;&gt; schema = {
+…     “type”: “object”,
+…     “properties”: {“name”: {“$ref”: “#/$defs/string_type”}},
+…     “$defs”: {“string_type”: {“type”: “string”}},
+… }
+&gt;&gt;&gt; result = dereference_refs(schema)
+&gt;&gt;&gt; result[“properties”][“name”]  # {“type”: “string”}</p>
+<p>Mixed $ref with additional properties:
+&gt;&gt;&gt; schema = {
+…     “properties”: {
+…         “name”: {“$ref”: “#/$defs/base”, “description”: “User name”}
+…     },
+…     “$defs”: {“base”: {“type”: “string”, “minLength”: 1}},
+… }
+&gt;&gt;&gt; result = dereference_refs(schema)
+&gt;&gt;&gt; result[“properties”][“name”]
+# {“type”: “string”, “minLength”: 1, “description”: “User name”}</p>
+<p>Handling circular references:
+&gt;&gt;&gt; schema = {
+…     “properties”: {“user”: {“$ref”: “#/$defs/User”}},
+…     “$defs”: {
+…         “User”: {
+…             “type”: “object”,
+…             “properties”: {“friend”: {“$ref”: “#/$defs/User”}},
+…         }
+…     },
+… }
+&gt;&gt;&gt; result = dereference_refs(schema)  # Won’t cause infinite recursion</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Circular references are handled gracefully by breaking cycles</p></li>
+<li><p>Mixed $ref objects (with both $ref and other properties) are supported</p></li>
+<li><p>Additional properties in mixed $refs override resolved properties</p></li>
+<li><p>The $defs section is preserved in the output by default</p></li>
+</ul>
+</div>
 </dd></dl>
 <ul class="simple">
 </ul>

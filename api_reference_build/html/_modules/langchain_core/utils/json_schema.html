@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 11, 2025" name="docbuild:last-update"/>
+<meta content="Sep 12, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -261,6 +261,31 @@
     <span class="k">return</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_process_dict_properties</span><span class="p">(</span>
+    <span class="n">properties</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">full_schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">processed_refs</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">skip_keys</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">shallow_refs</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Process dictionary properties, recursing into nested structures."""</span>
+    <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">properties</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">skip_keys</span><span class="p">:</span>
+            <span class="c1"># Skip recursion for specified keys, just copy the value as-is</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+            <span class="c1"># Recursively process nested objects and arrays</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_dereference_refs_helper</span><span class="p">(</span>
+                <span class="n">value</span><span class="p">,</span> <span class="n">full_schema</span><span class="p">,</span> <span class="n">processed_refs</span><span class="p">,</span> <span class="n">skip_keys</span><span class="p">,</span> <span class="n">shallow_refs</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Copy primitive values directly</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_dereference_refs_helper</span><span class="p">(</span>
     <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">full_schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
@@ -268,55 +293,87 @@
     <span class="n">skip_keys</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">shallow_refs</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>  <span class="c1"># noqa: FBT001</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Inline every pure {'$ref':...}.</span>
+<span class="w">    </span><span class="sd">"""Dereference JSON Schema $ref objects, handling both pure and mixed references.</span>
 
-<span class="sd">    But:</span>
+<span class="sd">    This function processes JSON Schema objects containing $ref properties by resolving</span>
+<span class="sd">    the references and merging any additional properties. It handles:</span>
 
-<span class="sd">    - if shallow_refs=True: only break cycles, do not inline nested refs</span>
-<span class="sd">    - if shallow_refs=False: deep-inline all nested refs</span>
+<span class="sd">    - Pure $ref objects: {"$ref": "#/path/to/definition"}</span>
+<span class="sd">    - Mixed $ref objects: {"$ref": "#/path", "title": "Custom Title", ...}</span>
+<span class="sd">    - Circular references by breaking cycles and preserving non-ref properties</span>
 
-<span class="sd">    Also skip recursion under any key in skip_keys.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        obj: The object to process (can be dict, list, or primitive)</span>
+<span class="sd">        full_schema: The complete schema containing all definitions</span>
+<span class="sd">        processed_refs: Set tracking currently processing refs (for cycle detection)</span>
+<span class="sd">        skip_keys: Keys under which to skip recursion</span>
+<span class="sd">        shallow_refs: If True, only break cycles; if False, deep-inline all refs</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        The object with refs dereferenced.</span>
+<span class="sd">        The object with $ref properties resolved and merged with other properties.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">processed_refs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">processed_refs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
-    <span class="c1"># 1) Pure $ref node?</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"$ref"</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+    <span class="c1"># Case 1: Object contains a $ref property (pure or mixed with additional properties)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"$ref"</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
         <span class="n">ref_path</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="s2">"$ref"</span><span class="p">]</span>
-        <span class="c1"># cycle?</span>
+        <span class="n">additional_properties</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="o">!=</span> <span class="s2">"$ref"</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Detect circular reference: if we're already processing this $ref,</span>
+        <span class="c1"># return only the additional properties to break the cycle</span>
         <span class="k">if</span> <span class="n">ref_path</span> <span class="ow">in</span> <span class="n">processed_refs</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">{}</span>
+            <span class="k">return</span> <span class="n">_process_dict_properties</span><span class="p">(</span>
+                <span class="n">additional_properties</span><span class="p">,</span>
+                <span class="n">full_schema</span><span class="p">,</span>
+                <span class="n">processed_refs</span><span class="p">,</span>
+                <span class="n">skip_keys</span><span class="p">,</span>
+                <span class="n">shallow_refs</span><span class="o">=</span><span class="n">shallow_refs</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Mark this reference as being processed (for cycle detection)</span>
         <span class="n">processed_refs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ref_path</span><span class="p">)</span>
 
-        <span class="c1"># grab + copy the target</span>
-        <span class="n">target</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">_retrieve_ref</span><span class="p">(</span><span class="n">ref_path</span><span class="p">,</span> <span class="n">full_schema</span><span class="p">))</span>
-
-        <span class="c1"># deep inlining: recurse into everything</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">_dereference_refs_helper</span><span class="p">(</span>
-            <span class="n">target</span><span class="p">,</span> <span class="n">full_schema</span><span class="p">,</span> <span class="n">processed_refs</span><span class="p">,</span> <span class="n">skip_keys</span><span class="p">,</span> <span class="n">shallow_refs</span>
+        <span class="c1"># Fetch and recursively resolve the referenced object</span>
+        <span class="n">referenced_object</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">_retrieve_ref</span><span class="p">(</span><span class="n">ref_path</span><span class="p">,</span> <span class="n">full_schema</span><span class="p">))</span>
+        <span class="n">resolved_reference</span> <span class="o">=</span> <span class="n">_dereference_refs_helper</span><span class="p">(</span>
+            <span class="n">referenced_object</span><span class="p">,</span> <span class="n">full_schema</span><span class="p">,</span> <span class="n">processed_refs</span><span class="p">,</span> <span class="n">skip_keys</span><span class="p">,</span> <span class="n">shallow_refs</span>
         <span class="p">)</span>
 
+        <span class="c1"># Clean up: remove from processing set before returning</span>
         <span class="n">processed_refs</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">ref_path</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">result</span>
 
-    <span class="c1"># 2) Not a pure-$ref: recurse, skipping any keys in skip_keys</span>
+        <span class="c1"># Pure $ref case: no additional properties, return resolved reference directly</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">additional_properties</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">resolved_reference</span>
+
+        <span class="c1"># Mixed $ref case: merge resolved reference with additional properties</span>
+        <span class="c1"># Additional properties take precedence over resolved properties</span>
+        <span class="n">merged_result</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resolved_reference</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">merged_result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">resolved_reference</span><span class="p">)</span>
+
+        <span class="c1"># Process additional properties and merge them (they override resolved ones)</span>
+        <span class="n">processed_additional</span> <span class="o">=</span> <span class="n">_process_dict_properties</span><span class="p">(</span>
+            <span class="n">additional_properties</span><span class="p">,</span>
+            <span class="n">full_schema</span><span class="p">,</span>
+            <span class="n">processed_refs</span><span class="p">,</span>
+            <span class="n">skip_keys</span><span class="p">,</span>
+            <span class="n">shallow_refs</span><span class="o">=</span><span class="n">shallow_refs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">merged_result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">processed_additional</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">merged_result</span>
+
+    <span class="c1"># Case 2: Regular dictionary without $ref - process all properties</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">skip_keys</span><span class="p">:</span>
-                <span class="c1"># do not recurse under this key</span>
-                <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
-                <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">_dereference_refs_helper</span><span class="p">(</span>
-                    <span class="n">v</span><span class="p">,</span> <span class="n">full_schema</span><span class="p">,</span> <span class="n">processed_refs</span><span class="p">,</span> <span class="n">skip_keys</span><span class="p">,</span> <span class="n">shallow_refs</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
-        <span class="k">return</span> <span class="n">out</span>
+        <span class="k">return</span> <span class="n">_process_dict_properties</span><span class="p">(</span>
+            <span class="n">obj</span><span class="p">,</span> <span class="n">full_schema</span><span class="p">,</span> <span class="n">processed_refs</span><span class="p">,</span> <span class="n">skip_keys</span><span class="p">,</span> <span class="n">shallow_refs</span><span class="o">=</span><span class="n">shallow_refs</span>
+        <span class="p">)</span>
 
+    <span class="c1"># Case 3: List - recursively process each item</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">_dereference_refs_helper</span><span class="p">(</span>
@@ -325,6 +382,7 @@
             <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">obj</span>
         <span class="p">]</span>
 
+    <span class="c1"># Case 4: Primitive value (string, number, boolean, null) - return unchanged</span>
     <span class="k">return</span> <span class="n">obj</span>
 
 
@@ -336,19 +394,67 @@
     <span class="n">full_schema</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">skip_keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Try to substitute $refs in JSON Schema.</span>
+<span class="w">    </span><span class="sd">"""Resolve and inline JSON Schema $ref references in a schema object.</span>
+
+<span class="sd">    This function processes a JSON Schema and resolves all $ref references by replacing</span>
+<span class="sd">    them with the actual referenced content. It handles both simple references and</span>
+<span class="sd">    complex cases like circular references and mixed $ref objects that contain</span>
+<span class="sd">    additional properties alongside the $ref.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">      schema_obj: The fragment to dereference.</span>
-<span class="sd">      full_schema: The complete schema (defaults to schema_obj).</span>
-<span class="sd">      skip_keys:</span>
-<span class="sd">        - If None (the default), we skip recursion under '$defs' *and* only</span>
-<span class="sd">          shallow-inline refs.</span>
-<span class="sd">        - If provided (even as an empty list), we will recurse under every key and</span>
-<span class="sd">          deep-inline all refs.</span>
+<span class="sd">        schema_obj: The JSON Schema object or fragment to process. This can be a</span>
+<span class="sd">            complete schema or just a portion of one.</span>
+<span class="sd">        full_schema: The complete schema containing all definitions that $refs might</span>
+<span class="sd">            point to. If not provided, defaults to schema_obj (useful when the</span>
+<span class="sd">            schema is self-contained).</span>
+<span class="sd">        skip_keys: Controls recursion behavior and reference resolution depth:</span>
+<span class="sd">            - If None (default): Only recurse under '$defs' and use shallow reference</span>
+<span class="sd">              resolution (break cycles but don't deep-inline nested refs)</span>
+<span class="sd">            - If provided (even as []): Recurse under all keys and use deep reference</span>
+<span class="sd">              resolution (fully inline all nested references)</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        The schema with refs dereferenced.</span>
+<span class="sd">        A new dictionary with all $ref references resolved and inlined. The original</span>
+<span class="sd">        schema_obj is not modified.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        Basic reference resolution:</span>
+<span class="sd">        &gt;&gt;&gt; schema = {</span>
+<span class="sd">        ...     "type": "object",</span>
+<span class="sd">        ...     "properties": {"name": {"$ref": "#/$defs/string_type"}},</span>
+<span class="sd">        ...     "$defs": {"string_type": {"type": "string"}},</span>
+<span class="sd">        ... }</span>
+<span class="sd">        &gt;&gt;&gt; result = dereference_refs(schema)</span>
+<span class="sd">        &gt;&gt;&gt; result["properties"]["name"]  # {"type": "string"}</span>
+
+<span class="sd">        Mixed $ref with additional properties:</span>
+<span class="sd">        &gt;&gt;&gt; schema = {</span>
+<span class="sd">        ...     "properties": {</span>
+<span class="sd">        ...         "name": {"$ref": "#/$defs/base", "description": "User name"}</span>
+<span class="sd">        ...     },</span>
+<span class="sd">        ...     "$defs": {"base": {"type": "string", "minLength": 1}},</span>
+<span class="sd">        ... }</span>
+<span class="sd">        &gt;&gt;&gt; result = dereference_refs(schema)</span>
+<span class="sd">        &gt;&gt;&gt; result["properties"]["name"]</span>
+<span class="sd">        # {"type": "string", "minLength": 1, "description": "User name"}</span>
+
+<span class="sd">        Handling circular references:</span>
+<span class="sd">        &gt;&gt;&gt; schema = {</span>
+<span class="sd">        ...     "properties": {"user": {"$ref": "#/$defs/User"}},</span>
+<span class="sd">        ...     "$defs": {</span>
+<span class="sd">        ...         "User": {</span>
+<span class="sd">        ...             "type": "object",</span>
+<span class="sd">        ...             "properties": {"friend": {"$ref": "#/$defs/User"}},</span>
+<span class="sd">        ...         }</span>
+<span class="sd">        ...     },</span>
+<span class="sd">        ... }</span>
+<span class="sd">        &gt;&gt;&gt; result = dereference_refs(schema)  # Won't cause infinite recursion</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        - Circular references are handled gracefully by breaking cycles</span>
+<span class="sd">        - Mixed $ref objects (with both $ref and other properties) are supported</span>
+<span class="sd">        - Additional properties in mixed $refs override resolved properties</span>
+<span class="sd">        - The $defs section is preserved in the output by default</span>
 <span class="sd">    """</span>
     <span class="n">full</span> <span class="o">=</span> <span class="n">full_schema</span> <span class="ow">or</span> <span class="n">schema_obj</span>
     <span class="n">keys_to_skip</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">skip_keys</span><span class="p">)</span> <span class="k">if</span> <span class="n">skip_keys</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="s2">"$defs"</span><span class="p">]</span>
