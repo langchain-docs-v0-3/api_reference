@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 15, 2025" name="docbuild:last-update"/>
+<meta content="Sep 16, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -884,10 +884,31 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validate that AWS credentials to and python package exists in environment."""</span>
 
+        <span class="c1"># Skip creating new client if passed in constructor</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">create_aws_client</span><span class="p">(</span>
+                <span class="n">region_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region_name</span><span class="p">,</span>
+                <span class="n">credentials_profile_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials_profile_name</span><span class="p">,</span>
+                <span class="n">aws_access_key_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aws_access_key_id</span><span class="p">,</span>
+                <span class="n">aws_secret_access_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aws_secret_access_key</span><span class="p">,</span>
+                <span class="n">aws_session_token</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aws_session_token</span><span class="p">,</span>
+                <span class="n">endpoint_url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">endpoint_url</span><span class="p">,</span>
+                <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span>
+                <span class="n">service_name</span><span class="o">=</span><span class="s2">"bedrock-runtime"</span><span class="p">,</span>
+            <span class="p">)</span>
+
         <span class="c1"># Create bedrock client for control plane API call</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bedrock_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bedrock_client_cfg</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="s1">'meta'</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span> <span class="s1">'region_name'</span><span class="p">):</span>
+                        <span class="n">bedrock_client_cfg</span><span class="p">[</span><span class="s1">'region_name'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">region_name</span>
+                <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                    <span class="k">pass</span>
+                
             <span class="bp">self</span><span class="o">.</span><span class="n">bedrock_client</span> <span class="o">=</span> <span class="n">create_aws_client</span><span class="p">(</span>
-                <span class="n">region_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region_name</span><span class="p">,</span>
+                <span class="n">region_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region_name</span> <span class="ow">or</span> <span class="n">bedrock_client_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'region_name'</span><span class="p">),</span>
                 <span class="n">credentials_profile_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials_profile_name</span><span class="p">,</span>
                 <span class="n">aws_access_key_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aws_access_key_id</span><span class="p">,</span>
                 <span class="n">aws_secret_access_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aws_secret_access_key</span><span class="p">,</span>
@@ -905,37 +926,37 @@
         <span class="c1"># only claude-3/4, mistral-large, and nova models support tool choice:</span>
         <span class="c1"># https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ToolChoice.html</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports_tool_choice_values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="s2">"claude"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_base_model</span><span class="p">():</span>
+            <span class="n">base_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_base_model</span><span class="p">()</span>
+            <span class="k">if</span> <span class="s2">"claude"</span> <span class="ow">in</span> <span class="n">base_model</span><span class="p">:</span>
                 <span class="c1"># Tool choice not supported when thinking is enabled</span>
                 <span class="n">thinking_params</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">additional_model_request_fields</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
                     <span class="s2">"thinking"</span><span class="p">,</span> <span class="p">{}</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="p">(</span>
-                    <span class="s2">"claude-3-7-sonnet"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_base_model</span><span class="p">()</span>
+                    <span class="s2">"claude-3-7-sonnet"</span> <span class="ow">in</span> <span class="n">base_model</span>
                     <span class="ow">and</span> <span class="n">thinking_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"enabled"</span>
                 <span class="p">):</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">supports_tool_choice_values</span> <span class="o">=</span> <span class="p">()</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">supports_tool_choice_values</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"any"</span><span class="p">,</span> <span class="s2">"tool"</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="s2">"mistral-large"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_base_model</span><span class="p">():</span>
+            <span class="k">elif</span> <span class="s2">"llama4"</span> <span class="ow">in</span> <span class="n">base_model</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">supports_tool_choice_values</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"auto"</span><span class="p">,)</span>
+            <span class="k">elif</span> <span class="s2">"llama3"</span> <span class="ow">in</span> <span class="n">base_model</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="n">base_model</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"llama3-1"</span><span class="p">,</span> <span class="s2">"llama3-3"</span><span class="p">)):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">supports_tool_choice_values</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"auto"</span><span class="p">,)</span>
+                <span class="k">elif</span> <span class="s2">"llama3-2"</span> <span class="ow">in</span> <span class="n">base_model</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="n">base_model</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"11b"</span><span class="p">,</span> <span class="s2">"90b"</span><span class="p">)):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">supports_tool_choice_values</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"auto"</span><span class="p">,)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">supports_tool_choice_values</span> <span class="o">=</span> <span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">supports_tool_choice_values</span> <span class="o">=</span> <span class="p">()</span>
+            <span class="k">elif</span> <span class="s2">"mistral-large"</span> <span class="ow">in</span> <span class="n">base_model</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">supports_tool_choice_values</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"any"</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="s2">"nova"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_base_model</span><span class="p">():</span>
+            <span class="k">elif</span> <span class="s2">"nova"</span> <span class="ow">in</span> <span class="n">base_model</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">supports_tool_choice_values</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"any"</span><span class="p">,</span> <span class="s2">"tool"</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">supports_tool_choice_values</span> <span class="o">=</span> <span class="p">()</span>
-
-        <span class="c1"># Skip creating new client if passed in constructor</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">create_aws_client</span><span class="p">(</span>
-                <span class="n">region_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region_name</span><span class="p">,</span>
-                <span class="n">credentials_profile_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials_profile_name</span><span class="p">,</span>
-                <span class="n">aws_access_key_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aws_access_key_id</span><span class="p">,</span>
-                <span class="n">aws_secret_access_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aws_secret_access_key</span><span class="p">,</span>
-                <span class="n">aws_session_token</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aws_session_token</span><span class="p">,</span>
-                <span class="n">endpoint_url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">endpoint_url</span><span class="p">,</span>
-                <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span>
-                <span class="n">service_name</span><span class="o">=</span><span class="s2">"bedrock-runtime"</span><span class="p">,</span>
-            <span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">guard_last_turn_only</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">guardrail_config</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -1339,8 +1360,8 @@
 <span class="w">    </span><span class="sd">"""Handle Bedrock converse and Anthropic style content blocks"""</span>
     <span class="n">bedrock_messages</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">bedrock_system</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="c1"># Merge system, human, ai message runs because Anthropic expects (at most) 1</span>
-    <span class="c1"># system message then alternating human/ai messages.</span>
+    <span class="c1"># Merge system, human, ai message runs because Anthropic expects</span>
+    <span class="c1"># (optional) system messages first, then alternating human/ai messages.</span>
     <span class="n">messages</span> <span class="o">=</span> <span class="n">merge_message_runs</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">:</span>
         <span class="n">content</span> <span class="o">=</span> <span class="n">_lc_content_to_bedrock</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
@@ -1388,6 +1409,10 @@
             <span class="n">bedrock_messages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">curr</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unsupported message type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">bedrock_messages</span><span class="p">:</span>
+        <span class="n">bedrock_messages</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="p">[{</span><span class="s2">"text"</span><span class="p">:</span> <span class="n">EMPTY_CONTENT</span><span class="p">}]})</span>
+
     <span class="k">return</span> <span class="n">bedrock_messages</span><span class="p">,</span> <span class="n">bedrock_system</span>
 
 
@@ -1555,6 +1580,8 @@
                     <span class="s2">"source"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"bytes"</span><span class="p">:</span> <span class="n">_b64str_to_bytes</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="s2">"data"</span><span class="p">])},</span>
                 <span class="p">}</span>
             <span class="p">}</span>
+            <span class="k">if</span> <span class="n">citations</span> <span class="o">:=</span> <span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"citations"</span><span class="p">):</span>
+                <span class="n">formatted_block</span><span class="p">[</span><span class="s2">"document"</span><span class="p">][</span><span class="s2">"citations"</span><span class="p">]</span> <span class="o">=</span> <span class="n">citations</span>
             <span class="k">if</span> <span class="n">name</span> <span class="o">:=</span> <span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">):</span>
                 <span class="n">formatted_block</span><span class="p">[</span><span class="s2">"document"</span><span class="p">][</span><span class="s2">"name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
             <span class="k">elif</span> <span class="n">name</span> <span class="o">:=</span> <span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"filename"</span><span class="p">):</span>  <span class="c1"># OpenAI uses `filename`</span>

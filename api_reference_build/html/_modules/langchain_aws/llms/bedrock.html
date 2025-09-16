@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 15, 2025" name="docbuild:last-update"/>
+<meta content="Sep 16, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -1037,14 +1037,26 @@
 
         <span class="c1"># Create bedrock client for control plane API call</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bedrock_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># If client was provided but bedrock_client wasn't, try to extract config from client</span>
+            <span class="n">bedrock_client_cfg</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="s1">'meta'</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span> <span class="s1">'region_name'</span><span class="p">):</span>
+                        <span class="n">bedrock_client_cfg</span><span class="p">[</span><span class="s1">'region_name'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">region_name</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="s1">'_client_config'</span><span class="p">):</span>
+                        <span class="n">bedrock_client_cfg</span><span class="p">[</span><span class="s1">'config'</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">_client_config</span>
+                <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                    <span class="k">pass</span>
+                
+            <span class="c1"># Prioritize directly passed parameters over those extracted from client</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bedrock_client</span> <span class="o">=</span> <span class="n">create_aws_client</span><span class="p">(</span>
-                <span class="n">region_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region_name</span><span class="p">,</span>
+                <span class="n">region_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region_name</span> <span class="ow">or</span> <span class="n">bedrock_client_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'region_name'</span><span class="p">),</span>
                 <span class="n">credentials_profile_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials_profile_name</span><span class="p">,</span>
                 <span class="n">aws_access_key_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aws_access_key_id</span><span class="p">,</span>
                 <span class="n">aws_secret_access_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aws_secret_access_key</span><span class="p">,</span>
                 <span class="n">aws_session_token</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">aws_session_token</span><span class="p">,</span>
                 <span class="n">endpoint_url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">endpoint_url</span><span class="p">,</span>
-                <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span>
+                <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="ow">or</span> <span class="n">bedrock_client_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'config'</span><span class="p">),</span>
                 <span class="n">service_name</span><span class="o">=</span><span class="s2">"bedrock"</span><span class="p">,</span>
             <span class="p">)</span>
 

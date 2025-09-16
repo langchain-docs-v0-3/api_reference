@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 15, 2025" name="docbuild:last-update"/>
+<meta content="Sep 16, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -261,7 +261,21 @@
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StuffDocumentsChain</span><span class="p">:</span>
     <span class="n">llm_chain</span> <span class="o">=</span> <span class="n">LLMChain</span><span class="p">(</span><span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-    <span class="c1"># TODO: document prompt</span>
+<span class="w">    </span><span class="sd">"""Load a StuffDocumentsChain for summarization.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        llm: Language Model to use in the chain.</span>
+<span class="sd">        prompt: Prompt template that controls how the documents are formatted and</span>
+<span class="sd">            passed into the LLM. Defaults to `stuff_prompt.PROMPT`.</span>
+<span class="sd">        document_variable_name: Variable name in the prompt template where the</span>
+<span class="sd">            document text will be inserted. Defaults to "text".</span>
+<span class="sd">        verbose: Whether to log progress and intermediate steps. Defaults to None.</span>
+<span class="sd">        **kwargs: Additional keyword arguments passed to the StuffDocumentsChain.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A StuffDocumentsChain that takes in documents, formats them with the</span>
+<span class="sd">        given prompt, and runs the chain on the provided LLM.</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">StuffDocumentsChain</span><span class="p">(</span>
         <span class="n">llm_chain</span><span class="o">=</span><span class="n">llm_chain</span><span class="p">,</span>
         <span class="n">document_variable_name</span><span class="o">=</span><span class="n">document_variable_name</span><span class="p">,</span>
@@ -299,7 +313,41 @@
         <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
         <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="c1"># TODO: document prompt</span>
+<span class="w">    </span><span class="sd">"""Load a MapReduceDocumentsChain for summarization.</span>
+
+<span class="sd">    This chain first applies a "map" step to summarize each document,</span>
+<span class="sd">    then applies a "reduce" step to combine the summaries into a</span>
+<span class="sd">    final result. Optionally, a "collapse" step can be used to handle</span>
+<span class="sd">    long intermediate results.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        llm: Language Model to use for map and reduce steps.</span>
+<span class="sd">        map_prompt: Prompt used to summarize each documnet in the map step.</span>
+<span class="sd">            Defaults to `map_reduce_prompt.PROMPT`.</span>
+<span class="sd">        combine_prompt: Prompt used to combine summaries in the reduce step.</span>
+<span class="sd">            Defaults to `map_reduce_prompt.PROMPT`.</span>
+<span class="sd">        combine_document_variable_name: Variable name in the `combine_prompt` where</span>
+<span class="sd">            the mapped summaries are inserted. Defaults to "text".</span>
+<span class="sd">        map_reduce_document_variable_name: Variable name in the `map_prompt`</span>
+<span class="sd">            where document text is inserted. Defaults to "text".</span>
+<span class="sd">        collapse_prompt: Optional prompt used to collapse intermediate summaries</span>
+<span class="sd">            if they exceed the token limit (`token_max`). Defaults to None.</span>
+<span class="sd">        reduce_llm: Optional separate LLM for the reduce step. Defaults to None,</span>
+<span class="sd">            which uses the same model as the map step.</span>
+<span class="sd">        collapse_llm: Optional separate LLM for the collapse step. Defaults to None,</span>
+<span class="sd">            which uses the same model as the map step.</span>
+<span class="sd">        verbose: Whether to log progess and intermediate steps. Defaults to None.</span>
+<span class="sd">        token_max: Token threshold that triggers the collapse step during reduction.</span>
+<span class="sd">            Defaults to 3000.</span>
+<span class="sd">        callbacks: Optional callbacks for logging and tracing. Defaults to None.</span>
+<span class="sd">        collapse_max_retries: Maximum retries for the collapse step if it fails.</span>
+<span class="sd">            Defaults to None.</span>
+<span class="sd">        **kwargs: Additional keyword arguments passed to the MapReduceDocumentsChain.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A MapReduceDocumentsChain that maps each document to a summary,</span>
+<span class="sd">        then reduces all summaries into a single cohesive result.</span>
+<span class="sd">    """</span>
     <span class="n">combine_documents_chain</span> <span class="o">=</span> <span class="n">StuffDocumentsChain</span><span class="p">(</span>
         <span class="n">llm_chain</span><span class="o">=</span><span class="n">reduce_chain</span><span class="p">,</span>
         <span class="n">document_variable_name</span><span class="o">=</span><span class="n">combine_document_variable_name</span><span class="p">,</span>
