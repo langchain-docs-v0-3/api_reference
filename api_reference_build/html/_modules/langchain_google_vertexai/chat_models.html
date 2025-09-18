@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 17, 2025" name="docbuild:last-update"/>
+<meta content="Sep 18, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -392,7 +392,14 @@
 <span class="n">_allowed_beta_params</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"media_resolution"</span><span class="p">,</span>
 <span class="p">]</span>
-<span class="n">_allowed_params_prediction_service</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"request"</span><span class="p">,</span> <span class="s2">"timeout"</span><span class="p">,</span> <span class="s2">"metadata"</span><span class="p">,</span> <span class="s2">"labels"</span><span class="p">]</span>
+<span class="n">_allowed_params_prediction_service</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"request"</span><span class="p">,</span>
+    <span class="s2">"timeout"</span><span class="p">,</span>
+    <span class="s2">"metadata"</span><span class="p">,</span>
+    <span class="s2">"labels"</span><span class="p">,</span>
+    <span class="c1"># Allow controlling GAPIC client retries from callers.</span>
+    <span class="s2">"retry"</span><span class="p">,</span>
+<span class="p">]</span>
 
 
 <span class="n">_FUNCTION_CALL_THOUGHT_SIGNATURES_MAP_KEY</span> <span class="o">=</span> <span class="p">(</span>
@@ -997,6 +1004,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_completion_with_retry_inner</span><span class="p">(</span><span class="n">generation_method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">generation_method</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
+    <span class="c1"># If user requested 0 retries, disable GAPIC retries too unless explicitly set.</span>
+    <span class="k">if</span> <span class="n">max_retries</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="s2">"retry"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"retry"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
     <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">_allowed_params_prediction_service</span>
     <span class="p">}</span>
@@ -1026,6 +1037,10 @@
         <span class="n">generation_method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="k">await</span> <span class="n">generation_method</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># If user requested 0 retries, disable GAPIC retries too unless explicitly set.</span>
+    <span class="k">if</span> <span class="n">max_retries</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="s2">"retry"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"retry"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">_allowed_params_prediction_service</span>

@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 17, 2025" name="docbuild:last-update"/>
+<meta content="Sep 18, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -649,8 +649,12 @@ This caches two files using <cite>Part</cite> and queries them together.</p>
     <span class="p">)</span>
 
 
+<span class="c1"># Default method uses function calling</span>
 <span class="n">structured_llm</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">with_structured_output</span><span class="p">(</span><span class="n">Joke</span><span class="p">)</span>
-<span class="n">structured_llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"Tell me a joke about cats"</span><span class="p">)</span>
+
+<span class="c1"># For more reliable output, use json_schema with native responseSchema</span>
+<span class="n">structured_llm_json</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">with_structured_output</span><span class="p">(</span><span class="n">Joke</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"json_schema"</span><span class="p">)</span>
+<span class="n">structured_llm_json</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"Tell me a joke about cats"</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Joke</span><span class="p">(</span>
@@ -660,6 +664,17 @@ This caches two files using <cite>Part</cite> and queries them together.</p>
 <span class="p">)</span>
 </pre></div>
 </div>
+<p>Two methods are supported for structured output:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">method="function_calling"</span></code> (default): Uses tool calling to extract</p></li>
+</ul>
+<p>structured data. Compatible with all models.
+* <code class="docutils literal notranslate"><span class="pre">method="json_schema"</span></code>: Uses Gemini’s native structured output with
+responseSchema. More reliable but requires Gemini 1.5+ models.
+<code class="docutils literal notranslate"><span class="pre">method="json_mode"</span></code> also works for backwards compatibility but is a misnomer.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">json_schema</span></code> method is recommended for better reliability as it
+constrains the model’s generation process directly rather than relying on
+post-processing tool calls.</p>
 </dd>
 <dt>Image input:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">httpx</span>
@@ -2240,7 +2255,7 @@ giving up. Defaults to 3.</p></li>
 <span class="sig-name descname"><span class="pre">with_structured_output</span></span><span class="sig-paren">(</span>
 <dl>
 <dd><em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">BaseModel</span><span class="p"><span class="pre">]</span></span></span></em>,</dd>
-<dd><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'function_calling'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'json_mode'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'function_calling'</span></span></em>,</dd>
+<dd><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'function_calling'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'json_mode'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'json_schema'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'function_calling'</span></span></em>,</dd>
 <dd><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>,</dd>
 <dd><em class="sig-param"><span class="n"><span class="pre">include_raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>,</dd>
 <dd><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>,</dd>
@@ -2270,7 +2285,7 @@ then both the raw model response (a BaseMessage) and the parsed model
 response will be returned. If an error occurs during output parsing it
 will be caught and returned as well. The final output is always a dict
 with keys <code class="docutils literal notranslate"><span class="pre">'raw'</span></code>, <code class="docutils literal notranslate"><span class="pre">'parsed'</span></code>, and <code class="docutils literal notranslate"><span class="pre">'parsing_error'</span></code>.</p></li>
-<li><p><strong>method</strong> (<em>Literal</em><em>[</em><em>'function_calling'</em><em>, </em><em>'json_mode'</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>method</strong> (<em>Literal</em><em>[</em><em>'function_calling'</em><em>, </em><em>'json_mode'</em><em>, </em><em>'json_schema'</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>

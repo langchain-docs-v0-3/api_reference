@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 17, 2025" name="docbuild:last-update"/>
+<meta content="Sep 18, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -283,6 +283,7 @@
     <span class="n">create_aws_client</span><span class="p">,</span>
     <span class="n">get_num_tokens_anthropic</span><span class="p">,</span>
     <span class="n">get_token_ids_anthropic</span><span class="p">,</span>
+    <span class="n">thinking_in_params</span><span class="p">,</span>
     <span class="n">trim_message_whitespace</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -1380,6 +1381,37 @@
             <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_provider</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"anthropic"</span><span class="p">:</span>
             <span class="n">formatted_tools</span> <span class="o">=</span> <span class="p">[</span><span class="n">convert_to_anthropic_tool</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span> <span class="k">for</span> <span class="n">tool</span> <span class="ow">in</span> <span class="n">tools</span><span class="p">]</span>
+
+            <span class="c1"># Disallow forced tool use when thinking is enabled on specific Claude models</span>
+            <span class="n">base_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_base_model</span><span class="p">()</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="nb">any</span><span class="p">(</span>
+                    <span class="n">x</span> <span class="ow">in</span> <span class="n">base_model</span>
+                    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"claude-3-7-"</span><span class="p">,</span> <span class="s2">"claude-opus-4-"</span><span class="p">,</span> <span class="s2">"claude-sonnet-4-"</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="ow">and</span> <span class="n">thinking_in_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span> <span class="ow">or</span> <span class="p">{})</span>
+            <span class="p">):</span>
+                <span class="n">forced</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool_choice</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+                    <span class="n">forced</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">tool_choice</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool_choice</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="c1"># "any" or specific tool name forces tool use; "auto"/"none" do not</span>
+                    <span class="k">if</span> <span class="n">tool_choice</span> <span class="o">==</span> <span class="s2">"any"</span><span class="p">:</span>
+                        <span class="n">forced</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">elif</span> <span class="n">tool_choice</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"none"</span><span class="p">):</span>
+                        <span class="c1"># Treat as specific tool name</span>
+                        <span class="n">forced</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool_choice</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">tool_choice</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">tc_type</span> <span class="o">=</span> <span class="n">tool_choice</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span>
+                    <span class="c1"># Bedrock types: "auto", "any", "tool" (function)</span>
+                    <span class="k">if</span> <span class="n">tc_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"any"</span><span class="p">,</span> <span class="s2">"tool"</span><span class="p">,</span> <span class="s2">"function"</span><span class="p">):</span>
+                        <span class="n">forced</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">if</span> <span class="n">forced</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">"Anthropic Claude (3.7/4/4.1) with thinking enabled does not support forced tool use. "</span>
+                        <span class="s2">"Remove forced tool_choice (e.g. 'any' or a specific tool), or set "</span>
+                        <span class="s2">"tool_choice='auto', or disable thinking."</span>
+                    <span class="p">)</span>
 
             <span class="c1"># true if the model is a claude 3 model</span>
             <span class="k">if</span> <span class="s2">"claude-"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_base_model</span><span class="p">():</span>

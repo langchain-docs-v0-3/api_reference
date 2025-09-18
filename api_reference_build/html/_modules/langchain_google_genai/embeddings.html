@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 17, 2025" name="docbuild:last-update"/>
+<meta content="Sep 18, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -340,22 +340,10 @@
             <span class="n">client_options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">client_options</span><span class="p">,</span>
             <span class="n">transport</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="c1"># Only initialize async client if there's an event loop running</span>
-        <span class="c1"># to avoid RuntimeError during synchronous initialization</span>
-        <span class="k">if</span> <span class="n">_is_event_loop_running</span><span class="p">():</span>
-            <span class="c1"># async clients don't support "rest" transport</span>
-            <span class="n">transport</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transport</span>
-            <span class="k">if</span> <span class="n">transport</span> <span class="o">==</span> <span class="s2">"rest"</span><span class="p">:</span>
-                <span class="n">transport</span> <span class="o">=</span> <span class="s2">"grpc_asyncio"</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span> <span class="o">=</span> <span class="n">build_generative_async_service</span><span class="p">(</span>
-                <span class="n">credentials</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">credentials</span><span class="p">,</span>
-                <span class="n">api_key</span><span class="o">=</span><span class="n">google_api_key</span><span class="p">,</span>
-                <span class="n">client_info</span><span class="o">=</span><span class="n">client_info</span><span class="p">,</span>
-                <span class="n">client_options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">client_options</span><span class="p">,</span>
-                <span class="n">transport</span><span class="o">=</span><span class="n">transport</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># Always defer async client initialization to first async call.</span>
+        <span class="c1"># Avoids implicit event loop creation and aligns with lazy init</span>
+        <span class="c1"># in chat models.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">async_client</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="nd">@property</span>
