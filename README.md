@@ -1,0 +1,1 @@
+This repo is decoupled from the api ref build process in [langchain](https://github.com/langchain-ai/langchain/tree/master/docs) but gets absorbed back in [during the Vercel build process](https://github.com/langchain-ai/langchain/blob/395515762e99619e60389b97770e228c8c29017f/docs/Makefile#L104-L106).
