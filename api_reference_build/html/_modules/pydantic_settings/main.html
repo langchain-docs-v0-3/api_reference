@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 24, 2025" name="docbuild:last-update"/>
+<meta content="Sep 25, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -225,6 +225,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">argparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">Namespace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleNamespace</span>
@@ -246,10 +247,14 @@
     <span class="n">DotenvType</span><span class="p">,</span>
     <span class="n">EnvSettingsSource</span><span class="p">,</span>
     <span class="n">InitSettingsSource</span><span class="p">,</span>
+    <span class="n">JsonConfigSettingsSource</span><span class="p">,</span>
     <span class="n">PathType</span><span class="p">,</span>
     <span class="n">PydanticBaseSettingsSource</span><span class="p">,</span>
     <span class="n">PydanticModel</span><span class="p">,</span>
+    <span class="n">PyprojectTomlConfigSettingsSource</span><span class="p">,</span>
     <span class="n">SecretsSettingsSource</span><span class="p">,</span>
+    <span class="n">TomlConfigSettingsSource</span><span class="p">,</span>
+    <span class="n">YamlConfigSettingsSource</span><span class="p">,</span>
     <span class="n">get_subcommand</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -611,7 +616,8 @@
             <span class="n">dotenv_settings</span><span class="o">=</span><span class="n">dotenv_settings</span><span class="p">,</span>
             <span class="n">file_secret_settings</span><span class="o">=</span><span class="n">file_secret_settings</span><span class="p">,</span>
         <span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">default_settings</span><span class="p">,)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">([</span><span class="n">source</span> <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">sources</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">CliSettingsSource</span><span class="p">)]):</span>
+        <span class="n">custom_cli_sources</span> <span class="o">=</span> <span class="p">[</span><span class="n">source</span> <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">sources</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">CliSettingsSource</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">custom_cli_sources</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cli_settings_source</span><span class="p">,</span> <span class="n">CliSettingsSource</span><span class="p">):</span>
                 <span class="n">sources</span> <span class="o">=</span> <span class="p">(</span><span class="n">cli_settings_source</span><span class="p">,)</span> <span class="o">+</span> <span class="n">sources</span>
             <span class="k">elif</span> <span class="n">cli_parse_args</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -634,6 +640,12 @@
                     <span class="n">case_sensitive</span><span class="o">=</span><span class="n">case_sensitive</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">sources</span> <span class="o">=</span> <span class="p">(</span><span class="n">cli_settings</span><span class="p">,)</span> <span class="o">+</span> <span class="n">sources</span>
+        <span class="c1"># We ensure that if command line arguments haven't been parsed yet, we do so.</span>
+        <span class="k">elif</span> <span class="n">cli_parse_args</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">custom_cli_sources</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">env_vars</span><span class="p">:</span>
+            <span class="n">custom_cli_sources</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="n">args</span><span class="o">=</span><span class="n">cli_parse_args</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_settings_warn_unused_config_keys</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_config</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">sources</span><span class="p">:</span>
             <span class="n">state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="n">states</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -652,6 +664,37 @@
             <span class="c1"># no one should mean to do this, but I think returning an empty dict is marginally preferable</span>
             <span class="c1"># to an informative error and much better than a confusing error</span>
             <span class="k">return</span> <span class="p">{}</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_settings_warn_unused_config_keys</span><span class="p">(</span><span class="n">sources</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">model_config</span><span class="p">:</span> <span class="n">SettingsConfigDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Warns if any values in model_config were set but the corresponding settings source has not been initialised.</span>
+
+<span class="sd">        The list alternative sources and their config keys can be found here:</span>
+<span class="sd">        https://docs.pydantic.dev/latest/concepts/pydantic_settings/#other-settings-source</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sources: The tuple of configured sources</span>
+<span class="sd">            model_config: The model config to check for unused config keys</span>
+<span class="sd">        """</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">warn_if_not_used</span><span class="p">(</span><span class="n">source_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">PydanticBaseSettingsSource</span><span class="p">],</span> <span class="n">keys</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">source_type</span><span class="p">)</span> <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">sources</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">model_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s1">'Config key `</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">` is set in model_config but will be ignored because no '</span>
+                            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">source_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1"> source is configured. To use this config key, add a '</span>
+                            <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">source_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1"> source to the settings sources via the '</span>
+                            <span class="s1">'settings_customise_sources hook.'</span><span class="p">,</span>
+                            <span class="ne">UserWarning</span><span class="p">,</span>
+                            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                        <span class="p">)</span>
+
+        <span class="n">warn_if_not_used</span><span class="p">(</span><span class="n">JsonConfigSettingsSource</span><span class="p">,</span> <span class="p">(</span><span class="s1">'json_file'</span><span class="p">,</span> <span class="s1">'json_file_encoding'</span><span class="p">))</span>
+        <span class="n">warn_if_not_used</span><span class="p">(</span><span class="n">PyprojectTomlConfigSettingsSource</span><span class="p">,</span> <span class="p">(</span><span class="s1">'pyproject_toml_depth'</span><span class="p">,</span> <span class="s1">'pyproject_toml_table_header'</span><span class="p">))</span>
+        <span class="n">warn_if_not_used</span><span class="p">(</span><span class="n">TomlConfigSettingsSource</span><span class="p">,</span> <span class="p">(</span><span class="s1">'toml_file'</span><span class="p">,))</span>
+        <span class="n">warn_if_not_used</span><span class="p">(</span><span class="n">YamlConfigSettingsSource</span><span class="p">,</span> <span class="p">(</span><span class="s1">'yaml_file'</span><span class="p">,</span> <span class="s1">'yaml_file_encoding'</span><span class="p">,</span> <span class="s1">'yaml_config_section'</span><span class="p">))</span>
 
     <span class="n">model_config</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">SettingsConfigDict</span><span class="p">]</span> <span class="o">=</span> <span class="n">SettingsConfigDict</span><span class="p">(</span>
         <span class="n">extra</span><span class="o">=</span><span class="s1">'forbid'</span><span class="p">,</span>
@@ -698,6 +741,25 @@
 <span class="sd">    A utility class for running Pydantic `BaseSettings`, `BaseModel`, or `pydantic.dataclasses.dataclass` as</span>
 <span class="sd">    CLI applications.</span>
 <span class="sd">    """</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_base_settings_cls</span><span class="p">(</span><span class="n">model_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseSettings</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">model_cls</span><span class="p">,</span> <span class="n">BaseSettings</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">model_cls</span>
+
+        <span class="k">class</span><span class="w"> </span><span class="nc">CliAppBaseSettings</span><span class="p">(</span><span class="n">BaseSettings</span><span class="p">,</span> <span class="n">model_cls</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+            <span class="vm">__doc__</span> <span class="o">=</span> <span class="n">model_cls</span><span class="o">.</span><span class="vm">__doc__</span>
+            <span class="n">model_config</span> <span class="o">=</span> <span class="n">SettingsConfigDict</span><span class="p">(</span>
+                <span class="n">nested_model_default_partial_update</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">case_sensitive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">cli_hide_none_type</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">cli_avoid_json</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">cli_enforce_required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">cli_implicit_flags</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">cli_kebab_case</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">CliAppBaseSettings</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_cli_cmd</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cli_cmd_method_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">is_required</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
@@ -797,22 +859,10 @@
         <span class="n">model_init_data</span><span class="p">[</span><span class="s1">'_cli_exit_on_error'</span><span class="p">]</span> <span class="o">=</span> <span class="n">cli_exit_on_error</span>
         <span class="n">model_init_data</span><span class="p">[</span><span class="s1">'_cli_settings_source'</span><span class="p">]</span> <span class="o">=</span> <span class="n">cli_settings</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">model_cls</span><span class="p">,</span> <span class="n">BaseSettings</span><span class="p">):</span>
-
-            <span class="k">class</span><span class="w"> </span><span class="nc">CliAppBaseSettings</span><span class="p">(</span><span class="n">BaseSettings</span><span class="p">,</span> <span class="n">model_cls</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
-                <span class="vm">__doc__</span> <span class="o">=</span> <span class="n">model_cls</span><span class="o">.</span><span class="vm">__doc__</span>
-                <span class="n">model_config</span> <span class="o">=</span> <span class="n">SettingsConfigDict</span><span class="p">(</span>
-                    <span class="n">nested_model_default_partial_update</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">case_sensitive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">cli_hide_none_type</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">cli_avoid_json</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">cli_enforce_required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">cli_implicit_flags</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">cli_kebab_case</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="p">)</span>
-
-            <span class="n">model</span> <span class="o">=</span> <span class="n">CliAppBaseSettings</span><span class="p">(</span><span class="o">**</span><span class="n">model_init_data</span><span class="p">)</span>
+            <span class="n">base_settings_cls</span> <span class="o">=</span> <span class="n">CliApp</span><span class="o">.</span><span class="n">_get_base_settings_cls</span><span class="p">(</span><span class="n">model_cls</span><span class="p">)</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">base_settings_cls</span><span class="p">(</span><span class="o">**</span><span class="n">model_init_data</span><span class="p">)</span>
             <span class="n">model_init_data</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">field_info</span> <span class="ow">in</span> <span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">model_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">field_info</span> <span class="ow">in</span> <span class="n">base_settings_cls</span><span class="o">.</span><span class="n">model_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="n">model_init_data</span><span class="p">[</span><span class="n">_field_name_for_signature</span><span class="p">(</span><span class="n">field_name</span><span class="p">,</span> <span class="n">field_info</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">CliApp</span><span class="o">.</span><span class="n">_run_cli_cmd</span><span class="p">(</span><span class="n">model_cls</span><span class="p">(</span><span class="o">**</span><span class="n">model_init_data</span><span class="p">),</span> <span class="n">cli_cmd_method_name</span><span class="p">,</span> <span class="n">is_required</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -841,6 +891,21 @@
 
         <span class="n">subcommand</span> <span class="o">=</span> <span class="n">get_subcommand</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">is_required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cli_exit_on_error</span><span class="o">=</span><span class="n">cli_exit_on_error</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">CliApp</span><span class="o">.</span><span class="n">_run_cli_cmd</span><span class="p">(</span><span class="n">subcommand</span><span class="p">,</span> <span class="n">cli_cmd_method_name</span><span class="p">,</span> <span class="n">is_required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">serialize</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">PydanticModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Serializes the CLI arguments for a Pydantic data model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: The data model to serialize.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The serialized CLI arguments for the data model.</span>
+<span class="sd">        """</span>
+
+        <span class="n">base_settings_cls</span> <span class="o">=</span> <span class="n">CliApp</span><span class="o">.</span><span class="n">_get_base_settings_cls</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">CliSettingsSource</span><span class="p">[</span><span class="n">Any</span><span class="p">](</span><span class="n">base_settings_cls</span><span class="p">)</span><span class="o">.</span><span class="n">_serialized_args</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 </pre></div>
 </article>
 </div>

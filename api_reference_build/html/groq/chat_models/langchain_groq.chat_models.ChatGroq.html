@@ -54,7 +54,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 24, 2025" name="docbuild:last-update"/>
+<meta content="Sep 25, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -444,24 +444,31 @@ section.</p>
 </dd>
 <dt>Tool calling:</dt><dd><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
 
+
 <span class="k">class</span><span class="w"> </span><span class="nc">GetWeather</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">'''Get the current weather in a given location'''</span>
 
     <span class="n">location</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"The city and state, e.g. San Francisco, CA"</span><span class="p">)</span>
+
 
 <span class="k">class</span><span class="w"> </span><span class="nc">GetPopulation</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">'''Get the current population in a given location'''</span>
 
     <span class="n">location</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"The city and state, e.g. San Francisco, CA"</span><span class="p">)</span>
 
+
 <span class="n">model_with_tools</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">bind_tools</span><span class="p">([</span><span class="n">GetWeather</span><span class="p">,</span> <span class="n">GetPopulation</span><span class="p">])</span>
 <span class="n">ai_msg</span> <span class="o">=</span> <span class="n">model_with_tools</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"What is the population of NY?"</span><span class="p">)</span>
 <span class="n">ai_msg</span><span class="o">.</span><span class="n">tool_calls</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">[{</span><span class="s1">'name'</span><span class="p">:</span> <span class="s1">'GetPopulation'</span><span class="p">,</span>
-<span class="s1">'args'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'location'</span><span class="p">:</span> <span class="s1">'NY'</span><span class="p">},</span>
-<span class="s1">'id'</span><span class="p">:</span> <span class="s1">'call_bb8d'</span><span class="p">}]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"GetPopulation"</span><span class="p">,</span>
+        <span class="s2">"args"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"location"</span><span class="p">:</span> <span class="s2">"NY"</span><span class="p">},</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"call_bb8d"</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">]</span>
 </pre></div>
 </div>
 <p>See <code class="docutils literal notranslate"><span class="pre">ChatGroq.bind_tools()</span></code> method for more.</p>
@@ -470,6 +477,7 @@ section.</p>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
 
+
 <span class="k">class</span><span class="w"> </span><span class="nc">Joke</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">'''Joke to tell user.'''</span>
 
@@ -477,11 +485,16 @@ section.</p>
     <span class="n">punchline</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"The punchline to the joke"</span><span class="p">)</span>
     <span class="n">rating</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"How funny the joke is, from 1 to 10"</span><span class="p">)</span>
 
+
 <span class="n">structured_model</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">with_structured_output</span><span class="p">(</span><span class="n">Joke</span><span class="p">)</span>
 <span class="n">structured_model</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"Tell me a joke about cats"</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Joke</span><span class="p">(</span><span class="n">setup</span><span class="o">=</span><span class="s2">"Why don't cats play poker in the jungle?"</span><span class="p">,</span> <span class="n">punchline</span><span class="o">=</span><span class="s1">'Too many cheetahs!'</span><span class="p">,</span> <span class="n">rating</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Joke</span><span class="p">(</span>
+    <span class="n">setup</span><span class="o">=</span><span class="s2">"Why don't cats play poker in the jungle?"</span><span class="p">,</span>
+    <span class="n">punchline</span><span class="o">=</span><span class="s2">"Too many cheetahs!"</span><span class="p">,</span>
+    <span class="n">rating</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 <p>See <code class="docutils literal notranslate"><span class="pre">ChatGroq.with_structured_output()</span></code> for more.</p>
@@ -490,17 +503,21 @@ section.</p>
 <span class="n">ai_msg</span><span class="o">.</span><span class="n">response_metadata</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">'token_usage'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'completion_tokens'</span><span class="p">:</span> <span class="mi">70</span><span class="p">,</span>
-<span class="s1">'prompt_tokens'</span><span class="p">:</span> <span class="mi">28</span><span class="p">,</span>
-<span class="s1">'total_tokens'</span><span class="p">:</span> <span class="mi">98</span><span class="p">,</span>
-<span class="s1">'completion_time'</span><span class="p">:</span> <span class="mf">0.111956391</span><span class="p">,</span>
-<span class="s1">'prompt_time'</span><span class="p">:</span> <span class="mf">0.007518279</span><span class="p">,</span>
-<span class="s1">'queue_time'</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-<span class="s1">'total_time'</span><span class="p">:</span> <span class="mf">0.11947467</span><span class="p">},</span>
-<span class="s1">'model_name'</span><span class="p">:</span> <span class="s1">'llama-3.1-8b-instant'</span><span class="p">,</span>
-<span class="s1">'system_fingerprint'</span><span class="p">:</span> <span class="s1">'fp_c5f20b5bb1'</span><span class="p">,</span>
-<span class="s1">'finish_reason'</span><span class="p">:</span> <span class="s1">'stop'</span><span class="p">,</span>
-<span class="s1">'logprobs'</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">"token_usage"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"completion_tokens"</span><span class="p">:</span> <span class="mi">70</span><span class="p">,</span>
+        <span class="s2">"prompt_tokens"</span><span class="p">:</span> <span class="mi">28</span><span class="p">,</span>
+        <span class="s2">"total_tokens"</span><span class="p">:</span> <span class="mi">98</span><span class="p">,</span>
+        <span class="s2">"completion_time"</span><span class="p">:</span> <span class="mf">0.111956391</span><span class="p">,</span>
+        <span class="s2">"prompt_time"</span><span class="p">:</span> <span class="mf">0.007518279</span><span class="p">,</span>
+        <span class="s2">"queue_time"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"total_time"</span><span class="p">:</span> <span class="mf">0.11947467</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">"model_name"</span><span class="p">:</span> <span class="s2">"llama-3.1-8b-instant"</span><span class="p">,</span>
+    <span class="s2">"system_fingerprint"</span><span class="p">:</span> <span class="s2">"fp_c5f20b5bb1"</span><span class="p">,</span>
+    <span class="s2">"finish_reason"</span><span class="p">:</span> <span class="s2">"stop"</span><span class="p">,</span>
+    <span class="s2">"logprobs"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 </dd>
@@ -2001,9 +2018,7 @@ an instance of <code class="docutils literal notranslate"><span class="pre">sche
 <span class="n">llm</span> <span class="o">=</span> <span class="n">ChatGroq</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"openai/gpt-oss-120b"</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">structured_llm</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">with_structured_output</span><span class="p">(</span><span class="n">AnswerWithJustification</span><span class="p">)</span>
 
-<span class="n">structured_llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
-    <span class="s2">"What weighs more a pound of bricks or a pound of feathers"</span>
-<span class="p">)</span>
+<span class="n">structured_llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"What weighs more a pound of bricks or a pound of feathers"</span><span class="p">)</span>
 
 <span class="c1"># -&gt; AnswerWithJustification(</span>
 <span class="c1">#     answer='They weigh the same',</span>
@@ -2026,12 +2041,11 @@ an instance of <code class="docutils literal notranslate"><span class="pre">sche
 
 <span class="n">llm</span> <span class="o">=</span> <span class="n">ChatGroq</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"openai/gpt-oss-120b"</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">structured_llm</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">with_structured_output</span><span class="p">(</span>
-    <span class="n">AnswerWithJustification</span><span class="p">,</span> <span class="n">include_raw</span><span class="o">=</span><span class="kc">True</span>
+    <span class="n">AnswerWithJustification</span><span class="p">,</span>
+    <span class="n">include_raw</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">structured_llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
-    <span class="s2">"What weighs more a pound of bricks or a pound of feathers"</span>
-<span class="p">)</span>
+<span class="n">structured_llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"What weighs more a pound of bricks or a pound of feathers"</span><span class="p">)</span>
 <span class="c1"># -&gt; {</span>
 <span class="c1">#     'raw': AIMessage(content='', additional_kwargs={'tool_calls': [{'id': 'call_Ao02pnFYXD6GN1yzc0uXPsvF', 'function': {'arguments': '{"answer":"They weigh the same.","justification":"Both a pound of bricks and a pound of feathers weigh one pound. The weight is the same, but the volume or density of the objects may differ."}', 'name': 'AnswerWithJustification'}, 'type': 'function'}]}),</span>
 <span class="c1">#     'parsed': AnswerWithJustification(answer='They weigh the same.', justification='Both a pound of bricks and a pound of feathers weigh one pound. The weight is the same, but the volume or density of the objects may differ.'),</span>
@@ -2051,17 +2065,13 @@ an instance of <code class="docutils literal notranslate"><span class="pre">sche
 <span class="w">    </span><span class="sd">'''An answer to the user question along with justification for the answer.'''</span>
 
     <span class="n">answer</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">justification</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
-        <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"A justification for the answer."</span>
-    <span class="p">]</span>
+    <span class="n">justification</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"A justification for the answer."</span><span class="p">]</span>
 
 
 <span class="n">llm</span> <span class="o">=</span> <span class="n">ChatGroq</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"openai/gpt-oss-120b"</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">structured_llm</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">with_structured_output</span><span class="p">(</span><span class="n">AnswerWithJustification</span><span class="p">)</span>
 
-<span class="n">structured_llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
-    <span class="s2">"What weighs more a pound of bricks or a pound of feathers"</span>
-<span class="p">)</span>
+<span class="n">structured_llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"What weighs more a pound of bricks or a pound of feathers"</span><span class="p">)</span>
 <span class="c1"># -&gt; {</span>
 <span class="c1">#     'answer': 'They weigh the same',</span>
 <span class="c1">#     'justification': 'Both a pound of bricks and a pound of feathers weigh one pound. The weight is the same, but the volume and density of the two substances differ.'</span>
@@ -2117,12 +2127,11 @@ an instance of <code class="docutils literal notranslate"><span class="pre">sche
 
 <span class="n">llm</span> <span class="o">=</span> <span class="n">ChatGroq</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"openai/gpt-oss-120b"</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">structured_llm</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">with_structured_output</span><span class="p">(</span>
-    <span class="n">AnswerWithJustification</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"json_schema"</span>
+    <span class="n">AnswerWithJustification</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">"json_schema"</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">structured_llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
-    <span class="s2">"What weighs more a pound of bricks or a pound of feathers"</span>
-<span class="p">)</span>
+<span class="n">structured_llm</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"What weighs more a pound of bricks or a pound of feathers"</span><span class="p">)</span>
 
 <span class="c1"># -&gt; AnswerWithJustification(</span>
 <span class="c1">#     answer='They weigh the same',</span>

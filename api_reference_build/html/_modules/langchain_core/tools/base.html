@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 24, 2025" name="docbuild:last-update"/>
+<meta content="Sep 25, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -1581,8 +1581,7 @@
 <span class="sd">    """</span>
     <span class="c1"># cls has no subscript: cls = FooBar</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
-        <span class="c1"># Gather pydantic field objects (v2: model_fields / v1: __fields__)</span>
-        <span class="n">fields</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"model_fields"</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"__fields__"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="n">get_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
         <span class="n">alias_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">field</span><span class="o">.</span><span class="n">alias</span><span class="p">:</span> <span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">alias</span><span class="p">}</span>
 
         <span class="n">annotations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1660,7 +1659,7 @@
         <span class="k">if</span> <span class="n">type_</span> <span class="ow">in</span> <span class="n">generic_map</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">generic_map</span><span class="p">[</span><span class="n">type_</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">default_to_bound</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">type_</span><span class="o">.</span><span class="n">__bound__</span> <span class="ow">or</span> <span class="n">Any</span>
+            <span class="k">return</span> <span class="n">type_</span><span class="o">.</span><span class="n">__bound__</span> <span class="k">if</span> <span class="n">type_</span><span class="o">.</span><span class="n">__bound__</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">Any</span>
         <span class="k">return</span> <span class="n">type_</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">origin</span> <span class="o">:=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">type_</span><span class="p">))</span> <span class="ow">and</span> <span class="p">(</span><span class="n">args</span> <span class="o">:=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">type_</span><span class="p">)):</span>
         <span class="n">new_args</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
