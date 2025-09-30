@@ -52,7 +52,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="en" name="docsearch:language"/>
 <meta content="" name="docsearch:version"/>
-<meta content="Sep 29, 2025" name="docbuild:last-update"/>
+<meta content="Sep 30, 2025" name="docbuild:last-update"/>
 </head>
 <body data-bs-root-margin="0px 0px -60%" data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-default-mode="" data-offset="180">
 <div class="skip-link d-print-none" id="pst-skip-link"><a href="#main-content">Skip to main content</a></div>
@@ -234,7 +234,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">anthropic</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core._api</span><span class="w"> </span><span class="kn">import</span> <span class="n">beta</span><span class="p">,</span> <span class="n">deprecated</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core._api</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecated</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.callbacks</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AsyncCallbackManagerForLLMRun</span><span class="p">,</span>
     <span class="n">CallbackManagerForLLMRun</span><span class="p">,</span>
@@ -316,6 +316,7 @@
         <span class="s2">"web_search_"</span><span class="p">,</span>
         <span class="s2">"web_fetch_"</span><span class="p">,</span>
         <span class="s2">"code_execution_"</span><span class="p">,</span>
+        <span class="s2">"memory_"</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">tool_type</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="k">for</span> <span class="n">prefix</span> <span class="ow">in</span> <span class="n">_builtin_tool_prefixes</span><span class="p">)</span>
 
@@ -1420,6 +1421,25 @@
 
 <span class="sd">            Total tokens: 408</span>
 
+<span class="sd">    Context management:</span>
+<span class="sd">        Anthropic supports a context editing feature that will automatically manage the</span>
+<span class="sd">        model's context window (e.g., by clearing tool results).</span>
+
+<span class="sd">        See `Anthropic documentation &lt;https://docs.claude.com/en/docs/build-with-claude/context-editing&gt;`__</span>
+<span class="sd">        for details and configuration options.</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from langchain_anthropic import ChatAnthropic</span>
+
+<span class="sd">            llm = ChatAnthropic(</span>
+<span class="sd">                model="claude-sonnet-4-5-20250929",</span>
+<span class="sd">                betas=["context-management-2025-06-27"],</span>
+<span class="sd">                context_management={"edits": [{"type": "clear_tool_uses_20250919"}]},</span>
+<span class="sd">            )</span>
+<span class="sd">            llm_with_tools = llm.bind_tools([{"type": "web_search_20250305", "name": "web_search"}])</span>
+<span class="sd">            response = llm_with_tools.invoke("Search for recent developments in AI")</span>
+
 <span class="sd">    Built-in tools:</span>
 <span class="sd">        See LangChain `docs &lt;https://python.langchain.com/docs/integrations/chat/anthropic/#built-in-tools&gt;`__</span>
 <span class="sd">        for more detail.</span>
@@ -1533,6 +1553,19 @@
 <span class="sd">                'id': 'toolu_01VdNgt1YV7kGfj9LFLm6HyQ',</span>
 <span class="sd">                'type': 'tool_call'}]</span>
 
+<span class="sd">        .. dropdown::  Memory tool</span>
+
+<span class="sd">            .. code-block:: python</span>
+
+<span class="sd">                from langchain_anthropic import ChatAnthropic</span>
+
+<span class="sd">                llm = ChatAnthropic(</span>
+<span class="sd">                    model="claude-sonnet-4-5-20250929",</span>
+<span class="sd">                    betas=["context-management-2025-06-27"],</span>
+<span class="sd">                )</span>
+<span class="sd">                llm_with_tools = llm.bind_tools([{"type": "memory_20250818", "name": "memory"}])</span>
+<span class="sd">                response = llm_with_tools.invoke("What are my interests?")</span>
+
 <span class="sd">    Response metadata</span>
 <span class="sd">        .. code-block:: python</span>
 
@@ -1638,6 +1671,11 @@
 
 <span class="sd">    Example: ``mcp_servers=[{"type": "url", "url": "https://mcp.example.com/mcp",</span>
 <span class="sd">    "name": "example-mcp"}]``</span>
+<span class="sd">    """</span>
+
+    <span class="n">context_management</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">"""Configuration for</span>
+<span class="sd">    `context management &lt;https://docs.claude.com/en/docs/build-with-claude/context-editing&gt;`__.</span>
 <span class="sd">    """</span>
 
     <span class="nd">@property</span>
@@ -1792,6 +1830,7 @@
             <span class="s2">"top_p"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">top_p</span><span class="p">,</span>
             <span class="s2">"stop_sequences"</span><span class="p">:</span> <span class="n">stop</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop_sequences</span><span class="p">,</span>
             <span class="s2">"betas"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">betas</span><span class="p">,</span>
+            <span class="s2">"context_management"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_management</span><span class="p">,</span>
             <span class="s2">"mcp_servers"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mcp_servers</span><span class="p">,</span>
             <span class="s2">"system"</span><span class="p">:</span> <span class="n">system</span><span class="p">,</span>
             <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">model_kwargs</span><span class="p">,</span>
@@ -2454,7 +2493,6 @@
 
 <div class="viewcode-block" id="ChatAnthropic.get_num_tokens_from_messages">
 <a class="viewcode-back" href="../../anthropic/chat_models/langchain_anthropic.chat_models.ChatAnthropic.html#langchain_anthropic.chat_models.ChatAnthropic.get_num_tokens_from_messages">[docs]</a>
-    <span class="nd">@beta</span><span class="p">()</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_num_tokens_from_messages</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseMessage</span><span class="p">],</span>
@@ -2469,8 +2507,8 @@
 <span class="sd">            messages: The message inputs to tokenize.</span>
 <span class="sd">            tools: If provided, sequence of dict, BaseModel, function, or BaseTools</span>
 <span class="sd">                to be converted to tool schemas.</span>
-<span class="sd">            kwargs: Additional keyword arguments are passed to the</span>
-<span class="sd">                :meth:`~langchain_anthropic.chat_models.ChatAnthropic.bind` method.</span>
+<span class="sd">            kwargs: Additional keyword arguments are passed to the Anthropic</span>
+<span class="sd">                ``messages.count_tokens`` method.</span>
 
 <span class="sd">        Basic usage:</span>
 
@@ -2505,7 +2543,7 @@
 <span class="sd">                def get_weather(location: str) -&gt; str:</span>
 <span class="sd">                    \"\"\"Get the current weather in a given location</span>
 
-<span class="sd">        Args:</span>
+<span class="sd">                    Args:</span>
 <span class="sd">                        location: The city and state, e.g. San Francisco, CA</span>
 <span class="sd">                    \"\"\"</span>
 <span class="sd">                    return "Sunny"</span>
@@ -2523,15 +2561,24 @@
 
 <span class="sd">                Uses Anthropic's `token counting API &lt;https://docs.anthropic.com/en/docs/build-with-claude/token-counting&gt;`__ to count tokens in messages.</span>
 
-<span class="sd">        """</span>  <span class="c1"># noqa: E501</span>
+<span class="sd">        """</span>  <span class="c1"># noqa: D214,E501</span>
         <span class="n">formatted_system</span><span class="p">,</span> <span class="n">formatted_messages</span> <span class="o">=</span> <span class="n">_format_messages</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">formatted_system</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s2">"system"</span><span class="p">]</span> <span class="o">=</span> <span class="n">formatted_system</span>
         <span class="k">if</span> <span class="n">tools</span><span class="p">:</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s2">"tools"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">convert_to_anthropic_tool</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span> <span class="k">for</span> <span class="n">tool</span> <span class="ow">in</span> <span class="n">tools</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_management</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"context_management"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_management</span>
 
-        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">count_tokens</span><span class="p">(</span>
-            <span class="n">betas</span><span class="o">=</span><span class="p">[</span><span class="s2">"token-counting-2024-11-01"</span><span class="p">],</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">betas</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">beta_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">beta</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">count_tokens</span><span class="p">(</span>
+                <span class="n">betas</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">betas</span><span class="p">,</span>
+                <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">messages</span><span class="o">=</span><span class="n">formatted_messages</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">beta_response</span><span class="o">.</span><span class="n">input_tokens</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">count_tokens</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
             <span class="n">messages</span><span class="o">=</span><span class="n">formatted_messages</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
@@ -2649,7 +2696,7 @@
         <span class="c1"># Capture model name, but don't include usage_metadata yet</span>
         <span class="c1"># as it will be properly reported in message_delta with complete info</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="s2">"model"</span><span class="p">):</span>
-            <span class="n">response_metadata</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"model_name"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">model</span><span class="p">}</span>
+            <span class="n">response_metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"model_name"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">model</span><span class="p">}</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">response_metadata</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -2750,13 +2797,16 @@
     <span class="c1"># Process final usage metadata and completion info</span>
     <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"message_delta"</span> <span class="ow">and</span> <span class="n">stream_usage</span><span class="p">:</span>
         <span class="n">usage_metadata</span> <span class="o">=</span> <span class="n">_create_usage_metadata</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">usage</span><span class="p">)</span>
+        <span class="n">response_metadata</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"stop_reason"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">stop_reason</span><span class="p">,</span>
+            <span class="s2">"stop_sequence"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">stop_sequence</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">context_management</span> <span class="o">:=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="s2">"context_management"</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">response_metadata</span><span class="p">[</span><span class="s2">"context_management"</span><span class="p">]</span> <span class="o">=</span> <span class="n">context_management</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
         <span class="n">message_chunk</span> <span class="o">=</span> <span class="n">AIMessageChunk</span><span class="p">(</span>
             <span class="n">content</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
             <span class="n">usage_metadata</span><span class="o">=</span><span class="n">usage_metadata</span><span class="p">,</span>
-            <span class="n">response_metadata</span><span class="o">=</span><span class="p">{</span>
-                <span class="s2">"stop_reason"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">stop_reason</span><span class="p">,</span>
-                <span class="s2">"stop_sequence"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">delta</span><span class="o">.</span><span class="n">stop_sequence</span><span class="p">,</span>
-            <span class="p">},</span>
+            <span class="n">response_metadata</span><span class="o">=</span><span class="n">response_metadata</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="c1"># Unhandled event types (e.g., `content_block_stop`, `ping` events)</span>
     <span class="c1"># https://docs.anthropic.com/en/docs/build-with-claude/streaming#other-events</span>
